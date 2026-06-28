@@ -4,6 +4,15 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      upload-to:
+        description: 'Repo to upload artifacts to (e.g. Dev-Reds/website-nuxt)'
+        required: false
+        default: ''
+      release-tag:
+        description: 'Release tag to upload to (e.g. v1.0.0)'
+        required: false
+        default: 'v1.0.0'
 
 jobs:
   build-windows:
@@ -89,7 +98,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: Crux-Client-Mac
-      - name: Upload to Release
+      - name: Upload to Release (crux-client)
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -99,3 +108,23 @@ jobs:
             *.tar.gz
             *.dmg
           fail_on_unmatched_files: false
+
+  upload-to-website-nuxt:
+    needs: [build-windows, build-linux, build-macos]
+    if: github.event_name == 'workflow_dispatch' && inputs.upload-to != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Crux-Client-*
+          merge-multiple: true
+      - name: Upload to external repo release
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          TAG="${{ inputs.release-tag }}"
+          for f in *.exe *.zip *.tar.gz *.dmg; do
+            [ -f "$f" ] && gh release upload "$TAG" "$f" --clobber -R "${{ inputs.upload-to }}" || true
+          done
