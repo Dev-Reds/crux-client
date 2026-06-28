@@ -1,0 +1,101 @@
+name: Build Crux Client Installer
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx electron-builder --win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Crux-Client-Windows-Installer
+          path: installer/Crux Client-Installer-*.exe
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx electron-builder --linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Crux-Client-Linux
+          path: installer/Crux Client-*-linux-x64.*
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx electron-builder --mac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Crux-Client-Mac
+          path: installer/Crux Client-*-mac-x64.*
+
+  create-release-zip:
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Crux-Client-*
+          merge-multiple: true
+      - name: Create release zip
+        run: |
+          mkdir -p release
+          mv *.exe release/ 2>/dev/null || true
+          mv *.zip release/ 2>/dev/null || true
+          mv *.tar.gz release/ 2>/dev/null || true
+          mv *.dmg release/ 2>/dev/null || true
+          cd release
+          zip -9 -r ../Crux-Client-Installer-All.zip ./*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Crux-Client-Installer-All
+          path: Crux-Client-Installer-All.zip
+
+  upload-to-release:
+    needs: [create-release-zip]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Crux-Client-Installer-All
+      - uses: actions/download-artifact@v4
+        with:
+          name: Crux-Client-Windows-Installer
+      - uses: actions/download-artifact@v4
+        with:
+          name: Crux-Client-Linux
+      - uses: actions/download-artifact@v4
+        with:
+          name: Crux-Client-Mac
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Crux-Client-Installer-All.zip
+            *.exe
+            *.zip
+            *.tar.gz
+            *.dmg
+          fail_on_unmatched_files: false
