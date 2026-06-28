@@ -23,11 +23,11 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - run: npx electron-builder --win
+      - run: npx electron-builder --win --publish=never
       - uses: actions/upload-artifact@v4
         with:
           name: Crux-Client-Windows-Installer
-          path: installer/Crux Client-Installer-*.exe
+          path: installer/Crux-Client-Windows-Installer.exe
 
   build-linux:
     runs-on: ubuntu-latest
@@ -37,11 +37,11 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - run: npx electron-builder --linux
+      - run: npx electron-builder --linux --publish=never
       - uses: actions/upload-artifact@v4
         with:
           name: Crux-Client-Linux
-          path: installer/Crux Client-*-linux-x64.*
+          path: installer/Crux-Client-Linux-x64.*
 
   build-macos:
     runs-on: macos-latest
@@ -51,11 +51,11 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - run: npx electron-builder --mac
+      - run: npx electron-builder --mac --publish=never
       - uses: actions/upload-artifact@v4
         with:
           name: Crux-Client-Mac
-          path: installer/Crux Client-*-mac-x64.*
+          path: installer/Crux-Client-Mac-x64.*
 
   create-release-zip:
     needs: [build-windows, build-linux, build-macos]
