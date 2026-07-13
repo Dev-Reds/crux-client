@@ -1970,13 +1970,22 @@ const JSZip = require('jszip');
 
 function fetchJsonHttps(url) {
   return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'CruxClient' } }, res => {
+    https.get(url, { headers: { 'User-Agent': 'CruxClient', 'Accept': 'application/vnd.github.v3+json' } }, res => {
       if (res.statusCode === 301 || res.statusCode === 302) {
         return fetchJsonHttps(res.headers.location).then(resolve, reject);
       }
+      if (res.statusCode === 403) {
+        return reject(new Error('GitHub API rate limited (403). Try again later.'));
+      }
+      if (res.statusCode !== 200) {
+        return reject(new Error('GitHub API error: HTTP ' + res.statusCode));
+      }
       let data = '';
       res.on('data', c => data += c);
-      res.on('end', () => { try { resolve(JSON.parse(data)); } catch { reject(new Error('JSON parse error')); } });
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch { reject(new Error('JSON parse error')); }
+      });
     }).on('error', reject);
   });
 }
@@ -2023,9 +2032,16 @@ function isNewer(remote, local) {
 ipcMain.handle('check-for-update', async () => {
   try {
     const releases = await fetchJsonHttps(`https://api.github.com/repos/${GITHUB_REPO}/releases`);
-    if (!Array.isArray(releases) || !releases.length) return { updateAvailable: false };
+    console.log('[Crux Update] API returned', Array.isArray(releases) ? releases.length : typeof releases);
+    if (!Array.isArray(releases) || !releases.length) {
+      console.log('[Crux Update] No releases found');
+      return { updateAvailable: false, error: 'No releases found' };
+    }
     const versioned = releases.filter(r => r.tag_name && /^v?\d+\.\d+\.\d+/.test(r.tag_name) && !r.prerelease);
-    if (!versioned.length) return { updateAvailable: false };
+    console.log('[Crux Update] Versioned releases:', versioned.map(r => r.tag_name).join(', '));
+    if (!versioned.length) {
+      return { updateAvailable: false, error: 'No versioned releases found' };
+    }
     versioned.sort((a, b) => {
       const av = parseVersion(a.tag_name), bv = parseVersion(b.tag_name);
       for (let i = 0; i < Math.max(av.length, bv.length); i++) {
@@ -2036,8 +2052,10 @@ ipcMain.handle('check-for-update', async () => {
     });
     const latest = versioned[versioned.length - 1];
     const latestVersion = latest.tag_name.replace(/^v/, '');
+    console.log('[Crux Update] Latest:', latestVersion, 'Local:', CURRENT_VERSION, 'Newer:', isNewer(latestVersion, CURRENT_VERSION));
     if (isNewer(latestVersion, CURRENT_VERSION)) {
       const launcherZip = latest.assets.find(a => a.name === 'Launcher.zip');
+      console.log('[Crux Update] Update available! URL:', launcherZip ? launcherZip.browser_download_url : 'NO LAUNCHER.ZIP');
       return {
         updateAvailable: true,
         currentVersion: CURRENT_VERSION,
@@ -2048,6 +2066,7 @@ ipcMain.handle('check-for-update', async () => {
     }
     return { updateAvailable: false, currentVersion: CURRENT_VERSION };
   } catch (e) {
+    console.error('[Crux Update] Error:', e.message);
     return { updateAvailable: false, error: e.message };
   }
 });

@@ -4111,9 +4111,11 @@ let updateInstalling = false;
 async function checkForUpdates(silent) {
   const statusEl = document.getElementById('update-status');
   const btn = document.getElementById('check-update-btn');
+  console.log('[Crux] checkForUpdates called, silent:', silent);
   if (!silent && btn) { btn.textContent = 'Checking...'; btn.disabled = true; }
   try {
     const result = await ipcRenderer.invoke('check-for-update');
+    console.log('[Crux] Update result:', JSON.stringify(result));
     if (result.updateAvailable) {
       pendingUpdate = result;
       if (!silent) {
@@ -4125,12 +4127,12 @@ async function checkForUpdates(silent) {
     } else {
       if (!silent) {
         statusEl.style.display = 'block';
-        statusEl.style.color = '#5f5';
-        statusEl.textContent = result.error ? 'Update check failed: ' + result.error : 'Launcher is up to date!';
-        setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+        statusEl.style.color = result.error ? '#f44' : '#5f5';
+        statusEl.textContent = result.error ? 'Update check failed: ' + result.error : `Up to date (v${result.currentVersion || '?'})`;
       }
     }
   } catch (e) {
+    console.error('[Crux] Update check error:', e);
     if (!silent) {
       statusEl.style.display = 'block';
       statusEl.style.color = '#f44';
