@@ -1183,7 +1183,6 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     </div>
     <div style="display:flex;gap:.8em;justify-content:center">
       <button class="btn btn-primary" id="update-install-btn" style="display:none">Update & Restart</button>
-      <button class="btn" id="update-close-btn" style="display:none">Later</button>
     </div>
     <p id="update-error-text" style="color:#f44;font-size:.85em;margin-top:1em;display:none"></p>
     <p id="update-done-text" style="color:#5f5;font-size:.85em;margin-top:1em;display:none"></p>
@@ -2941,7 +2940,7 @@ async function importModpackFromModrinth(projectId, projectName, selectedVersion
         const env = f.env || {};
         return (env.clientSide || 'required') !== 'unsupported' && f.downloads && f.downloads.length;
       });
-      const BATCH = 5;
+      const BATCH = toDownload.length;
       let downloaded = 0;
       for(let i = 0; i < toDownload.length; i += BATCH) {
         const batch = toDownload.slice(i, i + BATCH);
@@ -4160,21 +4159,14 @@ function showUpdateOverlay(info) {
   document.getElementById('update-progress-wrap').style.display = 'none';
   document.getElementById('update-error-text').style.display = 'none';
   document.getElementById('update-done-text').style.display = 'none';
-  if (info.downloadUrl) {
-    document.getElementById('update-install-btn').style.display = 'inline-block';
-  } else {
-    document.getElementById('update-install-btn').style.display = 'none';
-  }
-  document.getElementById('update-close-btn').style.display = 'inline-block';
+  document.getElementById('update-install-btn').style.display = info.downloadUrl ? 'inline-block' : 'none';
   document.getElementById('update-done-text').style.display = 'none';
 }
 
 document.getElementById('update-install-btn').addEventListener('click', async () => {
   if (!pendingUpdate || !pendingUpdate.downloadUrl) return;
   const installBtn = document.getElementById('update-install-btn');
-  const closeBtn = document.getElementById('update-close-btn');
   installBtn.style.display = 'none';
-  closeBtn.style.display = 'none';
   document.getElementById('update-progress-wrap').style.display = 'block';
   document.getElementById('update-error-text').style.display = 'none';
   document.getElementById('update-done-text').style.display = 'none';
@@ -4188,12 +4180,7 @@ document.getElementById('update-install-btn').addEventListener('click', async ()
     document.getElementById('update-error-text').textContent = 'Update failed: ' + e.message;
     document.getElementById('update-error-text').style.display = 'block';
     installBtn.style.display = 'inline-block';
-    closeBtn.style.display = 'inline-block';
   }
-});
-
-document.getElementById('update-close-btn').addEventListener('click', () => {
-  document.getElementById('update-overlay').style.display = 'none';
 });
 
 ipcRenderer.on('update-download-progress', (_, { downloaded, total }) => {

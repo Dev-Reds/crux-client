@@ -2083,25 +2083,75 @@ ipcMain.handle('check-for-update', async () => {
 });
 
 ipcMain.handle('download-and-install-update', async (e, downloadUrl) => {
-  const buffer = await downloadBuffer(downloadUrl);
-  const zip = await JSZip.loadAsync(buffer);
-  const appDir = __dirname;
-  const keepFiles = ['node_modules', '.git', 'installer', 'scripts', 'exe', 'icons', 'client-mod', '.github', '.vscode', '.opencode'];
-  const promises = [];
-  zip.forEach((relativePath, zipEntry) => {
-    if (zipEntry.dir) return;
-    const parts = relativePath.split('/');
-    if (parts.length > 1 && keepFiles.includes(parts[0])) return;
-    if (parts[0] === 'package-lock.json') return;
-    if (relativePath.includes('..')) return;
-    const dest = path.join(appDir, relativePath);
-    promises.push(zipEntry.async('nodebuffer').then(data => {
-      return fs.promises.writeFile(dest, data);
-    }));
-  });
-  await Promise.all(promises);
-  app.relaunch();
-  app.quit();
+  const isAsar = __dirname.endsWith('app.asar') || process.env.APPIMAGE;
+  const send = (...a) => { try { mainWindow.webContents.send(...a); } catch {} };
+
+  if (isAsar) {
+    // Installed version: download installer exe and run it
+    updateLog('Installed version detected — downloading installer...');
+    const installerUrl = downloadUrl.replace(/Launcher\.zip$/i, 'Crux-Client-Windows-Installer.exe');
+    const tmpDir = path.join(process.env.TEMP || process.env.LOCALAPPDATA || '.', 'CruxUpdate');
+    await fs.promises.mkdir(tmpDir, { recursive: true });
+    const installerPath = path.join(tmpDir, 'Crux-Client-Installer.exe');
+    updateLog(`Downloading installer from: ${installerPath}`);
+
+    // Download installer with progress
+    await new Promise((resolve, reject) => {
+      const doRequest = (reqUrl) => {
+        const lib = reqUrl.startsWith('https') ? https : http;
+        lib.get(reqUrl, { headers: { 'User-Agent': 'CruxClient' } }, res => {
+          if (res.statusCode === 301 || res.statusCode === 302) return doRequest(res.headers.location);
+          if (res.statusCode !== 200) return reject(new Error('HTTP ' + res.statusCode));
+          const total = parseInt(res.headers['content-length'], 10) || 0;
+          let downloaded = 0;
+          const ws = fs.createWriteStream(installerPath);
+          res.on('data', chunk => {
+            ws.write(chunk);
+            downloaded += chunk.length;
+            send('update-download-progress', { downloaded, total });
+          });
+          res.on('end', () => { ws.end(() => resolve()); });
+          res.on('error', reject);
+        }).on('error', reject);
+      };
+      doRequest(installerUrl);
+    });
+
+    updateLog('Installer downloaded. Starting silent install...');
+    // Run installer silently
+    const { execSync } = require('child_process');
+    try {
+      execSync(`"${installerPath}" /S`, { timeout: 120000 });
+      updateLog('Install finished. Restarting...');
+    } catch (e) {
+      updateLog('Silent install failed, trying normal launch...');
+      const { spawn } = require('child_process');
+      spawn(installerPath, [], { detached: true, stdio: 'ignore' }).unref();
+    }
+    app.quit();
+  } else {
+    // Dev mode: extract zip over source files
+    updateLog('Dev mode detected — extracting zip...');
+    const buffer = await downloadBuffer(downloadUrl);
+    const zip = await JSZip.loadAsync(buffer);
+    const appDir = __dirname;
+    const keepFiles = ['node_modules', '.git', 'installer', 'scripts', 'exe', 'icons', 'client-mod', '.github', '.vscode', '.opencode'];
+    const promises = [];
+    zip.forEach((relativePath, zipEntry) => {
+      if (zipEntry.dir) return;
+      const parts = relativePath.split('/');
+      if (parts.length > 1 && keepFiles.includes(parts[0])) return;
+      if (parts[0] === 'package-lock.json') return;
+      if (relativePath.includes('..')) return;
+      const dest = path.join(appDir, relativePath);
+      promises.push(zipEntry.async('nodebuffer').then(data => {
+        return fs.promises.writeFile(dest, data);
+      }));
+    });
+    await Promise.all(promises);
+    app.relaunch();
+    app.quit();
+  }
 });
 
 // ── Uninstall ─────────────────────────────────────────────────────────────────
