@@ -585,7 +585,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <h2>Updates</h2>
         <button class="btn" id="check-update-btn">Check for Updates</button>
         <p style="color:#555;font-size:.76em;margin-top:.3em">Current version: <span id="current-version-label">1.0.0</span></p>
-        <p id="update-status" style="color:#555;font-size:.76em;margin-top:.3em;display:none"></p>
+        <div id="update-debug" style="margin-top:.5em;padding:.5em;background:#0a0a0a;border:1px solid #222;border-radius:var(--r);font-family:monospace;font-size:.72em;color:#888;max-height:120px;overflow-y:auto;display:none"></div>
       </div>
 
       <div class="settings-section" style="border-top:1px solid #333;padding-top:1em">
@@ -4108,36 +4108,39 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
 let pendingUpdate = null;
 let updateInstalling = false;
 
+function updateLog(msg){
+  const el=document.getElementById('update-debug');
+  if(!el) return;
+  el.style.display='block';
+  const t=new Date().toLocaleTimeString();
+  el.innerHTML+=`<div style="margin-bottom:2px"><span style="color:#555">[${t}]</span> ${escHtml(msg)}</div>`;
+  el.scrollTop=el.scrollHeight;
+}
+
 async function checkForUpdates(silent) {
-  const statusEl = document.getElementById('update-status');
   const btn = document.getElementById('check-update-btn');
   console.log('[Crux] checkForUpdates called, silent:', silent);
   if (!silent && btn) { btn.textContent = 'Checking...'; btn.disabled = true; }
+  updateLog('Starting update check...');
   try {
+    updateLog('Fetching releases from GitHub API...');
     const result = await ipcRenderer.invoke('check-for-update');
     console.log('[Crux] Update result:', JSON.stringify(result));
+    updateLog(`Result: ${JSON.stringify(result).slice(0, 200)}`);
     if (result.updateAvailable) {
       pendingUpdate = result;
-      if (!silent) {
-        statusEl.style.display = 'block';
-        statusEl.style.color = '#5f5';
-        statusEl.textContent = `Update available: v${result.newVersion}`;
-      }
+      updateLog(`UPDATE FOUND: v${result.newVersion} (current: v${result.currentVersion})`);
       showUpdateOverlay(result);
     } else {
-      if (!silent) {
-        statusEl.style.display = 'block';
-        statusEl.style.color = result.error ? '#f44' : '#5f5';
-        statusEl.textContent = result.error ? 'Update check failed: ' + result.error : `Up to date (v${result.currentVersion || '?'})`;
+      if (result.error) {
+        updateLog(`ERROR: ${result.error}`);
+      } else {
+        updateLog(`Up to date (v${result.currentVersion || '?'})`);
       }
     }
   } catch (e) {
     console.error('[Crux] Update check error:', e);
-    if (!silent) {
-      statusEl.style.display = 'block';
-      statusEl.style.color = '#f44';
-      statusEl.textContent = 'Update check failed: ' + e.message;
-    }
+    updateLog(`EXCEPTION: ${e.message}`);
   }
   if (!silent && btn) { btn.textContent = 'Check for Updates'; btn.disabled = false; }
 }
@@ -4202,6 +4205,7 @@ ipcRenderer.on('update-download-progress', (_, { downloaded, total }) => {
 });
 
 document.getElementById('check-update-btn').addEventListener('click', () => checkForUpdates(false));
+ipcRenderer.on('update-log', (_, msg) => updateLog('[main] ' + msg));
 </script>
 </body>
 </html>

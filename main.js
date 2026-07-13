@@ -1968,6 +1968,13 @@ const CURRENT_VERSION = require('./package.json').version;
 const GITHUB_REPO = 'Dev-Reds/crux-client';
 const JSZip = require('jszip');
 
+function updateLog(msg) {
+  console.log('[Crux Update]', msg);
+  if (mainWindow && mainWindow.webContents) {
+    try { mainWindow.webContents.send('update-log', msg); } catch {}
+  }
+}
+
 function fetchJsonHttps(url) {
   return new Promise((resolve, reject) => {
     https.get(url, { headers: { 'User-Agent': 'CruxClient', 'Accept': 'application/vnd.github.v3+json' } }, res => {
@@ -2031,14 +2038,15 @@ function isNewer(remote, local) {
 
 ipcMain.handle('check-for-update', async () => {
   try {
+    updateLog('Fetching releases from GitHub...');
     const releases = await fetchJsonHttps(`https://api.github.com/repos/${GITHUB_REPO}/releases`);
-    console.log('[Crux Update] API returned', Array.isArray(releases) ? releases.length : typeof releases);
+    updateLog(`Got ${Array.isArray(releases) ? releases.length : '?'} releases`);
     if (!Array.isArray(releases) || !releases.length) {
-      console.log('[Crux Update] No releases found');
+      updateLog('No releases found on GitHub');
       return { updateAvailable: false, error: 'No releases found' };
     }
     const versioned = releases.filter(r => r.tag_name && /^v?\d+\.\d+\.\d+/.test(r.tag_name) && !r.prerelease);
-    console.log('[Crux Update] Versioned releases:', versioned.map(r => r.tag_name).join(', '));
+    updateLog(`Versioned: ${versioned.map(r => r.tag_name).join(', ') || 'none'}`);
     if (!versioned.length) {
       return { updateAvailable: false, error: 'No versioned releases found' };
     }
@@ -2052,21 +2060,24 @@ ipcMain.handle('check-for-update', async () => {
     });
     const latest = versioned[versioned.length - 1];
     const latestVersion = latest.tag_name.replace(/^v/, '');
-    console.log('[Crux Update] Latest:', latestVersion, 'Local:', CURRENT_VERSION, 'Newer:', isNewer(latestVersion, CURRENT_VERSION));
-    if (isNewer(latestVersion, CURRENT_VERSION)) {
+    const newer = isNewer(latestVersion, CURRENT_VERSION);
+    updateLog(`Latest: v${latestVersion}, Local: v${CURRENT_VERSION}, Newer: ${newer}`);
+    if (newer) {
       const launcherZip = latest.assets.find(a => a.name === 'Launcher.zip');
-      console.log('[Crux Update] Update available! URL:', launcherZip ? launcherZip.browser_download_url : 'NO LAUNCHER.ZIP');
+      const url = launcherZip ? launcherZip.browser_download_url : null;
+      updateLog(`Update available! Download: ${url || 'NO LAUNCHER.ZIP'}`);
       return {
         updateAvailable: true,
         currentVersion: CURRENT_VERSION,
         newVersion: latestVersion,
         releaseNotes: latest.body || '',
-        downloadUrl: launcherZip ? launcherZip.browser_download_url : null,
+        downloadUrl: url,
       };
     }
+    updateLog('Up to date!');
     return { updateAvailable: false, currentVersion: CURRENT_VERSION };
   } catch (e) {
-    console.error('[Crux Update] Error:', e.message);
+    updateLog(`ERROR: ${e.message}`);
     return { updateAvailable: false, error: e.message };
   }
 });
