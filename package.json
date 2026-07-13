@@ -1,80 +1,82 @@
 {
-  "name": "files",
-  "version": "1.0.1",
-  "description": "",
-  "main": "main.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron .",
-    "package": "node ./scripts/package-versioned.js",
-    "package-all": "node ./scripts/package-all.js",
-    "package-mac": "node ./scripts/package-mac.js",
-    "build-installer": "node ./installer/build-installer.js",
-    "build-installer-all": "node ./installer/build-installer.js --all"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "express": "^5.2.1",
-    "jszip": "^3.10.1",
-    "minecraft-launcher-core": "^3.18.2"
-  },
-  "devDependencies": {
-    "electron": "^41.2.1",
-    "electron-builder": "^24.13.3",
-    "electron-packager": "^17.1.2",
-    "jimp": "^1.6.1"
-  },
-  "build": {
-    "appId": "com.cruxclient.launcher",
-    "productName": "Crux Client",
-    "directories": {
-      "output": "installer"
-    },
-    "files": [
-      "main.js",
-      "index.html",
-      "package.json",
-      "node_modules/**/*",
-      "Crux-Client.png",
-      "icons/**/*",
-      "!node_modules/jszip/dist/*.map"
-    ],
-    "win": {
-      "icon": "icons/icon.ico",
-      "target": [
-        "nsis"
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
-      "deleteAppDataOnUninstall": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Crux Client",
-      "artifactName": "Crux-Client-Windows-Installer.exe",
-      "installerIcon": "icons/icon.ico",
-      "uninstallerIcon": "icons/icon.ico"
-    },
-    "linux": {
-      "icon": "icons/icon.png",
-      "target": [
-        "zip",
-        "tar.gz"
-      ],
-      "artifactName": "Crux-Client-Linux-x64.${ext}",
-      "category": "Game"
-    },
-    "mac": {
-      "icon": "icons/icon.png",
-      "target": [
-        "zip"
-      ],
-      "artifactName": "Crux-Client-Mac-x64.${ext}"
-    }
-  }
+    "name":  "files",
+    "version":  "1.0.2",
+    "description":  "",
+    "main":  "main.js",
+    "scripts":  {
+                    "test":  "echo \"Error: no test specified\" \u0026\u0026 exit 1",
+                    "start":  "electron .",
+                    "package":  "node ./scripts/package-versioned.js",
+                    "package-all":  "node ./scripts/package-all.js",
+                    "package-mac":  "node ./scripts/package-mac.js",
+                    "build-installer":  "node ./installer/build-installer.js",
+                    "build-installer-all":  "node ./installer/build-installer.js --all"
+                },
+    "keywords":  [
+
+                 ],
+    "author":  "",
+    "license":  "ISC",
+    "type":  "commonjs",
+    "dependencies":  {
+                         "express":  "^5.2.1",
+                         "jszip":  "^3.10.1",
+                         "minecraft-launcher-core":  "^3.18.2"
+                     },
+    "devDependencies":  {
+                            "electron":  "^41.2.1",
+                            "electron-builder":  "^24.13.3",
+                            "electron-packager":  "^17.1.2",
+                            "jimp":  "^1.6.1"
+                        },
+    "build":  {
+                  "appId":  "com.cruxclient.launcher",
+                  "productName":  "Crux Client",
+                  "directories":  {
+                                      "output":  "installer"
+                                  },
+                  "files":  [
+                                "main.js",
+                                "index.html",
+                                "package.json",
+                                "node_modules/**/*",
+                                "Crux-Client.png",
+                                "icons/**/*",
+                                "!node_modules/jszip/dist/*.map"
+                            ],
+                  "win":  {
+                              "icon":  "icons/icon.ico",
+                              "target":  [
+                                             "nsis"
+                                         ]
+                          },
+                  "nsis":  {
+                               "oneClick":  false,
+                               "perMachine":  false,
+                               "allowToChangeInstallationDirectory":  true,
+                               "deleteAppDataOnUninstall":  true,
+                               "createDesktopShortcut":  true,
+                               "createStartMenuShortcut":  true,
+                               "shortcutName":  "Crux Client",
+                               "artifactName":  "Crux-Client-Windows-Installer.exe",
+                               "installerIcon":  "icons/icon.ico",
+                               "uninstallerIcon":  "icons/icon.ico"
+                           },
+                  "linux":  {
+                                "icon":  "icons/icon.png",
+                                "target":  [
+                                               "zip",
+                                               "tar.gz"
+                                           ],
+                                "artifactName":  "Crux-Client-Linux-x64.${ext}",
+                                "category":  "Game"
+                            },
+                  "mac":  {
+                              "icon":  "icons/icon.png",
+                              "target":  [
+                                             "zip"
+                                         ],
+                              "artifactName":  "Crux-Client-Mac-x64.${ext}"
+                          }
+              }
 }
