@@ -1,6 +1,6 @@
 {
   "name": "files",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "main.js",
   "scripts": {
@@ -18,6 +18,7 @@
   "type": "commonjs",
   "dependencies": {
     "express": "^5.2.1",
+    "jszip": "^3.10.1",
     "minecraft-launcher-core": "^3.18.2"
   },
   "devDependencies": {
@@ -26,7 +27,7 @@
     "electron-packager": "^17.1.2",
     "jimp": "^1.6.1"
   },
-    "build": {
+  "build": {
     "appId": "com.cruxclient.launcher",
     "productName": "Crux Client",
     "directories": {
@@ -38,7 +39,8 @@
       "package.json",
       "node_modules/**/*",
       "Crux-Client.png",
-      "icons/**/*"
+      "icons/**/*",
+      "!node_modules/jszip/dist/*.map"
     ],
     "win": {
       "icon": "icons/icon.ico",
@@ -47,12 +49,16 @@
       ]
     },
     "nsis": {
-      "oneClick": true,
+      "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": false,
-      "deleteAppDataOnUninstall": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
       "shortcutName": "Crux Client",
-      "artifactName": "Crux-Client-Windows-Installer.exe"
+      "artifactName": "Crux-Client-Windows-Installer.exe",
+      "installerIcon": "icons/icon.ico",
+      "uninstallerIcon": "icons/icon.ico"
     },
     "linux": {
       "icon": "icons/icon.png",

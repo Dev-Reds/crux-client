@@ -6,6 +6,8 @@
   <link rel="icon" type="image/png" href="Crux-Client.png">
   <title>Crux Client</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>window.JSZip=null;</script>
+<script>try{window.JSZip=require('jszip');}catch{}</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;height:100%;overflow:hidden;}
@@ -96,6 +98,43 @@ body.light .instance-item:hover{background:#eee;}
 body.light .instance-item.sel{background:#ddeeff;}
 body.light .account-item:hover{background:#eee;}
 body.light .mod-list-empty{color:#888;}
+
+/* ── Servers ── */
+.server-list{display:flex;flex-direction:column;gap:.5em;margin-bottom:1em;}
+.server-item{display:flex;align-items:center;gap:.8em;padding:.7em 1em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);cursor:pointer;transition:all .2s;}
+.server-item:hover{background:#1a1a1a;border-color:#333;}
+.server-item.sel{border-color:var(--acc);background:#0d1a2a;}
+.server-item .server-status{width:.6em;height:.6em;border-radius:50%;flex-shrink:0;}
+.server-item .server-status.running{background:#1bd96a;box-shadow:0 0 6px #1bd96a88;}
+.server-item .server-status.stopped{background:#555;}
+.server-item .server-info{flex:1;min-width:0;}
+.server-item .server-name{font-weight:bold;font-size:.9em;color:#ccc;}
+.server-item .server-meta{font-size:.72em;color:#555;margin-top:.15em;}
+.server-item .server-actions{display:flex;gap:.3em;flex-shrink:0;}
+.server-console{background:#0a0a0a;border:1px solid #1e1e1e;border-radius:var(--r);padding:.6em;font-family:'Consolas','Courier New',monospace;font-size:.75em;color:#aaa;height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.4;}
+.server-console-input{display:flex;gap:.3em;margin-top:.4em;}
+.server-console-input input{flex:1;padding:.35em .6em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-family:monospace;font-size:.8em;outline:none;}
+.server-console-input input:focus{border-color:var(--acc);}
+.server-cmd-btns{display:flex;gap:.3em;margin-top:.5em;flex-wrap:wrap;}
+body.light .server-item{background:#fff;border-color:#ddd;}
+body.light .server-item:hover{background:#f0f0f0;}
+body.light .server-item.sel{background:#ddeeff;border-color:var(--acc);}
+body.light .server-item .server-name{color:#111;}
+body.light .server-console{background:#f5f5f5;border-color:#ddd;color:#333;}
+.server-type-card{display:flex;flex-direction:column;align-items:center;gap:.25em;padding:1em .5em;background:#0d0d0d;border:2px solid #2a2a2a;border-radius:var(--r);cursor:pointer;transition:all .2s;text-align:center;}
+.server-type-card:hover{border-color:#555;background:#151515;}
+.server-type-card.sel{border-color:var(--acc);background:#0d1a2a;}
+body.light .server-type-card{background:#fff;border-color:#ddd;}
+body.light .server-type-card:hover{background:#f0f0f0;border-color:#bbb;}
+body.light .server-type-card.sel{background:#ddeeff;border-color:var(--acc);}
+.server-mod-result{display:flex;align-items:center;gap:.5em;padding:.4em .6em;border-bottom:1px solid #1e1e1e;font-size:.8em;}
+.server-mod-result:last-child{border-bottom:none;}
+.server-mod-result:hover{background:#161616;}
+.server-mod-added-tag{display:flex;align-items:center;gap:.3em;padding:.2em .5em;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:.3em;font-size:.72em;color:#ccc;}
+.server-mod-added-tag .mod-tag-remove{cursor:pointer;color:#666;font-size:.9em;}
+.server-mod-added-tag .mod-tag-remove:hover{color:#f44;}
+body.light .server-mod-result{border-bottom-color:#eee;color:#111;}
+body.light .server-mod-added-tag{background:#eee;border-color:#ccc;color:#333;}
 body.light .mod-toggle{border-color:#ccc;color:#888;}
 body.light .mod-remove{border-color:#ccc;color:#888;}
 body.light #client-rp-input{background:#fff!important;color:#111!important;border-color:#ccc!important;}
@@ -114,6 +153,16 @@ body.light h2[style*="color:#ccc"]{color:#333!important;}
 .launch-left{flex:1;min-width:0;padding:2.5vh 2vw;overflow-y:auto;display:flex;flex-direction:column;}
 .launch-left h1{font-size:1.5em;margin-bottom:.8em;}
 .launch-right{width:28vw;background:#0d0d0d;border-left:1px solid #1a1a1a;display:flex;flex-direction:column;align-items:center;padding:1.5vh 1.2vw;gap:1em;overflow-y:auto;}
+
+/* ── Quick RAM control on launch page ── */
+.quick-ram{display:flex;align-items:center;gap:.5em;margin-bottom:.8em;padding:.5em .7em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);font-size:.82em;}
+.quick-ram label{color:#888;white-space:nowrap;margin:0;}
+.quick-ram input[type=range]{flex:1;min-width:60px;}
+.quick-ram .ram-val{color:var(--acc);font-weight:bold;min-width:2.5em;text-align:right;}
+.quick-ram .ram-unit-btn{padding:.15em .5em;border:1px solid #333;border-radius:.3em;background:#1a1a1a;color:#aaa;cursor:pointer;font-size:.78em;white-space:nowrap;transition:all .2s;}
+.quick-ram .ram-unit-btn:hover{background:#222;color:#fff;}
+body.light .quick-ram{background:#fff;border-color:#ddd;}
+body.light .quick-ram .ram-unit-btn{background:#eee;border-color:#ccc;color:#555;}
 body.light .launch-right{background:#e8e8e8;border-left-color:#ddd;}
 body.light .launch-left{background:#f0f0f0;}
 
@@ -205,6 +254,8 @@ body.light .mod-result-name{color:#111;}
 .profile-meta{color:#555;font-size:.76em;}
 .profile-edit-btn{width:auto;padding:.22em .65em;font-size:.72em;background:transparent;border-color:#2a2a2a;color:#666;border-radius:.35em;}
 .profile-edit-btn:hover{border-color:var(--acc);color:var(--acc);}
+.profile-share-btn{width:auto;padding:.22em .5em;font-size:.72em;background:transparent;border-color:#2a2a2a;color:#1bd96a;border-radius:.35em;}
+.profile-share-btn:hover{border-color:#1bd96a;color:#1bd96a;}
 body.light .profile-list{background:#fff;border-color:#ddd;}
 body.light .profile-item{border-bottom-color:#eee;color:#111;}
 body.light .profile-meta{color:#888;}
@@ -285,17 +336,17 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 </head>
 <body>
 
-</div>
-
 <div id="launcher-screen" style="display:flex">
   <div class="toolbar">
     <button class="tb-btn active" data-page="launch-page" data-i18n="tab_launch">Launch</button>
+    <button class="tb-btn" data-page="recent-page">Recent</button>
     <button class="tb-btn" data-page="mods-page" data-i18n="tab_mods">Client Options</button>
     <button class="tb-btn" data-page="profiles-page" data-i18n="tab_profiles">Profiles</button>
     <button class="tb-btn" data-page="cape-page" data-i18n="tab_cape">Capes</button>
     <button class="tb-btn" data-page="settings-page" data-i18n="tab_settings">Settings</button>
     <button class="tb-btn" data-page="logs-page" data-i18n="tab_logs">Logs<span id="running-badge" style="display:none;margin-left:.3em;background:#1bd96a;color:#000;border-radius:999px;font-size:.7em;padding:.05em .45em;font-weight:bold"></span></button>
     <button class="tb-btn" data-page="instances-page" data-i18n="tab_instances">Instances</button>
+    <button class="tb-btn" data-page="servers-page">Servers</button>
     <button class="tb-btn" id="toolbar-theme" title="Toggle theme">
       <svg id="icon-moon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       <svg id="icon-sun" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -326,9 +377,15 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
               <span data-i18n="lbl_version">Version:</span>
               <span id="profile-version-display" style="color:#ccc;font-weight:bold">—</span>
             </div>
+          <div class="quick-ram" id="quick-ram">
+            <label>RAM:</label>
+            <input type="range" id="quick-ram-slider" min="1" max="8" step="1" value="2">
+            <span class="ram-val" id="quick-ram-val">2</span>
+            <span style="color:#666" id="quick-ram-unit-label">GB</span>
+            <button class="ram-unit-btn" id="quick-ram-unit-btn">MB</button>
+          </div>
           <div style="display:flex;gap:.5em;max-width:24em">
             <button class="btn btn-primary" id="launch-btn" style="flex:1" data-i18n="btn_launch">▶ Launch Minecraft</button>
-          
           </div>
           <div id="status" class="status-text">Ready.</div>
           <div class="lp-wrap" id="lp-wrap">
@@ -371,7 +428,9 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div style="display:flex;gap:.4em;margin-bottom:.6em">
         <button class="btn btn-sm mod-filter-btn active" data-filter="all" id="filter-all">All</button>
         <button class="btn btn-sm mod-filter-btn" data-filter="fabric" id="filter-fabric" style="border-color:#1bd96a55;color:#1bd96a">Fabric</button>
+        <button class="btn btn-sm mod-filter-btn" data-filter="quilt" id="filter-quilt" style="border-color:#cc559955;color:#cc5599">Quilt</button>
         <button class="btn btn-sm mod-filter-btn" data-filter="forge" id="filter-forge" style="border-color:#f1642255;color:#f16422">Forge</button>
+        <button class="btn btn-sm mod-filter-btn" data-filter="neoforge" id="filter-neoforge" style="border-color:#ff880055;color:#ff8800">NeoForge</button>
         <button class="btn btn-sm mod-filter-btn" data-filter="disabled" id="filter-disabled">Disabled</button>
       </div>
       <div class="mod-list" id="mod-list">
@@ -411,47 +470,48 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <div style="display:flex;gap:.4em">
           <button class="btn btn-sm btn-modrinth" id="import-modpack-modrinth-btn">📦 Modrinth</button>
           <button class="btn btn-sm btn-curseforge" id="import-modpack-curseforge-btn">📦 CurseForge</button>
+          <button class="btn btn-sm" id="import-share-btn" style="border-color:#1bd96a44;color:#1bd96a">📋 Import Share Code</button>
           <button class="btn btn-sm btn-primary" id="new-profile-btn" data-i18n="new_profile">+ New Profile</button>
         </div>
       </div>
+      <div id="modpack-progress" style="display:none;width:100%;max-width:30em;margin-bottom:.8em">
+        <div class="lp-bg"><div class="lp-fill" id="modpack-progress-fill"></div></div>
+        <div class="lp-label" id="modpack-progress-label"></div>
+      </div>
       <div class="profile-list" id="profile-list"></div>
+    </div>
+
+    <!-- ══ RECENT PLAYED ══ -->
+    <div id="recent-page" class="page" style="display:none">
+      <h1>Recent Played</h1>
+      <div style="display:flex;gap:.4em;margin-bottom:.8em;align-items:center">
+        <button class="btn btn-sm" id="recent-clear-btn" style="color:#f44;width:auto">Clear History</button>
+        <span style="font-size:.8em;color:#555" id="recent-count"></span>
+      </div>
+      <div class="profile-list" id="recent-list"></div>
     </div>
 
     <!-- ══ CAPE & COSMETICS ══ -->
     <div id="cape-page" class="page" style="display:none">
       <h1 data-i18n="h_cape">Capes</h1>
       <div class="settings-section">
-        <h2>Cape</h2>
-        <p style="color:#666;font-size:.82em;margin-bottom:.8em">Cape is applied client-side via OptiFine/Fabric mods. Upload a cape PNG (64x32) to display it in-game with supported mods.</p>
-        <div class="form-row" style="max-width:100%">
-          <label>Cape URL:</label>
-          <div style="display:flex;gap:.4em">
-            <input type="text" class="pack-input" id="cape-url-input" placeholder="https://... or leave blank">
-            <button class="btn btn-sm btn-primary" id="cape-save-btn" style="width:auto">Save</button>
-          </div>
+        <h2>Minecraft Capes</h2>
+        <p style="color:#666;font-size:.82em;margin-bottom:.8em">Load your capes from your Minecraft account. Select a cape to switch.</p>
+        <div id="capes-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(10em,1fr));gap:.5em;min-height:5em"></div>
+        <p id="capes-loading" style="color:#888;font-size:.82em">Loading capes...</p>
+        <p id="capes-empty" style="color:#555;font-size:.82em;display:none">No capes found.</p>
+        <p id="capes-status" style="font-size:.82em;color:#888;margin-top:.4em"></p>
+        <div style="display:flex;gap:.4em;margin-top:.5em">
+          <button class="btn btn-primary btn-sm" id="capes-refresh-btn" style="width:auto">Refresh</button>
+          <button class="btn btn-sm" id="capes-remove-btn" style="width:auto">Remove Cape</button>
         </div>
-        <div style="margin-top:.6em">
-          <label class="btn btn-sm" style="cursor:pointer;display:inline-block;width:auto">
-            Upload Cape PNG
-            <input type="file" id="cape-file-input" accept="image/png" style="display:none">
-          </label>
-        </div>
-        <canvas id="cape-preview" width="128" height="64" style="margin-top:.8em;border:1px solid #2a2a2a;border-radius:.35em;image-rendering:pixelated;width:min(16em,100%);height:auto;display:block;background:#111"></canvas>
       </div>
     </div>
 
     <!-- ══ SETTINGS ══ -->
     <div id="settings-page" class="page">
       <h1 data-i18n="h_settings">Settings</h1>
-      <div class="settings-section">
-        <h2 data-i18n="sec_java">Java Installation</h2>
-        <div class="form-row" style="max-width:100%">
-          <select id="javaSelect"><option>Detecting...</option></select>
-        </div>
-        <div style="display:flex;gap:.4em;flex-wrap:wrap;margin-top:.4em">
-          <button class="btn btn-sm" id="rescan-java-btn" style="width:auto" data-i18n="btn_rescan">↻ Rescan Java</button>
-        </div>
-      </div>
+      <select id="javaSelect" style="display:none"><option></option></select>
       <div class="settings-section">
         <h2 data-i18n="sec_ram">RAM for Minecraft</h2>
         <div class="form-row" style="max-width:100%">
@@ -460,6 +520,16 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
             <button class="btn btn-sm" id="ram-unit-btn" style="width:auto;padding:.2em .6em;font-size:.72em">Switch to MB</button>
           </div>
           <input type="range" id="ramSlider" min="1" max="8" step="1" value="1">
+        </div>
+      </div>
+      <div class="settings-section">
+        <h2>RAM for Crux Client</h2>
+        <div class="form-row" style="max-width:100%">
+          <div style="display:flex;align-items:center;gap:.6em;margin-bottom:.4em">
+            <label style="margin:0">Launcher RAM: <span id="launcherRamValue">1</span> GB</label>
+          </div>
+          <input type="range" id="launcherRamSlider" min="1" max="8" step="1" value="1">
+          <div class="status-text">Controls how much memory the launcher itself uses. Requires restart.</div>
         </div>
       </div>
       <div class="settings-section">
@@ -511,6 +581,13 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <p style="color:#555;font-size:.76em;margin-top:.3em">Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.</p>
       </div>
 
+      <div class="settings-section">
+        <h2>Updates</h2>
+        <button class="btn" id="check-update-btn">Check for Updates</button>
+        <p style="color:#555;font-size:.76em;margin-top:.3em">Current version: <span id="current-version-label">1.0.0</span></p>
+        <p id="update-status" style="color:#555;font-size:.76em;margin-top:.3em;display:none"></p>
+      </div>
+
       <div class="settings-section" style="border-top:1px solid #333;padding-top:1em">
         <h2 style="color:#f88">Uninstall</h2>
         <button class="btn" id="uninstall-btn" style="border-color:#f4444444;color:#f44">Uninstall Crux Client</button>
@@ -546,6 +623,346 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       </div>
     </div>
 
+    <!-- ══ SERVERS ══ -->
+    <div id="servers-page" class="page" style="display:none">
+      <h1>Servers</h1>
+      <div style="display:flex;align-items:center;gap:.5em;margin-bottom:1em">
+        <button class="btn btn-primary btn-sm" id="server-create-btn" style="width:auto;padding:.4em 1em">+ New Server</button>
+        <span style="font-size:.75em;color:#555" id="server-count-label">0 / 5 servers</span>
+        <span style="font-size:.75em;color:#555;margin-left:auto" id="server-running-label"></span>
+      </div>
+
+      <!-- Server list -->
+      <div class="server-list" id="server-list">
+        <div class="mod-list-empty">No servers created yet. Click "+ New Server" to start.</div>
+      </div>
+
+      <!-- Server wizard (hidden by default) -->
+      <div id="server-editor" style="display:none;margin-bottom:1.5em;padding:1em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);">
+        <!-- Step indicator -->
+        <div id="server-wizard-steps" style="display:flex;gap:.5em;margin-bottom:1em;font-size:.75em;color:#555">
+          <span id="ws-step1" style="color:var(--acc)">① Type</span>
+          <span id="ws-step2">② Version</span>
+          <span id="ws-step3">③ Mods</span>
+          <span id="ws-step4">④ Settings</span>
+        </div>
+
+        <!-- STEP 1: Server Type -->
+        <div id="server-step-type" class="server-wizard-step">
+          <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc">Choose Server Type</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(10em,1fr));gap:.5em" id="server-type-grid">
+            <div class="server-type-card" data-type="vanilla">
+              <div style="font-size:1.4em">🟫</div>
+              <div style="font-weight:bold;font-size:.9em">Vanilla</div>
+              <div style="font-size:.65em;color:#666">Standard Minecraft</div>
+            </div>
+            <div class="server-type-card" data-type="paper">
+              <div style="font-size:1.4em">📄</div>
+              <div style="font-weight:bold;font-size:.9em">Paper</div>
+              <div style="font-size:.65em;color:#666">Optimized + Plugins</div>
+            </div>
+            <div class="server-type-card" data-type="spigot">
+              <div style="font-size:1.4em">🪵</div>
+              <div style="font-weight:bold;font-size:.9em">Spigot</div>
+              <div style="font-size:.65em;color:#666">Plugins + Performance</div>
+            </div>
+            <div class="server-type-card" data-type="purpur">
+              <div style="font-size:1.4em">🟣</div>
+              <div style="font-weight:bold;font-size:.9em">Purpur</div>
+              <div style="font-size:.65em;color:#666">Paper fork + Extra options</div>
+            </div>
+            <div class="server-type-card" data-type="fabric">
+              <div style="font-size:1.4em">🧵</div>
+              <div style="font-weight:bold;font-size:.9em">Fabric</div>
+              <div style="font-size:.65em;color:#666">Mod loader server</div>
+            </div>
+            <div class="server-type-card" data-type="quilt">
+              <div style="font-size:1.4em">🪡</div>
+              <div style="font-weight:bold;font-size:.9em">Quilt</div>
+              <div style="font-size:.65em;color:#666">Fabric fork mod loader</div>
+            </div>
+            <div class="server-type-card" data-type="forge">
+              <div style="font-size:1.4em">⬛</div>
+              <div style="font-weight:bold;font-size:.9em">Forge</div>
+              <div style="font-size:.65em;color:#666">Classic mod loader</div>
+            </div>
+            <div class="server-type-card" data-type="neoforge">
+              <div style="font-size:1.4em">🔶</div>
+              <div style="font-weight:bold;font-size:.9em">NeoForge</div>
+              <div style="font-size:.65em;color:#666">Forge fork for modern MC</div>
+            </div>
+            <div class="server-type-card" data-type="modpack">
+              <div style="font-size:1.4em">📦</div>
+              <div style="font-weight:bold;font-size:.9em">Modpack</div>
+              <div style="font-size:.65em;color:#666">Modpack server + Loader</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:.4em;margin-top:.8em">
+            <button class="btn btn-sm" id="server-cancel-btn" style="width:auto;padding:.4em 1em">Cancel</button>
+          </div>
+        </div>
+
+        <!-- STEP 2: MC Version -->
+        <div id="server-step-version" class="server-wizard-step" style="display:none">
+          <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc">Choose MC Version</h3>
+          <div class="form-row" style="max-width:20em">
+            <select id="server-version-select" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em"></select>
+          </div>
+          <div id="server-modloader-row" class="form-row" style="max-width:20em;margin-top:.5em;display:none">
+            <label>Mod Loader</label>
+            <select id="server-modloader-select" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em">
+              <option value="fabric">Fabric</option>
+              <option value="forge">Forge</option>
+              <option value="quilt">Quilt</option>
+              <option value="neoforge">NeoForge</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:.4em;margin-top:.8em">
+            <button class="btn btn-primary btn-sm" id="server-next-btn" style="width:auto;padding:.4em 1em">Next →</button>
+            <button class="btn btn-sm" id="server-back-btn" style="width:auto;padding:.4em 1em">← Back</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: Mods/Plugins (skipped for vanilla) -->
+        <div id="server-step-mods" class="server-wizard-step" style="display:none">
+          <h3 style="margin:0 0 .3em;font-size:1em;color:#ccc" id="server-mods-title">Add Mods</h3>
+          <div style="font-size:.72em;color:#555;margin-bottom:.6em" id="server-mods-desc">Search and add mods for your server.</div>
+          <div style="margin-bottom:.6em">
+            <input type="text" id="server-mod-search" placeholder="Search mods..." style="width:100%;padding:.35em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+          </div>
+          <div id="server-mod-results" style="max-height:15em;overflow-y:auto;margin-bottom:.5em"></div>
+          <div style="font-size:.75em;color:#555;margin-bottom:.3em">Added:</div>
+          <div id="server-mod-added" style="display:flex;flex-wrap:wrap;gap:.3em;margin-bottom:.6em;min-height:1.5em"></div>
+          <div style="display:flex;gap:.4em">
+            <button class="btn btn-primary btn-sm" id="server-next-btn2" style="width:auto;padding:.4em 1em">Next →</button>
+            <button class="btn btn-sm" id="server-back-btn2" style="width:auto;padding:.4em 1em">← Back</button>
+            <button class="btn btn-sm" id="server-skip-mods" style="width:auto;padding:.4em 1em;margin-left:auto">Skip</button>
+          </div>
+        </div>
+
+        <!-- STEP 4: Settings -->
+        <div id="server-step-settings" class="server-wizard-step" style="display:none">
+          <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc">Server Settings</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6em;max-width:30em">
+            <div class="form-row">
+              <label>Server Name</label>
+              <input type="text" id="server-name-input" placeholder="My Server" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+            </div>
+            <div class="form-row">
+              <label>Address</label>
+              <input type="text" id="server-address-input" value="localhost" placeholder="localhost" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+            </div>
+            <div class="form-row">
+              <label>Port</label>
+              <input type="number" id="server-port-input" value="25565" min="1" max="65535" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+            </div>
+            <div class="form-row">
+              <label>RAM (GB)</label>
+              <input type="number" id="server-ram-input" value="2" min="1" max="8" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+            </div>
+            <div class="form-row">
+              <label>Max Players</label>
+              <input type="number" id="server-maxplayers-input" value="20" min="1" max="100" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+            </div>
+            <div class="form-row">
+              <label>Gamemode</label>
+              <select id="server-gamemode-select" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em">
+                <option value="survival">Survival</option>
+                <option value="creative">Creative</option>
+                <option value="adventure">Adventure</option>
+                <option value="spectator">Spectator</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Difficulty</label>
+              <select id="server-difficulty-select" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em">
+                <option value="peaceful">Peaceful</option>
+                <option value="easy">Easy</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>MOTD</label>
+              <input type="text" id="server-motd-input" value="Crux Server" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+            </div>
+            <div class="form-row">
+              <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                <input type="checkbox" id="server-online-mode" checked style="accent-color:var(--acc)"> Online Mode
+              </label>
+            </div>
+            <div class="form-row">
+              <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                <input type="checkbox" id="server-pvp" checked style="accent-color:var(--acc)"> PvP
+              </label>
+            </div>
+            <div class="form-row">
+              <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                <input type="checkbox" id="server-cmdblocks" checked style="accent-color:var(--acc)"> Command Blocks
+              </label>
+            </div>
+            <div class="form-row">
+              <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                <input type="checkbox" id="server-whitelist" style="accent-color:var(--acc)"> Whitelist
+              </label>
+            </div>
+            <div class="form-row">
+              <label>Resource Pack URL</label>
+              <input type="text" id="server-rp-url" placeholder="" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+            </div>
+            <div class="form-row">
+              <label>Resource Pack Upload (.zip)</label>
+              <input type="file" id="server-rp-file" accept=".zip" style="color:#fff;font-size:.85em">
+            </div>
+          </div>
+
+          <div style="margin-top:.8em">
+            <button class="btn btn-sm" id="server-advanced-toggle" style="width:auto;padding:.3em .8em;background:var(--bg2);border:1px solid #2a2a2a">▶ Advanced Settings</button>
+          </div>
+
+          <div id="server-advanced-settings" style="display:none;margin-top:.6em">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6em;max-width:40em">
+              <div class="form-row">
+                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                  <input type="checkbox" id="server-allow-flight" style="accent-color:var(--acc)"> Allow Flight
+                </label>
+              </div>
+              <div class="form-row">
+                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                  <input type="checkbox" id="server-spawn-animals" checked style="accent-color:var(--acc)"> Spawn Animals
+                </label>
+              </div>
+              <div class="form-row">
+                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                  <input type="checkbox" id="server-spawn-monsters" checked style="accent-color:var(--acc)"> Spawn Monsters
+                </label>
+              </div>
+              <div class="form-row">
+                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                  <input type="checkbox" id="server-spawn-npcs" checked style="accent-color:var(--acc)"> Spawn NPCs
+                </label>
+              </div>
+              <div class="form-row">
+                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                  <input type="checkbox" id="server-allow-nether" checked style="accent-color:var(--acc)"> Allow Nether
+                </label>
+              </div>
+              <div class="form-row">
+                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                  <input type="checkbox" id="server-force-gamemode" style="accent-color:var(--acc)"> Force Gamemode
+                </label>
+              </div>
+              <div class="form-row">
+                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                  <input type="checkbox" id="server-prevent-proxy" style="accent-color:var(--acc)"> Prevent Proxy
+                </label>
+              </div>
+              <div class="form-row">
+                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                  <input type="checkbox" id="server-sync-chunks" checked style="accent-color:var(--acc)"> Sync Chunk Writes
+                </label>
+              </div>
+              <div class="form-row">
+                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
+                  <input type="checkbox" id="server-hide-players" style="accent-color:var(--acc)"> Hide Online Players
+                </label>
+              </div>
+              <div class="form-row">
+                <label>Spawn Protection</label>
+                <input type="number" id="server-spawn-protection" value="0" min="0" max="16" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
+              </div>
+              <div class="form-row">
+                <label>View Distance</label>
+                <input type="number" id="server-view-distance" value="10" min="1" max="32" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
+              </div>
+              <div class="form-row">
+                <label>Simulation Distance</label>
+                <input type="number" id="server-sim-distance" value="10" min="1" max="32" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
+              </div>
+              <div class="form-row">
+                <label>Level Seed</label>
+                <input type="text" id="server-seed" placeholder="" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
+              </div>
+              <div class="form-row">
+                <label>Level Name</label>
+                <input type="text" id="server-level-name" value="world" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
+              </div>
+              <div class="form-row">
+                <label>Level Type</label>
+                <select id="server-level-type" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em">
+                  <option value="minecraft:normal">Normal</option>
+                  <option value="minecraft:flat">Flat</option>
+                  <option value="minecraft:large_biomes">Large Biomes</option>
+                  <option value="minecraft:amplified">Amplified</option>
+                  <option value="minecraft:single_biome_surface">Single Biome</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Player Idle Timeout</label>
+                <input type="number" id="server-idle-timeout" value="0" min="0" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
+              </div>
+              <div class="form-row">
+                <label>Max Tick Time</label>
+                <input type="number" id="server-max-tick-time" value="60000" min="0" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
+              </div>
+              <div class="form-row">
+                <label>Op Permission Level</label>
+                <select id="server-op-level" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4" selected>4</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Network Compression</label>
+                <input type="number" id="server-compression" value="256" min="0" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
+              </div>
+              <div class="form-row">
+                <label>Entity Broadcast Range</label>
+                <input type="number" id="server-broadcast-range" value="100" min="0" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
+              </div>
+              <div class="form-row">
+                <label>Rate Limit</label>
+                <input type="number" id="server-rate-limit" value="0" min="0" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:.4em;margin-top:.8em">
+            <button class="btn btn-primary btn-sm" id="server-save-btn" style="width:auto;padding:.4em 1em">Create Server</button>
+            <button class="btn btn-sm" id="server-back-btn3" style="width:auto;padding:.4em 1em">← Back</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Server console (hidden by default) -->
+      <div id="server-console-wrap" style="display:none">
+        <div style="display:flex;align-items:center;gap:.5em;margin-bottom:.5em">
+          <h3 style="margin:0;font-size:.9em;color:#ccc" id="server-console-title">Console</h3>
+          <span style="font-size:.72em;color:#555" id="server-console-status"></span>
+        </div>
+        <div class="server-console" id="server-console"></div>
+        <div class="server-console-input">
+          <input type="text" id="server-command-input" placeholder="Type command...">
+          <button class="btn btn-sm" id="server-command-send" style="width:auto;padding:.3em .8em">Send</button>
+        </div>
+        <div class="server-cmd-btns">
+          <button class="btn btn-sm" id="server-stop-btn" style="width:auto;padding:.3em .8em;color:#f44;border-color:#f4444444">■ Stop Server</button>
+          <button class="btn btn-sm" id="server-op-btn" style="width:auto;padding:.3em .8em">OP Player</button>
+          <button class="btn btn-sm" id="server-whitelist-btn" style="width:auto;padding:.3em .8em">Whitelist</button>
+          <button class="btn btn-sm" id="server-backup-btn" style="width:auto;padding:.3em .8em">Backup World</button>
+        </div>
+        <div id="server-whitelist-panel" style="display:none;margin-top:.5em;padding:.5em;background:var(--bg2);border-radius:var(--r)">
+          <div style="display:flex;gap:.4em;margin-bottom:.4em">
+            <input type="text" id="server-whitelist-input" placeholder="Player name..." style="flex:1;padding:.3em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+            <button class="btn btn-sm" id="server-whitelist-add-btn" style="width:auto;padding:.3em .8em">Add</button>
+          </div>
+          <div id="server-whitelist-list" style="max-height:10em;overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ══ ACCOUNT ══ -->
     <div id="account-page" class="page" style="display:none">
       <h1 data-i18n="h_account">MC Account</h1>
@@ -556,7 +973,6 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <div class="account-add-btns">
           <button class="btn btn-sm btn-ms" id="btn-add-ms" data-i18n="add_ms">+ Microsoft</button>
           <button class="btn btn-sm btn-mojang" id="btn-add-mojang" data-i18n="add_mojang">+ Mojang</button>
-          <button class="btn btn-sm" id="btn-add-offline" data-i18n="add_offline">+ Offline</button>
         </div>
       </div>
     </div>
@@ -565,6 +981,16 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 </div>
 
 <!-- ── Mod search modal ── -->
+<div id="modpack-version-modal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h2 id="modpack-version-title">Choose Modpack Version</h2>
+      <button class="btn modal-close" onclick="document.getElementById('modpack-version-modal').style.display='none'">✕</button>
+    </div>
+    <div id="modpack-version-list" style="max-height:420px;overflow-y:auto;padding:.5rem 0"></div>
+  </div>
+</div>
+
 <div id="mod-modal" class="modal-overlay" style="display:none">
   <div class="modal">
     <div class="modal-header">
@@ -583,6 +1009,37 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div id="mod-results" class="mod-results">
         <div class="modal-loading">Loading popular mods...</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Share Profile Modal ── -->
+<div id="share-modal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h2>Share Profile</h2>
+      <button class="btn modal-close" onclick="document.getElementById('share-modal').style.display='none'">✕</button>
+    </div>
+    <div style="padding:1rem">
+      <p style="color:#888;font-size:.82em;margin-bottom:.6em">Copy this code and send it to someone. They can import it in their Crux Launcher.</p>
+      <textarea id="share-code-output" readonly style="width:100%;height:120px;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#1bd96a;font-family:monospace;font-size:.75em;padding:.5em;resize:none"></textarea>
+      <button class="btn btn-sm" id="share-copy-btn" style="width:auto;margin-top:.5em;border-color:#1bd96a44;color:#1bd96a">📋 Copy Code</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Import Share Code Modal ── -->
+<div id="import-share-modal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h2>Import Profile</h2>
+      <button class="btn modal-close" onclick="document.getElementById('import-share-modal').style.display='none'">✕</button>
+    </div>
+    <div style="padding:1rem">
+      <p style="color:#888;font-size:.82em;margin-bottom:.6em">Paste a share code from another Crux Launcher user.</p>
+      <textarea id="share-code-input" placeholder="Paste share code here..." style="width:100%;height:120px;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-family:monospace;font-size:.75em;padding:.5em;resize:none"></textarea>
+      <div id="import-share-status" style="font-size:.8em;color:#888;margin-top:.4em;min-height:1.2em"></div>
+      <button class="btn btn-sm btn-primary" id="import-share-confirm-btn" style="width:auto;margin-top:.5em">Import Profile</button>
     </div>
   </div>
 </div>
@@ -607,9 +1064,18 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <label>Mod Loader:</label>
         <div style="display:flex;gap:.5em">
           <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="fabric" id="ml-fabric" checked> Fabric</label>
+          <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="quilt" id="ml-quilt"> Quilt</label>
           <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="forge" id="ml-forge"> Forge</label>
+          <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="neoforge" id="ml-neoforge"> NeoForge</label>
           <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="vanilla" id="ml-vanilla"> Vanilla</label>
         </div>
+      </div>
+      <div class="form-row" style="max-width:100%">
+        <label>Rendering API:</label>
+        <select id="profile-render-api" style="padding:.5em .85em;border:1px solid #2a2a2a;border-radius:var(--r);background:#111;color:#fff;font-size:.85em;width:100%">
+          <option value="opengl">OpenGL (Standard)</option>
+          <option value="vulkan">Vulkan</option>
+        </select>
       </div>
       <!-- Mods section: always visible at top -->
       <div class="pack-section" id="profile-mods-section">
@@ -673,6 +1139,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       </div>
       <div style="display:flex;gap:.5em;margin-top:.8em">
         <button class="btn btn-primary btn-sm" id="save-profile-btn" style="width:auto">Save</button>
+        <button class="btn btn-sm" id="share-profile-btn" style="width:auto;border-color:#1bd96a44;color:#1bd96a">Share</button>
         <button class="btn btn-sm" id="delete-profile-btn" style="width:auto;border-color:#f4444444;color:#f44">Delete</button>
       </div>
     </div>
@@ -702,31 +1169,39 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
   </div>
 </div>
 
-<!-- ── Offline login modal ── -->
-<div id="offline-modal" class="modal-overlay login-modal" style="display:none">
-  <div class="modal">
-    <div class="modal-header">
-      <h2>Add Offline Account</h2>
-      <button class="btn modal-close" id="offline-modal-close">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-row" style="max-width:100%">
-        <label>Username:</label>
-        <input type="text" class="pack-input" id="offline-username" placeholder="Player">
+<!-- ══ UPDATE OVERLAY ══ -->
+<div id="update-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#0a0a0a;color:#fff;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2em">
+  <div id="update-content" style="max-width:500px;width:100%">
+    <h1 style="margin-bottom:.3em" id="update-title">Update Available</h1>
+    <p style="color:#aaa;margin-bottom:.5em" id="update-version-text"></p>
+    <div id="update-notes-box" style="background:#1a1a1a;border:1px solid #333;border-radius:.5em;padding:1em;text-align:left;max-height:30vh;overflow-y:auto;margin-bottom:1.5em;font-size:.85em;color:#ccc;white-space:pre-wrap;display:none"></div>
+    <div id="update-progress-wrap" style="display:none;margin-bottom:1.5em">
+      <div style="background:#222;border-radius:.5em;height:8px;overflow:hidden;margin-bottom:.5em">
+        <div id="update-progress-bar" style="background:var(--acc,#0088ff);height:100%;width:0%;transition:width .3s"></div>
       </div>
-      <button class="btn btn-primary btn-sm" id="offline-add-btn" style="width:auto;margin-top:.4em">Add</button>
+      <p id="update-progress-text" style="color:#aaa;font-size:.8em;margin:0"></p>
     </div>
+    <div style="display:flex;gap:.8em;justify-content:center">
+      <button class="btn btn-primary" id="update-install-btn" style="display:none">Download & Install</button>
+      <button class="btn" id="update-close-btn" style="display:none">Later</button>
+      <button class="btn btn-primary" id="update-start-install-btn" style="display:none">Install & Restart</button>
+    </div>
+    <p id="update-error-text" style="color:#f44;font-size:.85em;margin-top:1em;display:none"></p>
+    <p id="update-done-text" style="color:#5f5;font-size:.85em;margin-top:1em;display:none"></p>
   </div>
 </div>
 
 <script>
 const { ipcRenderer } = require('electron');
 const path = require('path');
+function rlog(msg){ try{ ipcRenderer.send('renderer-log', msg); }catch{} }
+window.onerror = (msg, src, line, col, err) => { rlog(`ERROR: ${msg} at ${src}:${line}:${col} ${err?.stack||''}`); };
+window.addEventListener('unhandledrejection', (e) => { rlog(`UNHANDLED PROMISE: ${e.reason?.stack||e.reason}`); });
 
 // ════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════
-let settings={}, accounts=[], profiles=[], installedMods=[], launchedVersions=[], mcVersionList=[];
+let settings={}, accounts=[], profiles=[], installedMods=[], launchedVersions=[], mcVersionList=[], recentHistory=[];
 let currentSource='modrinth', profileModMode=false, profilePackMode=null;
 let editingProfileId=null, editingPackData={};
 let currentAccentIdx=5;
@@ -767,50 +1242,87 @@ function buildColorGrid(){
 // ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
-window.onload = async()=>{
-  [settings, accounts, profiles, installedMods, launchedVersions] = await Promise.all([
-    ipcRenderer.invoke('load-settings')         .then(r=>r||{}),
-    ipcRenderer.invoke('load-accounts')         .then(r=>r||[]),
-    ipcRenderer.invoke('load-profiles')         .then(r=>r||[]),
-    ipcRenderer.invoke('load-mods')             .then(r=>r||[]),
-    ipcRenderer.invoke('load-launched-versions').then(r=>r||[]),
-  ]);
+async function bootLauncher(){
+  try {
+    // Always bind toolbar first so UI is immediately interactive
+    bindToolbar();
 
-  if (settings.ram === undefined || settings.ram === null) {
-    const totalGB = await ipcRenderer.invoke('get-total-ram');
-    settings.ram = Math.max(1, Math.min(8, Math.round(totalGB / 2)));
+    const results = await Promise.allSettled([
+      ipcRenderer.invoke('load-settings').then(r=>r||{}),
+      ipcRenderer.invoke('load-accounts').then(r=>r||[]),
+      ipcRenderer.invoke('load-profiles').then(r=>r||[]),
+      ipcRenderer.invoke('load-mods').then(r=>r||[]),
+      ipcRenderer.invoke('load-launched-versions').then(r=>r||[]),
+    ]);
+    settings      = results[0].status==='fulfilled' ? results[0].value : {};
+    accounts      = results[1].status==='fulfilled' ? results[1].value : [];
+    profiles      = results[2].status==='fulfilled' ? results[2].value : [];
+    installedMods = results[3].status==='fulfilled' ? results[3].value : [];
+    launchedVersions = results[4].status==='fulfilled' ? results[4].value : [];
+    recentHistory = settings.recentHistory || [];
+
+    if (settings.ram === undefined || settings.ram === null) {
+      try {
+        const totalGB = await ipcRenderer.invoke('get-total-ram');
+        settings.ram = Math.max(1, Math.min(8, Math.round(totalGB / 2)));
+      } catch { settings.ram = 2; }
+    }
+
+    if(settings.theme==='light') applyTheme(true);
+    if(typeof settings.accentIdx==='number'){currentAccentIdx=settings.accentIdx;}
+
+    buildColorGrid();
+    applyAccent(currentAccentIdx);
+    bindSettings();
+    ensureDefaultMods();
+    // Apply saved toggle states
+    try {
+      document.getElementById('open-logs-toggle').checked = !!settings.openLogsAfterLaunch;
+      document.getElementById('close-launcher-toggle').checked = !!settings.closeLauncherWhilePlaying;
+      document.getElementById('use-original-launcher-toggle').checked = !!settings.useOriginalLauncher;
+    } catch {}
+    renderModList();
+    fetchMissingModIcons();
+    renderAccountList();
+    renderProfileList();
+    updateLaunchProfileSelect();
+    // Fetch skinModel for existing accounts that don't have it
+    let skinModelChanged=false;
+    for(const acc of accounts){
+      if(!acc.skinModel && acc.accessToken && acc.type==='Microsoft'){
+        try{const r=await ipcRenderer.invoke('get-skin-variant',acc.accessToken);acc.skinModel=r.variant||'classic';if(r.url)acc.skinUrl=r.url;skinModelChanged=true;}catch{acc.skinModel='classic';skinModelChanged=true;}
+      }
+      if(!acc.skinModel){acc.skinModel='classic';skinModelChanged=true;}
+    }
+    if(skinModelChanged) ipcRenderer.send('save-accounts',accounts);
+    updateSkinDisplay();
+    init3DSkin();
+    setInterval(()=>{ updateSkinDisplay(); },10000);
+    loadClientRPSettings();
+
+    // Set version label
+    try { document.getElementById('current-version-label').textContent = require('./package.json').version; } catch {}
+
+    // Show launcher immediately
+    document.getElementById('launcher-screen').style.display='flex';
+    showPage(accounts.length ? 'launch-page' : 'account-page');
+
+    document.getElementById('status').textContent='Loading versions...';
+    loadVersions();
+
+    // Auto-check for updates (non-blocking)
+    checkForUpdates(true);
+  } catch(err) {
+    console.error('[Crux] Boot error:', err);
+    // Fallback: at least show the UI and make toolbar clickable
+    try {
+      bindToolbar();
+      document.getElementById('launcher-screen').style.display='flex';
+      document.getElementById('status').textContent='Startup error: '+(err.message||err);
+    } catch {}
   }
-
-  if(settings.theme==='light') applyTheme(true);
-  if(typeof settings.accentIdx==='number'){currentAccentIdx=settings.accentIdx;}
-  if(settings.ramUnit) { /* handled in bindSettings */ }
-
-  buildColorGrid();
-  applyAccent(currentAccentIdx);
-  bindToolbar();
-  bindSettings();
-  ensureDefaultMods();
-  // Apply saved toggle states
-  document.getElementById('open-logs-toggle').checked = !!settings.openLogsAfterLaunch;
-  document.getElementById('close-launcher-toggle').checked = !!settings.closeLauncherWhilePlaying;
-  document.getElementById('use-original-launcher-toggle').checked = !!settings.useOriginalLauncher;
-  renderModList();
-  fetchMissingModIcons(); // fetch icons in background
-  renderAccountList();
-  renderProfileList();
-  updateLaunchProfileSelect();
-  updateSkinDisplay();
-  init3DSkin();
-  loadClientRPSettings();
-
-  // Show launcher immediately
-  document.getElementById('launcher-screen').style.display='flex';
-  showPage(accounts.length ? 'launch-page' : 'account-page');
-
-  document.getElementById('status').textContent='Loading versions...';
-  loadVersions();
-  // Java scan is triggered automatically by main process after load (see java-scan-result listener below)
-};
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',bootLauncher);}else{bootLauncher();}
 
 // ════════════════════════════════════════
 // SCREEN / NAV
@@ -820,6 +1332,7 @@ function updateStopButtons(){
   const runningCount = Object.values(instances).filter(i=>i.status==='running').length;
   document.getElementById('stop-btn').style.display = hasRunning ? '' : 'none';
   document.getElementById('stop-all-btn').style.display = runningCount >= 2 ? '' : 'none';
+  if(!hasRunning) document.getElementById('launch-btn').disabled=false;
 }
 function showLauncher(){
   document.getElementById('launcher-screen').style.display='flex';
@@ -837,6 +1350,8 @@ function showPage(id){
   });
   if(id==='logs-page'){ refreshLogSelect(); updateStopButtons(); }
   if(id==='instances-page') renderInstanceList();
+  if(id==='recent-page') renderRecentList();
+  if(id==='cape-page') loadMCCapes();
   if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); }
 }
 
@@ -914,8 +1429,25 @@ function bindSettings(){
     updateRamSlider();
   });
 
-  // Java rescan
-  document.getElementById('rescan-java-btn').addEventListener('click',async()=>{
+  // Launcher RAM slider
+  const launcherSlider = document.getElementById('launcherRamSlider');
+  const launcherValEl = document.getElementById('launcherRamValue');
+  if(launcherSlider) {
+    const savedLauncherRam = parseInt(settings.launcherRam, 10) || 2;
+    launcherSlider.min = 1; launcherSlider.max = 8; launcherSlider.step = 1;
+    launcherSlider.value = Math.max(1, Math.min(8, savedLauncherRam));
+    launcherValEl.textContent = launcherSlider.value;
+    launcherSlider.addEventListener('input', () => {
+      const v = parseInt(launcherSlider.value, 10);
+      launcherValEl.textContent = v;
+      settings.launcherRam = v;
+      saveSettings();
+    });
+  }
+
+  // Java rescan (hidden - auto-detected)
+  const rescanBtn = document.getElementById('rescan-java-btn');
+  if(rescanBtn) rescanBtn.addEventListener('click',async()=>{
     document.getElementById('rescan-java-btn').textContent='Scanning...';
     await loadJava();
     document.getElementById('rescan-java-btn').textContent='↻ Rescan Java';
@@ -927,18 +1459,6 @@ function bindSettings(){
     settings.lang=e.target.value; saveSettings();
     applyLanguage(e.target.value);
   });
-
-  // Cape
-  document.getElementById('cape-save-btn').addEventListener('click',()=>{
-    settings.capeUrl=document.getElementById('cape-url-input').value.trim();
-    saveSettings(); renderCapePreview(settings.capeUrl);
-  });
-  document.getElementById('cape-file-input').addEventListener('change',e=>{
-    const f=e.target.files[0]; if(!f)return;
-    const r=new FileReader(); r.onload=ev=>{settings.capeUrl=ev.target.result;saveSettings();renderCapePreview(settings.capeUrl);document.getElementById('cape-url-input').value='(file loaded)';};
-    r.readAsDataURL(f);
-  });
-  if(settings.capeUrl){document.getElementById('cape-url-input').value=settings.capeUrl;renderCapePreview(settings.capeUrl);}
 
 }
 
@@ -1071,9 +1591,9 @@ ipcRenderer.on('java-scan-result',(_,javas)=>{
 function populateJava(javas){
   const sel=document.getElementById('javaSelect'); sel.innerHTML='';
   if(!javas||!javas.length){
-    sel.innerHTML='<option value="">No Java found — click Download Java 21 in Settings</option>';
-    document.getElementById('status').textContent='No Java found. Go to Settings → Download Java 21.';
-    return; // don't auto-install, just let user proceed
+    sel.innerHTML='<option value="">No Java found</option>';
+    document.getElementById('status').textContent='No Java found. Install Java and restart the launcher.';
+    return;
   }
   const sorted=[...javas].sort((a,b)=>{ const va=parseInt(a.version)||0,vb=parseInt(b.version)||0; return Math.abs(vb-21)-Math.abs(va-21); });
   sorted.forEach(j=>{ const o=document.createElement('option'); o.value=j.path; o.textContent=`Java ${j.version}`; sel.appendChild(o); });
@@ -1139,6 +1659,8 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
   const modLoader=profile?.modLoader||'fabric';
 
   if(!version){ document.getElementById('status').textContent='No version selected.'; return; }
+  const acc=getSelectedAccount();
+  if(!acc||(!acc.accessToken&&acc.type!=='Microsoft')){ document.getElementById('status').textContent='Please log in with a Microsoft or Mojang account first.'; return; }
 
   // Auto-add shader mod to PROFILE mods (not client mods)
   if(profile?.shaderPacks?.length && modLoader!=='vanilla'){
@@ -1168,7 +1690,6 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
     autoDownloadForVersion(version);
   }
 
-  const acc=getSelectedAccount();
   ipcRenderer.send('launch-minecraft',{
     version, javaPath, ram, ramUnit, modLoader,
     profileId: pid,
@@ -1178,26 +1699,26 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
     useClientMods: profile?.useClientMods !== false,
     useClientRPs:  profile?.useClientRPs  !== false,
     profileMods: profile?.mods||[],
+    mrpackMods: profile?.mrpackMods||[],
+    mrpackRPs: profile?.mrpackRPs||[],
     accessToken: acc?.accessToken||null,
     accountType: acc?.type||null,
     uuid: acc?.uuid||null,
     playerName: acc?.name||'Player',
     refreshToken: acc?.refreshToken||null,
     clientToken: acc?.clientToken||null,
-    useOriginalLauncher: settings.useOriginalLauncher||false
+    useOriginalLauncher: settings.useOriginalLauncher||false,
+    renderApi: profile?.renderApi||'opengl'
   });
 });
 
-// No Java found — redirect to settings and auto-scan
+// No Java found — auto-scan
 ipcRenderer.on('no-java-found',(_,neededVersion)=>{
   document.getElementById('status').textContent=`Java ${neededVersion} required. Scanning for Java...`;
   updateStopButtons();
   document.getElementById('launch-btn').disabled=false;
-  showPage('settings-page');
   setTimeout(async()=>{
-    document.getElementById('rescan-java-btn').textContent='Scanning...';
     await loadJava();
-    document.getElementById('rescan-java-btn').textContent='↻ Rescan Java';
     if(!document.getElementById('javaSelect').value){
       document.getElementById('status').textContent=`No Java found. Download Java ${neededVersion} from adoptium.net`;
     }
@@ -1206,14 +1727,28 @@ ipcRenderer.on('no-java-found',(_,neededVersion)=>{
 
 document.getElementById('stop-btn').addEventListener('click',()=>{
   const toStop = selectedInstanceId || currentInstanceId;
-  if(toStop) ipcRenderer.send('stop-minecraft', toStop);
+  if(toStop){
+    if(instances[toStop]) instances[toStop].status='closed';
+    if(currentInstanceId===toStop) currentInstanceId=null;
+    updateStopButtons(); updateRunningBadge(); renderInstanceList();
+    ipcRenderer.send('stop-minecraft', toStop);
+  }
 });
 document.getElementById('stop-all-btn').addEventListener('click',()=>{
   const running = Object.values(instances).filter(i=>i.status==='running');
-  running.forEach(inst => ipcRenderer.send('stop-minecraft', inst.id));
+  running.forEach(inst => {
+    inst.status='closed';
+    ipcRenderer.send('stop-minecraft', inst.id);
+  });
+  currentInstanceId=null;
+  updateStopButtons(); updateRunningBadge(); renderInstanceList();
 });
 
 ipcRenderer.on('launch-status',(_,s)=>{ document.getElementById('status').textContent=s; });
+ipcRenderer.on('launch-error',(_,msg)=>{
+  document.getElementById('launch-btn').disabled=false;
+  document.getElementById('status').textContent='Error: '+msg;
+});
 ipcRenderer.on('launch-progress',(_,d)=>{
   const lpWrap=document.getElementById('lp-wrap'),lpFill=document.getElementById('lp-fill'),lpLabel=document.getElementById('lp-label');
   const lpWrapL=document.getElementById('lp-wrap-logs'),lpFillL=document.getElementById('lp-fill-logs'),lpLabelL=document.getElementById('lp-label-logs');
@@ -1241,6 +1776,10 @@ ipcRenderer.on('instance-started',(_,inst)=>{
   document.getElementById('logs-container').innerHTML='';
   if(settings.openLogsAfterLaunch) showPage('logs-page');
   if(settings.closeLauncherWhilePlaying) ipcRenderer.send('close-launcher');
+  const p=profiles.find(x=>x.id===inst.profileId);
+  recentHistory.unshift({ type:'world', profileId:inst.profileId, profileName:inst.profileName||p?.name||'World', version:inst.version, modLoader:p?.modLoader||'', time:Date.now() });
+  if(recentHistory.length>10) recentHistory=recentHistory.slice(0,10);
+  settings.recentHistory=recentHistory; saveSettings();
 });
 ipcRenderer.on('instance-log',(_,{instanceId,line})=>{
   if(!instances[instanceId])return;
@@ -1264,6 +1803,14 @@ ipcRenderer.on('instance-crashed',(_,{instanceId})=>{
   updateRunningBadge();
   renderInstanceList();
   refreshLogSelect();
+});
+ipcRenderer.on('mods-updated',(_, modsUpdated)=>{
+  for(const u of modsUpdated){
+    for(const mod of installedMods){
+      if(mod.modrinthId===u.modrinthId){ mod.version=u.version; mod.downloadUrl=u.downloadUrl; }
+    }
+  }
+  saveMods(); renderModList();
 });
 async function autoDownloadForVersion(mcVersion){
   for(const mod of installedMods){
@@ -1353,9 +1900,10 @@ function renderProfileList(){
   profiles.forEach(p=>{
     const item=document.createElement('div');
     item.className='profile-item'+(p.id===settings.selectedProfile?' sel':'');
-    item.innerHTML=`<span class="profile-name">${p.name}${p.isModpack?'<span style="font-size:.7em;margin-left:.4em;padding:.1em .35em;border-radius:999px;background:#1bd96a22;color:#1bd96a;border:1px solid #1bd96a44">modpack</span>':''}</span><span class="profile-meta">${p.mcVersion||'Latest'} · ${p.modLoader||'fabric'} · ${(p.mods||[]).length} mods</span><button class="btn profile-edit-btn">Edit</button>`;
-    item.addEventListener('click',e=>{ if(e.target.classList.contains('profile-edit-btn'))return; settings.selectedProfile=p.id; saveSettings(); renderProfileList(); updateLaunchProfileSelect(); });
+    item.innerHTML=`<span class="profile-name">${p.name}${p.isModpack?'<span style="font-size:.7em;margin-left:.4em;padding:.1em .35em;border-radius:999px;background:#1bd96a22;color:#1bd96a;border:1px solid #1bd96a44">modpack</span>':''}</span><span class="profile-meta">${p.mcVersion||'Latest'} · ${p.modLoader||'fabric'} · ${(p.mods||[]).length} mods</span><button class="btn profile-share-btn" title="Share Profile">Share</button><button class="btn profile-edit-btn">Edit</button>`;
+    item.addEventListener('click',e=>{ if(e.target.classList.contains('profile-edit-btn')||e.target.classList.contains('profile-share-btn'))return; settings.selectedProfile=p.id; saveSettings(); renderProfileList(); updateLaunchProfileSelect(); });
     item.querySelector('.profile-edit-btn').addEventListener('click',()=>openProfileModal(p.id));
+    item.querySelector('.profile-share-btn').addEventListener('click',()=>{shareProfile(p.id);});
     el.appendChild(item);
   });
 }
@@ -1374,7 +1922,8 @@ function updateVersionDisplay(){
 }
 
 document.getElementById('new-profile-btn').addEventListener('click',()=>{
-  const np={id:'p_'+Date.now(),name:'New Profile',mcVersion:'',mods:[],datapacks:[],resourcePacks:[],shaderPacks:[]};
+  const latestRelease=mcVersionList.find(v=>v.type==='release')?.id||'';
+  const np={id:'p_'+Date.now(),name:'New Profile',mcVersion:latestRelease,modLoader:'fabric',mods:[],datapacks:[],resourcePacks:[],shaderPacks:[]};
   profiles.push(np); ipcRenderer.send('save-profiles',profiles); renderProfileList(); updateLaunchProfileSelect(); openProfileModal(np.id);
 });
 
@@ -1387,8 +1936,10 @@ function updateModLoaderVisibility(){
 
 async function checkLoaderAvailability(mcVersion){
   const fabricBtn=document.getElementById('ml-fabric');
+  const quiltBtn=document.getElementById('ml-quilt');
   const forgeBtn =document.getElementById('ml-forge');
-  if(!mcVersion){ fabricBtn.disabled=false; forgeBtn.disabled=false; return; }
+  const neoBtn=document.getElementById('ml-neoforge');
+  if(!mcVersion){ fabricBtn.disabled=false; quiltBtn.disabled=false; forgeBtn.disabled=false; neoBtn.disabled=false; return; }
 
   // Check Fabric
   try {
@@ -1399,6 +1950,15 @@ async function checkLoaderAvailability(mcVersion){
     fabricBtn.title=fabricBtn.disabled?`Fabric not available for MC ${mcVersion}`:'';
   } catch { fabricBtn.disabled=false; fabricBtn.title=''; }
 
+  // Check Quilt
+  try {
+    const res=await fetch(`https://meta.quiltmc.net/v3/versions/loader/${mcVersion}`);
+    if(!res.ok) throw new Error('Not found');
+    const data=await res.json();
+    quiltBtn.disabled=!(Array.isArray(data)&&data.length>0);
+    quiltBtn.title=quiltBtn.disabled?`Quilt not available for MC ${mcVersion}`:'';
+  } catch { quiltBtn.disabled=false; quiltBtn.title=''; }
+
   // Check Forge
   try {
     const res=await fetch('https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json');
@@ -1408,6 +1968,15 @@ async function checkLoaderAvailability(mcVersion){
     forgeBtn.title=forgeBtn.disabled?`Forge not available for MC ${mcVersion}`:'';
   } catch { forgeBtn.disabled=false; forgeBtn.title=''; }
 
+  // Check NeoForge
+  try {
+    const res=await fetch('https://api.neoforged.net/api/v1/versions/minecraft');
+    if(!res.ok) throw new Error('Not found');
+    const data=await res.json();
+    neoBtn.disabled=!data?.versions?.some?.(v=>v.id===mcVersion);
+    neoBtn.title=neoBtn.disabled?`NeoForge not available for MC ${mcVersion}`:'';
+  } catch { neoBtn.disabled=false; neoBtn.title=''; }
+
   // If current selection no longer available, switch to a valid option
   const checked=document.querySelector('input[name="modLoader"]:checked');
   if(checked&&checked.disabled){
@@ -1416,6 +1985,105 @@ async function checkLoaderAvailability(mcVersion){
     updateModLoaderVisibility();
   }
 }
+
+// ══ RECENT PLAYED ══
+function renderRecentList(){
+  const el=document.getElementById('recent-list'); el.innerHTML='';
+  const clearBtn=document.getElementById('recent-clear-btn');
+  document.getElementById('recent-count').textContent=`${recentHistory.length}/10`;
+  if(clearBtn) clearBtn.style.display=recentHistory.length?'':'none';
+  if(!recentHistory.length){ el.innerHTML='<div class="mod-list-empty">No recent activity yet.</div>'; return; }
+  recentHistory.forEach((r,i)=>{
+    const item=document.createElement('div'); item.className='profile-item';
+    const date=new Date(r.time).toLocaleString();
+    item.innerHTML=`
+      <span class="profile-name">${escHtml(r.profileName||r.worldName||'World')}</span>
+      <span class="profile-meta">${r.version||'?'} · ${r.modLoader||''} · ${date}</span>
+      <button class="btn btn-sm recent-launch-btn" style="width:auto">▶ Play</button>
+      <button class="btn btn-sm recent-remove-btn" style="width:auto;padding:.2em .5em;color:#f44">✕</button>`;
+    item.querySelector('.recent-launch-btn').addEventListener('click',()=>{
+      const p=profiles.find(x=>x.id===r.profileId);
+      if(p){
+        document.getElementById('profileSelect').value=p.id;
+        settings.selectedProfile=p.id;
+        saveSettings();
+        showPage('launch-page');
+        document.getElementById('launch-btn').click();
+      }
+    });
+    item.querySelector('.recent-remove-btn')?.addEventListener('click',(e)=>{ e.stopPropagation(); recentHistory.splice(i,1); settings.recentHistory=recentHistory; saveSettings(); renderRecentList(); });
+    el.appendChild(item);
+  });
+}
+document.getElementById('recent-clear-btn').addEventListener('click',()=>{ recentHistory=[]; settings.recentHistory=[]; saveSettings(); renderRecentList(); });
+
+// ══ CAPES ══
+async function loadMCCapes(){
+  const container=document.getElementById('capes-container'); container.innerHTML='';
+  document.getElementById('capes-loading').style.display='';
+  document.getElementById('capes-empty').style.display='none';
+  document.getElementById('capes-status').textContent='';
+  const acc=getSelectedAccount();
+  if(!acc||!acc.accessToken){ document.getElementById('capes-loading').style.display='none'; document.getElementById('capes-status').textContent='No account selected.'; return; }
+  try {
+    const res=await fetch('https://api.minecraftservices.com/minecraft/profile',{ headers:{'Authorization':`Bearer ${acc.accessToken}`}});
+    if(!res.ok){ const body=await res.text().catch(()=>''); throw new Error(`HTTP ${res.status}: ${body.slice(0,120)}`); }
+    const profile=await res.json();
+    const capesList=profile?.capes||[];
+    document.getElementById('capes-loading').style.display='none';
+    if(!capesList.length){ document.getElementById('capes-empty').style.display=''; return; }
+    capesList.forEach(cape=>{
+      const card=document.createElement('div');
+      card.style.cssText='padding:.6em;background:var(--bg2);border-radius:var(--r);border:1px solid #2a2a2a;text-align:center';
+      const isActive=cape.state==='ACTIVE'||cape.active;
+      card.style.borderColor=isActive?'var(--acc)':'#2a2a2a';
+      const capeUrl=cape.url||cape.texture||null;
+      if(capeUrl){
+        const cvs=document.createElement('canvas');
+        cvs.width=64; cvs.height=32;
+        cvs.style.cssText='width:100%;image-rendering:pixelated;margin:0 auto .3em;display:block;border-radius:4px';
+        const cctx=cvs.getContext('2d');
+        const tmp=new Image(); tmp.crossOrigin='anonymous';
+        tmp.onload=()=>{
+          cctx.imageSmoothingEnabled=false;
+          cctx.drawImage(tmp, 0,0);
+        };
+        tmp.src=capeUrl;
+        card.appendChild(cvs);
+      }
+      if(isActive){
+        const badge=document.createElement('div');
+        badge.style.cssText='font-size:.7em;color:var(--acc);margin-top:.2em';
+        badge.textContent='✓ Active';
+        card.appendChild(badge);
+      }
+      if(!isActive){
+        const btn=document.createElement('button');
+        btn.className='btn btn-sm';
+        btn.style.cssText='width:auto;margin-top:.3em';
+        btn.textContent='Equip';
+        btn.addEventListener('click',async()=>{
+          try {
+            const res2=await fetch('https://api.minecraftservices.com/minecraft/profile/capes/active',{ method:'PUT', headers:{'Authorization':`Bearer ${acc.accessToken}`,'Content-Type':'application/json'}, body:JSON.stringify({capeId:cape.id})});
+            if(res2.ok){ document.getElementById('capes-status').textContent=`Equipped: ${cape.name||cape.id}`; loadMCCapes(); }
+            else{ const errBody=await res2.text().catch(()=>''); document.getElementById('capes-status').textContent=`Failed (${res2.status}): ${errBody.slice(0,80)}`; }
+          } catch(e){ document.getElementById('capes-status').textContent='Error: '+e.message; }
+        });
+        card.appendChild(btn);
+      }
+      container.appendChild(card);
+    });
+  } catch(e){ document.getElementById('capes-loading').style.display='none'; document.getElementById('capes-status').textContent='Error loading capes: '+e.message; }
+}
+document.getElementById('capes-refresh-btn').addEventListener('click',loadMCCapes);
+document.getElementById('capes-remove-btn').addEventListener('click',async()=>{
+  const acc=getSelectedAccount(); if(!acc||!acc.accessToken)return;
+  try {
+    const res=await fetch('https://api.minecraftservices.com/minecraft/profile/capes/active',{ method:'DELETE', headers:{'Authorization':`Bearer ${acc.accessToken}`,'Content-Type':'application/json'}});
+    if(res.ok){ document.getElementById('capes-status').textContent='Cape removed.'; loadMCCapes(); }
+    else document.getElementById('capes-status').textContent='Failed to remove cape';
+  } catch(e){ document.getElementById('capes-status').textContent='Error: '+e.message; }
+});
 
 function openProfileModal(profileId){
   editingProfileId=profileId;
@@ -1432,6 +2100,7 @@ function openProfileModal(profileId){
 
   document.getElementById('profile-use-client-mods').checked = p.useClientMods !== false;
   document.getElementById('profile-use-client-rps').checked  = p.useClientRPs  !== false;
+  document.getElementById('profile-render-api').value = p.renderApi || 'opengl';
 
   // Always rebuild version select fresh
   const sel=document.getElementById('profile-version-select');
@@ -1475,10 +2144,21 @@ document.getElementById('profile-modal').addEventListener('click',e=>{ if(e.targ
 document.getElementById('save-profile-btn').addEventListener('click',()=>{
   const idx=profiles.findIndex(p=>p.id===editingProfileId); if(idx<0)return;
   profiles[idx].name=document.getElementById('profile-name-input').value||'Profile';
-  profiles[idx].mcVersion=document.getElementById('profile-version-select').value;
+  const newMcVersion=document.getElementById('profile-version-select').value;
+  const oldMcVersion=profiles[idx].mcVersion;
+  profiles[idx].mcVersion=newMcVersion;
   profiles[idx].modLoader=document.querySelector('input[name="modLoader"]:checked')?.value||'fabric';
   profiles[idx].useClientMods = document.getElementById('profile-use-client-mods').checked;
   profiles[idx].useClientRPs  = document.getElementById('profile-use-client-rps').checked;
+  profiles[idx].renderApi = document.getElementById('profile-render-api').value;
+  // Update profile mods' mcVersion when profile version changes
+  if(newMcVersion && newMcVersion !== oldMcVersion && editingPackData.mods) {
+    for(const mod of editingPackData.mods) {
+      if(mod.mcVersion && mod.mcVersion !== 'all' && mod.mcVersion !== 'latest') {
+        mod.mcVersion = newMcVersion;
+      }
+    }
+  }
   profiles[idx].mods=editingPackData.mods; profiles[idx].datapacks=editingPackData.datapacks;
   profiles[idx].resourcePacks=editingPackData.resourcePacks; profiles[idx].shaderPacks=editingPackData.shaderPacks;
   ipcRenderer.send('save-profiles',profiles); renderProfileList(); updateLaunchProfileSelect();
@@ -1488,6 +2168,84 @@ document.getElementById('delete-profile-btn').addEventListener('click',()=>{
   if(profiles.length<=1)return;
   profiles=profiles.filter(p=>p.id!==editingProfileId); ipcRenderer.send('save-profiles',profiles); renderProfileList(); updateLaunchProfileSelect();
   document.getElementById('profile-modal').style.display='none';
+});
+
+// ── Share Profile ──
+function shareProfile(profileId){
+  const p=profiles.find(x=>x.id===profileId); if(!p)return;
+  const shareData={
+    v:1,
+    name:p.name,
+    mcVersion:p.mcVersion,
+    modLoader:p.modLoader,
+    renderApi:p.renderApi||'opengl',
+    useClientMods:p.useClientMods!==false,
+    useClientRPs:p.useClientRPs!==false,
+    mods:(p.mods||[]).map(m=>({name:m.name,modrinthId:m.modrinthId,curseforgeId:m.curseforgeId,version:m.version,mcVersion:m.mcVersion,source:m.source,iconUrl:m.iconUrl,downloadAllVersions:!!m.downloadAllVersions,disabled:!!m.disabled,loader:m.loader})),
+    datapacks:p.datapacks||[],
+    resourcePacks:p.resourcePacks||[],
+    shaderPacks:p.shaderPacks||[],
+    isModpack:!!p.isModpack,
+    modrinthId:p.modrinthId||null
+  };
+  const json=JSON.stringify(shareData);
+  const code='CRUX:'+btoa(unescape(encodeURIComponent(json)));
+  document.getElementById('share-code-output').value=code;
+  document.getElementById('share-modal').style.display='flex';
+}
+document.getElementById('share-profile-btn').addEventListener('click',()=>{ if(editingProfileId) shareProfile(editingProfileId); });
+document.getElementById('share-copy-btn').addEventListener('click',()=>{
+  const ta=document.getElementById('share-code-output');
+  ta.select();navigator.clipboard.writeText(ta.value);
+  document.getElementById('share-copy-btn').textContent='✓ Copied!';
+  setTimeout(()=>{document.getElementById('share-copy-btn').textContent='📋 Copy Code';},2000);
+});
+
+// ── Import Share Code ──
+document.getElementById('import-share-btn').addEventListener('click',()=>{
+  document.getElementById('share-code-input').value='';
+  document.getElementById('import-share-status').textContent='';
+  document.getElementById('import-share-modal').style.display='flex';
+});
+document.getElementById('import-share-confirm-btn').addEventListener('click',async()=>{
+  const code=document.getElementById('share-code-input').value.trim();
+  const statusEl=document.getElementById('import-share-status');
+  if(!code){statusEl.textContent='Please paste a share code.';statusEl.style.color='#f44';return;}
+  try{
+    let json;
+    if(code.startsWith('CRUX:')){
+      json=decodeURIComponent(escape(atob(code.slice(5))));
+    } else {
+      json=decodeURIComponent(escape(atob(code)));
+    }
+    const data=JSON.parse(json);
+    if(!data.name||!data.mcVersion) throw new Error('Invalid profile data');
+    statusEl.textContent='Creating profile...';statusEl.style.color='#888';
+    const np={
+      id:'p_'+Date.now(),
+      name:data.name+' (imported)',
+      mcVersion:data.mcVersion,
+      modLoader:data.modLoader||'fabric',
+      renderApi:data.renderApi||'opengl',
+      mods:(data.mods||[]).map(m=>({name:m.name,modrinthId:m.modrinthId,curseforgeId:m.curseforgeId,version:m.version||'latest',mcVersion:m.mcVersion||data.mcVersion,source:m.source||'Modrinth',iconUrl:m.iconUrl||'',downloadAllVersions:!!m.downloadAllVersions,disabled:!!m.disabled,loader:m.loader||data.modLoader||'fabric'})),
+      datapacks:data.datapacks||[],
+      resourcePacks:data.resourcePacks||[],
+      shaderPacks:data.shaderPacks||[],
+      useClientMods:data.useClientMods!==false,
+      useClientRPs:data.useClientRPs!==false,
+      isModpack:!!data.isModpack,
+      modrinthId:data.modrinthId||null,
+      mrpackMods:[],mrpackRPs:[]
+    };
+    profiles.push(np);
+    ipcRenderer.send('save-profiles',profiles);
+    renderProfileList();updateLaunchProfileSelect();
+    statusEl.textContent='✓ Profile imported: '+np.name+' ('+(np.mods||[]).length+' mods)';
+    statusEl.style.color='#1bd96a';
+    setTimeout(()=>{document.getElementById('import-share-modal').style.display='none';},1500);
+  }catch(e){
+    statusEl.textContent='Invalid code: '+e.message;statusEl.style.color='#f44';
+  }
 });
 
 // Profile pack buttons
@@ -1546,6 +2304,7 @@ function updateSkinDisplay(){
   const label = document.getElementById('skin-name-display');
   if(acc){
     label.textContent = acc.name || 'No account';
+    skinModel = acc.skinModel || 'classic';
     if(acc.skinUrl){
       loadSkinTexture(acc.skinUrl);
     } else {
@@ -1553,6 +2312,7 @@ function updateSkinDisplay(){
     }
   } else {
     label.textContent = 'No account';
+    skinModel = 'classic';
     buildSkinMesh(null);
   }
 }
@@ -1581,7 +2341,7 @@ document.getElementById('btn-add-ms').addEventListener('click',async()=>{
       return;
     }
     const id='acc_'+Date.now();
-    accounts.push({id,name:result.name,uuid:result.uuid,type:'Microsoft',accessToken:result.accessToken,refreshToken:result.refreshToken,skinUrl:result.skinUrl});
+    accounts.push({id,name:result.name,uuid:result.uuid,type:'Microsoft',accessToken:result.accessToken,refreshToken:result.refreshToken,skinUrl:result.skinUrl,skinModel:result.skinModel||'classic'});
     if(!settings.selectedAccount)settings.selectedAccount=id;
     ipcRenderer.send('save-accounts',accounts); saveSettings(); renderAccountList(); updateSkinDisplay();
     document.getElementById('status').textContent='✓ Logged in as '+result.name;
@@ -1608,24 +2368,11 @@ document.getElementById('mojang-login-btn').addEventListener('click',async()=>{
   document.getElementById('mojang-login-btn').textContent='Login';
   if(result.error){ document.getElementById('mojang-error').textContent=result.error; document.getElementById('mojang-error').style.display='block'; return; }
   const id='acc_'+Date.now();
-  accounts.push({id,name:result.name,uuid:result.uuid,type:'Mojang',accessToken:result.accessToken,clientToken:result.clientToken,skinUrl:result.skinUrl});
-  if(!settings.selectedAccount)settings.selectedAccount=id;
-  ipcRenderer.send('save-accounts',accounts); saveSettings(); renderAccountList(); updateSkinDisplay();
-  document.getElementById('mojang-modal').style.display='none';
+    accounts.push({id,name:result.name,uuid:result.uuid,type:'Mojang',accessToken:result.accessToken,clientToken:result.clientToken,skinUrl:result.skinUrl,skinModel:'classic'});
+    if(!settings.selectedAccount)settings.selectedAccount=id;
+    ipcRenderer.send('save-accounts',accounts); saveSettings(); renderAccountList(); updateSkinDisplay();
+    document.getElementById('mojang-modal').style.display='none';
   document.getElementById('status').textContent='Logged in as '+result.name;
-});
-
-// Offline
-document.getElementById('btn-add-offline').addEventListener('click',()=>{ document.getElementById('offline-username').value=''; document.getElementById('offline-modal').style.display='flex'; });
-document.getElementById('offline-modal-close').addEventListener('click',()=>{ document.getElementById('offline-modal').style.display='none'; });
-document.getElementById('offline-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('offline-modal'))document.getElementById('offline-modal').style.display='none'; });
-document.getElementById('offline-add-btn').addEventListener('click',()=>{
-  const name=document.getElementById('offline-username').value.trim(); if(!name)return;
-  const id='acc_'+Date.now(), uuid=crypto.randomUUID();
-  accounts.push({id,name,uuid,type:'Offline',accessToken:null,skinUrl:null});
-  if(!settings.selectedAccount)settings.selectedAccount=id;
-  ipcRenderer.send('save-accounts',accounts); saveSettings(); renderAccountList(); updateSkinDisplay();
-  document.getElementById('offline-modal').style.display='none';
 });
 
 function getSelectedAccount(){ return accounts.find(a=>a.id===settings.selectedAccount)||accounts[0]||null; }
@@ -1633,7 +2380,7 @@ function getSelectedAccount(){ return accounts.find(a=>a.id===settings.selectedA
 // ════════════════════════════════════════
 // SKIN 3D
 // ════════════════════════════════════════
-let skinTexture=null, threeScene=null, threeRenderer=null, threeCamera=null, skinMeshGroup=null;
+let skinTexture=null, skinModel='classic', threeScene=null, threeRenderer=null, threeCamera=null, skinMeshGroup=null;
 let skin3DDrag={active:false,startX:0,startY:0,rotY:0,rotX:0};
 let currentRotY=30, currentRotX=10;
 
@@ -1666,7 +2413,16 @@ function init3DSkin(){
   wrap.addEventListener('touchend',()=>{skin3DDrag.active=false;});
   const ro=new ResizeObserver(()=>{const w=wrap.clientWidth,h=wrap.clientHeight;if(w>0&&h>0){threeRenderer.setSize(w,h);threeCamera.aspect=w/h;threeCamera.updateProjectionMatrix();}});
   ro.observe(wrap);
-  (function loop(){requestAnimationFrame(loop);if(skinMeshGroup){skinMeshGroup.rotation.y=currentRotY*Math.PI/180;skinMeshGroup.rotation.x=currentRotX*Math.PI/180;}threeRenderer.render(threeScene,threeCamera);})();
+  let skinFocused = true;
+  document.addEventListener('visibilitychange',()=>{ skinFocused = !document.hidden; });
+  let lastSkinRender = 0;
+  (function loop(t){
+    requestAnimationFrame(loop);
+    const interval = skinFocused ? 33 : 100;
+    if(t - lastSkinRender < interval) return;
+    lastSkinRender = t;
+    if(skinMeshGroup){skinMeshGroup.rotation.y=currentRotY*Math.PI/180;skinMeshGroup.rotation.x=currentRotX*Math.PI/180;threeRenderer.render(threeScene,threeCamera);}
+  })(0);
 }
 
 function makeUV(sx,sy,sw,sh){const u0=sx/64,u1=(sx+sw)/64,v0=1-sy/64,v1=1-(sy+sh)/64;return{u0,u1,v0,v1};}
@@ -1693,6 +2449,9 @@ function buildSkinMesh(tex){
   if(!skinMeshGroup)return;
   while(skinMeshGroup.children.length)skinMeshGroup.remove(skinMeshGroup.children[0]);
   const U=0.25;
+  const isSlim=skinModel==='slim';
+  const armW=isSlim?3:4;
+  const armX=isSlim?5.5:6;
   // HEAD — centered at Y=22px (5.5 units), flush against body top
   const hg=new THREE.Group(); hg.position.set(0,U*22,0);
   hg.add(skinBox(U*8,U*8,U*8,0,0,0,tex,uv(8,8,8,8),uv(24,8,8,8),uv(8,0,8,8),uv(16,0,8,8),uv(16,8,8,8),uv(0,8,8,8)));
@@ -1702,14 +2461,14 @@ function buildSkinMesh(tex){
   skinMeshGroup.add(skinBox(U*8,U*12,U*4,0,U*12,0,tex,uv(20,20,8,12),uv(32,20,8,12),uv(20,16,8,4),uv(28,16,8,4),uv(28,20,4,12),uv(16,20,4,12)));
   // JACKET (body outer layer)
   if(tex){{const j=skinBox(U*8.5,U*12.5,U*4.5,0,U*12,0,tex,uv(20,36,8,12),uv(32,36,8,12),uv(20,32,8,4),uv(28,32,8,4),uv(28,36,4,12),uv(16,36,4,12));j.renderOrder=1;skinMeshGroup.add(j);}}
-  // RIGHT ARM — centered at Y=12px (3 units), X=6px (1.5 units)
-  skinMeshGroup.add(skinBox(U*4,U*12,U*4,U*6,U*12,0,tex,uv(44,20,4,12),uv(52,20,4,12),uv(44,16,4,4),uv(48,16,4,4),uv(48,20,4,12),uv(40,20,4,12)));
+  // RIGHT ARM — centered at Y=12px (3 units), X depends on slim model
+  skinMeshGroup.add(skinBox(U*armW,U*12,U*4,U*armX,U*12,0,tex,uv(44,20,armW,12),uv(44+armW+4,20,armW,12),uv(44,16,armW,4),uv(44+armW,16,armW,4),uv(44+armW,20,armW,12),uv(44-4,20,armW,12)));
   // RIGHT SLEEVE (right arm outer layer)
-  if(tex){{const s=skinBox(U*4.5,U*12.5,U*4.5,U*6,U*12,0,tex,uv(44,36,4,12),uv(52,36,4,12),uv(44,32,4,4),uv(48,32,4,4),uv(48,36,4,12),uv(40,36,4,12));s.renderOrder=1;skinMeshGroup.add(s);}}
-  // LEFT ARM — centered at Y=12px (3 units), X=-6px (-1.5 units)
-  skinMeshGroup.add(skinBox(U*4,U*12,U*4,-U*6,U*12,0,tex,uv(36,52,4,12),uv(44,52,4,12),uv(36,48,4,4),uv(40,48,4,4),uv(40,52,4,12),uv(32,52,4,12)));
+  if(tex){{const s=skinBox(U*(armW+.5),U*12.5,U*4.5,U*armX,U*12,0,tex,uv(44,36,armW,12),uv(44+armW+4,36,armW,12),uv(44,32,armW,4),uv(44+armW,32,armW,4),uv(44+armW,36,armW,12),uv(44-4,36,armW,12));s.renderOrder=1;skinMeshGroup.add(s);}}
+  // LEFT ARM — centered at Y=12px (3 units), X=-armX
+  skinMeshGroup.add(skinBox(U*armW,U*12,U*4,-U*armX,U*12,0,tex,uv(36,52,armW,12),uv(36+armW+4,52,armW,12),uv(36,48,armW,4),uv(36+armW,48,armW,4),uv(36+armW,52,armW,12),uv(36-4,52,armW,12)));
   // LEFT SLEEVE (left arm outer layer)
-  if(tex){{const s=skinBox(U*4.5,U*12.5,U*4.5,-U*6,U*12,0,tex,uv(52,52,4,12),uv(60,52,4,12),uv(52,48,4,4),uv(56,48,4,4),uv(56,52,4,12),uv(48,52,4,12));s.renderOrder=1;skinMeshGroup.add(s);}}
+  if(tex){{const s=skinBox(U*(armW+.5),U*12.5,U*4.5,-U*armX,U*12,0,tex,uv(52,52,armW,12),uv(52+armW+4,52,armW,12),uv(52,48,armW,4),uv(52+armW,48,armW,4),uv(52+armW,52,armW,12),uv(52-4,52,armW,12));s.renderOrder=1;skinMeshGroup.add(s);}}
   // RIGHT LEG — centered at Y=0px (0 units), X=2px (0.5 units)
   skinMeshGroup.add(skinBox(U*4,U*12,U*4,U*2,0,0,tex,uv(4,20,4,12),uv(12,20,4,12),uv(4,16,4,4),uv(8,16,4,4),uv(8,20,4,12),uv(0,20,4,12)));
   // RIGHT PANTS (right leg outer layer)
@@ -1722,19 +2481,104 @@ function buildSkinMesh(tex){
   skinMeshGroup.position.set(0,-U*12,0);
 }
 
+function detectSlimFromTexture(img){
+  try{
+    const c=document.createElement('canvas');c.width=64;c.height=64;
+    const ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+    const d=ctx.getImageData(0,0,64,64).data;
+    const px=(x,y)=>d[(y*64+x)*4+3];
+    // Slim arm bottom is at (47,16); classic has nothing at (47,16) since classic arm bottom starts at x=48
+    if(px(47,16)>0) return 'slim';
+    return 'classic';
+  }catch{return 'classic';}
+}
+
 function loadSkinTexture(url){
   if(!window.THREE)return;
+  function detectAndSave(img){
+    const detected=detectSlimFromTexture(img);
+    skinModel=detected;
+    const acc=getSelectedAccount();
+    if(acc&&acc.skinModel!==detected){acc.skinModel=detected;ipcRenderer.send('save-accounts',accounts);}
+  }
   if(url.startsWith('data:')){
     const img=new Image();
-    img.onload=()=>{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;c.getContext('2d').drawImage(img,0,0);const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;skinTexture=t;buildSkinMesh(t);};
+    img.onload=()=>{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;c.getContext('2d').drawImage(img,0,0);const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;skinTexture=t;detectAndSave(img);buildSkinMesh(t);};
     img.src=url;
   } else {
-    new THREE.TextureLoader().load(url,t=>{t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;skinTexture=t;buildSkinMesh(t);},undefined,()=>{});
+    new THREE.TextureLoader().load(url,t=>{
+      t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;skinTexture=t;
+      const img=new Image();img.crossOrigin='anonymous';
+      img.onload=()=>{detectAndSave(img);buildSkinMesh(t);};
+      img.onerror=()=>buildSkinMesh(t);
+      img.src=url;
+    },undefined,()=>{});
   }
 }
 
 function drawDefaultAvatar(){}
 function drawSkin3D(){}
+
+function initCape3D(wrap, capeUrl){
+  if(!window.THREE){wrap.innerHTML='<div style="padding:2rem;color:#888">Loading 3D...</div>';setTimeout(()=>initCape3D(wrap,capeUrl),300);return;}
+  const W=140,H=160;
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(30,W/H,0.1,100);
+  camera.position.set(0,0,6);
+  camera.lookAt(0,0,0);
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setSize(W,H);
+  renderer.setClearColor(0x000000,0);
+  renderer.setPixelRatio(window.devicePixelRatio||1);
+  wrap.innerHTML='';
+  wrap.appendChild(renderer.domElement);
+  renderer.domElement.style.width='100%';
+  renderer.domElement.style.height='100%';
+  scene.add(new THREE.AmbientLight(0xffffff,0.8));
+  const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(3,5,4);scene.add(dl);
+  const dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-3,-1,-2);scene.add(dl2);
+  const capeGroup=new THREE.Group();scene.add(capeGroup);
+  const capeMat=new THREE.MeshLambertMaterial({color:0xcccccc,side:THREE.DoubleSide});
+  const capeFront=new THREE.Mesh(new THREE.PlaneGeometry(2.8,3.5),capeMat);
+  capeGroup.add(capeFront);
+
+  new THREE.TextureLoader().load(capeUrl,(fullTex)=>{
+    const img=fullTex.image;
+    function cropCape(sx,sy,sw,sh){
+      const c=document.createElement('canvas');c.width=sw;c.height=sh;
+      const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
+      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
+    }
+    const frontTex=cropCape(18,0,11,16);
+    capeFront.material=new THREE.MeshLambertMaterial({map:frontTex});
+    const backTex=cropCape(4,0,11,16);
+    const capeBack=new THREE.Mesh(new THREE.PlaneGeometry(2.8,3.5),new THREE.MeshLambertMaterial({map:backTex,side:THREE.BackSide}));
+    capeBack.position.z=-0.02;capeGroup.add(capeBack);
+  },undefined,()=>{});
+  capeGroup.rotation.y=Math.PI;
+
+  let drag={active:false,sx:0,sy:0,ry:30,rx:10};
+  let rY=30,rX=10;
+  wrap.addEventListener('mousedown',e=>{drag.active=true;drag.sx=e.clientX;drag.sy=e.clientY;drag.ry=rY;drag.rx=rX;wrap.style.cursor='grabbing';});
+  document.addEventListener('mousemove',e=>{if(!drag.active)return;rY=drag.ry+(e.clientX-drag.sx)*0.7;rX=Math.max(-40,Math.min(40,drag.rx+(e.clientY-drag.sy)*0.4));});
+  document.addEventListener('mouseup',()=>{drag.active=false;if(wrap.isConnected)wrap.style.cursor='grab';});
+  wrap.addEventListener('wheel',e=>{e.preventDefault();camera.position.z=Math.max(3,Math.min(12,camera.position.z+e.deltaY*0.005));},{passive:false});
+  wrap.addEventListener('touchstart',e=>{const t=e.touches[0];drag.active=true;drag.sx=t.clientX;drag.sy=t.clientY;drag.ry=rY;drag.rx=rX;});
+  wrap.addEventListener('touchmove',e=>{const t=e.touches[0];if(!drag.active)return;rY=drag.ry+(t.clientX-drag.sx)*0.7;rX=Math.max(-40,Math.min(40,drag.rx+(t.clientY-drag.sy)*0.4));e.preventDefault();},{passive:false});
+  wrap.addEventListener('touchend',()=>{drag.active=false;});
+  let capeFocused=true;
+  document.addEventListener('visibilitychange',()=>{capeFocused=!document.hidden;});
+  let lastRender=0;
+  (function loop(t){
+    requestAnimationFrame(loop);
+    if(t-lastRender<(capeFocused?33:100))return;lastRender=t;
+    if(wrap.isConnected){
+      capeGroup.rotation.y=rY*Math.PI/180;capeGroup.rotation.x=rX*Math.PI/180;
+      renderer.render(scene,camera);
+    }
+  })(0);
+}
 
 
 function saveMods(){ ipcRenderer.send('save-mods',installedMods); }
@@ -1824,11 +2668,12 @@ async function fetchModrinthPage(q,offset){
       : profilePackMode==='datapacks'?'datapack'
       : profilePackMode==='resourcePacks'||profilePackMode==='clientRP'?'resourcepack'
       : profilePackMode==='shaderPacks'?'shader':'mod';
-    const facet=`[["project_type:${facetType}"]]`;
+    const facets=[['project_type:'+facetType]];
+    const facet=JSON.stringify(facets);
     const url=q
       ?`https://api.modrinth.com/v2/search?query=${encodeURIComponent(q)}&facets=${encodeURIComponent(facet)}&limit=${PAGE_SIZE}&offset=${offset}`
       :`https://api.modrinth.com/v2/search?facets=${encodeURIComponent(facet)}&limit=${PAGE_SIZE}&offset=${offset}&index=downloads`;
-    const d=await(await fetch(url)).json();
+    const d=await ipcRenderer.invoke('fetch-json-no-cors', url);
     return(d.hits||[]).map(h=>({id:h.project_id,name:h.title,description:h.description,iconUrl:h.icon_url||'',latestVersion:h.latest_version||'latest',downloads:h.downloads}));
   }catch{return[];}
 }
@@ -1837,7 +2682,7 @@ async function appendModResults(results){
   for(const mod of results){
     let mcVersions=['latest'];
     try{
-      const vd=await(await fetch(`https://api.modrinth.com/v2/project/${mod.id}/version`)).json();
+      const vd=await ipcRenderer.invoke('fetch-json-no-cors', `https://api.modrinth.com/v2/project/${mod.id}/version`);
       const seen=new Set(); mcVersions=vd.flatMap(v=>v.game_versions).filter(v=>{if(seen.has(v))return false;seen.add(v);return true;}).slice(0,25);
       if(!mcVersions.length)mcVersions=['latest'];
     }catch{}
@@ -1864,13 +2709,14 @@ async function appendModResults(results){
       if(profilePackMode==='modpack'){
         closeModModal();
         modpackMode=false; profilePackMode=null;
-        importModpackFromModrinth(mod.id, mod.name);
+        showModpackVersionPicker(mod.id, mod.name);
         return;
       }
       if(profileModMode&&profilePackMode){
         const key=profilePackMode;
         if(key==='mods'&&!editingPackData.mods.some(m=>m.modrinthId===mod.id)){
-          editingPackData.mods.push({name:mod.name,version:mod.latestVersion,mcVersion:profileMC||'latest',source:currentSource==='modrinth'?'Modrinth':'CurseForge',iconUrl:mod.iconUrl,modrinthId:mod.id,downloadAllVersions:false,disabled:false});
+          const edProfile=profiles.find(p=>p.id===editingProfileId);
+          editingPackData.mods.push({name:mod.name,version:mod.latestVersion,mcVersion:profileMC||'latest',source:currentSource==='modrinth'?'Modrinth':'CurseForge',iconUrl:mod.iconUrl,modrinthId:mod.id,downloadAllVersions:false,disabled:false,loader:edProfile?.modLoader||'fabric'});
           renderProfilePackList('profile-mods-list','mods',true);
         }else if(key!=='mods'&&!editingPackData[key].includes(mod.name)){
           editingPackData[key].push(mod.name);renderPackTags('profile-'+key.toLowerCase(),key);
@@ -1888,13 +2734,15 @@ async function appendModResults(results){
       btn.textContent='Installing...';
       const vers=launchedVersions.length?launchedVersions:[defaultV];
       let n=0; const src=currentSource==='modrinth'?'Modrinth':'CurseForge';
+      const curProfile=profiles.find(p=>p.id===settings.selectedProfile)||profiles[0];
+      const curLoader=curProfile?.modLoader||'fabric';
       for(const v of vers){
         if(!mcVersions.includes(v))continue;
         if(!installedMods.some(m=>m.modrinthId===mod.id&&m.mcVersion===v)){
-          installedMods.push({name:mod.name,version:mod.latestVersion,mcVersion:v,source:src,iconUrl:mod.iconUrl,modrinthId:mod.id,downloadAllVersions:true,disabled:false,autoInstalled:n>0});n++;
+          installedMods.push({name:mod.name,version:mod.latestVersion,mcVersion:v,source:src,iconUrl:mod.iconUrl,modrinthId:mod.id,downloadAllVersions:true,disabled:false,autoInstalled:n>0,loader:curLoader});n++;
         }
       }
-      if(!n){if(!installedMods.some(m=>m.modrinthId===mod.id&&m.mcVersion===defaultV)){installedMods.push({name:mod.name,version:mod.latestVersion,mcVersion:defaultV,source:src,iconUrl:mod.iconUrl,modrinthId:mod.id,downloadAllVersions:true,disabled:false});n++;}}
+      if(!n){if(!installedMods.some(m=>m.modrinthId===mod.id&&m.mcVersion===defaultV)){installedMods.push({name:mod.name,version:mod.latestVersion,mcVersion:defaultV,source:src,iconUrl:mod.iconUrl,modrinthId:mod.id,downloadAllVersions:true,disabled:false,loader:curLoader});n++;}}
       saveMods();renderModList();fetchMissingModIcons();
       btn.textContent=`Added ✓ (${n})`;btn.style.opacity='.55';
     });
@@ -1918,60 +2766,190 @@ document.getElementById('import-modpack-curseforge-btn').addEventListener('click
   openModModal('curseforge');
 });
 
-async function importModpackFromModrinth(projectId, projectName) {
+async function importModpackFromModrinth(projectId, projectName, selectedVersion) {
+  const pp=document.getElementById('modpack-progress'), pf=document.getElementById('modpack-progress-fill'), pl=document.getElementById('modpack-progress-label');
   try {
+    pp.style.display='block'; pf.style.width='1%'; pl.textContent=`Importing: ${projectName}...`;
     document.getElementById('status').textContent=`Importing modpack: ${projectName}...`;
+    rlog('importModpackFromModrinth start: '+projectId+' '+projectName+' v='+!!selectedVersion);
 
-    // Get latest version
-    const versions = await (await fetch(`https://api.modrinth.com/v2/project/${projectId}/version`)).json();
-    if(!versions||!versions.length) throw new Error('No versions found');
-    const latest = versions[0];
-
-    // Get project details for MC version and loader
-    const project = await (await fetch(`https://api.modrinth.com/v2/project/${projectId}`)).json();
-    const mcVersion = latest.game_versions?.[0] || '';
-    const loader = latest.loaders?.find(l=>['fabric','forge','quilt'].includes(l)) || 'fabric';
-
-    // Get mods from the modpack (mrpack format)
-    const mrpackFile = latest.files?.find(f=>f.filename?.endsWith('.mrpack')) || latest.files?.[0];
-    let mods = [];
-    if(mrpackFile) {
-      try {
-        // Download mrpack index to get mod list
-        const resp = await fetch(mrpackFile.url);
-        const buf  = await resp.arrayBuffer();
-        // mrpack is a zip — we can't easily unzip in browser JS without a library
-        // Instead, get dependency list from Modrinth API
-        const deps = await (await fetch(`https://api.modrinth.com/v2/project/${projectId}/dependencies`)).json();
-        mods = (deps.projects||[]).map(p=>({
-          name: p.title, modrinthId: p.id, version:'latest',
-          mcVersion, source:'Modrinth', iconUrl: p.icon_url||'',
-          downloadAllVersions:false, disabled:false, loader
-        }));
-      } catch {}
+    let latest;
+    if (selectedVersion) {
+      latest = selectedVersion;
+    } else {
+      rlog('Fetching versions for '+projectId);
+      const versions = await ipcRenderer.invoke('fetch-json-no-cors', `https://api.modrinth.com/v2/project/${projectId}/version`);
+      rlog('Got versions: '+(versions?.length||0));
+      if(!versions||!versions.length) throw new Error('No versions found');
+      latest = versions[0];
     }
 
-    // Create profile from modpack
+    const mcVersion = latest.game_versions?.[0] || '';
+    const loader = latest.loaders?.find(l=>['fabric','forge','quilt','neoforge'].includes(l)) || 'fabric';
+
+    const mrpackFile = latest.files?.find(f=>f.filename?.endsWith('.mrpack')) || latest.files?.[0];
+    rlog('mrpack file: '+(mrpackFile?.url||'NONE')+' '+(mrpackFile?.filename||''));
+    let mods = [];
+    let resourcePacks = [];
+    let downloadedFiles = [];
+    let downloadedRpFiles = [];
+    if(mrpackFile) {
+      pl.textContent='Downloading mrpack...'; pf.style.width='5%';
+      rlog('Downloading mrpack from: '+mrpackFile.url);
+      const mrpackPath = await ipcRenderer.invoke('fetch-buffer', mrpackFile.url);
+      rlog('mrpack downloaded: '+mrpackPath);
+      pl.textContent='Extracting modpack...'; pf.style.width='10%';
+      const JSZip = window.JSZip || require('jszip');
+      if(!JSZip) throw new Error('JSZip not loaded');
+      const fs = require('fs');
+      const zipBuf = new Uint8Array(fs.readFileSync(mrpackPath));
+      const zip = await JSZip.loadAsync(zipBuf.buffer);
+      await ipcRenderer.invoke('delete-temp', mrpackPath);
+      rlog('mrpack extracted OK');
+
+      const indexFile = zip.file('modrinth.index.json');
+      if(!indexFile) throw new Error('Invalid mrpack: no modrinth.index.json found');
+      const indexData = JSON.parse(await indexFile.async('string'));
+      const fileOverrides = indexData.files || [];
+      rlog('fileOverrides count: '+fileOverrides.length);
+
+      const toDownload = fileOverrides.filter(f => {
+        const env = f.env || {};
+        return (env.clientSide || 'required') !== 'unsupported' && f.downloads && f.downloads.length;
+      });
+      const BATCH = 5;
+      let downloaded = 0;
+      for(let i = 0; i < toDownload.length; i += BATCH) {
+        const batch = toDownload.slice(i, i + BATCH);
+        const results = await Promise.allSettled(batch.map(file =>
+          ipcRenderer.invoke('fetch-buffer', file.downloads[0]).then(modPath => {
+            const fileName = file.filename || file.path?.split('/')?.pop() || 'mod.jar';
+            return { tempPath: modPath, fileName, mcPath: file.path || 'mods/' + fileName };
+          })
+        ));
+        for(const r of results) {
+          if(r.status === 'fulfilled') {
+            downloaded++;
+            downloadedFiles.push(r.value);
+            mods.push({
+              name: r.value.fileName.replace(/\.jar$/i,''),
+              fileName: r.value.fileName,
+              diskPath: '',
+              path: r.value.mcPath,
+              source: 'Modrinth', modrinthId: null, version: 'latest',
+              mcVersion, iconUrl: '', downloadAllVersions: false, disabled: false, loader
+            });
+          } else { downloaded++; rlog('Mod download failed: '+r.reason); }
+        }
+        const pct = 10 + Math.round((downloaded / toDownload.length) * 80);
+        pf.style.width = pct+'%';
+        pl.textContent = `Downloading mods... ${downloaded}/${toDownload.length}`;
+        document.getElementById('status').textContent = `Downloading mods... ${downloaded}/${toDownload.length}`;
+      }
+      rlog('All mods downloaded: '+mods.length);
+
+      for(const file of fileOverrides) {
+        if(file.path && (file.path.endsWith('.zip') || file.path.includes('resourcepacks/'))) {
+          if(file.downloads && file.downloads.length) {
+            try {
+              const rpPath = await ipcRenderer.invoke('fetch-buffer', file.downloads[0]);
+              const rpName = file.filename || file.path.split('/').pop();
+              downloadedRpFiles.push({ tempPath: rpPath, fileName: rpName, mcPath: file.path });
+              resourcePacks.push({
+                name: rpName.replace(/\.zip$/i,''),
+                fileName: rpName,
+                diskPath: '',
+                path: file.path,
+                source: 'Modrinth'
+              });
+            } catch {}
+          }
+        }
+      }
+    }
+
+    const profileId = 'p_'+Date.now();
+    pl.textContent='Saving files to disk...'; pf.style.width='92%';
+    rlog('Saving '+downloadedFiles.length+' mod files to disk...');
+    const savedMods = await ipcRenderer.invoke('save-mrpack-mods', { profileId, files: downloadedFiles });
+    const savedRPs = await ipcRenderer.invoke('save-mrpack-mods', { profileId, files: downloadedRpFiles });
+    rlog('Saved '+savedMods.length+' mods to disk');
+    for(let i = 0; i < mods.length; i++) {
+      if(savedMods[i]) mods[i].diskPath = savedMods[i].diskPath;
+    }
+    for(let i = 0; i < resourcePacks.length; i++) {
+      if(savedRPs[i]) resourcePacks[i].diskPath = savedRPs[i].diskPath;
+    }
+
+    pl.textContent='Saving profile...'; pf.style.width='95%';
     const np = {
-      id: 'p_'+Date.now(),
+      id: profileId,
       name: projectName,
       mcVersion,
       modLoader: loader,
-      mods,
+      mods: mods.map(m=>({ name:m.name, modrinthId:m.modrinthId, version:m.version, mcVersion:m.mcVersion, source:m.source, iconUrl:m.iconUrl, downloadAllVersions:m.downloadAllVersions, disabled:m.disabled, loader:m.loader, diskPath:m.diskPath })),
       datapacks:[], resourcePacks:[], shaderPacks:[],
-      useClientMods: false, // modpacks usually manage their own mods
+      useClientMods: false,
       useClientRPs: false,
       isModpack: true,
-      modrinthId: projectId
+      modrinthId: projectId,
+      mrpackMods: mods,
+      mrpackRPs: resourcePacks
     };
     profiles.push(np);
+    rlog('Profile created: '+np.name+' '+mods.length+' mods '+mcVersion+' '+loader);
     ipcRenderer.send('save-profiles', profiles);
     renderProfileList();
     updateLaunchProfileSelect();
+    pf.style.width='100%'; pl.textContent=`✓ Imported: ${projectName} (${mods.length} mods)`;
     document.getElementById('status').textContent=`✓ Imported: ${projectName} (${mods.length} mods, MC ${mcVersion})`;
+    setTimeout(()=>{ pp.style.display='none'; }, 3000);
     showPage('profiles-page');
   } catch(e) {
+    pl.textContent=`Import failed: ${e.message}`;
     document.getElementById('status').textContent=`Modpack import failed: ${e.message}`;
+    rlog('IMPORT ERROR: '+e.message+' | '+e.stack);
+    setTimeout(()=>{ pp.style.display='none'; }, 5000);
+  }
+}
+async function showModpackVersionPicker(projectId, projectName) {
+  const listEl = document.getElementById('modpack-version-list');
+  const titleEl = document.getElementById('modpack-version-title');
+  const modal = document.getElementById('modpack-version-modal');
+  titleEl.textContent = `Choose Version — ${projectName}`;
+  listEl.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)">Loading versions...</div>';
+  modal.style.display = 'flex';
+
+  try {
+    const versions = await ipcRenderer.invoke('fetch-json-no-cors', `https://api.modrinth.com/v2/project/${projectId}/version`);
+    if (!versions || !versions.length) { listEl.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)">No versions found.</div>'; return; }
+
+    listEl.innerHTML = '';
+    for (const v of versions) {
+      const mcVersions = (v.game_versions || []).join(', ');
+      const loaders = (v.loaders || []).join(', ');
+      const date = v.date_published ? new Date(v.date_published).toLocaleDateString() : '';
+      const div = document.createElement('div');
+      div.style.cssText = 'padding:.6rem .8rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:.5rem';
+      div.innerHTML = `<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.95rem">${escHtml(v.version_number || v.name)}</div><div style="font-size:.78rem;color:var(--text-muted)">${escHtml(mcVersions)} · ${escHtml(loaders)}</div></div><div style="font-size:.75rem;color:var(--text-muted);white-space:nowrap">${date}</div><button class="btn" style="padding:.3rem .8rem;font-size:.8rem;white-space:nowrap;min-width:70px">Install</button>`;
+      const btn = div.querySelector('button');
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        btn.disabled = true;
+        btn.textContent = 'Installing...';
+        btn.style.opacity = '.6';
+        try {
+          modal.style.display = 'none';
+          await importModpackFromModrinth(projectId, projectName, v);
+        } catch(err) {
+          document.getElementById('status').textContent = `Import failed: ${err.message}`;
+          rlog('Version install error: '+err.message+' | '+err.stack);
+        }
+      });
+      listEl.appendChild(div);
+    }
+  } catch(e) {
+    listEl.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted)">Failed to load versions: ${escHtml(e.message)}</div>`;
   }
 }
 async function fetchMissingModIcons(){
@@ -1983,7 +2961,7 @@ async function fetchMissingModIcons(){
     const chunk = ids.slice(i, i+100);
     try {
       const url = `https://api.modrinth.com/v2/projects?ids=${encodeURIComponent(JSON.stringify(chunk))}`;
-      const projects = await (await fetch(url)).json();
+      const projects = await ipcRenderer.invoke('fetch-json-no-cors', url);
       if(!Array.isArray(projects)) continue;
       let changed = false;
       projects.forEach(p => {
@@ -2172,8 +3150,10 @@ function renderModList() {
   list.querySelectorAll('.mod-item').forEach(e=>e.remove());
 
   let filtered = installedMods;
-  if (modFilter === 'fabric')   filtered = installedMods.filter(m => !m.loader || m.loader === 'fabric' || m.loader === 'any');
-  if (modFilter === 'forge')    filtered = installedMods.filter(m => m.loader === 'forge' || m.loader === 'any');
+  if (modFilter === 'fabric')   filtered = installedMods.filter(m => !m.loader || m.loader === 'fabric' || m.loader === 'quilt' || m.loader === 'any');
+  if (modFilter === 'forge')    filtered = installedMods.filter(m => m.loader === 'forge' || m.loader === 'neoforge' || m.loader === 'any');
+  if (modFilter === 'quilt')    filtered = installedMods.filter(m => m.loader === 'quilt' || m.loader === 'fabric' || m.loader === 'any');
+  if (modFilter === 'neoforge') filtered = installedMods.filter(m => m.loader === 'neoforge' || m.loader === 'forge' || m.loader === 'any');
   if (modFilter === 'disabled') filtered = installedMods.filter(m => m.disabled);
 
   if (!filtered.length) { empty.style.display=''; return; }
@@ -2197,7 +3177,9 @@ function renderModList() {
     const versionDisplay = mod.mcVersion === 'all' ? 'All versions' : `MC ${mod.mcVersion}`;
     const modVer = mod.version && mod.version !== 'latest' ? ` · ${mod.version}` : '';
     const typeLabel = '';
-    const loaderBadge = mod.loader ? `<span style="font-size:.7em;padding:.1em .35em;border-radius:999px;border:1px solid ${mod.loader==='forge'?'#f1642255':'#1bd96a44'};color:${mod.loader==='forge'?'#f16422':'#1bd96a'};margin-left:.3em">${mod.loader==='any'?'Any':mod.loader||'Fabric'}</span>` : '';
+    const loaderBadgeColors = { forge:['#f16422','#f1642255'], neoforge:['#ff8800','#ff880055'], quilt:['#cc5599','#cc559955'] };
+    const lbc = loaderBadgeColors[mod.loader] || ['#1bd96a','#1bd96a44'];
+    const loaderBadge = mod.loader ? `<span style="font-size:.7em;padding:.1em .35em;border-radius:999px;border:1px solid ${lbc[1]};color:${lbc[0]};margin-left:.3em">${mod.loader==='any'?'Any':mod.loader||'Fabric'}</span>` : '';
     item.innerHTML = `
       ${mod.iconUrl ? `<img class="mod-icon" src="${mod.iconUrl}" style="${op}">` : `<div class="mod-icon" style="${op}"></div>`}
       <div class="mod-info" style="${op}">
@@ -2240,9 +3222,9 @@ async function applySkinFromDataUrl(dataUrl) {
     setSkinUploadStatus('Uploading skin...');
     const result = await ipcRenderer.invoke('upload-skin', { accessToken: acc.accessToken, skinDataUrl: dataUrl, variant: 'classic' });
     if (result.success) setSkinUploadStatus('✓ Skin updated!');
-    else setSkinUploadStatus('Local updated, upload failed: ' + result.error, '#f5a623');
+    else setSkinUploadStatus('Upload failed: ' + result.error, '#f5a623');
   } else {
-    setSkinUploadStatus('✓ Skin set locally (offline account)');
+    setSkinUploadStatus('No account selected. Please log in first.', '#f44');
   }
 }
 
@@ -2316,9 +3298,770 @@ document.getElementById('use-original-launcher-toggle').addEventListener('change
 
 
 // ════════════════════════════════════════
+// QUICK RAM CONTROL (launch page)
+// ════════════════════════════════════════
+(function(){
+  const slider = document.getElementById('quick-ram-slider');
+  const valEl = document.getElementById('quick-ram-val');
+  const unitLabel = document.getElementById('quick-ram-unit-label');
+  const unitBtn = document.getElementById('quick-ram-unit-btn');
+  const settingsSlider = document.getElementById('ramSlider');
+
+  const clamp = (v,lo,hi) => Math.max(lo, Math.min(hi, v));
+  const toMb = gb => clamp(Math.round(gb * 1024), 512, 8192);
+  const toGb = mb => clamp(Math.round(mb / 1024), 1, 8);
+
+  function syncFromSettings(){
+    const unit = settings.ramUnit || 'gb';
+    const ram = parseInt(settings.ram, 10) || (unit === 'mb' ? 1024 : 2);
+    if(unit === 'mb'){
+      slider.min = 512; slider.max = 8192; slider.step = 256;
+      slider.value = clamp(ram, 512, 8192);
+      unitLabel.textContent = 'MB';
+      unitBtn.textContent = 'GB';
+    } else {
+      slider.min = 1; slider.max = 8; slider.step = 1;
+      slider.value = clamp(ram, 1, 8);
+      unitLabel.textContent = 'GB';
+      unitBtn.textContent = 'MB';
+    }
+    valEl.textContent = slider.value;
+  }
+
+  slider.addEventListener('input', () => {
+    const v = parseInt(slider.value, 10);
+    valEl.textContent = v;
+    const unit = settings.ramUnit || 'gb';
+    settings.ram = v;
+    settings.ramUnit = unit;
+    saveSettings();
+    if(settingsSlider){
+      if(unit === 'mb'){ settingsSlider.min=512; settingsSlider.max=8192; settingsSlider.step=256; }
+      else { settingsSlider.min=1; settingsSlider.max=8; settingsSlider.step=1; }
+      settingsSlider.value = v;
+      const rv = document.getElementById('ramValue');
+      if(rv) rv.textContent = v;
+    }
+  });
+
+  unitBtn.addEventListener('click', () => {
+    const oldUnit = settings.ramUnit || 'gb';
+    const oldVal = parseInt(slider.value, 10) || (oldUnit === 'mb' ? 1024 : 2);
+    const newUnit = oldUnit === 'gb' ? 'mb' : 'gb';
+    const newVal = oldUnit === 'gb' ? toMb(oldVal) : toGb(oldVal);
+    settings.ram = newVal;
+    settings.ramUnit = newUnit;
+    saveSettings();
+    syncFromSettings();
+    if(settingsSlider){
+      bindSettings();
+    }
+  });
+
+  // Sync on page show and after settings change
+  const observer = new MutationObserver(() => syncFromSettings());
+  const launchPage = document.getElementById('launch-page');
+  if(launchPage) observer.observe(launchPage, { attributes: true, attributeFilter: ['class'] });
+  syncFromSettings();
+})();
+
+// ════════════════════════════════════════
+// GLOBAL ERROR HANDLER (prevent white screen)
+// ════════════════════════════════════════
+window.addEventListener('error', (e) => {
+  console.error('[Crux] Uncaught error:', e.message, e.filename, e.lineno);
+  try {
+    const s = document.getElementById('status');
+    if(s) s.textContent = 'Error: ' + e.message;
+  } catch {}
+});
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('[Crux] Unhandled promise rejection:', e.reason);
+  try {
+    const s = document.getElementById('status');
+    if(s) s.textContent = 'Error: ' + (e.reason?.message || String(e.reason));
+  } catch {}
+});
+
+// ════════════════════════════════════════
 // BINDsettings extra bindings
 // ════════════════════════════════════════
 // (RAM display is initialized in bindSettings)
+
+// ════════════════════════════════════════
+// SERVERS
+// ════════════════════════════════════════
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+(async function(){
+  let servers = await ipcRenderer.invoke('load-servers');
+  let editingServerId = null;
+  let selectedServerId = null;
+  const MAX_SERVERS = 5;
+
+  function renderServerList(){
+    const el = document.getElementById('server-list');
+    const countEl = document.getElementById('server-count-label');
+    countEl.textContent = `${servers.length} / ${MAX_SERVERS} servers`;
+    document.getElementById('server-create-btn').disabled = servers.length >= MAX_SERVERS;
+    if(!servers.length){
+      el.innerHTML = '<div class="mod-list-empty">No servers created yet. Click "+ New Server" to start.</div>';
+      return;
+    }
+    el.innerHTML = '';
+    for(const s of servers){
+      const running = ipcRenderer.invoke('get-server-status', s.id).then(st => {
+        const item = el.querySelector(`[data-id="${s.id}"] .server-status`);
+        if(item) item.className = 'server-status ' + (st.status === 'running' ? 'running' : 'stopped');
+      });
+      const item = document.createElement('div');
+      item.className = 'server-item' + (s.id === selectedServerId ? ' sel' : '');
+      item.dataset.id = s.id;
+      const typeIcons = { vanilla:'🟫', paper:'📄', spigot:'🪵', purpur:'🟣', fabric:'🧵', quilt:'🪡', forge:'⬛', neoforge:'🔶', modpack:'📦' };
+      const localAddr = `${s.address || 'localhost'}:${s.port || 25565}`;
+      let lanAddr = '';
+      try {
+        const nets = require('os').networkInterfaces();
+        for (const name of Object.keys(nets)) {
+          for (const net of nets[name]) {
+            if (net.family === 'IPv4' && !net.internal) { lanAddr = `${net.address}:${s.port || 25565}`; break; }
+          }
+          if (lanAddr) break;
+        }
+      } catch {}
+      item.innerHTML = `
+        <div class="server-status stopped"></div>
+        <div style="font-size:1.3em;flex-shrink:0">${typeIcons[s.type] || '🟫'}</div>
+        <div class="server-info">
+          <div class="server-name">${escHtml(s.name)}</div>
+          <div style="display:flex;align-items:center;gap:.5em;margin-top:.15em;flex-wrap:wrap">
+            <code class="server-addr" style="font-size:.72em;color:var(--acc);background:#1bd96a12;padding:.15em .5em;border-radius:.3em;cursor:pointer;font-family:monospace;border:1px solid #1bd96a33;user-select:all" title="Click to copy - Local address">${escHtml(localAddr)}</code>
+            ${lanAddr ? `<code class="server-addr" style="font-size:.72em;color:#f5a623;background:#f5a62312;padding:.15em .5em;border-radius:.3em;cursor:pointer;font-family:monospace;border:1px solid #f5a62333;user-select:all" title="Click to copy - LAN address for friends on same network">${escHtml(lanAddr)}</code>` : ''}
+            <span style="font-size:.68em;color:#555">MC ${s.mcVersion || '?'} · ${(s.type || 'vanilla').charAt(0).toUpperCase() + (s.type || 'vanilla').slice(1)}${s.type==='modpack' && s.modpackLoader ? ' (' + s.modpackLoader + ')' : ''} · ${s.gamemode || 'survival'} · ${s.maxPlayers || 20}p</span>
+          </div>
+        </div>
+        <div class="server-actions">
+          <button class="btn btn-sm server-start-btn" style="width:auto;padding:.25em .6em;font-size:.75em">▶ Start</button>
+          <button class="btn btn-sm server-edit-btn" style="width:auto;padding:.25em .6em;font-size:.75em">✎</button>
+          <button class="btn btn-sm server-delete-btn" style="width:auto;padding:.25em .6em;font-size:.75em;color:#f44;border-color:#f4444444">✕</button>
+        </div>`;
+      item.addEventListener('click', (e) => {
+        if(e.target.closest('.server-actions')) return;
+        selectedServerId = s.id;
+        renderServerList();
+        showServerConsole(s.id);
+      });
+      el.appendChild(item);
+    }
+    // Bind action buttons
+    el.querySelectorAll('.server-start-btn').forEach(btn => {
+      const id = btn.closest('[data-id]').dataset.id;
+      btn.addEventListener('click', () => startServer(id));
+    });
+    el.querySelectorAll('.server-edit-btn').forEach(btn => {
+      const id = btn.closest('[data-id]').dataset.id;
+      btn.addEventListener('click', () => openServerEditor(id));
+    });
+    el.querySelectorAll('.server-delete-btn').forEach(btn => {
+      const id = btn.closest('[data-id]').dataset.id;
+      btn.addEventListener('click', () => deleteServer(id));
+    });
+    // Copy address on click
+    el.querySelectorAll('.server-addr').forEach(addrEl => {
+      addrEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const text = addrEl.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          const orig = addrEl.textContent;
+          addrEl.textContent = 'Copied!';
+          addrEl.style.color = '#1bd96a';
+          setTimeout(() => { addrEl.textContent = orig; addrEl.style.color = ''; }, 1200);
+        }).catch(() => {});
+      });
+    });
+    // Check running status
+    for(const s of servers){
+      ipcRenderer.invoke('get-server-status', s.id).then(st => {
+        const item = el.querySelector(`[data-id="${s.id}"] .server-status`);
+        if(item) item.className = 'server-status ' + (st.status === 'running' ? 'running' : 'stopped');
+        const startBtn = el.querySelector(`[data-id="${s.id}"] .server-start-btn`);
+        if(startBtn) startBtn.textContent = st.status === 'running' ? '■ Stop' : '▶ Start';
+      });
+    }
+  }
+
+  function openServerEditor(id){
+    editingServerId = id || null;
+    const s = servers.find(x => x.id === id) || {};
+    document.getElementById('server-name-input').value = s.name || '';
+    document.getElementById('server-address-input').value = s.address || 'localhost';
+    document.getElementById('server-port-input').value = s.port || 25565;
+    document.getElementById('server-maxplayers-input').value = s.maxPlayers || 20;
+    document.getElementById('server-ram-input').value = s.ram || 2;
+    document.getElementById('server-gamemode-select').value = s.gamemode || 'survival';
+    document.getElementById('server-difficulty-select').value = s.difficulty || 'normal';
+    document.getElementById('server-motd-input').value = s.motd || 'Crux Server';
+    document.getElementById('server-online-mode').checked = s.onlineMode !== false;
+    document.getElementById('server-pvp').checked = s.pvp !== false;
+    document.getElementById('server-cmdblocks').checked = s.cmdblocks !== false;
+    document.getElementById('server-whitelist').checked = s.whitelist === true;
+    document.getElementById('server-rp-url').value = s.rpUrl || '';
+    document.getElementById('server-rp-file').value = '';
+
+    // Advanced settings
+    document.getElementById('server-allow-flight').checked = s.allowFlight === true;
+    document.getElementById('server-spawn-animals').checked = s.spawnAnimals !== false;
+    document.getElementById('server-spawn-monsters').checked = s.spawnMonsters !== false;
+    document.getElementById('server-spawn-npcs').checked = s.spawnNpcs !== false;
+    document.getElementById('server-allow-nether').checked = s.allowNether !== false;
+    document.getElementById('server-force-gamemode').checked = s.forceGamemode === true;
+    document.getElementById('server-prevent-proxy').checked = s.preventProxy === true;
+    document.getElementById('server-sync-chunks').checked = s.syncChunks !== false;
+    document.getElementById('server-hide-players').checked = s.hidePlayers === true;
+    document.getElementById('server-spawn-protection').value = s.spawnProtection != null ? s.spawnProtection : 0;
+    document.getElementById('server-view-distance').value = s.viewDistance || 10;
+    document.getElementById('server-sim-distance').value = s.simDistance || 10;
+    document.getElementById('server-seed').value = s.seed || '';
+    document.getElementById('server-level-name').value = s.levelName || 'world';
+    document.getElementById('server-level-type').value = s.levelType || 'minecraft:normal';
+    document.getElementById('server-idle-timeout').value = s.idleTimeout || 0;
+    document.getElementById('server-max-tick-time').value = s.maxTickTime || 60000;
+    document.getElementById('server-op-level').value = s.opLevel || 4;
+    document.getElementById('server-compression').value = s.compression != null ? s.compression : 256;
+    document.getElementById('server-broadcast-range').value = s.broadcastRange || 100;
+    document.getElementById('server-rate-limit').value = s.rateLimit || 0;
+    document.getElementById('server-advanced-settings').style.display = 'none';
+    document.getElementById('server-advanced-toggle').textContent = '▶ Advanced Settings';
+    // Populate version select
+    const sel = document.getElementById('server-version-select');
+    sel.innerHTML = '';
+    const releases = mcVersionList.filter(v => v.type === 'release');
+    const snapshots = mcVersionList.filter(v => v.type === 'snapshot');
+    if(releases.length){
+      const og = document.createElement('optgroup'); og.label = 'Releases';
+      releases.forEach(v => { const o = document.createElement('option'); o.value = v.id; o.textContent = v.id; og.appendChild(o); });
+      sel.appendChild(og);
+    }
+    if(snapshots.length){
+      const og = document.createElement('optgroup'); og.label = 'Snapshots';
+      snapshots.forEach(v => { const o = document.createElement('option'); o.value = v.id; o.textContent = v.id; og.appendChild(o); });
+      sel.appendChild(og);
+    }
+    sel.value = s.mcVersion || mcVersionList.find(v => v.type === 'release')?.id || '';
+
+    // Reset wizard state
+    wizardSelectedType = s.type || null;
+    wizardSelectedMods = [];
+    wizardModpackLoader = s.modpackLoader || 'fabric';
+    document.querySelectorAll('.server-type-card').forEach(c => c.classList.remove('sel'));
+    if(wizardSelectedType){
+      const card = document.querySelector(`.server-type-card[data-type="${wizardSelectedType}"]`);
+      if(card) card.classList.add('sel');
+    }
+    updateModsUI();
+
+    document.getElementById('server-editor').style.display = 'block';
+    document.getElementById('server-console-wrap').style.display = 'none';
+
+    // If editing, go to settings step directly
+    if(id){
+      showWizardStep('settings');
+    } else {
+      showWizardStep('type');
+    }
+  }
+
+  let wizardSelectedType = null;
+  let wizardSelectedMods = [];
+  let wizardModpackLoader = 'fabric';
+
+  function showWizardStep(step){
+    document.querySelectorAll('.server-wizard-step').forEach(el => el.style.display = 'none');
+    document.getElementById('server-step-type').style.display = step === 'type' ? '' : 'none';
+    document.getElementById('server-step-version').style.display = step === 'version' ? '' : 'none';
+    document.getElementById('server-step-mods').style.display = step === 'mods' ? '' : 'none';
+    document.getElementById('server-step-settings').style.display = step === 'settings' ? '' : 'none';
+
+    const typeLabels = { vanilla: 'vanilla', paper: 'Paper', spigot: 'Spigot', purpur: 'Purpur', fabric: 'Fabric', forge: 'Forge', quilt: 'Quilt', neoforge: 'NeoForge', modpack: 'Modpack' };
+    const modLabels = { vanilla: '', paper: 'Plugins', spigot: 'Plugins', purpur: 'Plugins', fabric: 'Mods', forge: 'Mods', quilt: 'Mods', neoforge: 'Mods', modpack: 'Mods' };
+
+    // Update step indicator
+    const steps = ['type','version','mods','settings'];
+    const idx = steps.indexOf(step);
+    for(let i = 0; i < 4; i++){
+      const el = document.getElementById('ws-step'+(i+1));
+      el.style.color = i <= idx ? 'var(--acc)' : '#555';
+    }
+
+    // Update mods step title
+    if(step === 'mods'){
+      document.getElementById('server-mods-title').textContent = 'Add ' + (modLabels[wizardSelectedType] || 'Mods');
+      document.getElementById('server-mods-desc').textContent = `Search and add ${modLabels[wizardSelectedType] || 'mods'} for your ${typeLabels[wizardSelectedType] || ''} server.`;
+    }
+    // Show modloader selector for modpack type
+    const modloaderRow = document.getElementById('server-modloader-row');
+    if(modloaderRow) modloaderRow.style.display = wizardSelectedType === 'modpack' ? '' : 'none';
+  }
+
+  function updateModsUI(){
+    const results = document.getElementById('server-mod-results');
+    const added = document.getElementById('server-mod-added');
+    // Render added tags
+    added.innerHTML = '';
+    wizardSelectedMods.forEach((m, i) => {
+      const tag = document.createElement('span');
+      tag.className = 'server-mod-added-tag';
+      tag.innerHTML = `${escHtml(m.name)} <span class="mod-tag-remove" data-idx="${i}">×</span>`;
+      added.appendChild(tag);
+    });
+    added.querySelectorAll('.mod-tag-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        wizardSelectedMods.splice(parseInt(btn.dataset.idx), 1);
+        updateModsUI();
+      });
+    });
+  }
+
+  // Type card click
+  document.querySelectorAll('.server-type-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.server-type-card').forEach(c => c.classList.remove('sel'));
+      card.classList.add('sel');
+      wizardSelectedType = card.dataset.type;
+      showWizardStep('version');
+    });
+  });
+
+  // Wizard navigation
+  document.getElementById('server-next-btn')?.addEventListener('click', () => {
+    if(!wizardSelectedType) return;
+    wizardModpackLoader = document.getElementById('server-modloader-select')?.value || 'fabric';
+    if(['paper','spigot','purpur','fabric','forge','quilt','neoforge','modpack'].includes(wizardSelectedType)){
+      showWizardStep('mods');
+    } else {
+      showWizardStep('settings');
+    }
+  });
+  document.getElementById('server-next-btn2')?.addEventListener('click', () => showWizardStep('settings'));
+  document.getElementById('server-back-btn')?.addEventListener('click', () => showWizardStep('type'));
+  document.getElementById('server-back-btn2')?.addEventListener('click', () => showWizardStep('version'));
+  document.getElementById('server-back-btn3')?.addEventListener('click', () => {
+    if(!editingServerId && ['paper','spigot','purpur','fabric','forge','quilt','neoforge','modpack'].includes(wizardSelectedType)){
+      showWizardStep('mods');
+    } else {
+      showWizardStep('version');
+    }
+  });
+  document.getElementById('server-skip-mods')?.addEventListener('click', () => showWizardStep('settings'));
+
+  // Mod search for servers
+  async function doServerModSearch(){
+    const query = document.getElementById('server-mod-search').value.trim();
+    const results = document.getElementById('server-mod-results');
+    const mcVer = document.getElementById('server-version-select')?.value || '1.21';
+    const isPlugin = ['paper','spigot','purpur'].includes(wizardSelectedType);
+    const isModpack = wizardSelectedType === 'modpack';
+    const loaderFacet = isModpack ? (wizardModpackLoader || 'fabric') : (wizardSelectedType === 'fabric' ? 'fabric' : wizardSelectedType === 'quilt' ? 'quilt' : wizardSelectedType === 'forge' ? 'forge' : wizardSelectedType === 'neoforge' ? 'neoforge' : '');
+    let facets;
+    if(isModpack){
+      facets = [['project_type:modpack']];
+      if(loaderFacet) facets.push(['categories:' + loaderFacet]);
+    } else {
+      const facetType = isPlugin ? 'plugin' : 'mod';
+      facets = [['project_type:' + facetType]];
+      if(loaderFacet && !isPlugin) facets.push(['categories:' + loaderFacet]);
+      if(!isPlugin) facets.push(['categories:server-side']);
+    }
+    const facet = JSON.stringify(facets);
+    try {
+      let url;
+      if(!query){
+        url = `https://api.modrinth.com/v2/search?facets=${encodeURIComponent(facet)}&limit=20&index=downloads`;
+      } else {
+        url = `https://api.modrinth.com/v2/search?query=${encodeURIComponent(query)}&facets=${encodeURIComponent(facet)}&limit=20`;
+      }
+      results.innerHTML = '<div style="padding:.5em;color:#555;font-size:.78em">Searching Modrinth...</div>';
+      const d = await (await fetch(url)).json();
+      const hits = d.hits || [];
+      if(!hits.length){
+        results.innerHTML = '<div style="padding:.5em;color:#555;font-size:.78em">No results found.</div>';
+        return;
+      }
+      results.innerHTML = '';
+      hits.forEach(h => {
+        const item = document.createElement('div');
+        item.className = 'server-mod-result';
+        const iconUrl = h.icon_url || '';
+        const dlCount = h.downloads ? (h.downloads >= 1000000 ? (h.downloads/1000000).toFixed(1)+'M' : h.downloads >= 1000 ? (h.downloads/1000).toFixed(1)+'K' : h.downloads) : '';
+        item.innerHTML = `
+          ${iconUrl ? `<img class="mod-icon" src="${iconUrl}" style="width:1.8em;height:1.8em" onerror="this.style.display='none'">` : '<div class="mod-icon" style="width:1.8em;height:1.8em"></div>'}
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:bold;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(h.title)}</div>
+            <div style="font-size:.72em;color:#555">${escHtml(h.description || '').slice(0,60)}${(h.description||'').length > 60 ? '…' : ''}</div>
+          </div>
+          ${dlCount ? `<span style="font-size:.65em;color:#666;white-space:nowrap">↓${dlCount}</span>` : ''}
+          <button class="btn btn-sm btn-modrinth" style="width:auto;padding:.2em .6em;font-size:.7em" data-id="${h.project_id}">Add</button>`;
+        item.querySelector('button').addEventListener('click', () => {
+          if(wizardSelectedMods.find(m => m.id === h.project_id)) return;
+          wizardSelectedMods.push({ id: h.project_id, name: h.title, slug: h.slug });
+    updateModsUI();
+
+    // Set modloader select for modpack type
+    const mlSel = document.getElementById('server-modloader-select');
+    if(mlSel) mlSel.value = s.modpackLoader || 'fabric';
+    const mlRow = document.getElementById('server-modloader-row');
+    if(mlRow) mlRow.style.display = wizardSelectedType === 'modpack' ? '' : 'none';
+          item.querySelector('button').textContent = 'Added';
+          item.querySelector('button').disabled = true;
+        });
+        results.appendChild(item);
+      });
+    } catch(e){
+      results.innerHTML = '<div style="padding:.5em;color:#f44;font-size:.78em">Search failed: ' + escHtml(e.message) + '</div>';
+    }
+  }
+  document.getElementById('server-mod-search')?.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') doServerModSearch();
+  });
+  let serverSearchDebounce = null;
+  document.getElementById('server-mod-search')?.addEventListener('input', (e) => {
+    clearTimeout(serverSearchDebounce);
+    const q = e.target.value.trim();
+    if(q.length < 2) { doServerModSearch(); return; }
+    serverSearchDebounce = setTimeout(() => {
+      doServerModSearch();
+    }, 400);
+  });
+
+  function closeServerEditor(){
+    document.getElementById('server-editor').style.display = 'none';
+    editingServerId = null;
+    wizardSelectedType = null;
+    wizardSelectedMods = [];
+    wizardModpackLoader = 'fabric';
+    const mlRow = document.getElementById('server-modloader-row');
+    if(mlRow) mlRow.style.display = 'none';
+  }
+
+  document.getElementById('server-cancel-btn').addEventListener('click', closeServerEditor);
+
+  document.getElementById('server-save-btn').addEventListener('click', async () => {
+    const name = document.getElementById('server-name-input').value.trim() || 'My Server';
+    const address = document.getElementById('server-address-input').value.trim() || 'localhost';
+    const port = parseInt(document.getElementById('server-port-input').value) || 25565;
+    const mcVersion = document.getElementById('server-version-select').value;
+    const maxPlayers = parseInt(document.getElementById('server-maxplayers-input').value) || 20;
+    const ram = parseInt(document.getElementById('server-ram-input').value) || 2;
+    const gamemode = document.getElementById('server-gamemode-select').value;
+    const difficulty = document.getElementById('server-difficulty-select').value;
+    const motd = document.getElementById('server-motd-input').value.trim() || 'Crux Server';
+    const onlineMode = document.getElementById('server-online-mode').checked;
+    const pvp = document.getElementById('server-pvp').checked;
+    const cmdblocks = document.getElementById('server-cmdblocks').checked;
+    const whitelist = document.getElementById('server-whitelist').checked;
+    const rpUrl = document.getElementById('server-rp-url').value.trim();
+    const type = wizardSelectedType || 'vanilla';
+    const modpackLoader = type === 'modpack' ? (document.getElementById('server-modloader-select')?.value || 'fabric') : undefined;
+
+    const allowFlight = document.getElementById('server-allow-flight').checked;
+    const spawnAnimals = document.getElementById('server-spawn-animals').checked;
+    const spawnMonsters = document.getElementById('server-spawn-monsters').checked;
+    const spawnNpcs = document.getElementById('server-spawn-npcs').checked;
+    const allowNether = document.getElementById('server-allow-nether').checked;
+    const forceGamemode = document.getElementById('server-force-gamemode').checked;
+    const preventProxy = document.getElementById('server-prevent-proxy').checked;
+    const syncChunks = document.getElementById('server-sync-chunks').checked;
+    const hidePlayers = document.getElementById('server-hide-players').checked;
+    const spawnProtection = parseInt(document.getElementById('server-spawn-protection').value) || 0;
+    const viewDistance = parseInt(document.getElementById('server-view-distance').value) || 10;
+    const simDistance = parseInt(document.getElementById('server-sim-distance').value) || 10;
+    const seed = document.getElementById('server-seed').value.trim();
+    const levelName = document.getElementById('server-level-name').value.trim() || 'world';
+    const levelType = document.getElementById('server-level-type').value;
+    const idleTimeout = parseInt(document.getElementById('server-idle-timeout').value) || 0;
+    const maxTickTime = parseInt(document.getElementById('server-max-tick-time').value) || 60000;
+    const opLevel = parseInt(document.getElementById('server-op-level').value) || 4;
+    const compression = parseInt(document.getElementById('server-compression').value) || 256;
+    const broadcastRange = parseInt(document.getElementById('server-broadcast-range').value) || 100;
+    const rateLimit = parseInt(document.getElementById('server-rate-limit').value) || 0;
+
+    const serverObj = { name, address, port, mcVersion, maxPlayers, ram, gamemode, difficulty, motd, onlineMode, pvp, cmdblocks, whitelist, rpUrl, type, modpackLoader, plugins: wizardSelectedMods, allowFlight, spawnAnimals, spawnMonsters, spawnNpcs, allowNether, forceGamemode, preventProxy, syncChunks, hidePlayers, spawnProtection, viewDistance, simDistance, seed, levelName, levelType, idleTimeout, maxTickTime, opLevel, compression, broadcastRange, rateLimit };
+
+    if(editingServerId){
+      const idx = servers.findIndex(s => s.id === editingServerId);
+      if(idx >= 0) Object.assign(servers[idx], serverObj);
+    } else {
+      if(servers.length >= MAX_SERVERS) return;
+      serverObj.id = 'srv_' + Date.now();
+      servers.push(serverObj);
+    }
+    ipcRenderer.send('save-servers', servers);
+    closeServerEditor();
+    renderServerList();
+  });
+
+  document.getElementById('server-create-btn').addEventListener('click', () => {
+    if(servers.length >= MAX_SERVERS) return;
+    openServerEditor(null);
+  });
+
+  async function deleteServer(id){
+    const s = servers.find(x => x.id === id);
+    if(!s) return;
+    if(!confirm(`Delete server "${s.name}"?`)) return;
+    // Stop if running
+    ipcRenderer.send('stop-server', id);
+    servers = servers.filter(x => x.id !== id);
+    ipcRenderer.send('save-servers', servers);
+    if(selectedServerId === id) selectedServerId = null;
+    document.getElementById('server-console-wrap').style.display = 'none';
+    renderServerList();
+  }
+
+  async function startServer(id){
+    const s = servers.find(x => x.id === id);
+    if(!s) return;
+    const status = await ipcRenderer.invoke('get-server-status', id);
+    if(status.status === 'running'){
+      ipcRenderer.send('stop-server', id);
+      return;
+    }
+    ipcRenderer.send('start-server', s);
+    showServerConsole(id);
+  }
+
+  function showServerConsole(id){
+    const s = servers.find(x => x.id === id);
+    if(!s) return;
+    selectedServerId = id;
+    document.getElementById('server-console-title').textContent = s.name;
+    document.getElementById('server-console-wrap').style.display = 'block';
+    document.getElementById('server-editor').style.display = 'none';
+    // Load existing logs
+    ipcRenderer.invoke('get-server-status', id).then(st => {
+      const con = document.getElementById('server-console');
+      con.innerHTML = '';
+      (st.logs || []).forEach(line => { con.innerHTML += escHtml(line) + '\n'; });
+      con.scrollTop = con.scrollHeight;
+      document.getElementById('server-console-status').textContent = st.status === 'running' ? '● Running' : '○ Stopped';
+    });
+  }
+
+  // Server console input
+  document.getElementById('server-command-send').addEventListener('click', () => {
+    const input = document.getElementById('server-command-input');
+    const cmd = input.value.trim();
+    if(!cmd || !selectedServerId) return;
+    ipcRenderer.send('server-command', { serverId: selectedServerId, command: cmd });
+    input.value = '';
+  });
+  document.getElementById('server-command-input').addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') document.getElementById('server-command-send').click();
+  });
+
+  // Server stop button
+  document.getElementById('server-stop-btn').addEventListener('click', () => {
+    if(selectedServerId) ipcRenderer.send('stop-server', selectedServerId);
+  });
+
+  // Server OP button
+  document.getElementById('server-op-btn').addEventListener('click', () => {
+    const input = document.getElementById('server-command-input');
+    input.value = 'op ';
+    input.focus();
+    input.setSelectionRange(3, 3);
+  });
+
+  // Advanced Settings toggle
+  document.getElementById('server-advanced-toggle').addEventListener('click', () => {
+    const panel = document.getElementById('server-advanced-settings');
+    const btn = document.getElementById('server-advanced-toggle');
+    if (panel.style.display === 'none') {
+      panel.style.display = 'block';
+      btn.textContent = '▼ Advanced Settings';
+    } else {
+      panel.style.display = 'none';
+      btn.textContent = '▶ Advanced Settings';
+    }
+  });
+
+  // Whitelist toggle
+  document.getElementById('server-whitelist-btn').addEventListener('click', () => {
+    const panel = document.getElementById('server-whitelist-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    if (panel.style.display === 'block' && selectedServerId) {
+      loadWhitelist();
+    }
+  });
+
+  // Whitelist add
+  document.getElementById('server-whitelist-add-btn').addEventListener('click', () => {
+    const input = document.getElementById('server-whitelist-input');
+    const name = input.value.trim();
+    if (!name || !selectedServerId) return;
+    ipcRenderer.invoke('add-server-whitelist', { serverId: selectedServerId, player: name }).then(() => {
+      input.value = '';
+      loadWhitelist();
+    });
+  });
+
+  async function loadWhitelist() {
+    if (!selectedServerId) return;
+    const list = await ipcRenderer.invoke('get-server-whitelist', selectedServerId);
+    const container = document.getElementById('server-whitelist-list');
+    container.innerHTML = '';
+    list.forEach(p => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:.2em .4em';
+      row.innerHTML = `<span>${escHtml(p)}</span><button class="btn btn-sm" style="width:auto;padding:.1em .5em;color:#f44">✕</button>`;
+      row.querySelector('button').addEventListener('click', () => {
+        ipcRenderer.invoke('remove-server-whitelist', { serverId: selectedServerId, player: p }).then(loadWhitelist);
+      });
+      container.appendChild(row);
+    });
+  }
+
+  // Resource Pack upload
+  document.getElementById('server-rp-file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file || !editingServerId) return;
+    const buf = await file.arrayBuffer();
+    const data = new Uint8Array(buf);
+    const result = await ipcRenderer.invoke('upload-server-rp', { serverId: editingServerId, filename: file.name, data: Array.from(data) });
+    if (result) {
+      document.getElementById('server-rp-url').value = file.name;
+    }
+  });
+
+  // IPC listeners for server events
+  ipcRenderer.on('server-log', (_, { id, line }) => {
+    if(id !== selectedServerId) return;
+    const con = document.getElementById('server-console');
+    if(con){
+      con.innerHTML += escHtml(line) + '\n';
+      con.scrollTop = con.scrollHeight;
+    }
+  });
+  ipcRenderer.on('server-started', (_, { id }) => {
+    renderServerList();
+    if(id === selectedServerId) document.getElementById('server-console-status').textContent = '● Running';
+  });
+  ipcRenderer.on('server-stopped', (_, { id }) => {
+    renderServerList();
+    if(id === selectedServerId) document.getElementById('server-console-status').textContent = '○ Stopped';
+  });
+  ipcRenderer.on('server-error', (_, { id, error }) => {
+    if(id === selectedServerId){
+      const con = document.getElementById('server-console');
+      if(con){ con.innerHTML += escHtml('[ERROR] ' + error) + '\n'; con.scrollTop = con.scrollHeight; }
+      document.getElementById('server-console-status').textContent = '○ Error';
+    }
+    renderServerList();
+  });
+
+  renderServerList();
+})();
+
+// ════════════════════════════════════════
+// UPDATES
+// ════════════════════════════════════════
+let pendingUpdate = null;
+let updateInstalling = false;
+
+async function checkForUpdates(silent) {
+  const statusEl = document.getElementById('update-status');
+  const btn = document.getElementById('check-update-btn');
+  if (!silent && btn) { btn.textContent = 'Checking...'; btn.disabled = true; }
+  try {
+    const result = await ipcRenderer.invoke('check-for-update');
+    if (result.updateAvailable) {
+      pendingUpdate = result;
+      if (!silent) {
+        statusEl.style.display = 'block';
+        statusEl.style.color = '#5f5';
+        statusEl.textContent = `Update available: v${result.newVersion}`;
+      }
+      showUpdateOverlay(result);
+    } else {
+      if (!silent) {
+        statusEl.style.display = 'block';
+        statusEl.style.color = '#5f5';
+        statusEl.textContent = result.error ? 'Update check failed: ' + result.error : 'Launcher is up to date!';
+        setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+      }
+    }
+  } catch (e) {
+    if (!silent) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#f44';
+      statusEl.textContent = 'Update check failed: ' + e.message;
+    }
+  }
+  if (!silent && btn) { btn.textContent = 'Check for Updates'; btn.disabled = false; }
+}
+
+function showUpdateOverlay(info) {
+  const overlay = document.getElementById('update-overlay');
+  overlay.style.display = 'flex';
+  document.getElementById('update-title').textContent = 'Update Available';
+  document.getElementById('update-version-text').textContent = `v${info.currentVersion} → v${info.newVersion}`;
+  const notesBox = document.getElementById('update-notes-box');
+  if (info.releaseNotes && info.releaseNotes.trim()) {
+    notesBox.textContent = info.releaseNotes;
+    notesBox.style.display = 'block';
+  } else {
+    notesBox.style.display = 'none';
+  }
+  document.getElementById('update-progress-wrap').style.display = 'none';
+  document.getElementById('update-error-text').style.display = 'none';
+  document.getElementById('update-done-text').style.display = 'none';
+  if (info.downloadUrl) {
+    document.getElementById('update-install-btn').style.display = 'inline-block';
+  } else {
+    document.getElementById('update-install-btn').style.display = 'none';
+  }
+  document.getElementById('update-close-btn').style.display = 'inline-block';
+  document.getElementById('update-start-install-btn').style.display = 'none';
+}
+
+document.getElementById('update-install-btn').addEventListener('click', async () => {
+  if (!pendingUpdate || !pendingUpdate.downloadUrl) return;
+  const installBtn = document.getElementById('update-install-btn');
+  const closeBtn = document.getElementById('update-close-btn');
+  installBtn.style.display = 'none';
+  closeBtn.style.display = 'none';
+  document.getElementById('update-progress-wrap').style.display = 'block';
+  document.getElementById('update-error-text').style.display = 'none';
+  try {
+    const installerPath = await ipcRenderer.invoke('download-update', pendingUpdate.downloadUrl);
+    document.getElementById('update-progress-wrap').style.display = 'none';
+    document.getElementById('update-done-text').textContent = 'Download complete! Click Install to update.';
+    document.getElementById('update-done-text').style.display = 'block';
+    document.getElementById('update-start-install-btn').style.display = 'inline-block';
+    document.getElementById('update-start-install-btn').onclick = () => {
+      ipcRenderer.invoke('install-update', installerPath);
+    };
+  } catch (e) {
+    document.getElementById('update-progress-wrap').style.display = 'none';
+    document.getElementById('update-error-text').textContent = 'Download failed: ' + e.message;
+    document.getElementById('update-error-text').style.display = 'block';
+    installBtn.style.display = 'inline-block';
+    closeBtn.style.display = 'inline-block';
+  }
+});
+
+document.getElementById('update-close-btn').addEventListener('click', () => {
+  document.getElementById('update-overlay').style.display = 'none';
+});
+
+ipcRenderer.on('update-download-progress', (_, { downloaded, total }) => {
+  const pct = total ? Math.round((downloaded / total) * 100) : 0;
+  const mb = (downloaded / 1048576).toFixed(1);
+  const totalMb = total ? (total / 1048576).toFixed(0) : '?';
+  document.getElementById('update-progress-bar').style.width = pct + '%';
+  document.getElementById('update-progress-text').textContent = `${mb} MB / ${totalMb} MB (${pct}%)`;
+});
+
+document.getElementById('check-update-btn').addEventListener('click', () => checkForUpdates(false));
 </script>
 </body>
 </html>

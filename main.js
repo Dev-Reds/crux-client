@@ -1948,6 +1948,110 @@ function showCrashWindow(instanceId, code, log) {
   cw.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
 }
 
+// ── Update ────────────────────────────────────────────────────────────────────
+const CURRENT_VERSION = require('./package.json').version;
+const GITHUB_REPO = 'Dev-Reds/crux-client';
+
+function fetchJsonHttps(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'User-Agent': 'CruxClient' } }, res => {
+      if (res.statusCode === 301 || res.statusCode === 302) {
+        return fetchJsonHttps(res.headers.location).then(resolve, reject);
+      }
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => { try { resolve(JSON.parse(data)); } catch { reject(new Error('JSON parse error')); } });
+    }).on('error', reject);
+  });
+}
+
+function downloadFile(url, destPath, onProgress) {
+  return new Promise((resolve, reject) => {
+    const doRequest = (reqUrl) => {
+      const lib = reqUrl.startsWith('https') ? https : http;
+      lib.get(reqUrl, { headers: { 'User-Agent': 'CruxClient' } }, res => {
+        if (res.statusCode === 301 || res.statusCode === 302) {
+          return doRequest(res.headers.location);
+        }
+        if (res.statusCode !== 200) return reject(new Error('HTTP ' + res.statusCode));
+        const total = parseInt(res.headers['content-length'], 10) || 0;
+        let downloaded = 0;
+        const ws = fs.createWriteStream(destPath);
+        res.on('data', chunk => {
+          downloaded += chunk.length;
+          if (onProgress && total) onProgress(downloaded, total);
+        });
+        res.pipe(ws);
+        ws.on('finish', () => { ws.close(); resolve(destPath); });
+        ws.on('error', reject);
+      }).on('error', reject);
+    };
+    doRequest(url);
+  });
+}
+
+function parseVersion(v) {
+  return v.replace(/^v/, '').split('.').map(Number);
+}
+
+function isNewer(remote, local) {
+  const r = parseVersion(remote);
+  const l = parseVersion(local);
+  for (let i = 0; i < Math.max(r.length, l.length); i++) {
+    const a = r[i] || 0, b = l[i] || 0;
+    if (a > b) return true;
+    if (a < b) return false;
+  }
+  return false;
+}
+
+ipcMain.handle('check-for-update', async () => {
+  try {
+    const releases = await fetchJsonHttps(`https://api.github.com/repos/${GITHUB_REPO}/releases`);
+    if (!Array.isArray(releases) || !releases.length) return { updateAvailable: false };
+    const versioned = releases.filter(r => r.tag_name && /^v?\d+\.\d+\.\d+/.test(r.tag_name) && !r.prerelease);
+    if (!versioned.length) return { updateAvailable: false };
+    versioned.sort((a, b) => {
+      const av = parseVersion(a.tag_name), bv = parseVersion(b.tag_name);
+      for (let i = 0; i < Math.max(av.length, bv.length); i++) {
+        const diff = (av[i] || 0) - (bv[i] || 0);
+        if (diff !== 0) return diff;
+      }
+      return 0;
+    });
+    const latest = versioned[versioned.length - 1];
+    const latestVersion = latest.tag_name.replace(/^v/, '');
+    if (isNewer(latestVersion, CURRENT_VERSION)) {
+      const installer = latest.assets.find(a => a.name === 'Crux-Client-Installer.exe');
+      return {
+        updateAvailable: true,
+        currentVersion: CURRENT_VERSION,
+        newVersion: latestVersion,
+        releaseNotes: latest.body || '',
+        downloadUrl: installer ? installer.browser_download_url : null,
+      };
+    }
+    return { updateAvailable: false, currentVersion: CURRENT_VERSION };
+  } catch (e) {
+    return { updateAvailable: false, error: e.message };
+  }
+});
+
+ipcMain.handle('download-update', async (e, downloadUrl) => {
+  const destDir = path.join(base, 'Cache');
+  await fs.promises.mkdir(destDir, { recursive: true });
+  const destPath = path.join(destDir, 'Crux-Client-Update.exe');
+  await downloadFile(downloadUrl, destPath, (downloaded, total) => {
+    if (mainWindow) mainWindow.webContents.send('update-download-progress', { downloaded, total });
+  });
+  return destPath;
+});
+
+ipcMain.handle('install-update', async (e, installerPath) => {
+  if (mainWindow) mainWindow.hide();
+  exec(`"${installerPath}"`, () => { app.quit(); });
+});
+
 // ── Uninstall ─────────────────────────────────────────────────────────────────
 ipcMain.handle('uninstall-app', async () => {
   if (mainWindow) mainWindow.destroy();
