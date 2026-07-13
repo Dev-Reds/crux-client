@@ -4171,7 +4171,7 @@ document.getElementById('update-install-btn').addEventListener('click', async ()
   document.getElementById('update-error-text').style.display = 'none';
   document.getElementById('update-done-text').style.display = 'none';
   try {
-    await ipcRenderer.invoke('download-and-install-update', pendingUpdate.downloadUrl);
+    await ipcRenderer.invoke('download-and-install-update', pendingUpdate.downloadUrl, pendingUpdate.installerUrl);
     document.getElementById('update-progress-wrap').style.display = 'none';
     document.getElementById('update-done-text').textContent = 'Update installed! Restarting...';
     document.getElementById('update-done-text').style.display = 'block';

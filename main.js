@@ -2064,14 +2064,17 @@ ipcMain.handle('check-for-update', async () => {
     updateLog(`Latest: v${latestVersion}, Local: v${CURRENT_VERSION}, Newer: ${newer}`);
     if (newer) {
       const launcherZip = latest.assets.find(a => a.name === 'Launcher.zip');
+      const installer = latest.assets.find(a => a.name.endsWith('.exe') && a.name.includes('Installer'));
       const url = launcherZip ? launcherZip.browser_download_url : null;
-      updateLog(`Update available! Download: ${url || 'NO LAUNCHER.ZIP'}`);
+      const installerUrl = installer ? installer.browser_download_url : null;
+      updateLog(`Update available! Launcher.zip: ${url ? 'yes' : 'NO'} | Installer: ${installerUrl ? installer.name : 'NO'}`);
       return {
         updateAvailable: true,
         currentVersion: CURRENT_VERSION,
         newVersion: latestVersion,
         releaseNotes: latest.body || '',
         downloadUrl: url,
+        installerUrl: installerUrl,
       };
     }
     updateLog('Up to date!');
@@ -2082,18 +2085,15 @@ ipcMain.handle('check-for-update', async () => {
   }
 });
 
-ipcMain.handle('download-and-install-update', async (e, downloadUrl) => {
+ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUrl) => {
   const isAsar = __dirname.endsWith('app.asar') || process.env.APPIMAGE;
   const send = (...a) => { try { mainWindow.webContents.send(...a); } catch {} };
 
   if (isAsar) {
     // Installed version: download installer exe and run it
     updateLog('Installed version detected — downloading installer...');
-    const installerUrl = downloadUrl.replace(/Launcher\.zip$/i, 'Crux-Client-Windows-Installer.exe');
-    const tmpDir = path.join(process.env.TEMP || process.env.LOCALAPPDATA || '.', 'CruxUpdate');
-    await fs.promises.mkdir(tmpDir, { recursive: true });
-    const installerPath = path.join(tmpDir, 'Crux-Client-Installer.exe');
-    updateLog(`Downloading installer from: ${installerPath}`);
+    const exeUrl = installerUrl || downloadUrl.replace(/Launcher\.zip$/i, 'Crux-Client-Windows-Installer.exe');
+    updateLog(`Installer URL: ${exeUrl}`);
 
     // Download installer with progress
     await new Promise((resolve, reject) => {
