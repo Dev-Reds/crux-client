@@ -2064,7 +2064,7 @@ ipcMain.handle('check-for-update', async () => {
     updateLog(`Latest: v${latestVersion}, Local: v${CURRENT_VERSION}, Newer: ${newer}`);
     if (newer) {
       const launcherZip = latest.assets.find(a => a.name === 'Launcher.zip');
-      const installer = latest.assets.find(a => a.name.endsWith('.exe') && a.name.includes('Installer'));
+      const installer = latest.assets.find(a => a.name === 'Crux-Client-Installer.exe' || (a.name.endsWith('.exe') && a.name.includes('Installer')));
       const url = launcherZip ? launcherZip.browser_download_url : null;
       const installerUrl = installer ? installer.browser_download_url : null;
       updateLog(`Update available! Launcher.zip: ${url ? 'yes' : 'NO'} | Installer: ${installerUrl ? installer.name : 'NO'}`);
@@ -2092,7 +2092,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
   if (isAsar) {
     // Installed version: download installer exe and run it
     updateLog('Installed version detected — downloading installer...');
-    const exeUrl = installerUrl || downloadUrl.replace(/Launcher\.zip$/i, 'Crux-Client-Windows-Installer.exe');
+    const exeUrl = installerUrl || downloadUrl.replace(/Launcher\.zip$/i, 'Crux-Client-Installer.exe');
     updateLog(`Installer URL: ${exeUrl}`);
 
     // Download installer with progress

@@ -59,7 +59,7 @@
                                "createDesktopShortcut":  true,
                                "createStartMenuShortcut":  true,
                                "shortcutName":  "Crux Client",
-                               "artifactName":  "Crux-Client-Windows-Installer.exe",
+                               "artifactName":  "Crux-Client-Installer.exe",
                                "installerIcon":  "icons/icon.ico",
                                "uninstallerIcon":  "icons/icon.ico"
                            },
