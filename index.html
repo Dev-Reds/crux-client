@@ -1182,9 +1182,8 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <p id="update-progress-text" style="color:#aaa;font-size:.8em;margin:0"></p>
     </div>
     <div style="display:flex;gap:.8em;justify-content:center">
-      <button class="btn btn-primary" id="update-install-btn" style="display:none">Download & Install</button>
+      <button class="btn btn-primary" id="update-install-btn" style="display:none">Update & Restart</button>
       <button class="btn" id="update-close-btn" style="display:none">Later</button>
-      <button class="btn btn-primary" id="update-start-install-btn" style="display:none">Install & Restart</button>
     </div>
     <p id="update-error-text" style="color:#f44;font-size:.85em;margin-top:1em;display:none"></p>
     <p id="update-done-text" style="color:#5f5;font-size:.85em;margin-top:1em;display:none"></p>
@@ -4020,7 +4019,7 @@ function showUpdateOverlay(info) {
     document.getElementById('update-install-btn').style.display = 'none';
   }
   document.getElementById('update-close-btn').style.display = 'inline-block';
-  document.getElementById('update-start-install-btn').style.display = 'none';
+  document.getElementById('update-done-text').style.display = 'none';
 }
 
 document.getElementById('update-install-btn').addEventListener('click', async () => {
@@ -4031,18 +4030,15 @@ document.getElementById('update-install-btn').addEventListener('click', async ()
   closeBtn.style.display = 'none';
   document.getElementById('update-progress-wrap').style.display = 'block';
   document.getElementById('update-error-text').style.display = 'none';
+  document.getElementById('update-done-text').style.display = 'none';
   try {
-    const installerPath = await ipcRenderer.invoke('download-update', pendingUpdate.downloadUrl);
+    await ipcRenderer.invoke('download-and-install-update', pendingUpdate.downloadUrl);
     document.getElementById('update-progress-wrap').style.display = 'none';
-    document.getElementById('update-done-text').textContent = 'Download complete! Click Install to update.';
+    document.getElementById('update-done-text').textContent = 'Update installed! Restarting...';
     document.getElementById('update-done-text').style.display = 'block';
-    document.getElementById('update-start-install-btn').style.display = 'inline-block';
-    document.getElementById('update-start-install-btn').onclick = () => {
-      ipcRenderer.invoke('install-update', installerPath);
-    };
   } catch (e) {
     document.getElementById('update-progress-wrap').style.display = 'none';
-    document.getElementById('update-error-text').textContent = 'Download failed: ' + e.message;
+    document.getElementById('update-error-text').textContent = 'Update failed: ' + e.message;
     document.getElementById('update-error-text').style.display = 'block';
     installBtn.style.display = 'inline-block';
     closeBtn.style.display = 'inline-block';

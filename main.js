@@ -1951,6 +1951,7 @@ function showCrashWindow(instanceId, code, log) {
 // ── Update ────────────────────────────────────────────────────────────────────
 const CURRENT_VERSION = require('./package.json').version;
 const GITHUB_REPO = 'Dev-Reds/crux-client';
+const JSZip = require('jszip');
 
 function fetchJsonHttps(url) {
   return new Promise((resolve, reject) => {
@@ -1965,7 +1966,7 @@ function fetchJsonHttps(url) {
   });
 }
 
-function downloadFile(url, destPath, onProgress) {
+function downloadBuffer(url) {
   return new Promise((resolve, reject) => {
     const doRequest = (reqUrl) => {
       const lib = reqUrl.startsWith('https') ? https : http;
@@ -1976,14 +1977,13 @@ function downloadFile(url, destPath, onProgress) {
         if (res.statusCode !== 200) return reject(new Error('HTTP ' + res.statusCode));
         const total = parseInt(res.headers['content-length'], 10) || 0;
         let downloaded = 0;
-        const ws = fs.createWriteStream(destPath);
+        const chunks = [];
         res.on('data', chunk => {
+          chunks.push(chunk);
           downloaded += chunk.length;
-          if (onProgress && total) onProgress(downloaded, total);
+          if (mainWindow) mainWindow.webContents.send('update-download-progress', { downloaded, total });
         });
-        res.pipe(ws);
-        ws.on('finish', () => { ws.close(); resolve(destPath); });
-        ws.on('error', reject);
+        res.on('end', () => resolve(Buffer.concat(chunks)));
       }).on('error', reject);
     };
     doRequest(url);
@@ -2022,13 +2022,13 @@ ipcMain.handle('check-for-update', async () => {
     const latest = versioned[versioned.length - 1];
     const latestVersion = latest.tag_name.replace(/^v/, '');
     if (isNewer(latestVersion, CURRENT_VERSION)) {
-      const installer = latest.assets.find(a => a.name === 'Crux-Client-Installer.exe');
+      const launcherZip = latest.assets.find(a => a.name === 'Launcher.zip');
       return {
         updateAvailable: true,
         currentVersion: CURRENT_VERSION,
         newVersion: latestVersion,
         releaseNotes: latest.body || '',
-        downloadUrl: installer ? installer.browser_download_url : null,
+        downloadUrl: launcherZip ? launcherZip.browser_download_url : null,
       };
     }
     return { updateAvailable: false, currentVersion: CURRENT_VERSION };
@@ -2037,19 +2037,26 @@ ipcMain.handle('check-for-update', async () => {
   }
 });
 
-ipcMain.handle('download-update', async (e, downloadUrl) => {
-  const destDir = path.join(base, 'Cache');
-  await fs.promises.mkdir(destDir, { recursive: true });
-  const destPath = path.join(destDir, 'Crux-Client-Update.exe');
-  await downloadFile(downloadUrl, destPath, (downloaded, total) => {
-    if (mainWindow) mainWindow.webContents.send('update-download-progress', { downloaded, total });
+ipcMain.handle('download-and-install-update', async (e, downloadUrl) => {
+  const buffer = await downloadBuffer(downloadUrl);
+  const zip = await JSZip.loadAsync(buffer);
+  const appDir = __dirname;
+  const keepFiles = ['node_modules', '.git', 'installer', 'scripts', 'exe', 'icons', 'client-mod', '.github', '.vscode', '.opencode'];
+  const promises = [];
+  zip.forEach((relativePath, zipEntry) => {
+    if (zipEntry.dir) return;
+    const parts = relativePath.split('/');
+    if (parts.length > 1 && keepFiles.includes(parts[0])) return;
+    if (parts[0] === 'package-lock.json') return;
+    if (relativePath.includes('..')) return;
+    const dest = path.join(appDir, relativePath);
+    promises.push(zipEntry.async('nodebuffer').then(data => {
+      return fs.promises.writeFile(dest, data);
+    }));
   });
-  return destPath;
-});
-
-ipcMain.handle('install-update', async (e, installerPath) => {
-  if (mainWindow) mainWindow.hide();
-  exec(`"${installerPath}"`, () => { app.quit(); });
+  await Promise.all(promises);
+  app.relaunch();
+  app.quit();
 });
 
 // ── Uninstall ─────────────────────────────────────────────────────────────────
