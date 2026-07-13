@@ -468,7 +468,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
 
   const instanceId = `inst_${++instanceCounter}`;
   instances[instanceId] = { id:instanceId, version, startTime:Date.now(), logs:[], crashed:false, process:null, sessionRetried:false };
-  mainWindow.webContents.send('instance-started', { id:instanceId, version, profileId, profileName, startTime:instances[instanceId].startTime });
+  mainWindow.webContents.send('instance-started', { id:instanceId, version, profileId, profileName, startTime:instances[instanceId].startTime, serverAddress: data.serverAddress||null, serverPort: data.serverPort||null, serverName: data.serverName||null });
 
   const send = (ch,...a) => { try { mainWindow.webContents.send(ch,...a); } catch {} };
 
@@ -1728,6 +1728,12 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       if (!gameArgs.some(a => a === '--gameDir' || a === '-d')) gameArgs.push('--gameDir', P.mc);
       if (!gameArgs.some(a => a === '--assetsDir')) gameArgs.push('--assetsDir', path.join(P.mc, 'assets'));
 
+      // Direct server connect from Recent
+      if (data.serverAddress) {
+        gameArgs.push('--server', data.serverAddress);
+        if (data.serverPort) gameArgs.push('--port', String(data.serverPort));
+      }
+
       // Crux Client custom arg — placed AFTER -cp but before mainClass
       // forge.eagerDisplay=false disables NeoForge EarlyDisplay entirely
       // fml.earlyWindowControl=false is an alternative property name
@@ -1842,13 +1848,22 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         mclcCustomArgs.push(`-Dorg.lwjgl.opengl.libpath=${mclcMesaDir}`);
         mclcCustomArgs.push('-Dorg.lwjgl.opengl.libname=opengl32');
       }
+      // Direct server connect from Recent
+      const mclcVersionObj = JSON.parse(JSON.stringify(versionObj));
+      if (data.serverAddress) {
+        if (!mclcVersionObj.arguments) mclcVersionObj.arguments = {};
+        if (!mclcVersionObj.arguments.game) mclcVersionObj.arguments.game = [];
+        mclcVersionObj.arguments.game.push('--server', data.serverAddress);
+        if (data.serverPort) mclcVersionObj.arguments.game.push('--port', String(data.serverPort));
+        send('instance-log', { instanceId, line: `[LAUNCH] Direct connect: ${data.serverAddress}:${data.serverPort || 25565}` });
+      }
       return new Promise((resolve) => {
         const launcher = new Client();
         const launchOpts = {
           clientPackage: null,
           authorization: auth,
           root: P.mc,
-          version: versionObj,
+          version: mclcVersionObj,
           memory: { max: maxRam, min: minRam },
           javaPath: resolvedJava,
           customArgs: mclcCustomArgs,

@@ -488,7 +488,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <button class="btn btn-sm" id="recent-clear-btn" style="color:#f44;width:auto">Clear History</button>
         <span style="font-size:.8em;color:#555" id="recent-count"></span>
       </div>
-      <div class="profile-list" id="recent-list"></div>
+      <div id="recent-sections"></div>
     </div>
 
     <!-- ══ CAPE & COSMETICS ══ -->
@@ -1206,6 +1206,7 @@ let editingProfileId=null, editingPackData={};
 let currentAccentIdx=5;
 let searchDebounce=null, modSearchOffset=0, modSearchQuery='', isLoadingMods=false;
 let instances={}, selectedInstanceId=null;
+let pendingLaunchServer=null;
 const PAGE_SIZE=15;
 
 // ════════════════════════════════════════
@@ -1707,8 +1708,12 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
     refreshToken: acc?.refreshToken||null,
     clientToken: acc?.clientToken||null,
     useOriginalLauncher: settings.useOriginalLauncher||false,
-    renderApi: profile?.renderApi||'opengl'
+    renderApi: profile?.renderApi||'opengl',
+    serverAddress: pendingLaunchServer?.address||null,
+    serverPort: pendingLaunchServer?.port||null,
+    serverName: pendingLaunchServer?.name||null
   });
+  pendingLaunchServer=null;
 });
 
 // No Java found — auto-scan
@@ -1776,8 +1781,19 @@ ipcRenderer.on('instance-started',(_,inst)=>{
   if(settings.openLogsAfterLaunch) showPage('logs-page');
   if(settings.closeLauncherWhilePlaying) ipcRenderer.send('close-launcher');
   const p=profiles.find(x=>x.id===inst.profileId);
-  recentHistory.unshift({ type:'world', profileId:inst.profileId, profileName:inst.profileName||p?.name||'World', version:inst.version, modLoader:p?.modLoader||'', time:Date.now() });
-  if(recentHistory.length>10) recentHistory=recentHistory.slice(0,10);
+  const entry={ profileId:inst.profileId, profileName:inst.profileName||p?.name||'World', version:inst.version, modLoader:p?.modLoader||'', time:Date.now() };
+  if(inst.serverAddress){
+    entry.type='server';
+    entry.serverAddress=inst.serverAddress;
+    entry.serverPort=inst.serverPort||25565;
+    entry.serverName=inst.serverName||inst.serverAddress;
+  } else if(p?.modLoader && p.modLoader!=='vanilla'){
+    entry.type='instance';
+  } else {
+    entry.type='world';
+  }
+  recentHistory.unshift(entry);
+  if(recentHistory.length>15) recentHistory=recentHistory.slice(0,15);
   settings.recentHistory=recentHistory; saveSettings();
 });
 ipcRenderer.on('instance-log',(_,{instanceId,line})=>{
@@ -1785,6 +1801,37 @@ ipcRenderer.on('instance-log',(_,{instanceId,line})=>{
   if(!instances[instanceId].logs)instances[instanceId].logs=[];
   instances[instanceId].logs.push(line);
   if(selectedInstanceId===instanceId){ appendLogLine(line); }
+  // Detect server connection from MC logs
+  if(!instances[instanceId]._serverDetected){
+    const low=line.toLowerCase();
+    // Patterns: "Connecting to server, host:port" / "Connecting to host,port" / "Server IP: host"
+    let match=null;
+    if((match=line.match(/Connecting to\s+(?:server,?\s*)?([^\s:,]+)[,:](\d+)/i))){
+      match={host:match[1],port:parseInt(match[2])};
+    } else if((match=line.match(/Server IP:\s*([^\s]+)/i))){
+      match={host:match[1],port:25565};
+    }
+    if(match && match.host){
+      instances[instanceId]._serverDetected=true;
+      const inst=instances[instanceId];
+      const srvName=match.host;
+      // Add to recent history as server entry
+      recentHistory.unshift({
+        type:'server',
+        serverName:srvName,
+        serverAddress:match.host,
+        serverPort:match.port,
+        profileId:inst.profileId||null,
+        profileName:inst.profileName||'',
+        version:inst.version||'',
+        modLoader:inst.modLoader||'',
+        instanceId:instanceId,
+        time:Date.now()
+      });
+      if(recentHistory.length>15) recentHistory=recentHistory.slice(0,15);
+      settings.recentHistory=recentHistory; saveSettings();
+    }
+  }
 });
 ipcRenderer.on('instance-closed',(_,{instanceId,code})=>{
   if(instances[instanceId]){instances[instanceId].status=code===0?'closed':'crashed';}
@@ -1987,32 +2034,110 @@ async function checkLoaderAvailability(mcVersion){
 
 // ══ RECENT PLAYED ══
 function renderRecentList(){
-  const el=document.getElementById('recent-list'); el.innerHTML='';
+  const el=document.getElementById('recent-sections'); el.innerHTML='';
   const clearBtn=document.getElementById('recent-clear-btn');
-  document.getElementById('recent-count').textContent=`${recentHistory.length}/10`;
-  if(clearBtn) clearBtn.style.display=recentHistory.length?'':'none';
-  if(!recentHistory.length){ el.innerHTML='<div class="mod-list-empty">No recent activity yet.</div>'; return; }
-  recentHistory.forEach((r,i)=>{
-    const item=document.createElement('div'); item.className='profile-item';
-    const date=new Date(r.time).toLocaleString();
-    item.innerHTML=`
-      <span class="profile-name">${escHtml(r.profileName||r.worldName||'World')}</span>
-      <span class="profile-meta">${r.version||'?'} · ${r.modLoader||''} · ${date}</span>
-      <button class="btn btn-sm recent-launch-btn" style="width:auto">▶ Play</button>
-      <button class="btn btn-sm recent-remove-btn" style="width:auto;padding:.2em .5em;color:#f44">✕</button>`;
-    item.querySelector('.recent-launch-btn').addEventListener('click',()=>{
-      const p=profiles.find(x=>x.id===r.profileId);
-      if(p){
-        document.getElementById('profileSelect').value=p.id;
-        settings.selectedProfile=p.id;
-        saveSettings();
-        showPage('launch-page');
-        document.getElementById('launch-btn').click();
+  const total=recentHistory.length;
+  document.getElementById('recent-count').textContent=`${total} entries`;
+  if(clearBtn) clearBtn.style.display=total?'':'none';
+  if(!total){ el.innerHTML='<div class="mod-list-empty">No recent activity yet.</div>'; return; }
+
+  const categories=[
+    { type:'server', title:'Servers', icon:'🌐', emptyMsg:'No servers joined yet.' },
+    { type:'instance', title:'Instances', icon:'📦', emptyMsg:'No instances launched yet.' },
+    { type:'world', title:'Worlds', icon:'🌍', emptyMsg:'No worlds played yet.' },
+  ];
+  const MAX_PER_CAT=5;
+
+  for(const cat of categories){
+    const items=recentHistory.filter(r=>r.type===cat.type).slice(0,MAX_PER_CAT);
+    const section=document.createElement('div');
+    section.style.cssText='margin-bottom:1em';
+    section.innerHTML=`<h2 style="font-size:1em;color:#aaa;margin-bottom:.5em">${cat.icon} ${cat.title} <span style="color:#555;font-weight:normal">(${items.length}${recentHistory.filter(r=>r.type===cat.type).length>MAX_PER_CAT?' of '+recentHistory.filter(r=>r.type===cat.type).length:''})</span></h2>`;
+
+    if(!items.length){
+      section.innerHTML+=`<div class="mod-list-empty" style="font-size:.8em">${cat.emptyMsg}</div>`;
+      el.appendChild(section);
+      continue;
+    }
+
+    const list=document.createElement('div');
+    list.className='profile-list';
+    items.forEach((r,i)=>{
+      const globalIdx=recentHistory.indexOf(r);
+      const item=document.createElement('div');
+      item.className='profile-item';
+      const date=new Date(r.time).toLocaleString();
+
+      if(cat.type==='server'){
+        const addr=r.serverAddress?`${r.serverAddress}:${r.serverPort||25565}`:'';
+        const metaParts=[addr];
+        if(r.version) metaParts.push(r.version);
+        if(r.profileName) metaParts.push(r.profileName);
+        metaParts.push(date);
+        item.innerHTML=`
+          <span class="profile-name">${escHtml(r.serverName||r.profileName||'Server')}</span>
+          <span class="profile-meta">${metaParts.join(' · ')}</span>
+          <button class="btn btn-sm recent-join-btn" style="width:auto">▶ Join</button>
+          <button class="btn btn-sm recent-remove-btn" style="width:auto;padding:.2em .5em;color:#f44">✕</button>`;
+        item.querySelector('.recent-join-btn').addEventListener('click',async()=>{
+          // Check if local server is running, start if not
+          if(r.localServerId){
+            const st=await ipcRenderer.invoke('get-server-status',r.localServerId);
+            if(st.status!=='running'){
+              ipcRenderer.send('start-server',r.localServerData||{id:r.localServerId,address:r.serverAddress||'localhost',port:r.serverPort||25565});
+            }
+          }
+          // Select the same profile used when the server was joined
+          const p=r.profileId?profiles.find(x=>x.id===r.profileId):profiles[0];
+          if(p){
+            document.getElementById('profileSelect').value=p.id;
+            settings.selectedProfile=p.id;
+            saveSettings();
+          }
+          pendingLaunchServer={address:r.serverAddress,port:r.serverPort||25565,name:r.serverName||r.serverAddress};
+          showPage('launch-page');
+          setTimeout(()=>document.getElementById('launch-btn').click(),200);
+        });
+      } else if(cat.type==='instance'){
+        item.innerHTML=`
+          <span class="profile-name">${escHtml(r.profileName||'Instance')}</span>
+          <span class="profile-meta">${r.version||'?'} · ${r.modLoader||''} · ${date}</span>
+          <button class="btn btn-sm recent-launch-btn" style="width:auto">▶ Launch</button>
+          <button class="btn btn-sm recent-remove-btn" style="width:auto;padding:.2em .5em;color:#f44">✕</button>`;
+        item.querySelector('.recent-launch-btn').addEventListener('click',()=>{
+          const p=profiles.find(x=>x.id===r.profileId);
+          if(p){
+            document.getElementById('profileSelect').value=p.id;
+            settings.selectedProfile=p.id;
+            saveSettings();
+            showPage('launch-page');
+            setTimeout(()=>document.getElementById('launch-btn').click(),200);
+          }
+        });
+      } else { // world
+        item.innerHTML=`
+          <span class="profile-name">${escHtml(r.profileName||r.worldName||'World')}</span>
+          <span class="profile-meta">${r.version||'?'} · ${r.modLoader||''} · ${date}</span>
+          <button class="btn btn-sm recent-launch-btn" style="width:auto">▶ Play</button>
+          <button class="btn btn-sm recent-remove-btn" style="width:auto;padding:.2em .5em;color:#f44">✕</button>`;
+        item.querySelector('.recent-launch-btn').addEventListener('click',()=>{
+          const p=profiles.find(x=>x.id===r.profileId);
+          if(p){
+            document.getElementById('profileSelect').value=p.id;
+            settings.selectedProfile=p.id;
+            saveSettings();
+            showPage('launch-page');
+            setTimeout(()=>document.getElementById('launch-btn').click(),200);
+          }
+        });
       }
+
+      item.querySelector('.recent-remove-btn')?.addEventListener('click',(e)=>{ e.stopPropagation(); recentHistory.splice(globalIdx,1); settings.recentHistory=recentHistory; saveSettings(); renderRecentList(); });
+      list.appendChild(item);
     });
-    item.querySelector('.recent-remove-btn')?.addEventListener('click',(e)=>{ e.stopPropagation(); recentHistory.splice(i,1); settings.recentHistory=recentHistory; saveSettings(); renderRecentList(); });
-    el.appendChild(item);
-  });
+    section.appendChild(list);
+    el.appendChild(section);
+  }
 }
 document.getElementById('recent-clear-btn').addEventListener('click',()=>{ recentHistory=[]; settings.recentHistory=[]; saveSettings(); renderRecentList(); });
 
@@ -3943,6 +4068,23 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
   ipcRenderer.on('server-started', (_, { id }) => {
     renderServerList();
     if(id === selectedServerId) document.getElementById('server-console-status').textContent = '● Running';
+    // Track server start in recent history
+    const srv=servers.find(x=>x.id===id);
+    if(srv){
+      recentHistory.unshift({
+        type:'server',
+        serverName:srv.name,
+        serverAddress:srv.address||'localhost',
+        serverPort:srv.port||25565,
+        localServerId:srv.id,
+        localServerData:srv,
+        profileId:srv.profileId||null,
+        version:srv.mcVersion||'',
+        time:Date.now()
+      });
+      if(recentHistory.length>15) recentHistory=recentHistory.slice(0,15);
+      settings.recentHistory=recentHistory; saveSettings();
+    }
   });
   ipcRenderer.on('server-stopped', (_, { id }) => {
     renderServerList();
