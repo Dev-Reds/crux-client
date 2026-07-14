@@ -3276,10 +3276,10 @@ function renderModList() {
   list.querySelectorAll('.mod-item').forEach(e=>e.remove());
 
   let filtered = installedMods;
-  if (modFilter === 'fabric')   filtered = installedMods.filter(m => !m.loader || m.loader === 'fabric' || m.loader === 'quilt' || m.loader === 'any');
-  if (modFilter === 'forge')    filtered = installedMods.filter(m => m.loader === 'forge' || m.loader === 'neoforge' || m.loader === 'any');
-  if (modFilter === 'quilt')    filtered = installedMods.filter(m => m.loader === 'quilt' || m.loader === 'fabric' || m.loader === 'any');
-  if (modFilter === 'neoforge') filtered = installedMods.filter(m => m.loader === 'neoforge' || m.loader === 'forge' || m.loader === 'any');
+  if (modFilter === 'fabric')   filtered = installedMods.filter(m => m.loader === 'fabric');
+  if (modFilter === 'forge')    filtered = installedMods.filter(m => m.loader === 'forge');
+  if (modFilter === 'quilt')    filtered = installedMods.filter(m => m.loader === 'quilt');
+  if (modFilter === 'neoforge') filtered = installedMods.filter(m => m.loader === 'neoforge');
   if (modFilter === 'disabled') filtered = installedMods.filter(m => m.disabled);
 
   if (!filtered.length) {

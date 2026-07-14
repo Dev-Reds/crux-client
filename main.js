@@ -1089,14 +1089,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       let toDeploy = [];
       for (const mod of normalMods) {
         if (mod.disabled) continue;
-        if (mod.loader) {
-          const compatible =
-            (modLoader === 'fabric'  && (mod.loader === 'fabric'  || mod.loader === 'quilt' || mod.loader === 'any')) ||
-            (modLoader === 'quilt'   && (mod.loader === 'quilt'   || mod.loader === 'fabric' || mod.loader === 'any')) ||
-            (modLoader === 'forge'   && (mod.loader === 'forge'   || mod.loader === 'neoforge' || mod.loader === 'any')) ||
-            (modLoader === 'neoforge'&& (mod.loader === 'neoforge'|| mod.loader === 'forge'   || mod.loader === 'any'));
-          if (!compatible) continue;
-        }
+        if (mod.loader && mod.loader !== modLoader) continue;
         const vm = mod.downloadAllVersions || mod.mcVersion === version || mod.mcVersion === 'all' || mod.mcVersion === 'latest';
         if (!vm) continue;
         toDeploy.push(mod);
