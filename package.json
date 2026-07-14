@@ -1,6 +1,6 @@
 {
     "name":  "files",
-    "version":  "1.0.3",
+    "version":  "1.0.5",
     "description":  "",
     "main":  "main.js",
     "scripts":  {
@@ -56,8 +56,8 @@
                                "perMachine":  false,
                                "allowToChangeInstallationDirectory":  true,
                                "deleteAppDataOnUninstall":  true,
-                               "createDesktopShortcut":  true,
-                               "createStartMenuShortcut":  true,
+                                "createDesktopShortcut":  "prompt",
+                                "createStartMenuShortcut":  "prompt",
                                "shortcutName":  "Crux Client",
                                "artifactName":  "Crux-Client-Installer.exe",
                                "installerIcon":  "icons/icon.ico",

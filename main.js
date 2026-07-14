@@ -49,7 +49,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width:1200, height:800, minWidth:900, minHeight:600,
     autoHideMenuBar:true,
-    icon: path.join(__dirname, 'Crux-Client.png'),
+    icon: path.join(__dirname, 'icons', 'icon.ico'),
     webPreferences:{ nodeIntegration:true, contextIsolation:false }
   });
   mainWindow.setMenu(null);
@@ -1119,6 +1119,8 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       const versionCache = new Map();
       const modsUpdated = [];
 
+      const existingFiles = fs.existsSync(modsDir) ? fs.readdirSync(modsDir) : [];
+
       for (const mod of toDeploy) {
         if (mod._isProfileMod) continue;
         if (!mod.modrinthId) continue;
@@ -1200,7 +1202,9 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         }
       }
 
-      const existingFiles = fs.existsSync(modsDir) ? fs.readdirSync(modsDir) : [];
+      // Refresh existingFiles after cleanup
+      existingFiles.length = 0;
+      existingFiles.push(...fs.readdirSync(modsDir).filter(f => f.endsWith('.jar')));
 
       // First pass: count already-downloaded mods
       let needsDownload = 0;
@@ -2094,6 +2098,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
     updateLog('Installed version detected — downloading installer...');
     const exeUrl = installerUrl || downloadUrl.replace(/Launcher\.zip$/i, 'Crux-Client-Installer.exe');
     updateLog(`Installer URL: ${exeUrl}`);
+    const installerPath = path.join(base, 'Crux-Client-Installer.exe');
 
     // Download installer with progress
     await new Promise((resolve, reject) => {
@@ -2114,7 +2119,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
           res.on('error', reject);
         }).on('error', reject);
       };
-      doRequest(installerUrl);
+      doRequest(exeUrl);
     });
 
     updateLog('Installer downloaded. Starting silent install...');

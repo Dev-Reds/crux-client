@@ -25,10 +25,8 @@ npm start
 
 ### Erste Schritte
 
-1. Code.zip herunterladen und entpacken
-2. Terminal im entpackten Ordner öffnen
-3. `npm install` ausführen (installiert alle Abhängigkeiten)
-4. `npm start` ausführen (startet den Launcher)
+1. Installer für deine Plattform herunterladen
+2. Installer ausführen
 
 ## Downloads
 
@@ -38,7 +36,6 @@ npm start
 | Linux | [Crux-Client-Linux-x64.zip](https://github.com/Dev-Reds/crux-client/releases/latest/download/Crux-Client-Linux-x64.zip) |
 | Linux | [Crux-Client-Linux-x64.tar.gz](https://github.com/Dev-Reds/crux-client/releases/latest/download/Crux-Client-Linux-x64.tar.gz) |
 | macOS | [Crux-Client-Mac-Installer.zip](https://github.com/Dev-Reds/crux-client/releases/latest/download/Crux-Client-Mac-Installer.zip) |
-| Quellcode | [Code.zip](https://github.com/Dev-Reds/crux-client/releases/latest/download/Code.zip) |
 
 ## Entwicklung
 
