@@ -1201,8 +1201,12 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       const deployIds = new Set(toDeploy.map(m => m.modrinthId).filter(Boolean));
       const existingJars = fs.readdirSync(modsDir).filter(f => f.endsWith('.jar'));
       for (const jar of existingJars) {
-        const idMatch = jar.match(/^([^-]+)-/);
-        if (idMatch && !deployIds.has(idMatch[1])) {
+        // Check if this jar belongs to any deployed mod (filename starts with modrinthId)
+        const isOwn = [...deployIds].some(id => jar.startsWith(id + '-') || jar.startsWith(id + '_'));
+        // Check if this jar looks like a launcher-deployed mod (any deployId is a prefix)
+        const looksDeployed = [...deployIds].some(id => jar.startsWith(id));
+        // Delete only if it looks launcher-deployed but doesn't match current profile
+        if (looksDeployed && !isOwn) {
           try { fs.unlinkSync(path.join(modsDir, jar)); } catch {}
         }
       }
