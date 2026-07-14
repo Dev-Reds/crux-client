@@ -1347,6 +1347,7 @@ function showPage(id){
       b.style.color=lightText?'#111':'#fff';
     } else { b.style.background=''; b.style.borderColor=''; b.style.color=''; }
   });
+  if(id==='mods-page') syncModFilterToProfile();
   if(id==='logs-page'){ refreshLogSelect(); updateStopButtons(); }
   if(id==='instances-page') renderInstanceList();
   if(id==='recent-page') renderRecentList();
@@ -1946,7 +1947,7 @@ function renderProfileList(){
     const item=document.createElement('div');
     item.className='profile-item'+(p.id===settings.selectedProfile?' sel':'');
     item.innerHTML=`<span class="profile-name">${p.name}${p.isModpack?'<span style="font-size:.7em;margin-left:.4em;padding:.1em .35em;border-radius:999px;background:#1bd96a22;color:#1bd96a;border:1px solid #1bd96a44">modpack</span>':''}</span><span class="profile-meta">${p.mcVersion||'Latest'} · ${p.modLoader||'fabric'} · ${(p.mods||[]).length} mods</span><button class="btn profile-share-btn" title="Share Profile">Share</button><button class="btn profile-edit-btn">Edit</button>`;
-    item.addEventListener('click',e=>{ if(e.target.classList.contains('profile-edit-btn')||e.target.classList.contains('profile-share-btn'))return; settings.selectedProfile=p.id; saveSettings(); renderProfileList(); updateLaunchProfileSelect(); });
+    item.addEventListener('click',e=>{ if(e.target.classList.contains('profile-edit-btn')||e.target.classList.contains('profile-share-btn'))return; settings.selectedProfile=p.id; saveSettings(); renderProfileList(); updateLaunchProfileSelect(); syncModFilterToProfile(); });
     item.querySelector('.profile-edit-btn').addEventListener('click',()=>openProfileModal(p.id));
     item.querySelector('.profile-share-btn').addEventListener('click',()=>{shareProfile(p.id);});
     el.appendChild(item);
@@ -1959,7 +1960,7 @@ function updateLaunchProfileSelect(){
   updateVersionDisplay();
 }
 
-document.getElementById('profileSelect').addEventListener('change',updateVersionDisplay);
+document.getElementById('profileSelect').addEventListener('change',()=>{ updateVersionDisplay(); const p=profiles.find(x=>x.id===document.getElementById('profileSelect').value); if(p){ settings.selectedProfile=p.id; saveSettings(); renderProfileList(); syncModFilterToProfile(); }});
 function updateVersionDisplay(){
   const p=profiles.find(x=>x.id===document.getElementById('profileSelect').value);
   document.getElementById('profile-version-display').textContent=p?(p.mcVersion||'Latest'):'';
@@ -3269,6 +3270,14 @@ document.querySelectorAll('.mod-filter-btn').forEach(btn => {
     renderModList();
   });
 });
+
+function syncModFilterToProfile(){
+  const p = profiles.find(x => x.id === settings.selectedProfile) || profiles[0];
+  const loader = p?.modLoader || 'fabric';
+  modFilter = loader;
+  document.querySelectorAll('.mod-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === loader));
+  renderModList();
+}
 
 function renderModList() {
   const list  = document.getElementById('mod-list');
