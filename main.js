@@ -525,25 +525,17 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         return v >= effectiveNeeded && v <= maxJavaForModLoader;
       });
 
-      // For non-Forge/NeoForge: if no exact match, use highest available Java (even if slightly below needed)
-      if (!valid.length && modLoader !== 'forge' && modLoader !== 'neoforge') {
-        const allAvailable = javas.filter(j => {
-          const v = parseInt(j.version)||0;
-          return v > 0 && v <= maxJavaForModLoader;
-        }).sort((a,b) => (parseInt(b.version)||0) - (parseInt(a.version)||0));
-        if (allAvailable.length) {
-          valid = [allAvailable[0]];
-          send('instance-log', { instanceId, line: `[JAVA] No Java ${effectiveNeeded}+ found, using best available: Java ${allAvailable[0].version}` });
-        }
-      }
-
       // Auto-download required Java from Adoptium if none found
       if (!valid.length) {
         const dlVer = Math.min(Math.max(effectiveNeeded, 17), 25);
         send('launch-progress', { instanceId, percent:3, message:`No Java ${effectiveNeeded}+ found. Downloading Java ${dlVer} from Adoptium...` });
         try {
-          const assets = await fetchJson(`https://api.adoptium.net/v3/assets/latest/${dlVer}/hotspot?os=windows&arch=x64&image_type=jre&heap_size=normal&vendor=eclipse`);
-          if (!assets || !assets.length) throw new Error('No Adoptium assets');
+          // Try JRE first, then JDK as fallback
+          let assets = await fetchJson(`https://api.adoptium.net/v3/assets/latest/${dlVer}/hotspot?os=windows&arch=x64&image_type=jre&heap_size=normal&vendor=eclipse`);
+          if (!assets || !assets.length) {
+            assets = await fetchJson(`https://api.adoptium.net/v3/assets/latest/${dlVer}/hotspot?os=windows&arch=x64&image_type=jdk&heap_size=normal&vendor=eclipse`);
+          }
+          if (!assets || !assets.length) throw new Error('No Adoptium assets for Java ' + dlVer);
           const asset = assets.find(a=>a.binary.package.link.endsWith('.zip')) || assets[0];
           const url = asset.binary.package.link;
           const fn  = path.basename(url.split('?')[0]);
@@ -554,6 +546,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             valid = [{ path: javaExeFound, version: String(dlVer) }];
             send('launch-progress', { instanceId, percent:10, message:`Java ${dlVer} already installed.` });
           } else {
+            send('launch-progress', { instanceId, percent:5, message:`Downloading Java ${dlVer}...` });
             if (!fs.existsSync(fp)) await downloadFile(url, fp);
             const AdmZip = require('adm-zip');
             await fs.promises.mkdir(extractTo, { recursive: true });
