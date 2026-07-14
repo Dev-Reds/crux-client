@@ -3216,6 +3216,8 @@ const DEFAULT_CLIENT_MODS = [
   { name:'Better Statistics Screen', modrinthId:'n6PXGAoM', loader:'fabric' },
   { name:'Chunky',                   modrinthId:'fALzjamp', loader:'fabric' },
   { name:'Better Ping Display',      modrinthId:'MS1ZFoKX', loader:'fabric' },
+  { name:'ViaFabricPlus',            modrinthId:'rIC2XJV4', loader:'fabric' },
+  { name:'Better Block Entities',    modrinthId:'ONZm0H7Y', loader:'fabric' },
   // Optimisation mods (Fabric)
   { name:'FerriteCore',              modrinthId:'uXXizFIs', loader:'fabric' },
   { name:'ModernFix',                modrinthId:'nmDcB62a', loader:'fabric' },
@@ -3236,6 +3238,7 @@ const DEFAULT_CLIENT_MODS = [
   { name:'ImmediatelyFast',          modrinthId:'5ZwdcRci', loader:'forge' },
   { name:'MemoryLeakFix',            modrinthId:'NRjRiSSD', loader:'forge' },
   { name:'Clumps',                   modrinthId:'Wnxd13zP', loader:'forge' },
+  { name:'Better Block Entities',    modrinthId:'ONZm0H7Y', loader:'forge' },
 ];
 
 function ensureDefaultMods() {
@@ -3275,11 +3278,16 @@ function renderModList() {
   let filtered = installedMods;
   if (modFilter === 'fabric')   filtered = installedMods.filter(m => !m.loader || m.loader === 'fabric' || m.loader === 'quilt' || m.loader === 'any');
   if (modFilter === 'forge')    filtered = installedMods.filter(m => m.loader === 'forge' || m.loader === 'neoforge' || m.loader === 'any');
-  if (modFilter === 'quilt')    filtered = installedMods.filter(m => m.loader === 'quilt' || m.loader === 'fabric' || m.loader === 'any');
-  if (modFilter === 'neoforge') filtered = installedMods.filter(m => m.loader === 'neoforge' || m.loader === 'forge' || m.loader === 'any');
+  if (modFilter === 'quilt')    filtered = installedMods;
+  if (modFilter === 'neoforge') filtered = installedMods;
   if (modFilter === 'disabled') filtered = installedMods.filter(m => m.disabled);
 
-  if (!filtered.length) { empty.style.display=''; return; }
+  if (!filtered.length) {
+    list.querySelectorAll('.mod-item').forEach(e=>e.remove());
+    empty.textContent = modFilter === 'disabled' ? 'No disabled mods.' : 'No mods installed yet.';
+    empty.style.display = '';
+    return;
+  }
   empty.style.display = 'none';
 
   // Deduplicate by modrinthId for display (show "all versions" mods once)
