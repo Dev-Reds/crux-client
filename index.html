@@ -4176,12 +4176,12 @@ function showUpdateOverlay(info) {
   document.getElementById('update-progress-wrap').style.display = 'none';
   document.getElementById('update-error-text').style.display = 'none';
   document.getElementById('update-done-text').style.display = 'none';
-  document.getElementById('update-install-btn').style.display = info.downloadUrl ? 'inline-block' : 'none';
+  document.getElementById('update-install-btn').style.display = (info.downloadUrl || info.installerUrl) ? 'inline-block' : 'none';
   document.getElementById('update-done-text').style.display = 'none';
 }
 
 document.getElementById('update-install-btn').addEventListener('click', async () => {
-  if (!pendingUpdate || !pendingUpdate.downloadUrl) return;
+  if (!pendingUpdate || (!pendingUpdate.downloadUrl && !pendingUpdate.installerUrl)) return;
   const installBtn = document.getElementById('update-install-btn');
   installBtn.style.display = 'none';
   document.getElementById('update-progress-wrap').style.display = 'block';
