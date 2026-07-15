@@ -4,11 +4,11 @@ const path = require('path');
 const buildAll = process.argv.includes('--all');
 const targets = buildAll ? '--win --linux' : '--win';
 
-console.log(`Building Crux Client installer${buildAll ? ' (Windows + Linux)' : ' (Windows only)'}...`);
+console.log(`Building Crux Client installer${buildAll ? ' (Windows + Linux)' : ' (Windows only)'} (x64)...`);
 console.log('Output folder:', path.join(__dirname));
 
 try {
-  execSync(`npx electron-builder ${targets}`, {
+  execSync(`npx electron-builder ${targets} --x64`, {
     stdio: 'inherit',
     cwd: path.join(__dirname, '..')
   });
