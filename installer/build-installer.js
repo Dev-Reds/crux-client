@@ -17,3 +17,14 @@ try {
   console.error('Installer build failed.');
   process.exit(error.status || 1);
 }
+
+const installerPath = path.join(__dirname, 'Crux-Client-Installer.exe');
+try {
+  console.log('Signing installer with Crux Client certificate...');
+  execSync(`powershell -NoProfile -Command "$cert = Get-ChildItem Cert:\\CurrentUser\\My | Where-Object { \\$_.Subject -like '*Crux Client*' } | Select-Object -First 1; if (\\$cert) { Set-AuthenticodeSignature -FilePath '${installerPath}' -Certificate \\$cert -TimestampServer 'http://timestamp.digicert.com' -HashAlgorithm SHA256; Write-Host 'Installer signed successfully.' } else { Write-Host 'WARNING: Crux Client certificate not found. Installer unsigned.' }"`, {
+    stdio: 'inherit',
+    cwd: path.join(__dirname, '..')
+  });
+} catch (e) {
+  console.log('Signing skipped (certificate not found or error).');
+}

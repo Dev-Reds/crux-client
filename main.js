@@ -2130,7 +2130,16 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
       doRequest(exeUrl);
     });
 
-    updateLog('Installer downloaded. Starting silent install...');
+    updateLog('Installer downloaded. Removing security block (Zone.Identifier)...');
+    try {
+      await new Promise((resolve, reject) => {
+        exec(`powershell -NoProfile -Command "Unblock-File -Path '${installerPath}'"`, { timeout: 10000, shell: true }, (err) => {
+          if (err) updateLog('Unblock-File warning: ' + (err.message || err));
+          resolve();
+        });
+      });
+    } catch {}
+    updateLog('Starting silent install...');
     try {
       await new Promise((resolve, reject) => {
         const c = exec(`"${installerPath}" /S`, { timeout: 300000, shell: true }, (err) => {
