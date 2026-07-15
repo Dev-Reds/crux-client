@@ -59,6 +59,50 @@ npx electron-builder --mac        # macOS
 
 Workflow: `.github/workflows/build.yml`
 
+## Neues Release erstellen (Anleitung)
+
+### Schritt 1: Version bumpen
+```json
+// package.json
+"version": "1.0.X"
+```
+
+### Schritt 2: Installer bauen
+```bash
+npm install
+npm run build-installer
+```
+Die fertigen Dateien liegen danach in `installer/`:
+- `Crux-Client-Installer.exe`
+- `Crux-Client-Installer.exe.blockmap`
+- `latest.yml`
+
+### Schritt 3: Git committen & pushen
+```bash
+git add -A
+git commit -m "v1.0.X"
+git push origin main
+```
+
+### Schritt 4: GitHub Release erstellen
+1. Gehe zu https://github.com/Dev-Reds/crux-client/releases/new
+2. **Tag erstellen:** `v1.0.X`
+3. **Title:** `v1.0.X`
+4. **Release-Notizen** einfügen (Changelog)
+5. **Assets hochladen:**
+   - `installer/Crux-Client-Installer.exe`
+   - `installer/Crux-Client-Installer.exe.blockmap`
+   - `installer/latest.yml`
+6. **Release veröffentlichen** (nicht als Draft!)
+
+### WICHTIG: Dateinamen
+> **Die folgenden Dateinamen dürfen sich NIE ändern**, da sie im Auto-Update System verwendet werden:
+>
+> - `Crux-Client-Installer.exe` (Windows Installer)
+> - `latest.yml` (Update-Manifest)
+>
+> Neue Releases MÜSSEN diese exakten Dateinamen verwenden.
+
 ## Repository Struktur
 
 ```

@@ -1183,6 +1183,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     </div>
     <div style="display:flex;gap:.8em;justify-content:center">
       <button class="btn btn-primary" id="update-install-btn" style="display:none">Update & Restart</button>
+      <button class="btn" id="update-github-btn" style="display:none">Download from GitHub</button>
     </div>
     <p id="update-error-text" style="color:#f44;font-size:.85em;margin-top:1em;display:none"></p>
     <p id="update-done-text" style="color:#5f5;font-size:.85em;margin-top:1em;display:none"></p>
@@ -1190,7 +1191,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 </div>
 
 <script>
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, shell } = require('electron');
 const path = require('path');
 function rlog(msg){ try{ ipcRenderer.send('renderer-log', msg); }catch{} }
 window.onerror = (msg, src, line, col, err) => { rlog(`ERROR: ${msg} at ${src}:${line}:${col} ${err?.stack||''}`); };
@@ -1753,15 +1754,24 @@ ipcRenderer.on('launch-error',(_,msg)=>{
   document.getElementById('launch-btn').disabled=false;
   document.getElementById('status').textContent='Error: '+msg;
 });
-ipcRenderer.on('launch-progress',(_,d)=>{
+let _lpLastUpdate=0,_lpPending=null;
+function _applyLaunchProgress(d){
   const lpWrap=document.getElementById('lp-wrap'),lpFill=document.getElementById('lp-fill'),lpLabel=document.getElementById('lp-label');
   const lpWrapL=document.getElementById('lp-wrap-logs'),lpFillL=document.getElementById('lp-fill-logs'),lpLabelL=document.getElementById('lp-label-logs');
+  lpWrap.classList.add('vis'); lpFill.style.width=(d.percent||0)+'%'; lpLabel.textContent=d.message||'';
+  if(lpWrapL){ lpWrapL.classList.add('vis'); lpFillL.style.width=(d.percent||0)+'%'; lpLabelL.textContent=d.message||''; }
+}
+ipcRenderer.on('launch-progress',(_,d)=>{
+  const lpWrap=document.getElementById('lp-wrap'),lpWrapL=document.getElementById('lp-wrap-logs');
   if(d.done){
+    _lpPending=null;
     setTimeout(()=>{lpWrap.classList.remove('vis'); if(lpWrapL)lpWrapL.classList.remove('vis');},2000);
     return;
   }
-  lpWrap.classList.add('vis'); lpFill.style.width=(d.percent||0)+'%'; lpLabel.textContent=d.message||'';
-  if(lpWrapL){ lpWrapL.classList.add('vis'); lpFillL.style.width=(d.percent||0)+'%'; lpLabelL.textContent=d.message||''; }
+  _lpPending=d;
+  const now=Date.now();
+  if(now-_lpLastUpdate>=500){ _lpLastUpdate=now; _applyLaunchProgress(d); }
+  else{ setTimeout(()=>{if(_lpPending){_lpLastUpdate=Date.now();_applyLaunchProgress(_lpPending);_lpPending=null;}},500-(now-_lpLastUpdate)); }
 });
 // Switch to logs tab when MC actually starts
 ipcRenderer.on('mc-launched',(_,instanceId)=>{
@@ -4177,6 +4187,7 @@ function showUpdateOverlay(info) {
   document.getElementById('update-error-text').style.display = 'none';
   document.getElementById('update-done-text').style.display = 'none';
   document.getElementById('update-install-btn').style.display = (info.downloadUrl || info.installerUrl) ? 'inline-block' : 'none';
+  document.getElementById('update-github-btn').style.display = 'inline-block';
   document.getElementById('update-done-text').style.display = 'none';
 }
 
@@ -4200,12 +4211,23 @@ document.getElementById('update-install-btn').addEventListener('click', async ()
   }
 });
 
-ipcRenderer.on('update-download-progress', (_, { downloaded, total }) => {
+document.getElementById('update-github-btn').addEventListener('click', () => {
+  shell.openExternal('https://github.com/Dev-Reds/crux-client/releases');
+});
+
+let _updLastUpdate=0,_updPending=null;
+function _applyUpdateProgress(downloaded,total){
   const pct = total ? Math.round((downloaded / total) * 100) : 0;
   const mb = (downloaded / 1048576).toFixed(1);
   const totalMb = total ? (total / 1048576).toFixed(0) : '?';
   document.getElementById('update-progress-bar').style.width = pct + '%';
   document.getElementById('update-progress-text').textContent = `${mb} MB / ${totalMb} MB (${pct}%)`;
+}
+ipcRenderer.on('update-download-progress', (_, { downloaded, total }) => {
+  _updPending={downloaded,total};
+  const now=Date.now();
+  if(now-_updLastUpdate>=500){ _updLastUpdate=now; _applyUpdateProgress(downloaded,total); }
+  else{ setTimeout(()=>{if(_updPending){_updLastUpdate=Date.now();_applyUpdateProgress(_updPending.downloaded,_updPending.total);_updPending=null;}},500-(now-_updLastUpdate)); }
 });
 
 document.getElementById('check-update-btn').addEventListener('click', () => checkForUpdates(false));

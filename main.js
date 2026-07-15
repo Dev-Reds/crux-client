@@ -193,7 +193,7 @@ async function findInstalledJavas(cb) {
     found.push({ path: p, version: v }); n++;
   }
   try {
-    const out = await new Promise((r,rj)=>exec('where java',(e,o)=>e?rj(e):r(o)));
+    const out = await new Promise((r,rj)=>exec('where java', { timeout: 10000 }, (e,o)=>e?rj(e):r(o)));
     for (const p of out.trim().split('\n').map(s=>s.trim()).filter(Boolean)) {
       if(cb)cb(10, `Scanning ${path.basename(p)}`);
       const v=await getJavaVersion(p); if(v) addJava(p, v);
@@ -246,13 +246,15 @@ async function findInstalledJavas(cb) {
 
 async function getJavaVersion(p) {
   try {
-    const o = await new Promise((r,rj)=>exec(`"${p}" -version`,(e,o,se)=>e?rj(e):r(se)));
+    const o = await new Promise((r,rj)=>{
+      const c = exec(`"${p}" -version`, { timeout: 10000 }, (e,o,se)=>e?rj(e):r(se));
+      c.on('error', rj);
+    });
     const m = o.match(/version "([^"]+)"/);
     if (!m) return null;
     const ver = m[1];
-    // Parse: "21.0.2" -> "21", "1.8.0_291" -> "8"
     const parts = ver.split('.');
-    if (parts[0] === '1') return parts[1]; // old format
+    if (parts[0] === '1') return parts[1];
     return parts[0];
   } catch { return null; }
 }
@@ -1197,18 +1199,10 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       // Remove unavailable mods from toDeploy (temporary — not saved)
       toDeploy = toDeploy.filter(mod => !unavailableMods.has(mod.modrinthId));
 
-      // ── Clean mods folder: remove JARs not in toDeploy ─────────────────────────────
-      const deployIds = new Set(toDeploy.map(m => m.modrinthId).filter(Boolean));
+      // ── Clean mods folder: remove ALL old JARs to ensure per-profile isolation ─────
       const existingJars = fs.readdirSync(modsDir).filter(f => f.endsWith('.jar'));
       for (const jar of existingJars) {
-        // Check if this jar belongs to any deployed mod (filename starts with modrinthId)
-        const isOwn = [...deployIds].some(id => jar.startsWith(id + '-') || jar.startsWith(id + '_'));
-        // Check if this jar looks like a launcher-deployed mod (any deployId is a prefix)
-        const looksDeployed = [...deployIds].some(id => jar.startsWith(id));
-        // Delete only if it looks launcher-deployed but doesn't match current profile
-        if (looksDeployed && !isOwn) {
-          try { fs.unlinkSync(path.join(modsDir, jar)); } catch {}
-        }
+        try { fs.unlinkSync(path.join(modsDir, jar)); } catch {}
       }
 
       // Refresh existingFiles after cleanup
@@ -1990,7 +1984,7 @@ function updateLog(msg) {
 
 function fetchJsonHttps(url) {
   return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'CruxClient', 'Accept': 'application/vnd.github.v3+json' } }, res => {
+    const req = https.get(url, { headers: { 'User-Agent': 'CruxClient', 'Accept': 'application/vnd.github.v3+json' } }, res => {
       if (res.statusCode === 301 || res.statusCode === 302) {
         return fetchJsonHttps(res.headers.location).then(resolve, reject);
       }
@@ -2007,6 +2001,7 @@ function fetchJsonHttps(url) {
         catch { reject(new Error('JSON parse error')); }
       });
     }).on('error', reject);
+    req.setTimeout(30000, () => { req.destroy(); reject(new Error('Timeout fetching GitHub API')); });
   });
 }
 
@@ -2014,7 +2009,7 @@ function downloadBuffer(url) {
   return new Promise((resolve, reject) => {
     const doRequest = (reqUrl) => {
       const lib = reqUrl.startsWith('https') ? https : http;
-      lib.get(reqUrl, { headers: { 'User-Agent': 'CruxClient' } }, res => {
+      const req = lib.get(reqUrl, { headers: { 'User-Agent': 'CruxClient' } }, res => {
         if (res.statusCode === 301 || res.statusCode === 302) {
           return doRequest(res.headers.location);
         }
@@ -2029,6 +2024,8 @@ function downloadBuffer(url) {
         });
         res.on('end', () => resolve(Buffer.concat(chunks)));
       }).on('error', reject);
+      req.setTimeout(120000, () => { req.destroy(); reject(new Error('Download timeout')); });
+      req.on('timeout', () => { req.destroy(); reject(new Error('Download timeout')); });
     };
     doRequest(url);
   });
@@ -2113,7 +2110,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
     await new Promise((resolve, reject) => {
       const doRequest = (reqUrl) => {
         const lib = reqUrl.startsWith('https') ? https : http;
-        lib.get(reqUrl, { headers: { 'User-Agent': 'CruxClient' } }, res => {
+        const req = lib.get(reqUrl, { headers: { 'User-Agent': 'CruxClient' } }, res => {
           if (res.statusCode === 301 || res.statusCode === 302) return doRequest(res.headers.location);
           if (res.statusCode !== 200) return reject(new Error('HTTP ' + res.statusCode));
           const total = parseInt(res.headers['content-length'], 10) || 0;
@@ -2127,19 +2124,23 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
           res.on('end', () => { ws.end(() => resolve()); });
           res.on('error', reject);
         }).on('error', reject);
+        req.setTimeout(300000, () => { req.destroy(); reject(new Error('Download timeout')); });
+        req.on('timeout', () => { req.destroy(); reject(new Error('Download timeout')); });
       };
       doRequest(exeUrl);
     });
 
     updateLog('Installer downloaded. Starting silent install...');
-    // Run installer silently
-    const { execSync } = require('child_process');
     try {
-      execSync(`"${installerPath}" /S`, { timeout: 120000 });
+      await new Promise((resolve, reject) => {
+        const c = exec(`"${installerPath}" /S`, { timeout: 120000 }, (err) => {
+          if (err) reject(err); else resolve();
+        });
+        c.on('error', reject);
+      });
       updateLog('Install finished. Restarting...');
     } catch (e) {
       updateLog('Silent install failed, trying normal launch...');
-      const { spawn } = require('child_process');
       spawn(installerPath, [], { detached: true, stdio: 'ignore' }).unref();
     }
     app.quit();
@@ -2754,7 +2755,6 @@ async function ensureMesa() {
   const mesaGL = path.join(mesaDir, 'x64', 'opengl32.dll');
   if (fs.existsSync(mesaGL)) return mesaGL;
 
-  // Mesa not installed — download and extract
   const tmpDir = path.join(base, '_mesa_tmp');
   const mesa7z = path.join(tmpDir, 'mesa.7z');
   try { await fs.promises.mkdir(tmpDir, { recursive: true }); } catch {}
@@ -2762,7 +2762,6 @@ async function ensureMesa() {
   try {
     mainWindow.webContents.send('launch-status', 'Lade Mesa3D Software-OpenGL herunter (~54MB)...');
 
-    // Download Mesa 7z
     await downloadFile(MESA_URL, mesa7z, (pct) => {
       const msg = `Mesa3D Download: ${Math.round(pct)}%`;
       try { mainWindow.webContents.send('launch-progress', { instanceId: '_mesa', percent: Math.round(pct * 0.7), message: msg }); } catch {}
@@ -2770,8 +2769,6 @@ async function ensureMesa() {
 
     mainWindow.webContents.send('launch-status', 'Entpacke Mesa3D...');
 
-    // Extract using node-7z (installs temporarily if needed)
-    const { execSync } = require('child_process');
     const script = `
       const path = require('path');
       const fs = require('fs');
@@ -2781,7 +2778,7 @@ async function ensureMesa() {
       async function extract() {
         let _7z;
         try { _7z = require('node-7z'); } catch(e) {
-          // Install node-7z temporarily
+          const { execSync } = require('child_process');
           execSync('npm install node-7z --prefix ' + JSON.stringify(tmpDir) + ' --no-save', { stdio: 'ignore' });
           _7z = require(path.join(tmpDir, 'node_modules', 'node-7z'));
         }
@@ -2792,39 +2789,45 @@ async function ensureMesa() {
         });
       }
       extract().then(() => {
-        // Move x64 directory to final location
         fs.mkdirSync(mesaDir, { recursive: true });
         const src = path.join(tmpDir, 'x64');
         const dst = path.join(mesaDir, 'x64');
-        if (fs.existsSync(src)) {
-          fs.cpSync(src, dst, { recursive: true });
-        }
+        if (fs.existsSync(src)) fs.cpSync(src, dst, { recursive: true });
         console.log('OK');
       }).catch(e => { console.error(e.message); process.exit(1); });
     `;
-    execSync(`node -e "${script.replace(/"/g, '\\"')}"`, { stdio: 'pipe', timeout: 120000 });
+    await new Promise((resolve, reject) => {
+      const c = exec(`node -e "${script.replace(/"/g, '\\"')}"`, { stdio: 'pipe', timeout: 120000 }, (err) => {
+        if (err) reject(err); else resolve();
+      });
+      c.on('error', reject);
+    });
 
     if (fs.existsSync(mesaGL)) {
       mainWindow.webContents.send('launch-status', 'Mesa3D installiert!');
-      // Cleanup temp
-      try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+      try { await fs.promises.rm(tmpDir, { recursive: true, force: true }); } catch {}
       return mesaGL;
     }
   } catch (e) {
     try { mainWindow.webContents.send('instance-log', { instanceId: '_mesa', line: `[MESA] Setup failed: ${e.message}` }); } catch {}
   }
-  // Cleanup on failure
-  try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+  try { await fs.promises.rm(tmpDir, { recursive: true, force: true }); } catch {}
   return null;
 }
 
-function findJavaExe(dir) {
-  for(const i of fs.readdirSync(dir)){
-    const f=path.join(dir,i);
-    if(fs.statSync(f).isDirectory()){
-      const jp=path.join(f,'bin','java.exe'); if(fs.existsSync(jp)) return jp;
-      const found=findJavaExe(f); if(found) return found;
-    }
+function findJavaExe(dir, maxDepth = 5) {
+  if (maxDepth <= 0) return null;
+  let items;
+  try { items = fs.readdirSync(dir); } catch { return null; }
+  for (const i of items) {
+    const f = path.join(dir, i);
+    let st;
+    try { st = fs.statSync(f); } catch { continue; }
+    if (!st.isDirectory()) continue;
+    const jp = path.join(f, 'bin', 'java.exe');
+    try { if (fs.existsSync(jp)) return jp; } catch {}
+    const found = findJavaExe(f, maxDepth - 1);
+    if (found) return found;
   }
   return null;
 }

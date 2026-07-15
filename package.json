@@ -1,6 +1,6 @@
 {
     "name":  "files",
-    "version":  "1.0.6",
+    "version":  "1.0.7",
     "description":  "",
     "main":  "main.js",
     "scripts":  {
@@ -51,18 +51,19 @@
                                              "nsis"
                                          ]
                           },
-                  "nsis":  {
-                               "oneClick":  false,
-                               "perMachine":  false,
-                               "allowToChangeInstallationDirectory":  true,
-                               "deleteAppDataOnUninstall":  true,
-"createDesktopShortcut":  true,
-                                 "createStartMenuShortcut":  true,
-                               "shortcutName":  "Crux Client",
-                               "artifactName":  "Crux-Client-Installer.exe",
-                               "installerIcon":  "icons/icon.ico",
-                               "uninstallerIcon":  "icons/icon.ico"
-                           },
+                   "nsis":  {
+                                "oneClick":  false,
+                                "perMachine":  false,
+                                "allowToChangeInstallationDirectory":  true,
+                                "deleteAppDataOnUninstall":  true,
+"createDesktopShortcut":  false,
+                                  "createStartMenuShortcut":  false,
+                                "shortcutName":  "Crux Client",
+                                "artifactName":  "Crux-Client-Installer.exe",
+                                "installerIcon":  "icons/icon.ico",
+                                "uninstallerIcon":  "icons/icon.ico",
+                                "include":  "installer/custom-shortcuts.nsh"
+                            },
                   "linux":  {
                                 "icon":  "icons/icon.png",
                                 "target":  [
