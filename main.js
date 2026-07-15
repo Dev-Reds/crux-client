@@ -2133,16 +2133,22 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
     updateLog('Installer downloaded. Starting silent install...');
     try {
       await new Promise((resolve, reject) => {
-        const c = exec(`"${installerPath}" /S`, { timeout: 120000 }, (err) => {
+        const c = exec(`"${installerPath}" /S`, { timeout: 300000, shell: true }, (err) => {
           if (err) reject(err); else resolve();
         });
         c.on('error', reject);
       });
       updateLog('Install finished. Restarting...');
     } catch (e) {
-      updateLog('Silent install failed, trying normal launch...');
-      spawn(installerPath, [], { detached: true, stdio: 'ignore' }).unref();
+      updateLog('Silent install failed, trying normal launch: ' + (e.message || e));
+      try {
+        spawn(`"${installerPath}"`, [], { shell: true, detached: true, stdio: 'ignore' }).unref();
+      } catch (e2) {
+        updateLog('Spawn also failed, trying exec start: ' + (e2.message || e2));
+        exec(`start "" "${installerPath}"`, { shell: true });
+      }
     }
+    await new Promise(r => setTimeout(r, 2000));
     app.quit();
   } else {
     // Dev mode: extract zip over source files

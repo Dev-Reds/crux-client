@@ -16,3 +16,10 @@ settings.json
 .vscode/
 icon-base64.txt
 icons/profile-icon-base64.txt
+*.zip
+_check.js
+_code_temp/
+debug_check.js
+debug_full.js
+test_actual_line.js
+UsersSANDRA~1.STOAppDataLocalTempopencodecheck6.js
