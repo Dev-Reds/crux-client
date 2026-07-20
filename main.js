@@ -65,6 +65,50 @@ app.whenReady().then(async () => {
   await Promise.all(['Cache','javaInstallations','client-mods','minecraft','servers'].map(d =>
     fs.promises.mkdir(path.join(base, d), { recursive: true }).catch(()=>{})
   ));
+
+  // Check for pending update installer before creating window
+  const pendingUpdatePath = path.join(base, 'Crux-Client-Installer.exe');
+  const updateDoneFlag = path.join(base, 'update-migrated.flag');
+  if (fs.existsSync(pendingUpdatePath) && !fs.existsSync(updateDoneFlag)) {
+    try {
+      // Save settings before update
+      const settingsPath = path.join(process.env.APPDATA || '', 'Crux Client', 'update-settings.json');
+      try {
+        const oldSettings = JSON.parse(fs.readFileSync(path.join(base, 'settings.json'), 'utf8'));
+        fs.writeFileSync(settingsPath, JSON.stringify(oldSettings, null, 2));
+        console.log('[UPDATE] Settings saved for migration');
+      } catch {
+        console.log('[UPDATE] Could not save settings');
+      }
+      // Run silent install
+      await new Promise((resolve, reject) => {
+        const cp = require('child_process');
+        cp.exec(`"${pendingUpdatePath}" /S`, { timeout: 300000, shell: true }, (err) => {
+          if (err) reject(err); else resolve();
+        });
+      });
+      // Mark as migrated so we don't loop
+      fs.writeFileSync(updateDoneFlag, 'done');
+      console.log('[UPDATE] Silent install completed, restarting...');
+      app.relaunch();
+      app.quit();
+      return;
+    } catch (e) {
+      console.error('[UPDATE] Auto-install failed:', e.message);
+    }
+  }
+  // Restore migrated settings on first launch after update
+  const migratedSettingsPath = path.join(process.env.APPDATA || '', 'Crux Client', 'update-settings.json');
+  if (fs.existsSync(migratedSettingsPath) && fs.existsSync(updateDoneFlag)) {
+    try {
+      const migrated = JSON.parse(fs.readFileSync(migratedSettingsPath, 'utf8'));
+      fs.writeFileSync(path.join(base, 'settings.json'), JSON.stringify(migrated, null, 2));
+      fs.unlinkSync(migratedSettingsPath);
+      fs.unlinkSync(updateDoneFlag);
+      console.log('[UPDATE] Settings restored after update.');
+    } catch {}
+  }
+
   createWindow();
   // Auto-scan Java in background after window loads
   mainWindow.webContents.on('did-finish-load', async () => {
