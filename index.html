@@ -2811,9 +2811,10 @@ async function fetchModrinthPage(q,offset){
       : profilePackMode==='shaderPacks'?'shader':'mod';
     const facets=[['project_type:'+facetType]];
     if (profileModMode && editingProfileId) {
-      const edProfile = profiles.find(p => p.id === editingProfileId);
-      if (edProfile && edProfile.modLoader && edProfile.modLoader !== 'vanilla') {
-        facets.push(['modloaders:' + edProfile.modLoader]);
+      const selectedLoader = document.querySelector('input[name="modLoader"]:checked');
+      const loaderVal = selectedLoader ? selectedLoader.value : null;
+      if (loaderVal && loaderVal !== 'vanilla') {
+        facets.push(['modloaders:' + loaderVal]);
       }
     }
     const facet=JSON.stringify(facets);
