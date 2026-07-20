@@ -2810,6 +2810,14 @@ async function fetchModrinthPage(q,offset){
       : profilePackMode==='resourcePacks'||profilePackMode==='clientRP'?'resourcepack'
       : profilePackMode==='shaderPacks'?'shader':'mod';
     const facets=[['project_type:'+facetType]];
+    if (profileModMode && editingProfileId) {
+      const edProfile = profiles.find(p => p.id === editingProfileId);
+      if (edProfile && edProfile.modLoader && edProfile.modLoader !== 'vanilla') {
+        facets.push(['categories:' + edProfile.modLoader]);
+      }
+    } else if (modFilter !== 'all' && modFilter !== 'disabled') {
+      facets.push(['categories:' + modFilter]);
+    }
     const facet=JSON.stringify(facets);
     const url=q
       ?`https://api.modrinth.com/v2/search?query=${encodeURIComponent(q)}&facets=${encodeURIComponent(facet)}&limit=${PAGE_SIZE}&offset=${offset}`
