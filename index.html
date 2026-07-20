@@ -2815,8 +2815,6 @@ async function fetchModrinthPage(q,offset){
       if (edProfile && edProfile.modLoader && edProfile.modLoader !== 'vanilla') {
         facets.push(['modloaders:' + edProfile.modLoader]);
       }
-    } else if (modFilter !== 'all' && modFilter !== 'disabled') {
-      facets.push(['modloaders:' + modFilter]);
     }
     const facet=JSON.stringify(facets);
     const url=q
