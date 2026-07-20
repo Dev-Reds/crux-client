@@ -380,7 +380,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
             </div>
           <div class="quick-ram" id="quick-ram">
             <label>RAM:</label>
-            <input type="range" id="quick-ram-slider" min="1" max="8" step="1" value="2">
+            <input type="range" id="quick-ram-slider" min="1" max="16" step="1" value="2">
             <span class="ram-val" id="quick-ram-val">2</span>
             <span style="color:#666" id="quick-ram-unit-label">GB</span>
             <button class="ram-unit-btn" id="quick-ram-unit-btn">MB</button>
@@ -1276,9 +1276,18 @@ async function bootLauncher(){
     if (settings.ram === undefined || settings.ram === null) {
       try {
         const totalGB = await ipcRenderer.invoke('get-total-ram');
-        settings.ram = Math.max(1, Math.min(8, Math.round(totalGB / 2)));
+        settings.ram = Math.max(1, Math.min(Math.max(totalGB - 2, 2), Math.round(totalGB / 2)));
       } catch { settings.ram = 2; }
     }
+    // Dynamically set slider max based on total RAM
+    try {
+      const totalGB = await ipcRenderer.invoke('get-total-ram');
+      const slider = document.getElementById('quick-ram-slider');
+      const maxRam = Math.max(4, Math.min(totalGB, 32));
+      slider.max = maxRam;
+      slider.value = Math.min(settings.ram, maxRam);
+      document.getElementById('ramValue').textContent = slider.value + ' GB';
+    } catch {}
 
     if(settings.theme==='light') applyTheme(true);
     if(typeof settings.accentIdx==='number'){currentAccentIdx=settings.accentIdx;}
