@@ -1192,6 +1192,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       </div>
       <p id="update-progress-text" style="color:#aaa;font-size:.8em;margin:0"></p>
     </div>
+    <p id="update-wait-text" style="color:#ffa500;font-size:.85em;margin-top:.5em;display:none">Please wait a few minutes for the download and restart button to appear.</p>
     <div style="display:flex;gap:.8em;justify-content:center">
       <button class="btn btn-primary" id="update-install-btn" style="display:none">Update & Restart</button>
       <button class="btn" id="update-github-btn" style="display:none">Download from GitHub</button>
@@ -4264,6 +4265,25 @@ function showUpdateOverlay(info) {
   document.getElementById('update-install-btn').style.display = (info.downloadUrl || info.installerUrl) ? 'inline-block' : 'none';
   document.getElementById('update-github-btn').style.display = 'inline-block';
   document.getElementById('update-done-text').style.display = 'none';
+
+  if (!info.downloadUrl && !info.installerUrl) {
+    document.getElementById('update-wait-text').style.display = 'block';
+    if (window._updatePollInterval) clearInterval(window._updatePollInterval);
+    window._updatePollInterval = setInterval(async () => {
+      try {
+        const result = await ipcRenderer.invoke('check-for-update');
+        if (result.updateAvailable && (result.downloadUrl || result.installerUrl)) {
+          pendingUpdate = result;
+          document.getElementById('update-wait-text').style.display = 'none';
+          document.getElementById('update-install-btn').style.display = 'inline-block';
+          clearInterval(window._updatePollInterval);
+          window._updatePollInterval = null;
+        }
+      } catch {}
+    }, 30000);
+  } else {
+    document.getElementById('update-wait-text').style.display = 'none';
+  }
 }
 
 document.getElementById('update-install-btn').addEventListener('click', async () => {
