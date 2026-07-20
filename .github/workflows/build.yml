@@ -139,7 +139,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Create crux_code.zip
         run: |
-          zip --symlinks -9 -r crux_code.zip . -x ".git/*" ".github/*" "node_modules/*" "dist/*" "*.exe" "*.dmg" "*.tar.gz"
+          zip --symlinks -9 -r crux_code.zip .
       - name: Upload to crux-code release
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
