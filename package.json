@@ -10,7 +10,8 @@
                     "package-all":  "node ./scripts/package-all.js",
                     "package-mac":  "node ./scripts/package-mac.js",
                     "build-installer":  "node ./installer/build-installer.js",
-                    "build-installer-all":  "node ./installer/build-installer.js --all"
+                    "build-installer-all":  "node ./installer/build-installer.js --all",
+                    "release":  "pwsh -NoProfile -File ./scripts/release.ps1"
                 },
     "keywords":  [
 
