@@ -2813,10 +2813,10 @@ async function fetchModrinthPage(q,offset){
     if (profileModMode && editingProfileId) {
       const edProfile = profiles.find(p => p.id === editingProfileId);
       if (edProfile && edProfile.modLoader && edProfile.modLoader !== 'vanilla') {
-        facets.push(['categories:' + edProfile.modLoader]);
+        facets.push(['modloaders:' + edProfile.modLoader]);
       }
     } else if (modFilter !== 'all' && modFilter !== 'disabled') {
-      facets.push(['categories:' + modFilter]);
+      facets.push(['modloaders:' + modFilter]);
     }
     const facet=JSON.stringify(facets);
     const url=q
