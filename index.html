@@ -2816,6 +2816,8 @@ async function fetchModrinthPage(q,offset){
       if (loaderVal && loaderVal !== 'vanilla') {
         facets.push(['categories:' + loaderVal]);
       }
+    } else if (modFilter !== 'all' && modFilter !== 'disabled') {
+      facets.push(['categories:' + modFilter]);
     }
     const facet=JSON.stringify(facets);
     const url=q
