@@ -2814,7 +2814,7 @@ async function fetchModrinthPage(q,offset){
       const selectedLoader = document.querySelector('input[name="modLoader"]:checked');
       const loaderVal = selectedLoader ? selectedLoader.value : null;
       if (loaderVal && loaderVal !== 'vanilla') {
-        facets.push(['modloaders:' + loaderVal]);
+        facets.push(['categories:' + loaderVal]);
       }
     }
     const facet=JSON.stringify(facets);
