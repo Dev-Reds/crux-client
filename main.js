@@ -421,7 +421,7 @@ ipcMain.on('stop-minecraft', (e, instanceId) => {
   if (!inst) return;
   const cp = require('child_process');
 
-  // 1. Kill the direct child process (the one we spawned)
+  // 1. Kill the direct child process (the one we spawned) - also kill javaw
   if (inst.process && inst.process.pid) {
     try { cp.exec(`taskkill /PID ${inst.process.pid} /F /T`, ()=>{}); } catch {}
   }
@@ -429,7 +429,7 @@ ipcMain.on('stop-minecraft', (e, instanceId) => {
   // 2. Kill Java child processes spawned by the launcher (useOriginalLauncher case)
   // Use PowerShell Get-Process to reliably find java/javaw processes
   try {
-    cp.exec('powershell -NoProfile -Command "Get-Process -Name java*,javaw* -ErrorAction SilentlyContinue | Select-Object Id,StartTime | ConvertTo-Json"', {timeout:8000}, (err, stdout) => {
+    cp.exec('powershell -NoProfile -Command "Get-Process -Name java,javaw -ErrorAction SilentlyContinue | Select-Object Id,StartTime | ConvertTo-Json"', {timeout:8000}, (err, stdout) => {
       if (err || !stdout) return;
       try {
         const procs = JSON.parse(stdout);
