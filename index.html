@@ -2829,6 +2829,8 @@ async function fetchModrinthPage(q,offset){
 }
 async function appendModResults(results){
   const el=document.getElementById('mod-results');
+  const curProfile=profiles.find(p=>p.id===settings.selectedProfile)||profiles[0];
+  const curLoader = modFilter !== 'all' && modFilter !== 'disabled' ? modFilter : (curProfile?.modLoader||'fabric');
   for(const mod of results){
     let mcVersions=['latest'];
     try{
@@ -2849,10 +2851,10 @@ async function appendModResults(results){
       <div class="mod-result-actions">
         <button class="btn mod-install-btn">${profilePackMode==='modpack'?'Import':'Install'}</button>
       </div>`;
-    // Disable button if already installed
+    // Disable button if already installed (checking loader too)
     const alreadyInstalled=profileModMode&&profilePackMode
       ? editingPackData.mods?.some(m=>m.modrinthId===mod.id)
-      : installedMods.some(m=>m.modrinthId===mod.id);
+      : installedMods.some(m=>m.modrinthId===mod.id && m.loader === curLoader);
     if(alreadyInstalled){const ib=item.querySelector('.mod-install-btn');ib.textContent='Installed ✓';ib.disabled=true;ib.style.opacity='.55';}
     item.querySelector('.mod-install-btn').addEventListener('click',async e=>{
       const btn=e.currentTarget; btn.disabled=true;
@@ -2884,8 +2886,6 @@ async function appendModResults(results){
       btn.textContent='Installing...';
       const vers=launchedVersions.length?launchedVersions:[defaultV];
       let n=0; const src=currentSource==='modrinth'?'Modrinth':'CurseForge';
-      const curProfile=profiles.find(p=>p.id===settings.selectedProfile)||profiles[0];
-      const curLoader = modFilter !== 'all' && modFilter !== 'disabled' ? modFilter : (curProfile?.modLoader||'fabric');
       for(const v of vers){
         if(!mcVersions.includes(v))continue;
         if(!installedMods.some(m=>m.modrinthId===mod.id&&m.mcVersion===v)){
