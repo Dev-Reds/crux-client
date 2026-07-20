@@ -696,7 +696,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       // No valid account — block launch
       send('launch-status', 'No valid account. Please log in with a Microsoft or Mojang account in the MC-Account tab.');
       send('launch-progress', { instanceId, percent:0, message:'', done:true });
-      send('no-java-found', 0);
+      send('no-account-found', 0);
       clearTimeout(safetyTimer);
       return;
     }
@@ -850,10 +850,12 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       // NeoForge dir names: "neoforge-21.1.235" → MC 1.21.1, "neoforge-21.4.xxx" → MC 1.21.4
       // NeoForge prefix = MC minor.patch (e.g. MC 1.21.1 → "21.1.", MC 1.20.6 → "20.6.")
       const neoPrefix = (() => { const p = version.split('.'); return `${p[1]||'0'}.${p[2]||'0'}.`; })();
+      // NeoForge version can also be just major.minor (e.g. 1.21 → 21)
+      const neoPrefixShort = (() => { const p = version.split('.'); return `neoforge-${p[1]||'0'}.`; })();
       let neoId = null;
       if (fs.existsSync(versionsDir)) {
         const dirs = fs.readdirSync(versionsDir);
-        neoId = dirs.find(d => d.toLowerCase().startsWith('neoforge-' + neoPrefix)) || null;
+        neoId = dirs.find(d => d.toLowerCase().startsWith('neoforge-' + neoPrefix)) || dirs.find(d => d.toLowerCase().startsWith(neoPrefixShort)) || null;
         if (neoId && !fs.existsSync(path.join(versionsDir, neoId, `${neoId}.json`))) neoId = null;
       }
       if (neoId) {
@@ -2073,7 +2075,7 @@ ipcMain.handle('check-for-update', async () => {
     const newer = isNewer(latestVersion, CURRENT_VERSION);
     updateLog(`Latest: v${latestVersion}, Local: v${CURRENT_VERSION}, Newer: ${newer}`);
     if (newer) {
-      const launcherZip = latest.assets.find(a => a.name === 'Launcher.zip');
+      const launcherZip = latest.assets.find(a => a.name === 'Launcher.zip' || a.name === 'Crux-Client-Installer-All.zip');
       const installer = latest.assets.find(a => a.name === 'Crux-Client-Installer.exe' || (a.name.endsWith('.exe') && a.name.includes('Installer')));
       const url = launcherZip ? launcherZip.browser_download_url : null;
       const installerUrl = installer ? installer.browser_download_url : null;

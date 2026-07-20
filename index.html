@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/png" href="Crux-Client.png">
+  <link rel="icon" type="image/png" href="./Crux-Client.png">
   <title>Crux Client</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>window.JSZip=null;</script>
@@ -1728,6 +1728,13 @@ ipcRenderer.on('no-java-found',(_,neededVersion)=>{
       document.getElementById('status').textContent=`No Java found. Download Java ${neededVersion} from adoptium.net`;
     }
   }, 300);
+});
+
+// No account found
+ipcRenderer.on('no-account-found',()=>{
+  document.getElementById('status').textContent='No valid account. Please log in.';
+  updateStopButtons();
+  document.getElementById('launch-btn').disabled=false;
 });
 
 document.getElementById('stop-btn').addEventListener('click',()=>{
