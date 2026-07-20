@@ -440,8 +440,13 @@ ipcMain.on('stop-minecraft', (e, instanceId) => {
           // Kill processes that started after our instance
           if (since && p.StartTime) {
             const procTime = new Date(p.StartTime).getTime();
-            if (procTime < since) continue; // Started before our instance, skip
+            if (procTime < since - 10000) continue; // Started before our instance, skip (10s buffer)
           }
+          // Only kill processes that are children of our launcher process
+          try {
+            const parentPid = cp.execSync(`powershell -NoProfile -Command "(Get-WmiObject Win32_Process -Filter 'ProcessId=${p.Id}').ParentProcessId"`, {timeout:3000,encoding:'utf8'}).trim();
+            if (parentPid && parseInt(parentPid) !== process.pid && parseInt(parentPid) !== (inst.process?.pid || -1)) continue;
+          } catch { /* can't determine parent, kill anyway as fallback */ }
           try { cp.exec(`taskkill /PID ${p.Id} /F /T`, ()=>{}); } catch {}
         }
       } catch {}
