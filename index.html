@@ -3081,7 +3081,7 @@ async function showModpackVersionPicker(projectId, projectName) {
       const date = v.date_published ? new Date(v.date_published).toLocaleDateString() : '';
       const div = document.createElement('div');
       div.style.cssText = 'padding:.6rem .8rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:.5rem';
-      div.innerHTML = `<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.95rem">${escHtml(v.version_number || v.name)}</div><div style="font-size:.78rem;color:var(--text-muted)">${escHtml(mcVersions)} · ${escHtml(loaders)}</div></div><div style="font-size:.75rem;color:var(--text-muted);white-space:nowrap">${date}</div><button class="btn" style="padding:.3rem .8rem;font-size:.8rem;white-space:nowrap;min-width:70px">Install</button>`;
+      div.innerHTML = `<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.95rem;word-break:break-word">${escHtml(v.version_number || v.name)}</div><div style="font-size:.78rem;color:var(--text-muted);word-break:break-word">${escHtml(mcVersions)} · ${escHtml(loaders)}</div></div><div style="font-size:.75rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0">${date}</div><button class="btn" style="padding:.3rem .8rem;font-size:.8rem;white-space:nowrap;min-width:70px;flex-shrink:0">Install</button>`;
       const btn = div.querySelector('button');
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
