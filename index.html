@@ -2885,7 +2885,7 @@ async function appendModResults(results){
       const vers=launchedVersions.length?launchedVersions:[defaultV];
       let n=0; const src=currentSource==='modrinth'?'Modrinth':'CurseForge';
       const curProfile=profiles.find(p=>p.id===settings.selectedProfile)||profiles[0];
-      const curLoader=curProfile?.modLoader||'fabric';
+      const curLoader = modFilter !== 'all' && modFilter !== 'disabled' ? modFilter : (curProfile?.modLoader||'fabric');
       for(const v of vers){
         if(!mcVersions.includes(v))continue;
         if(!installedMods.some(m=>m.modrinthId===mod.id&&m.mcVersion===v)){
