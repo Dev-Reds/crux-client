@@ -3328,12 +3328,12 @@ function renderModList() {
   // Deduplicate by modrinthId for display (show "all versions" mods once)
   const seen = new Set();
   const displayMods = [];
-  filtered.forEach((mod, realIdx) => {
+  filtered.forEach((mod) => {
     if (mod.downloadAllVersions && mod.modrinthId) {
       if (seen.has(mod.modrinthId)) return;
       seen.add(mod.modrinthId);
     }
-    displayMods.push({ mod, realIdx });
+    displayMods.push({ mod, realIdx: installedMods.indexOf(mod) });
   });
 
   displayMods.forEach(({ mod, realIdx }) => {
