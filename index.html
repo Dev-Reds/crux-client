@@ -347,6 +347,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     <button class="tb-btn" data-page="logs-page" data-i18n="tab_logs">Logs<span id="running-badge" style="display:none;margin-left:.3em;background:#1bd96a;color:#000;border-radius:999px;font-size:.7em;padding:.05em .45em;font-weight:bold"></span></button>
     <button class="tb-btn" data-page="instances-page" data-i18n="tab_instances">Instances</button>
     <button class="tb-btn" data-page="servers-page">Servers</button>
+    <button class="tb-btn" data-page="bugreport-page">Bug Report</button>
     <button class="tb-btn" id="toolbar-theme" title="Toggle theme">
       <svg id="icon-moon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       <svg id="icon-sun" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -977,6 +978,16 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       </div>
     </div>
 
+    <!-- ══ BUG REPORT ══ -->
+    <div id="bugreport-page" class="page" style="display:none">
+      <h1>Bug Report</h1>
+      <div style="max-width:500px;margin:1em auto;text-align:center;line-height:1.8">
+        <p style="color:#aaa;margin-bottom:1.5em">Found a bug? Report it on GitHub so we can fix it.</p>
+        <button class="btn btn-primary" id="bugreport-github-btn" style="font-size:1em;padding:.6em 1.5em">🐛 Report on GitHub</button>
+        <p style="color:#666;margin-top:1em;font-size:.82em">You can also check existing issues or feature requests.</p>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1184,6 +1195,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     <div style="display:flex;gap:.8em;justify-content:center">
       <button class="btn btn-primary" id="update-install-btn" style="display:none">Update & Restart</button>
       <button class="btn" id="update-github-btn" style="display:none">Download from GitHub</button>
+      <button class="btn" id="update-bugreport-btn" style="border-color:#f44;color:#f44">🐛 Bug Report</button>
     </div>
     <p id="update-error-text" style="color:#f44;font-size:.85em;margin-top:1em;display:none"></p>
     <p id="update-done-text" style="color:#5f5;font-size:.85em;margin-top:1em;display:none"></p>
@@ -4259,6 +4271,23 @@ document.getElementById('update-install-btn').addEventListener('click', async ()
 document.getElementById('update-github-btn').addEventListener('click', () => {
   shell.openExternal('https://github.com/Dev-Reds/crux-client/releases');
 });
+
+document.getElementById('update-bugreport-btn').addEventListener('click', () => {
+  shell.openExternal('https://github.com/Dev-Reds/crux-client/issues');
+});
+
+document.getElementById('bugreport-github-btn').addEventListener('click', () => {
+  shell.openExternal('https://github.com/Dev-Reds/crux-client/issues/new');
+});
+
+// Block tab switching when update overlay is shown
+const origShowPage = window.showPage;
+window.showPage = function(pageId) {
+  if (pendingUpdate && document.getElementById('update-overlay').style.display === 'flex') {
+    return;
+  }
+  if (origShowPage) origShowPage(pageId);
+};
 
 let _updLastUpdate=0,_updPending=null;
 function _applyUpdateProgress(downloaded,total){
