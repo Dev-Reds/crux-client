@@ -380,7 +380,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
             </div>
           <div class="quick-ram" id="quick-ram">
             <label>RAM:</label>
-            <input type="range" id="quick-ram-slider" min="1" max="16" step="1" value="2">
+            <input type="range" id="quick-ram-slider" min="0.125" max="32" step="0.125" value="2">
             <span class="ram-val" id="quick-ram-val">2</span>
             <span style="color:#666" id="quick-ram-unit-label">GB</span>
             <button class="ram-unit-btn" id="quick-ram-unit-btn">MB</button>
@@ -1402,27 +1402,36 @@ function bindSettings(){
   const slider = document.getElementById('ramSlider');
   const unitBtn = document.getElementById('ram-unit-btn');
   const unitLabel = document.getElementById('ramUnitLabel');
+  let maxRamGB = 8;
 
-  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-  const toMb = gb => clamp(Math.round(gb * 1024), 512, 8192);
-  const toGb = mb => clamp(Math.round(mb / 1024), 1, 8);
+  // Get max RAM from system
+  (async () => {
+    try {
+      maxRamGB = Math.max(4, Math.min(await ipcRenderer.invoke('get-total-ram'), 32));
+      updateRamSlider();
+    } catch {}
+  })();
+
+  const clamp = (value, min, max) => Math.max(min, Math.max(max, value));
+  const toMb = gb => clamp(Math.round(gb * 1024), 128, maxRamGB * 1024);
+  const toGb = mb => clamp(Math.round(mb / 1024), 0.125, maxRamGB);
   const getSavedRam = () => {
     const raw = parseInt(settings.ram, 10);
     if (Number.isNaN(raw)) return ramUnit === 'mb' ? 1024 : 1;
     if (ramUnit === 'mb') {
-      return raw > 0 && raw <= 8 ? toMb(raw) : clamp(raw, 512, 8192);
+      return raw > 0 && raw <= maxRamGB ? toMb(raw) : clamp(raw, 128, maxRamGB * 1024);
     }
-    return raw > 8 ? toGb(raw) : clamp(raw, 1, 8);
+    return raw > maxRamGB ? toGb(raw) : clamp(raw, 0.125, maxRamGB);
   };
 
   function updateRamSlider(){
     const savedRam = getSavedRam();
     if(ramUnit === 'mb'){
-      slider.min = 512; slider.max = 8192; slider.step = 256;
+      slider.min = 128; slider.max = maxRamGB * 1024; slider.step = 128;
       slider.value = savedRam;
       unitLabel.textContent='MB'; unitBtn.textContent='Switch to GB';
     } else {
-      slider.min = 1; slider.max = 8; slider.step = 1;
+      slider.min = 0.125; slider.max = maxRamGB; slider.step = 0.125;
       slider.value = savedRam;
       unitLabel.textContent='GB'; unitBtn.textContent='Switch to MB';
     }
