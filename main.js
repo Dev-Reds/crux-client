@@ -461,7 +461,10 @@ ipcMain.on('stop-minecraft', (e, instanceId) => {
 // ── Launch ─────────────────────────────────────────────────────────────────────
 ipcMain.on('launch-minecraft', async (event, data) => {
   lastLaunchData = data;
-  const { version, javaPath, ram, ramUnit, profileMods, clientMods, clientResourcePacks, useClientMods, useClientRPs, accessToken, uuid, playerName, modLoader, useOriginalLauncher, profileId, profileName, mrpackMods, mrpackRPs, renderApi } = data;
+  const { version, javaPath, ram, ramUnit, profileMods, clientMods, clientResourcePacks, useClientMods, useClientRPs, accessToken, uuid, playerName: rawPlayerName, modLoader, useOriginalLauncher, profileId, profileName, mrpackMods, mrpackRPs, renderApi } = data;
+
+  // Prefix player name with Crux for all launched instances
+  const playerName = rawPlayerName ? `Crux ${rawPlayerName}` : 'Player';
 
   // RAM
   let maxRam, minRam;
