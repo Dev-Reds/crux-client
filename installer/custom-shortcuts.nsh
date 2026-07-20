@@ -4,6 +4,9 @@ Var chkDesktopShortcut
 Var chkStartMenuShortcut
 
 !macro customHeader
+  ; Don't auto-launch after install - we handle it after shortcuts
+  !define DONT_RUN_APP_AFTER_INSTALL
+  
   Page custom nsisShortcutsPageShow nsisShortcutsPageLeave
 
   Function nsisShortcutsPageShow
@@ -30,5 +33,7 @@ Var chkStartMenuShortcut
       CreateDirectory "$SMPROGRAMS\Crux Client"
       CreateShortCut "$SMPROGRAMS\Crux Client\Crux Client.lnk" "$INSTDIR\Crux Client.exe" "" "$INSTDIR\icons\icon.ico"
     ${EndIf}
+    ; Now launch the application
+    Exec '"$INSTDIR\Crux Client.exe"'
   FunctionEnd
 !macroend
