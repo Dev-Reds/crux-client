@@ -530,6 +530,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <div style="display:flex;gap:.4em;align-items:center;flex-wrap:wrap">
           <button class="btn btn-primary btn-sm" id="cape-editor-btn" style="width:auto">Open Cape Editor</button>
           <span id="cape-custom-status" style="font-size:.78em;color:#888"></span>
+          <button class="btn btn-sm" id="cape-custom-toggle" style="width:auto;display:none">Disable Cape</button>
           <button class="btn btn-sm" id="cape-custom-remove" style="width:auto;color:#f44;border-color:#f4455">Remove Custom Cape</button>
         </div>
       </div>
@@ -3806,9 +3807,26 @@ document.getElementById('skin-url-apply-btn').addEventListener('click', async ()
         img.src=saved;
         document.getElementById('cape-custom-status').textContent='Custom cape active';
         document.getElementById('cape-custom-status').style.color='#1bd96a';
+        document.getElementById('cape-custom-toggle').style.display='';
+        const st=await ipcRenderer.invoke('get-custom-cape-state');
+        updateToggleBtn(st?.disabled);
       }
     }catch{}
   })();
+
+  function updateToggleBtn(disabled){
+    const btn=document.getElementById('cape-custom-toggle');
+    const st=document.getElementById('cape-custom-status');
+    if(disabled){
+      btn.textContent='Enable Cape';
+      btn.style.borderColor='#1bd96a'; btn.style.color='#1bd96a';
+      st.textContent='Custom cape disabled'; st.style.color='#888';
+    }else{
+      btn.textContent='Disable Cape';
+      btn.style.borderColor=''; btn.style.color='';
+      st.textContent='Custom cape active'; st.style.color='#1bd96a';
+    }
+  }
 
   function getPixelCoords(e){
     const rect=canvas.getBoundingClientRect();
@@ -3915,6 +3933,8 @@ document.getElementById('skin-url-apply-btn').addEventListener('click', async ()
     if(result?.success){
       document.getElementById('cape-custom-status').textContent='Custom cape saved!';
       document.getElementById('cape-custom-status').style.color='#1bd96a';
+      document.getElementById('cape-custom-toggle').style.display='';
+      updateToggleBtn(false);
     } else {
       document.getElementById('cape-custom-status').textContent='Error: '+(result?.error||'unknown');
       document.getElementById('cape-custom-status').style.color='#f44';
@@ -3946,6 +3966,12 @@ document.getElementById('skin-url-apply-btn').addEventListener('click', async ()
     ctx.clearRect(0,0,CAPE_W,CAPE_H);
     document.getElementById('cape-custom-status').textContent='Custom cape removed';
     document.getElementById('cape-custom-status').style.color='#888';
+    document.getElementById('cape-custom-toggle').style.display='none';
+  });
+
+  document.getElementById('cape-custom-toggle').addEventListener('click',async()=>{
+    const result=await ipcRenderer.invoke('toggle-custom-cape');
+    if(result?.success) updateToggleBtn(result.disabled);
   });
 })();
 

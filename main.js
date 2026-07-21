@@ -227,6 +227,22 @@ ipcMain.handle('remove-custom-cape', async () => {
   } catch { return { success: false }; }
 });
 
+ipcMain.handle('toggle-custom-cape', async () => {
+  try {
+    const s = await load(P.settings, {});
+    s.customCapeDisabled = !s.customCapeDisabled;
+    await save(P.settings, s);
+    return { success: true, disabled: s.customCapeDisabled };
+  } catch { return { success: false }; }
+});
+
+ipcMain.handle('get-custom-cape-state', async () => {
+  try {
+    const s = await load(P.settings, {});
+    return { disabled: !!s.customCapeDisabled };
+  } catch { return { disabled: false }; }
+});
+
 async function buildCustomCapeResourcePack(capeBuf) {
   const JSZip = require('jszip');
   const zip = new JSZip();
@@ -241,6 +257,8 @@ async function buildCustomCapeResourcePack(capeBuf) {
 // Auto-deploy custom cape resource pack on launch (called from launch-minecraft handler)
 async function deployCustomCapeRp(optionsPath) {
   if (!fs.existsSync(customCapePath)) return false;
+  const s = await load(P.settings, {});
+  if (s.customCapeDisabled) return false;
   const rpZip = path.join(customCapeRpDir, customCapeRpName);
   if (!fs.existsSync(rpZip)) {
     try { const buf = await fs.promises.readFile(customCapePath); await buildCustomCapeResourcePack(buf); }
