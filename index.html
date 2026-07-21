@@ -2583,6 +2583,7 @@ function updateSkinDisplay(){
     skinModel = acc.skinModel || 'classic';
     if(acc.skinUrl){
       loadSkinTexture(acc.skinUrl);
+      addSkinToList(acc.skinUrl, acc.name || 'Player', true);
     } else {
       buildSkinMesh(null);
     }
@@ -3563,12 +3564,27 @@ async function applySkinFromDataUrl(dataUrl) {
   }
 }
 
-function addSkinToList(dataUrl, name) {
+function addSkinToList(dataUrl, name, silent) {
   const exists = skinList.some(s => s.dataUrl === dataUrl);
-  if (exists) { setSkinUploadStatus('Skin already in list', '#f5a623'); return; }
+  if (exists) { if(!silent) setSkinUploadStatus('Skin already in list', '#f5a623'); return; }
+  // If it's an HTTP URL, download and convert to data URL for persistent storage
+  if (dataUrl.startsWith('http')) {
+    fetch(dataUrl).then(r=>r.blob()).then(blob=>{
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const base64 = ev.target.result;
+        if (skinList.some(s => s.dataUrl === base64)) return;
+        skinList.push({ name: name || 'Skin ' + (skinList.length+1), dataUrl: base64, addedAt: Date.now() });
+        saveSkinList();
+        if(!silent) setSkinUploadStatus('✓ Added to skin list!');
+      };
+      reader.readAsDataURL(blob);
+    }).catch(()=>{});
+    return;
+  }
   skinList.push({ name: name || 'Skin ' + (skinList.length+1), dataUrl, addedAt: Date.now() });
   saveSkinList();
-  setSkinUploadStatus('✓ Added to skin list!');
+  if(!silent) setSkinUploadStatus('✓ Added to skin list!');
 }
 
 // File picker → add to list
