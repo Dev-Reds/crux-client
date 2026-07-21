@@ -1261,6 +1261,8 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div class="sep"></div>
       <button class="tool-btn" id="cape-ed-clear" title="Clear All">🗑️</button>
       <div class="sep"></div>
+      <button class="tool-btn" id="cape-ed-elytra" title="Toggle Cape/Elytra">🪽 Cape</button>
+      <div class="sep"></div>
       <span style="font-size:.72em;color:#888" id="cape-ed-coords">-</span>
     </div>
     <div class="skin-editor-dual">
@@ -1268,9 +1270,6 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <canvas class="skin-editor-canvas" id="cape-ed-canvas" width="22" height="17"></canvas>
       </div>
       <div class="skin-editor-3d-wrap" id="cape-ed-3d-wrap"></div>
-    </div>
-    <div style="text-align:center;margin-bottom:.5em">
-      <span style="font-size:.6em;color:#555">← Back | Front →</span>
     </div>
     <div class="skin-editor-actions">
       <button class="btn btn-sm btn-primary" id="cape-ed-save">Save Cape</button>
@@ -2326,16 +2325,10 @@ async function loadMCCapes(){
       const capeUrl=cape.url||cape.texture||null;
       if(capeUrl){
         const cvs=document.createElement('canvas');
-        cvs.width=64; cvs.height=32;
-        cvs.style.cssText='width:100%;image-rendering:pixelated;margin:0 auto .3em;display:block;border-radius:4px';
-        const cctx=cvs.getContext('2d');
-        const tmp=new Image(); tmp.crossOrigin='anonymous';
-        tmp.onload=()=>{
-          cctx.imageSmoothingEnabled=false;
-          cctx.drawImage(tmp, 0,0);
-        };
-        tmp.src=capeUrl;
+        cvs.width=200; cvs.height=280;
+        cvs.style.cssText='width:100%;image-rendering:pixelated;margin:0 auto .3em;display:block;border-radius:4px;background:transparent';
         card.appendChild(cvs);
+        renderCape3D(cvs,capeUrl);
       }
       if(isActive){
         const badge=document.createElement('div');
@@ -2806,6 +2799,56 @@ function loadSkinTexture(url){
 function drawDefaultAvatar(){}
 function drawSkin3D(){}
 
+function renderCape3D(targetCanvas,capeUrl){
+  if(!window.THREE){setTimeout(()=>renderCape3D(targetCanvas,capeUrl),300);return;}
+  const W=200,H=280;
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(30,W/H,0.1,100);
+  camera.position.set(0,0,9);camera.lookAt(0,0,0);
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setSize(W,H);renderer.setClearColor(0x000000,0);renderer.setPixelRatio(1);
+  scene.add(new THREE.AmbientLight(0xffffff,0.8));
+  const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(3,5,4);scene.add(dl);
+  const dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-3,-1,-2);scene.add(dl2);
+  const grp=new THREE.Group();scene.add(grp);
+  function makeDrape(){
+    const segsW=8,segsH=12,CW=2.0,CH=4.0;
+    const v2=[],u2=[],ix=[];
+    for(let j=0;j<=segsH;j++){const fv=j/segsH;for(let i=0;i<=segsW;i++){const ft=i/segsW;v2.push((ft-0.5)*CW,CH*0.5-fv*CH,Math.sin(fv*Math.PI)*0.2+Math.sin(ft*Math.PI)*0.08*fv);u2.push(ft,fv);}}
+    for(let j=0;j<segsH;j++)for(let i=0;i<segsW;i++){const a=j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;ix.push(a,c,b,b,c,d);}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));g.setIndex(ix);g.computeVertexNormals();return g;
+  }
+  function makeDrapeBack(){
+    const segsW=8,segsH=12,CW=2.0,CH=4.0;
+    const v2=[],u2=[],ix=[];
+    for(let j=0;j<=segsH;j++){const fv=j/segsH;for(let i=0;i<=segsW;i++){const ft=i/segsW;v2.push((ft-0.5)*CW,CH*0.5-fv*CH,-0.2+Math.sin(fv*Math.PI)*0.2+Math.sin(ft*Math.PI)*0.08*fv);u2.push(ft,fv);}}
+    for(let j=0;j<segsH;j++)for(let i=0;i<segsW;i++){const a=j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;ix.push(a,b,c,b,d,c);}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));g.setIndex(ix);g.computeVertexNormals();return g;
+  }
+  new THREE.TextureLoader().load(capeUrl,(fullTex)=>{
+    const img=fullTex.image;
+    function cropCape(sx,sy,sw,sh){
+      const c=document.createElement('canvas');c.width=sw;c.height=sh;
+      const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
+      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
+    }
+    const frontTex=cropCape(15,1,10,20);
+    const backTex=cropCape(1,1,10,20);
+    const front=new THREE.Mesh(makeDrape(),new THREE.MeshLambertMaterial({map:frontTex,side:THREE.DoubleSide}));
+    grp.add(front);
+    const back=new THREE.Mesh(makeDrapeBack(),new THREE.MeshLambertMaterial({map:backTex,side:THREE.DoubleSide}));
+    grp.add(back);
+    grp.rotation.y=Math.PI;
+    grp.position.set(0,0,0);
+    renderer.render(scene,camera);
+    const ctx2=targetCanvas.getContext('2d');
+    ctx2.clearRect(0,0,W,H);
+    ctx2.drawImage(renderer.domElement,0,0);
+    renderer.dispose();
+  },undefined,()=>{renderer.dispose();});
+}
+
 function initCape3D(wrap, capeUrl){
   if(!window.THREE){wrap.innerHTML='<div style="padding:2rem;color:#888">Loading 3D...</div>';setTimeout(()=>initCape3D(wrap,capeUrl),300);return;}
   const W=140,H=160;
@@ -2826,7 +2869,7 @@ function initCape3D(wrap, capeUrl){
   const dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-3,-1,-2);scene.add(dl2);
   const capeGroup=new THREE.Group();scene.add(capeGroup);
   const capeMat=new THREE.MeshLambertMaterial({color:0xcccccc,side:THREE.DoubleSide});
-  const capeFront=new THREE.Mesh(new THREE.PlaneGeometry(2.8,3.5),capeMat);
+  const capeFront=new THREE.Mesh(new THREE.PlaneGeometry(2.0,4.0),capeMat);
   capeGroup.add(capeFront);
 
   new THREE.TextureLoader().load(capeUrl,(fullTex)=>{
@@ -2837,11 +2880,26 @@ function initCape3D(wrap, capeUrl){
       ctx.drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
       const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
     }
+    function makeDrape(){
+      const segsW=8,segsH=12,CW=2.0,CH=4.0;
+      const v2=[],u2=[],ix=[];
+      for(let j=0;j<=segsH;j++){const fv=j/segsH;for(let i=0;i<=segsW;i++){const ft=i/segsW;v2.push((ft-0.5)*CW,CH*0.5-fv*CH,Math.sin(fv*Math.PI)*0.2+Math.sin(ft*Math.PI)*0.08*fv);u2.push(ft,fv);}}
+      for(let j=0;j<segsH;j++)for(let i=0;i<segsW;i++){const a=j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;ix.push(a,c,b,b,c,d);}
+      const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));g.setIndex(ix);g.computeVertexNormals();return g;
+    }
+    function makeDrapeBack(){
+      const segsW=8,segsH=12,CW=2.0,CH=4.0;
+      const v2=[],u2=[],ix=[];
+      for(let j=0;j<=segsH;j++){const fv=j/segsH;for(let i=0;i<=segsW;i++){const ft=i/segsW;v2.push((ft-0.5)*CW,CH*0.5-fv*CH,-0.2+Math.sin(fv*Math.PI)*0.2+Math.sin(ft*Math.PI)*0.08*fv);u2.push(ft,fv);}}
+      for(let j=0;j<segsH;j++)for(let i=0;i<segsW;i++){const a=j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;ix.push(a,b,c,b,d,c);}
+      const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));g.setIndex(ix);g.computeVertexNormals();return g;
+    }
     const frontTex=cropCape(18,0,11,16);
-    capeFront.material=new THREE.MeshLambertMaterial({map:frontTex});
+    capeFront.geometry.dispose();capeFront.geometry=makeDrape();
+    capeFront.material=new THREE.MeshLambertMaterial({map:frontTex,side:THREE.DoubleSide});
     const backTex=cropCape(4,0,11,16);
-    const capeBack=new THREE.Mesh(new THREE.PlaneGeometry(2.8,3.5),new THREE.MeshLambertMaterial({map:backTex,side:THREE.BackSide}));
-    capeBack.position.z=-0.02;capeGroup.add(capeBack);
+    const capeBack=new THREE.Mesh(makeDrapeBack(),new THREE.MeshLambertMaterial({map:backTex,side:THREE.DoubleSide}));
+    capeGroup.add(capeBack);
   },undefined,()=>{});
   capeGroup.rotation.y=Math.PI;
 
@@ -3669,6 +3727,87 @@ loadSkinList();
 // ════════════════════════════════════════
 // SKIN PIXEL EDITOR
 // ════════════════════════════════════════
+function drawSteveSkin(c){
+  const s='#C69C6D',h='#4A2300',t='#00AADD',p='#3B3B98',sh='#434343',w='#FFFFFF',e='#3B3B3B',m='#8B6848';
+  function r(x,y,w2,h2,col){c.fillStyle=col;c.fillRect(x,y,w2,h2);}
+  // ── Head ──
+  r(8,0,8,8,h);           // top: hair
+  r(16,0,8,8,s);          // bottom: skin
+  r(8,8,8,8,s);           // front: skin
+  r(10,10,2,2,w);         // left eye white
+  r(14,10,2,2,w);         // right eye white
+  r(11,10,1,2,e);         // left pupil
+  r(15,10,1,2,e);         // right pupil
+  r(12,13,2,1,m);         // mouth
+  r(24,8,8,8,h);          // back: hair
+  r(16,8,8,8,s);          // right side
+  r(16,8,8,2,h);          // right side hair
+  r(0,8,8,8,s);           // left side
+  r(0,8,8,2,h);           // left side hair
+  // ── Head overlay (hat layer) ──
+  r(40,0,8,8,h); r(48,0,8,8,s);
+  r(40,8,8,8,h);          // front overlay: hair
+  r(56,8,8,8,h);          // back overlay: hair
+  r(48,8,8,8,h); r(32,8,8,8,h);
+  // ── Body ──
+  r(20,20,8,12,t);        // front: shirt
+  r(22,20,4,12,'#0099CC'); // shirt shade
+  r(32,20,8,12,t);        // back: shirt
+  r(20,16,8,4,t);         // top: shirt
+  r(28,16,8,4,t);         // bottom: shirt
+  r(28,20,4,12,t);        // right: shirt
+  r(16,20,4,12,t);        // left: shirt
+  // ── Right arm ──
+  r(44,16,4,4,t);         // top
+  r(48,16,4,4,t);         // bottom
+  r(44,20,4,6,t);         // front upper: shirt
+  r(44,26,4,6,s);         // front lower: skin
+  r(52,20,4,6,t);         // back upper
+  r(52,26,4,6,s);         // back lower
+  r(48,20,4,6,t);         // right upper
+  r(48,26,4,6,s);         // right lower
+  r(40,20,4,6,t);         // left upper
+  r(40,26,4,6,s);         // left lower
+  // ── Left arm ──
+  r(36,48,4,4,t); r(40,48,4,4,t);
+  r(36,52,4,6,t); r(36,58,4,6,s);
+  r(44,52,4,6,t); r(44,58,4,6,s);
+  r(40,52,4,6,t); r(40,58,4,6,s);
+  r(32,52,4,6,t); r(32,58,4,6,s);
+  // ── Right leg ──
+  r(4,16,4,4,p); r(8,16,4,4,p);
+  r(4,20,4,8,p);          // front upper: pants
+  r(4,28,4,4,sh);         // front lower: shoes
+  r(12,20,4,8,p);         // back upper
+  r(12,28,4,4,sh);        // back lower
+  r(8,20,4,8,p);          // right upper
+  r(8,28,4,4,sh);         // right lower
+  r(0,20,4,8,p);          // left upper
+  r(0,28,4,4,sh);         // left lower
+  // ── Left leg ──
+  r(20,48,4,4,p); r(24,48,4,4,p);
+  r(20,52,4,8,p); r(20,60,4,4,sh);
+  r(28,52,4,8,p); r(28,60,4,4,sh);
+  r(24,52,4,8,p); r(24,60,4,4,sh);
+  r(16,52,4,8,p); r(16,60,4,4,sh);
+  // ── Leg overlay (pants layer) ──
+  r(4,36,4,12,p); r(8,36,4,12,p);
+  r(12,36,4,12,p); r(0,36,4,12,p);
+  r(20,36,4,12,p); r(24,36,4,12,p);
+  r(28,36,4,12,p); r(16,36,4,12,p);
+  // ── Body overlay ──
+  r(20,36,8,12,t); r(32,36,8,12,t);
+  r(20,32,8,4,t); r(28,32,8,4,t);
+  r(28,36,4,12,t); r(16,36,4,12,t);
+  // ── Arm overlay ──
+  r(44,36,4,12,t); r(52,36,4,12,t);
+  r(44,32,4,4,t); r(48,32,4,4,t);
+  r(48,36,4,12,t); r(40,36,4,12,t);
+  r(36,36,4,12,t); r(44,36,4,12,t);
+  r(36,32,4,4,t); r(40,32,4,4,t);
+  r(40,36,4,12,t); r(32,36,4,12,t);
+}
+// ════════════════════════════════════════
 (function(){
   const overlay = document.getElementById('skin-editor-overlay');
   const canvas = document.getElementById('skin-ed-canvas');
@@ -3714,8 +3853,9 @@ loadSkinList();
   canvas.style.width = displaySize + 'px';
   canvas.style.height = displaySize + 'px';
 
-  // Initialize with transparent
+  // Initialize with Steve skin
   ctx.clearRect(0,0,64,64);
+  drawSteveSkin(ctx);
 
   function getPixelCoords(e){
     const rect = canvas.getBoundingClientRect();
@@ -4000,13 +4140,13 @@ loadSkinList();
   const coordsEl = document.getElementById('cape-ed-coords');
   const CAPE_W=22, CAPE_H=17;
   let currentTool='pencil', isDrawing=false;
-  let capeEd3dTex=null;
 
   const displaySize = Math.min(440, window.innerWidth*0.6);
   canvas.style.width = displaySize+'px';
   canvas.style.height = (displaySize*CAPE_H/CAPE_W)+'px';
 
-  ctx.clearRect(0,0,CAPE_W,CAPE_H);
+  ctx.fillStyle='#FFFFFF';
+  ctx.fillRect(0,0,CAPE_W,CAPE_H);
 
   // Load saved cape
   (async()=>{
@@ -4098,13 +4238,13 @@ loadSkinList();
         if(m)colorInput.value='#'+[m[0],m[1],m[2]].map(v=>(+v).toString(16).padStart(2,'0')).join('');
       }
     }
-    if(capeEd3dTex)capeEd3dTex.needsUpdate=true;
+    refreshCape3DTextures();
   }
 
   canvas.addEventListener('mousedown',e=>{
     isDrawing=true;
     const {x,y}=getPixelCoords(e);
-    if(currentTool==='fill'){floodFill(x,y,hexToRgba(colorInput.value));isDrawing=false;if(capeEd3dTex)capeEd3dTex.needsUpdate=true;return;}
+    if(currentTool==='fill'){floodFill(x,y,hexToRgba(colorInput.value));isDrawing=false;refreshCape3DTextures();return;}
     if(currentTool==='eyedropper'){
       const c=getPixel(x,y);
       if(c&&c!=='rgba(0,0,0,0)'){
@@ -4132,7 +4272,13 @@ loadSkinList();
 
   document.getElementById('cape-ed-clear').addEventListener('click',()=>{
     if(!confirm('Clear entire cape?'))return;
-    ctx.clearRect(0,0,CAPE_W,CAPE_H);
+    ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,CAPE_W,CAPE_H);
+  });
+
+  document.getElementById('cape-ed-elytra').addEventListener('click',()=>{
+    capeEd3dIsElytra=!capeEd3dIsElytra;
+    document.getElementById('cape-ed-elytra').textContent=capeEd3dIsElytra?'🪽 Elytra':'🪽 Cape';
+    if(window._capeEdRebuild)window._capeEdRebuild();
   });
 
   document.getElementById('cape-editor-btn').addEventListener('click',()=>{overlay.classList.add('open');setTimeout(initCapeEditor3D,100);});
@@ -4188,18 +4334,52 @@ loadSkinList();
 
   // ── Cape 3D Editor ──
   let capeEd3dRenderer=null, capeEd3dScene=null, capeEd3dCamera=null, capeEd3dGroup=null, capeEd3dRaycaster=null;
-  let capeEd3dRotY=30, capeEd3dRotX=10;
-
+  let capeEd3dRotY=30, capeEd3dRotX=10, capeEd3dIsElytra=false;
+  let capeEdFrontTex=null, capeEdBackTex=null;
+  function refreshCape3DTextures(){
+    if(capeEdFrontTex){const c=document.createElement('canvas');c.width=11;c.height=CAPE_H;c.getContext('2d').drawImage(canvas,11,0,11,CAPE_H,0,0,11,CAPE_H);capeEdFrontTex.image=c;capeEdFrontTex.needsUpdate=true;}
+    if(capeEdBackTex){const c=document.createElement('canvas');c.width=11;c.height=CAPE_H;c.getContext('2d').drawImage(canvas,0,0,11,CAPE_H,0,0,11,CAPE_H);capeEdBackTex.image=c;capeEdBackTex.needsUpdate=true;}
+  }
+  function makeElytraGeo(){
+    const segsW=8,segsH=8;
+    const W=2.2,H=3.4;
+    const verts=[],uvs=[],idx=[];
+    for(let side=-1;side<=1;side+=2){
+      for(let j=0;j<=segsH;j++){
+        const v=j/segsH;
+        for(let i=0;i<=segsW;i++){
+          const t=i/segsW;
+          const x=side*0.8+side*t*W*0.5;
+          const y=H*0.5-v*H;
+          const z=Math.sin(t*Math.PI)*0.3*v;
+          verts.push(x,y,z);
+          uvs.push(t,v);
+        }
+      }
+      const off=(side===-1?0:1)*(segsW+1)*(segsH+1);
+      for(let j=0;j<segsH;j++){
+        for(let i=0;i<segsW;i++){
+          const a=off+j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;
+          idx.push(a,c,b,b,c,d);
+        }
+      }
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+    geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+    geo.setIndex(idx);geo.computeVertexNormals();
+    return geo;
+  }
   function initCapeEditor3D(){
     if(!window.THREE)return;
     const wrap=document.getElementById('cape-ed-3d-wrap');
     if(!wrap)return;
-    const W=wrap.clientWidth||300, H=wrap.clientHeight||400;
+    const W2=wrap.clientWidth||300, H2=wrap.clientHeight||400;
     capeEd3dScene=new THREE.Scene();
-    capeEd3dCamera=new THREE.PerspectiveCamera(30,W/H,0.1,100);
+    capeEd3dCamera=new THREE.PerspectiveCamera(30,W2/H2,0.1,100);
     capeEd3dCamera.position.set(0,0,6);capeEd3dCamera.lookAt(0,0,0);
     capeEd3dRenderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
-    capeEd3dRenderer.setSize(W,H);capeEd3dRenderer.setClearColor(0x000000,0);
+    capeEd3dRenderer.setSize(W2,H2);capeEd3dRenderer.setClearColor(0x000000,0);
     capeEd3dRenderer.setPixelRatio(window.devicePixelRatio||1);
     wrap.innerHTML='';wrap.appendChild(capeEd3dRenderer.domElement);
     capeEd3dRenderer.domElement.style.width='100%';capeEd3dRenderer.domElement.style.height='100%';
@@ -4207,13 +4387,53 @@ loadSkinList();
     const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(3,5,4);capeEd3dScene.add(dl);
     const dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-3,-1,-2);capeEd3dScene.add(dl2);
     capeEd3dGroup=new THREE.Group();capeEd3dScene.add(capeEd3dGroup);
-    capeEd3dTex=new THREE.CanvasTexture(canvas);
-    capeEd3dTex.magFilter=THREE.NearestFilter;capeEd3dTex.minFilter=THREE.NearestFilter;
-    const capeFront=new THREE.Mesh(new THREE.PlaneGeometry(2.8,3.5),new THREE.MeshLambertMaterial({map:capeEd3dTex}));
-    capeEd3dGroup.add(capeFront);
-    const capeBack=new THREE.Mesh(new THREE.PlaneGeometry(2.8,3.5),new THREE.MeshLambertMaterial({map:capeEd3dTex,side:THREE.BackSide}));
-    capeBack.position.z=-0.02;capeEd3dGroup.add(capeBack);
-    capeEd3dGroup.rotation.y=Math.PI;
+
+    function cropEditorHalf(side){
+      const c=document.createElement('canvas');c.width=11;c.height=CAPE_H;
+      c.getContext('2d').drawImage(canvas,side*11,0,11,CAPE_H,0,0,11,CAPE_H);
+      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
+    }
+    function cropEditorEdge(col){
+      const c=document.createElement('canvas');c.width=1;c.height=CAPE_H;
+      c.getContext('2d').drawImage(canvas,col,0,1,CAPE_H,0,0,1,CAPE_H);
+      c.getContext('2d').drawImage(canvas,col,0,1,CAPE_H,0,0,1,CAPE_H);
+      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
+    }
+
+    const ED_W=2.2, ED_H=3.4, ED_DEPTH=0.2;
+    const ED_HALF=ED_W/2, ED_DEPH=ED_DEPTH/2;
+
+    function rebuildCapeMesh(){
+      while(capeEd3dGroup.children.length){const c=capeEd3dGroup.children[0];capeEd3dGroup.remove(c);if(c.geometry)c.geometry.dispose();if(c.material){if(c.material.map)c.material.map.dispose();c.material.dispose();}}
+      capeEdFrontTex=cropEditorHalf(1);capeEdBackTex=cropEditorHalf(0);
+      if(capeEd3dIsElytra){
+        const geo=makeElytraGeo();
+        const leftTex=capeEdBackTex.clone();
+        const rightTex=capeEdFrontTex.clone();
+        const left=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({map:leftTex,side:THREE.DoubleSide}));
+        left.userData={uvHalf:'left'};
+        const right=new THREE.Mesh(geo.clone(),new THREE.MeshLambertMaterial({map:rightTex,side:THREE.DoubleSide}));
+        right.userData={uvHalf:'right'};
+        capeEd3dGroup.add(left,right);
+      }else{
+        const front=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_H),new THREE.MeshLambertMaterial({map:capeEdFrontTex,side:THREE.DoubleSide}));
+        front.position.z=ED_DEPH;front.userData={uvHalf:'front'};
+        capeEd3dGroup.add(front);
+        const back=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_H),new THREE.MeshLambertMaterial({map:capeEdBackTex,side:THREE.DoubleSide}));
+        back.position.z=-ED_DEPH;back.userData={uvHalf:'back'};
+        capeEd3dGroup.add(back);
+        const leftEdgeTex=cropEditorEdge(0);
+        const leftSide=new THREE.Mesh(new THREE.PlaneGeometry(ED_DEPTH,ED_H),new THREE.MeshLambertMaterial({map:leftEdgeTex,side:THREE.DoubleSide}));
+        leftSide.rotation.y=Math.PI/2;leftSide.position.x=-ED_HALF;leftSide.userData={uvHalf:'back'};
+        capeEd3dGroup.add(leftSide);
+        const rightEdgeTex=cropEditorEdge(21);
+        const rightSide=new THREE.Mesh(new THREE.PlaneGeometry(ED_DEPTH,ED_H),new THREE.MeshLambertMaterial({map:rightEdgeTex,side:THREE.DoubleSide}));
+        rightSide.rotation.y=-Math.PI/2;rightSide.position.x=ED_HALF;rightSide.userData={uvHalf:'front'};
+        capeEd3dGroup.add(rightSide);
+      }
+      capeEd3dGroup.position.set(0,0,0);
+    }
+    rebuildCapeMesh();
     capeEd3dRaycaster=new THREE.Raycaster();
     let drag={active:false,sx:0,sy:0,ry:capeEd3dRotY,rx:capeEd3dRotX};
     wrap.addEventListener('contextmenu',e=>e.preventDefault());
@@ -4247,6 +4467,7 @@ loadSkinList();
       capeEd3dGroup.rotation.y=capeEd3dRotY*Math.PI/180;capeEd3dGroup.rotation.x=capeEd3dRotX*Math.PI/180;
       capeEd3dRenderer.render(capeEd3dScene,capeEd3dCamera);
     })();
+    window._capeEdRebuild=rebuildCapeMesh;
   }
 
   function paintCape3D(e,wrap){
@@ -4258,8 +4479,18 @@ loadSkinList();
     const hits=capeEd3dRaycaster.intersectObjects(capeEd3dGroup.children,true);
     if(hits.length>0&&hits[0].uv){
       const uv=hits[0].uv;
-      const px=Math.min(CAPE_W-1,Math.max(0,Math.floor(uv.x*CAPE_W)));
-      const py=Math.min(CAPE_H-1,Math.max(0,Math.floor((1-uv.y)*CAPE_H)));
+      const half=hits[0].object.userData?.uvHalf;
+      const halfW=11;
+      let px,py;
+      if(half==='front'||half==='right'){
+        px=halfW+Math.floor(uv.x*halfW);
+        py=Math.floor((1-uv.y)*CAPE_H);
+      }else{
+        px=Math.floor(uv.x*halfW);
+        py=Math.floor((1-uv.y)*CAPE_H);
+      }
+      px=Math.max(0,Math.min(CAPE_W-1,px));
+      py=Math.max(0,Math.min(CAPE_H-1,py));
       const color=hexToRgba(colorInput.value);
       if(currentTool==='pencil')setPixel(px,py,color);
       else if(currentTool==='eraser')setPixel(px,py,'rgba(0,0,0,0)');
@@ -4271,7 +4502,7 @@ loadSkinList();
           if(m)colorInput.value='#'+[m[0],m[1],m[2]].map(v=>(+v).toString(16).padStart(2,'0')).join('');
         }
       }
-      if(capeEd3dTex)capeEd3dTex.needsUpdate=true;
+      refreshCape3DTextures();
     }
   }
 })();
