@@ -281,10 +281,6 @@ async function deployCustomCapeRp(optionsPath) {
   }
   if (!fs.existsSync(rpZip)) return false;
 
-  let options = '';
-  try { options = await fs.promises.readFile(optionsPath, 'utf8'); } catch {}
-
-  const rpEntry = `"file/${customCapeRpName}"`;
   if (!options.includes(customCapeRpName)) {
     if (options.match(/^resourcePacks:/m)) {
       options = options.replace(/^resourcePacks:.*$/m, (line) => {
