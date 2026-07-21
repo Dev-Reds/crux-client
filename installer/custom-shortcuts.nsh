@@ -30,7 +30,7 @@ Var createStartMenu
   FunctionEnd
 !macroend
 
-!macro customInstallMode
+!macro customInstall
   ${If} $createDesktop == ${BST_CHECKED}
     CreateShortCut "$DESKTOP\Crux Client.lnk" "$INSTDIR\Crux Client.exe" "" "$INSTDIR\icons\icon.ico"
   ${EndIf}
