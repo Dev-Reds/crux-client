@@ -2,11 +2,12 @@
 
 Var chkDesktopShortcut
 Var chkStartMenuShortcut
+Var createDesktop
+Var createStartMenu
 
 !macro customHeader
-  ; Don't auto-launch after install - we handle it after shortcuts
   !define DONT_RUN_APP_AFTER_INSTALL
-  
+
   Page custom nsisShortcutsPageShow nsisShortcutsPageLeave
 
   Function nsisShortcutsPageShow
@@ -24,16 +25,17 @@ Var chkStartMenuShortcut
   FunctionEnd
 
   Function nsisShortcutsPageLeave
-    ${NSD_GetState} $chkDesktopShortcut $0
-    ${If} $0 == ${BST_CHECKED}
-      CreateShortCut "$DESKTOP\Crux Client.lnk" "$INSTDIR\Crux Client.exe" "" "$INSTDIR\icons\icon.ico"
-    ${EndIf}
-    ${NSD_GetState} $chkStartMenuShortcut $0
-    ${If} $0 == ${BST_CHECKED}
-      CreateDirectory "$SMPROGRAMS\Crux Client"
-      CreateShortCut "$SMPROGRAMS\Crux Client\Crux Client.lnk" "$INSTDIR\Crux Client.exe" "" "$INSTDIR\icons\icon.ico"
-    ${EndIf}
-    ; Now launch the application
-    Exec '"$INSTDIR\Crux Client.exe"'
+    ${NSD_GetState} $chkDesktopShortcut $createDesktop
+    ${NSD_GetState} $chkStartMenuShortcut $createStartMenu
   FunctionEnd
+!macroend
+
+!macro customInstallMode
+  ${If} $createDesktop == ${BST_CHECKED}
+    CreateShortCut "$DESKTOP\Crux Client.lnk" "$INSTDIR\Crux Client.exe" "" "$INSTDIR\icons\icon.ico"
+  ${EndIf}
+  ${If} $createStartMenu == ${BST_CHECKED}
+    CreateDirectory "$SMPROGRAMS\Crux Client"
+    CreateShortCut "$SMPROGRAMS\Crux Client\Crux Client.lnk" "$INSTDIR\Crux Client.exe" "" "$INSTDIR\icons\icon.ico"
+  ${EndIf}
 !macroend

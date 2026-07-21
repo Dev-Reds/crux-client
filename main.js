@@ -80,17 +80,34 @@ app.whenReady().then(async () => {
       } catch {
         console.log('[UPDATE] Could not save settings');
       }
-      // Run silent install
-      await new Promise((resolve, reject) => {
-        const cp = require('child_process');
-        cp.exec(`"${pendingUpdatePath}" /S`, { timeout: 300000, shell: true }, (err) => {
-          if (err) reject(err); else resolve();
-        });
-      });
-      // Mark as migrated so we don't loop
+      // Mark as migrated so we don't loop on next startup
       fs.writeFileSync(updateDoneFlag, 'done');
-      console.log('[UPDATE] Silent install completed, restarting...');
-      app.relaunch();
+      // Create a batch script that waits for the launcher to close, then runs the installer
+      const launcherExe = path.basename(app.getPath('exe'));
+      const batchPath = path.join(os.tmpdir(), 'crux-update-' + Date.now() + '.bat');
+      const batchContent = [
+        '@echo off',
+        'echo Waiting for ' + launcherExe + ' to close...',
+        ':waitloop',
+        'timeout /t 1 /nobreak >nul',
+        'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
+        'if %errorlevel%==0 goto waitloop',
+        'echo Launcher closed. Starting installer...',
+        'start /wait "" "' + pendingUpdatePath + '" /S',
+        'echo Installer finished. Starting launcher...',
+        'start "" "' + path.dirname(app.getPath('exe')) + '\\' + launcherExe + '"',
+        'del "%~f0"',
+      ].join('\r\n');
+      await fs.promises.writeFile(batchPath, batchContent, 'utf8');
+      console.log('[UPDATE] Update batch script created. Closing launcher to run installer...');
+      // Start the batch script detached, then quit the app
+      try {
+        spawn('cmd.exe', ['/c', batchPath], { shell: false, detached: true, stdio: 'ignore', windowsHide: true }).unref();
+      } catch (e) {
+        console.log('[UPDATE] Batch spawn failed: ' + e.message + ', trying direct start...');
+        exec(`start "" "${batchPath}"`, { shell: true });
+      }
+      await new Promise(r => setTimeout(r, 500));
       app.quit();
       return;
     } catch (e) {
@@ -2154,7 +2171,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
   const send = (...a) => { try { mainWindow.webContents.send(...a); } catch {} };
 
   if (isAsar) {
-    // Installed version: download installer exe and run it
+    // Installed version: download installer, create batch script that waits for app to close, then run installer
     updateLog('Installed version detected — downloading installer...');
     const exeUrl = installerUrl || downloadUrl.replace(/Launcher\.zip$/i, 'Crux-Client-Installer.exe');
     updateLog(`Installer URL: ${exeUrl}`);
@@ -2193,25 +2210,34 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
         });
       });
     } catch {}
-    updateLog('Starting silent install...');
+
+    // Create a batch script that waits for the launcher to close, then runs the installer
+    const launcherExe = path.basename(app.getPath('exe'));
+    const batchPath = path.join(os.tmpdir(), 'crux-update-' + Date.now() + '.bat');
+    const batchContent = [
+      '@echo off',
+      'echo Waiting for ' + launcherExe + ' to close...',
+      ':waitloop',
+      'timeout /t 1 /nobreak >nul',
+      'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
+      'if %errorlevel%==0 goto waitloop',
+      'echo Launcher closed. Starting installer...',
+      'start /wait "" "' + installerPath + '" /S',
+      'echo Installer finished. Starting launcher...',
+      'start "" "' + path.dirname(app.getPath('exe')) + '\\' + launcherExe + '"',
+      'del "%~f0"',
+    ].join('\r\n');
+    await fs.promises.writeFile(batchPath, batchContent, 'utf8');
+    updateLog('Update batch script created. Closing launcher to run installer...');
+
+    // Start the batch script detached, then quit the app
     try {
-      await new Promise((resolve, reject) => {
-        const c = exec(`"${installerPath}" /S`, { timeout: 300000, shell: true }, (err) => {
-          if (err) reject(err); else resolve();
-        });
-        c.on('error', reject);
-      });
-      updateLog('Install finished. Restarting...');
+      spawn('cmd.exe', ['/c', batchPath], { shell: false, detached: true, stdio: 'ignore', windowsHide: true }).unref();
     } catch (e) {
-      updateLog('Silent install failed, trying normal launch: ' + (e.message || e));
-      try {
-        spawn(`"${installerPath}"`, [], { shell: true, detached: true, stdio: 'ignore' }).unref();
-      } catch (e2) {
-        updateLog('Spawn also failed, trying exec start: ' + (e2.message || e2));
-        exec(`start "" "${installerPath}"`, { shell: true });
-      }
+      updateLog('Batch spawn failed: ' + e.message + ', trying direct start...');
+      exec(`start "" "${batchPath}"`, { shell: true });
     }
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 500));
     app.quit();
   } else {
     // Dev mode: extract zip over source files
