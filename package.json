@@ -5,7 +5,7 @@
     "main":  "main.js",
     "scripts":  {
                     "test":  "echo \"Error: no test specified\" \u0026\u0026 exit 1",
-                    "start":  "wscript start-hidden.vbs",
+                    "start":  "electron .",
                     "package":  "node ./scripts/package-versioned.js",
                     "package-all":  "node ./scripts/package-all.js",
                     "package-mac":  "node ./scripts/package-mac.js",
