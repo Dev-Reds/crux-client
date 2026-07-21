@@ -45,17 +45,6 @@ app.setPath('userData', base);
 app.setPath('cache', path.join(base,'Cache'));
 
 // ── Window ─────────────────────────────────────────────────────────────────────
-// Detach from console on Windows so no console window lingers
-if (process.platform === 'win32') {
-  try {
-    const ps = `Add-Type '[DllImport("kernel32.dll")] public static extern bool FreeConsole();' -Name W -Namespace Q; [Q.W]::FreeConsole()`;
-    const tmpFile = path.join(os.tmpdir(), 'crux-freeconsole.ps1');
-    fs.writeFileSync(tmpFile, ps);
-    require('child_process').execSync(`powershell -NoProfile -ExecutionPolicy Bypass -File "${tmpFile}"`, { stdio:'ignore', windowsHide:true });
-    try { fs.unlinkSync(tmpFile); } catch {}
-  } catch {}
-}
-
 function createWindow() {
   mainWindow = new BrowserWindow({
     width:1200, height:800, minWidth:900, minHeight:600,

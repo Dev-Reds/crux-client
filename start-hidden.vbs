@@ -1,3 +1,4 @@
 Set objShell = CreateObject("WScript.Shell")
-objShell.CurrentDirectory = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
-objShell.Run "node_modules\electron\dist\electron.exe .", 0, False
+Set objFSO = CreateObject("Scripting.FileSystemObject")
+objShell.CurrentDirectory = objFSO.GetParentFolderName(WScript.ScriptFullName)
+objShell.Run "node -e ""require('child_process').spawn(require('electron'),['.'],{detached:true,stdio:'ignore',windowsHide:true}).unref()""", 0, False
