@@ -2107,14 +2107,7 @@ function parseVersion(v) {
 }
 
 function isNewer(remote, local) {
-  const r = parseVersion(remote);
-  const l = parseVersion(local);
-  for (let i = 0; i < Math.max(r.length, l.length); i++) {
-    const a = r[i] || 0, b = l[i] || 0;
-    if (a > b) return true;
-    if (a < b) return false;
-  }
-  return false;
+  return remote !== local;
 }
 
 ipcMain.handle('check-for-update', async () => {
