@@ -258,7 +258,22 @@ async function buildCustomCapeResourcePack(capeBuf) {
 async function deployCustomCapeRp(optionsPath) {
   if (!fs.existsSync(customCapePath)) return false;
   const s = await load(P.settings, {});
-  if (s.customCapeDisabled) return false;
+
+  let options = '';
+  try { options = await fs.promises.readFile(optionsPath, 'utf8'); } catch {}
+
+  const rpEntry = `"file/${customCapeRpName}"`;
+
+  // If disabled, remove cape from options.txt if present
+  if (s.customCapeDisabled) {
+    if (options.includes(customCapeRpName)) {
+      options = options.replace(new RegExp(`,?\\s*\\??"file/${customCapeRpName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"\\?`,'g'), '');
+      // Clean up empty array edge cases
+      options = options.replace(/^resourcePacks:\["vanilla",?\s*\]/m, 'resourcePacks:["vanilla"]');
+      await fs.promises.writeFile(optionsPath, options);
+    }
+    return false;
+  }
   const rpZip = path.join(customCapeRpDir, customCapeRpName);
   if (!fs.existsSync(rpZip)) {
     try { const buf = await fs.promises.readFile(customCapePath); await buildCustomCapeResourcePack(buf); }
