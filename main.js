@@ -10,6 +10,20 @@ const { URL } = require('url');
 let mainWindow;
 let authWindow = null;
 
+// ── Single instance lock ────────────────────────────────────────────────────
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
+
 // ── Prevent crashes ──────────────────────────────────────────────────────────
 const logFile = path.join(process.env.APPDATA || process.env.LOCALAPPDATA || '', 'Crux Client', 'crash.log');
 function logDebug(msg) {
