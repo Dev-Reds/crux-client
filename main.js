@@ -195,6 +195,83 @@ ipcMain.on('save-mods', async (e, data) => {
   }
 });
 
+// ── Custom Cape ────────────────────────────────────────────────────────────────
+const customCapePath = path.join(base, 'custom-cape.png');
+const customCapeRpDir = path.join(P.mc, 'resourcepacks');
+const customCapeRpName = 'Crux-Custom-Cape.zip';
+
+ipcMain.handle('save-custom-cape', async (e, dataUrl) => {
+  try {
+    const base64 = dataUrl.replace(/^data:image\/png;base64,/, '');
+    const buf = Buffer.from(base64, 'base64');
+    await fs.promises.writeFile(customCapePath, buf);
+    await buildCustomCapeResourcePack(buf);
+    return { success: true };
+  } catch(err) { return { success: false, error: err.message }; }
+});
+
+ipcMain.handle('load-custom-cape', async () => {
+  try {
+    if (!fs.existsSync(customCapePath)) return null;
+    const buf = await fs.promises.readFile(customCapePath);
+    return 'data:image/png;base64,' + buf.toString('base64');
+  } catch { return null; }
+});
+
+ipcMain.handle('remove-custom-cape', async () => {
+  try {
+    if (fs.existsSync(customCapePath)) await fs.promises.unlink(customCapePath);
+    const rpZip = path.join(customCapeRpDir, customCapeRpName);
+    if (fs.existsSync(rpZip)) await fs.promises.unlink(rpZip);
+    return { success: true };
+  } catch { return { success: false }; }
+});
+
+async function buildCustomCapeResourcePack(capeBuf) {
+  const JSZip = require('jszip');
+  const zip = new JSZip();
+  const packMeta = JSON.stringify({ pack:{ pack_format:15, description:'Crux Custom Cape' } });
+  zip.file('pack.mcmeta', packMeta);
+  zip.file('assets/minecraft/textures/entity/cape.png', capeBuf);
+  const zipBuf = await zip.generateAsync({ type:'nodebuffer', compression:'DEFLATE' });
+  await fs.promises.mkdir(customCapeRpDir, { recursive: true });
+  await fs.promises.writeFile(path.join(customCapeRpDir, customCapeRpName), zipBuf);
+}
+
+// Auto-deploy custom cape resource pack on launch (called from launch-minecraft handler)
+async function deployCustomCapeRp(optionsPath) {
+  if (!fs.existsSync(customCapePath)) return false;
+  const rpZip = path.join(customCapeRpDir, customCapeRpName);
+  if (!fs.existsSync(rpZip)) {
+    try { const buf = await fs.promises.readFile(customCapePath); await buildCustomCapeResourcePack(buf); }
+    catch { return false; }
+  }
+  if (!fs.existsSync(rpZip)) return false;
+
+  let options = '';
+  try { options = await fs.promises.readFile(optionsPath, 'utf8'); } catch {}
+
+  const rpEntry = `"file/${customCapeRpName}"`;
+  if (!options.includes(customCapeRpName)) {
+    if (options.match(/^resourcePacks:/m)) {
+      options = options.replace(/^resourcePacks:.*$/m, (line) => {
+        const current = line.replace(/^resourcePacks:/, '').trim();
+        if (current === '[]') return `resourcePacks:["vanilla",${rpEntry}]`;
+        return `resourcePacks:${current.replace(/\]$/, `,${rpEntry}]`)}`;
+      });
+    } else {
+      options += `\nresourcePacks:["vanilla",${rpEntry}]`;
+    }
+    if (options.match(/^incompatibleResourcePacks:/m)) {
+      options = options.replace(/^incompatibleResourcePacks:.*$/m, 'incompatibleResourcePacks:[]');
+    } else {
+      options += '\nincompatibleResourcePacks:[]';
+    }
+    await fs.promises.writeFile(optionsPath, options);
+  }
+  return true;
+}
+
 let mcVersionList = [];
 
 // ── MC Versions ────────────────────────────────────────────────────────────────
@@ -1420,6 +1497,15 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     } else {
       // If no RPs configured, don't clear user's existing options.txt RP settings
     }
+
+    // ── Deploy custom cape resource pack ──────────────────────────────────────
+    try {
+      const capeRpDeployed = await deployCustomCapeRp(path.join(P.mc, 'options.txt'));
+      if (capeRpDeployed) {
+        send('instance-log', { instanceId, line: '[Cape] Custom cape resource pack deployed.' });
+        send('launch-progress', { instanceId, percent:51, message:'Custom cape resource pack activated.' });
+      }
+    } catch(e) { send('instance-log', { instanceId, line: `[Cape] Deploy failed: ${e.message}` }); }
 
     // ── Original launcher ───────────────────────────────────────────────────────
     if (useOriginalLauncher) {
