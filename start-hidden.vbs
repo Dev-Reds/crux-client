@@ -1,2 +1,3 @@
 Set objShell = CreateObject("WScript.Shell")
-objShell.Run "cmd /c node node_modules\electron\dist\electron .", 0, False
+objShell.CurrentDirectory = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
+objShell.Run "node_modules\electron\dist\electron.exe .", 0, False

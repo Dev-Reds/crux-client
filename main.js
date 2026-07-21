@@ -195,6 +195,11 @@ ipcMain.on('save-mods', async (e, data) => {
   }
 });
 
+// ── Skin List ──────────────────────────────────────────────────────────────────
+const skinListPath = path.join(base, 'skin-list.json');
+ipcMain.handle('load-skin-list', async () => load(skinListPath, []));
+ipcMain.on('save-skin-list', async (e, data) => save(skinListPath, data));
+
 // ── Custom Cape ────────────────────────────────────────────────────────────────
 const customCapePath = path.join(base, 'custom-cape.png');
 const customCapeRpDir = path.join(P.mc, 'resourcepacks');

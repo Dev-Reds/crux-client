@@ -420,14 +420,17 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
             <div class="skin-change-label" style="color:#555;margin-bottom:.3em">Change Skin:</div>
             <div style="display:flex;gap:.3em;margin-bottom:.3em">
               <input type="text" id="skin-url-input" placeholder="Skin URL..." style="flex:1;padding:.3em .5em;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
-              <button class="btn btn-sm btn-primary" id="skin-url-apply-btn" style="width:auto;font-size:.78em">URL</button>
+              <button class="btn btn-sm btn-primary" id="skin-url-apply-btn" style="width:auto;font-size:.78em">Add</button>
             </div>
             <label class="btn skin-file-btn" style="cursor:pointer;display:block;text-align:center;font-size:.82em;padding:.35em">
-              📁 Choose PNG File
+              📁 Add PNG to List
               <input type="file" id="skin-file-input" accept="image/png" style="display:none">
             </label>
             <div id="skin-upload-status" style="color:#1bd96a;font-size:.72em;margin-top:.25em;text-align:center;min-height:1em"></div>
-            <button class="btn btn-sm" id="skin-editor-btn" style="width:100%;margin-top:.3em;font-size:.8em">🎨 Pixel Editor</button>
+            <div style="display:flex;gap:.3em;margin-top:.3em">
+              <button class="btn btn-sm" id="skin-editor-btn" style="flex:1;font-size:.8em">🎨 Pixel Editor</button>
+              <button class="btn btn-sm btn-primary" id="skin-list-btn" style="flex:1;font-size:.8em">📋 Skin List</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1264,6 +1267,19 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <button class="btn btn-sm" id="cape-ed-export">Export PNG</button>
       <button class="btn btn-sm" id="cape-ed-import">Import PNG</button>
       <button class="btn btn-sm" id="cape-ed-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SKIN LIST OVERLAY ══ -->
+<div class="skin-editor-overlay" id="skin-list-overlay">
+  <div class="skin-editor-panel" style="max-width:600px">
+    <h2>📋 Skin List</h2>
+    <p style="color:#888;font-size:.8em;margin-bottom:.8em">Click a skin to apply it. Skins are saved locally.</p>
+    <div id="skin-list-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(8em,1fr));gap:.5em;min-height:5em;margin-bottom:1em"></div>
+    <p id="skin-list-empty" style="color:#555;font-size:.82em;text-align:center;display:none">No skins saved yet.</p>
+    <div class="skin-editor-actions">
+      <button class="btn btn-sm" id="skin-list-close">Close</button>
     </div>
   </div>
 </div>
@@ -3515,8 +3531,15 @@ function renderModList() {
 }
 
 // ════════════════════════════════════════
-// SKIN UPLOAD (real API)
+// SKIN LIST + UPLOAD
 // ════════════════════════════════════════
+let skinList = [];
+
+async function loadSkinList() {
+  try { skinList = await ipcRenderer.invoke('load-skin-list'); if (!Array.isArray(skinList)) skinList = []; } catch { skinList = []; }
+}
+function saveSkinList() { ipcRenderer.send('save-skin-list', skinList); }
+
 function setSkinUploadStatus(msg, color='#1bd96a') {
   const el = document.getElementById('skin-upload-status');
   if (el) { el.textContent = msg; el.style.color = color; }
@@ -3530,27 +3553,34 @@ async function applySkinFromDataUrl(dataUrl) {
   loadSkinTexture(dataUrl);
   updateSkinDisplay();
   renderAccountList();
-
-  // Upload to Mojang API if logged in
   if (acc.accessToken) {
     setSkinUploadStatus('Uploading skin...');
     const result = await ipcRenderer.invoke('upload-skin', { accessToken: acc.accessToken, skinDataUrl: dataUrl, variant: 'classic' });
     if (result.success) setSkinUploadStatus('✓ Skin updated!');
     else setSkinUploadStatus('Upload failed: ' + result.error, '#f5a623');
   } else {
-    setSkinUploadStatus('No account selected. Please log in first.', '#f44');
+    setSkinUploadStatus('Please log in first to upload.', '#f5a623');
   }
 }
 
-// File picker
+function addSkinToList(dataUrl, name) {
+  const exists = skinList.some(s => s.dataUrl === dataUrl);
+  if (exists) { setSkinUploadStatus('Skin already in list', '#f5a623'); return; }
+  skinList.push({ name: name || 'Skin ' + (skinList.length+1), dataUrl, addedAt: Date.now() });
+  saveSkinList();
+  setSkinUploadStatus('✓ Added to skin list!');
+}
+
+// File picker → add to list
 document.getElementById('skin-file-input').addEventListener('change', e => {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
-  reader.onload = ev => applySkinFromDataUrl(ev.target.result);
+  reader.onload = ev => { addSkinToList(ev.target.result, file.name.replace(/\.png$/i,'')); };
   reader.readAsDataURL(file);
+  e.target.value = '';
 });
 
-// URL apply
+// URL → add to list
 document.getElementById('skin-url-apply-btn').addEventListener('click', async () => {
   const url = document.getElementById('skin-url-input').value.trim();
   if (!url) return;
@@ -3559,10 +3589,56 @@ document.getElementById('skin-url-apply-btn').addEventListener('click', async ()
     const res = await fetch(url);
     const blob = await res.blob();
     const reader = new FileReader();
-    reader.onload = ev => applySkinFromDataUrl(ev.target.result);
+    reader.onload = ev => {
+      addSkinToList(ev.target.result, url.split('/').pop().replace(/\.png$/i,'') || 'URL Skin');
+      document.getElementById('skin-url-input').value = '';
+    };
     reader.readAsDataURL(blob);
-  } catch(e) { setSkinUploadStatus('Failed to load URL: ' + e.message, '#f44'); }
+  } catch(e) { setSkinUploadStatus('Failed: ' + e.message, '#f44'); }
 });
+
+// Skin List overlay
+function renderSkinList() {
+  const container = document.getElementById('skin-list-container');
+  const emptyEl = document.getElementById('skin-list-empty');
+  container.innerHTML = '';
+  if (!skinList.length) { emptyEl.style.display = ''; return; }
+  emptyEl.style.display = 'none';
+  skinList.forEach((skin, idx) => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:.4em;cursor:pointer;text-align:center;transition:all .15s';
+    card.onmouseenter = () => card.style.borderColor = 'var(--acc,#0088ff)';
+    card.onmouseleave = () => card.style.borderColor = '#2a2a2a';
+    const thumb = document.createElement('img');
+    thumb.src = skin.dataUrl;
+    thumb.style.cssText = 'width:4em;height:4em;image-rendering:pixelated;border-radius:4px;margin-bottom:.3em;display:block;margin-left:auto;margin-right:auto';
+    const label = document.createElement('div');
+    label.textContent = skin.name || 'Skin '+(idx+1);
+    label.style.cssText = 'font-size:.72em;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    const btns = document.createElement('div');
+    btns.style.cssText = 'display:flex;gap:.25em;margin-top:.3em;justify-content:center';
+    const applyBtn = document.createElement('button');
+    applyBtn.className = 'btn btn-sm btn-primary';
+    applyBtn.style.cssText = 'width:auto;font-size:.68em;padding:.2em .5em';
+    applyBtn.textContent = 'Apply';
+    applyBtn.onclick = (e) => { e.stopPropagation(); applySkinFromDataUrl(skin.dataUrl); setSkinUploadStatus('Applied: ' + skin.name); };
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-sm';
+    delBtn.style.cssText = 'width:auto;font-size:.68em;padding:.2em .5em;color:#f44;border-color:#f4455';
+    delBtn.textContent = '✕';
+    delBtn.onclick = (e) => { e.stopPropagation(); skinList.splice(idx,1); saveSkinList(); renderSkinList(); };
+    btns.appendChild(applyBtn); btns.appendChild(delBtn);
+    card.appendChild(thumb); card.appendChild(label); card.appendChild(btns);
+    card.onclick = () => { applySkinFromDataUrl(skin.dataUrl); setSkinUploadStatus('Applied: ' + skin.name); document.getElementById('skin-list-overlay').classList.remove('open'); };
+    container.appendChild(card);
+  });
+}
+
+document.getElementById('skin-list-btn').addEventListener('click', () => { renderSkinList(); document.getElementById('skin-list-overlay').classList.add('open'); });
+document.getElementById('skin-list-close').addEventListener('click', () => document.getElementById('skin-list-overlay').classList.remove('open'));
+document.getElementById('skin-list-overlay').addEventListener('click', e => { if (e.target.id === 'skin-list-overlay') e.target.classList.remove('open'); });
+
+loadSkinList();
 
 // ════════════════════════════════════════
 // SKIN PIXEL EDITOR
@@ -3740,11 +3816,11 @@ document.getElementById('skin-url-apply-btn').addEventListener('click', async ()
   });
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.classList.remove('open');});
 
-  // Apply to skin viewer
+  // Add to skin list from editor
   document.getElementById('skin-ed-apply').addEventListener('click',()=>{
     const dataUrl = canvas.toDataURL('image/png');
-    applySkinFromDataUrl(dataUrl);
-    setSkinUploadStatus('Skin applied from editor!');
+    addSkinToList(dataUrl, 'Pixel Editor Skin');
+    setSkinUploadStatus('Added to skin list!');
     overlay.classList.remove('open');
   });
 
