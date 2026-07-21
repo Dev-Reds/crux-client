@@ -179,7 +179,7 @@ body.light .skin3d-wrap{background:#e0e0e0;}
 /* Skin Pixel Editor */
 .skin-editor-overlay{display:none;position:fixed;inset:0;z-index:10000;background:#0a0a0aee;color:#fff;flex-direction:column;align-items:center;justify-content:center;}
 .skin-editor-overlay.open{display:flex;}
-.skin-editor-panel{background:#141414;border:1px solid #333;border-radius:12px;padding:1.2em;max-width:900px;width:95%;max-height:92vh;overflow-y:auto;}
+.skin-editor-panel{background:#141414;border:1px solid #333;border-radius:12px;padding:1.2em;max-width:1100px;width:95%;max-height:92vh;overflow-y:auto;}
 .skin-editor-panel h2{margin:0 0 .6em;font-size:1.1em;}
 .skin-editor-toolbar{display:flex;gap:.4em;flex-wrap:wrap;align-items:center;margin-bottom:.7em;}
 .skin-editor-toolbar .tool-btn{padding:.3em .6em;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#ccc;cursor:pointer;font-size:.78em;transition:all .15s;}
@@ -189,6 +189,10 @@ body.light .skin3d-wrap{background:#e0e0e0;}
 .skin-editor-toolbar .sep{width:1px;height:1.5em;background:#333;margin:0 .2em;}
 .skin-editor-canvas-wrap{position:relative;display:flex;justify-content:center;margin-bottom:.7em;}
 .skin-editor-canvas{image-rendering:pixelated;cursor:crosshair;border:1px solid #333;background:repeating-conic-gradient(#2a2a2a 0% 25%, #222 0% 50%) 0 0 / 16px 16px;}
+.skin-editor-dual{display:flex;gap:1em;justify-content:center;align-items:flex-start;flex-wrap:wrap;margin-bottom:.7em;}
+.skin-editor-3d-wrap{width:300px;height:400px;min-width:220px;background:#0a0a0a;border:1px solid #333;border-radius:8px;cursor:grab;position:relative;overflow:hidden;}
+.skin-editor-3d-wrap:active{cursor:grabbing;}
+.skin-editor-3d-wrap canvas{width:100%!important;height:100%!important;display:block;}
 .skin-editor-body-labels{font-size:.6em;color:#555;text-align:center;margin-bottom:.5em;}
 .skin-editor-actions{display:flex;gap:.4em;justify-content:center;}
 
@@ -1227,8 +1231,11 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div class="sep"></div>
       <span style="font-size:.72em;color:#888" id="skin-ed-coords">-</span>
     </div>
-    <div class="skin-editor-canvas-wrap">
-      <canvas class="skin-editor-canvas" id="skin-ed-canvas" width="64" height="64"></canvas>
+    <div class="skin-editor-dual">
+      <div class="skin-editor-canvas-wrap">
+        <canvas class="skin-editor-canvas" id="skin-ed-canvas" width="64" height="64"></canvas>
+      </div>
+      <div class="skin-editor-3d-wrap" id="skin-ed-3d-wrap"></div>
     </div>
     <div class="skin-editor-body-labels">Head · Body · Right Arm · Left Arm · Right Leg · Left Leg — drag to rotate the 3D preview</div>
     <div class="skin-editor-actions">
@@ -1256,8 +1263,11 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div class="sep"></div>
       <span style="font-size:.72em;color:#888" id="cape-ed-coords">-</span>
     </div>
-    <div class="skin-editor-canvas-wrap">
-      <canvas class="skin-editor-canvas" id="cape-ed-canvas" width="22" height="17"></canvas>
+    <div class="skin-editor-dual">
+      <div class="skin-editor-canvas-wrap">
+        <canvas class="skin-editor-canvas" id="cape-ed-canvas" width="22" height="17"></canvas>
+      </div>
+      <div class="skin-editor-3d-wrap" id="cape-ed-3d-wrap"></div>
     </div>
     <div style="text-align:center;margin-bottom:.5em">
       <span style="font-size:.6em;color:#555">← Back | Front →</span>
@@ -3668,6 +3678,7 @@ loadSkinList();
   let currentTool = 'pencil';
   let isDrawing = false;
   let showTemplate = false;
+  let ed3dTex = null;
 
   // Skin UV template overlay (body part outlines)
   const templateOverlay = document.createElement('canvas');
@@ -3771,12 +3782,13 @@ loadSkinList();
         if(m)colorInput.value='#'+[m[0],m[1],m[2]].map(v=>(+v).toString(16).padStart(2,'0')).join('');
       }
     }
+    if(ed3dTex)ed3dTex.needsUpdate=true;
   }
 
   canvas.addEventListener('mousedown',e=>{
     isDrawing=true;
     const {x,y}=getPixelCoords(e);
-    if(currentTool==='fill'){floodFill(x,y,hexToRgba(colorInput.value));isDrawing=false;return;}
+    if(currentTool==='fill'){floodFill(x,y,hexToRgba(colorInput.value));isDrawing=false;if(ed3dTex)ed3dTex.needsUpdate=true;return;}
     if(currentTool==='eyedropper'){
       const c=getPixel(x,y);
       if(c&&c!=='rgba(0,0,0,0)'){
@@ -3824,6 +3836,7 @@ loadSkinList();
   // Open editor
   document.getElementById('skin-editor-btn').addEventListener('click',()=>{
     overlay.classList.add('open');
+    setTimeout(initSkinEditor3D, 100);
   });
 
   // Close editor
@@ -3869,6 +3882,111 @@ loadSkinList();
     if(!showTemplate)return;
     ctx.drawImage(templateOverlay,0,0);
   }
+
+  // ── Skin 3D Editor ──
+  let ed3dRenderer=null, ed3dScene=null, ed3dCamera=null, ed3dGroup=null, ed3dRaycaster=null;
+  let ed3dRotY=30, ed3dRotX=10, ed3dDragActive=false, ed3dDragSX=0, ed3dDragSY=0, ed3dDragRY=0, ed3dDragRX=0;
+
+  function initSkinEditor3D(){
+    if(!window.THREE)return;
+    const wrap=document.getElementById('skin-ed-3d-wrap');
+    if(!wrap)return;
+    const W=wrap.clientWidth||300, H=wrap.clientHeight||400;
+    ed3dScene=new THREE.Scene();
+    ed3dCamera=new THREE.PerspectiveCamera(35,W/H,0.1,100);
+    ed3dCamera.position.set(0,1.3,11);ed3dCamera.lookAt(0,0,0);
+    ed3dRenderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+    ed3dRenderer.setSize(W,H);ed3dRenderer.setClearColor(0x000000,0);
+    ed3dRenderer.setPixelRatio(window.devicePixelRatio||1);
+    wrap.innerHTML='';wrap.appendChild(ed3dRenderer.domElement);
+    ed3dRenderer.domElement.style.width='100%';ed3dRenderer.domElement.style.height='100%';
+    ed3dScene.add(new THREE.AmbientLight(0xffffff,0.7));
+    const dl1=new THREE.DirectionalLight(0xffffff,0.8);dl1.position.set(2,4,3);ed3dScene.add(dl1);
+    const dl2=new THREE.DirectionalLight(0xaabbff,0.3);dl2.position.set(-2,-1,-2);ed3dScene.add(dl2);
+    ed3dGroup=new THREE.Group();ed3dScene.add(ed3dGroup);
+    ed3dTex=new THREE.CanvasTexture(canvas);
+    ed3dTex.magFilter=THREE.NearestFilter;ed3dTex.minFilter=THREE.NearestFilter;
+    buildEditorSkinMesh(ed3dGroup,ed3dTex);
+    ed3dRaycaster=new THREE.Raycaster();
+    wrap.addEventListener('contextmenu',e=>e.preventDefault());
+    wrap.addEventListener('mousedown',e=>{
+      if(e.button===0){
+        paintSkin3D(e,wrap);
+        const onMove=ev=>paintSkin3D(ev,wrap);
+        const onUp=()=>{document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
+        document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+      }else{
+        ed3dDragActive=true;ed3dDragSX=e.clientX;ed3dDragSY=e.clientY;
+        ed3dDragRY=ed3dRotY;ed3dDragRX=ed3dRotX;
+        const onMove=ev=>{
+          if(!ed3dDragActive)return;
+          ed3dRotY=ed3dDragRY+(ev.clientX-ed3dDragSX)*0.6;
+          ed3dRotX=Math.max(-35,Math.min(35,ed3dDragRX+(ev.clientY-ed3dDragSY)*0.3));
+        };
+        const onUp=()=>{ed3dDragActive=false;document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
+        document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+      }
+    });
+    wrap.addEventListener('wheel',e=>{e.preventDefault();ed3dCamera.position.z=Math.max(5,Math.min(25,ed3dCamera.position.z+e.deltaY*0.01));},{passive:false});
+    let tStart=null;
+    wrap.addEventListener('touchstart',e=>{const t=e.touches[0];tStart={x:t.clientX,y:t.clientY};ed3dDragRY=ed3dRotY;ed3dDragRX=ed3dRotX;});
+    wrap.addEventListener('touchmove',e=>{if(!tStart)return;const t=e.touches[0];ed3dRotY=ed3dDragRY+(t.clientX-tStart.x)*0.6;ed3dRotX=Math.max(-35,Math.min(35,ed3dDragRX+(t.clientY-tStart.y)*0.3));e.preventDefault();},{passive:false});
+    wrap.addEventListener('touchend',()=>tStart=null);
+    const ro=new ResizeObserver(()=>{const w=wrap.clientWidth,h=wrap.clientHeight;if(w>0&&h>0){ed3dRenderer.setSize(w,h);ed3dCamera.aspect=w/h;ed3dCamera.updateProjectionMatrix();}});
+    ro.observe(wrap);
+    (function loop(){
+      if(!wrap.isConnected){ed3dRenderer.dispose();return;}
+      requestAnimationFrame(loop);
+      ed3dGroup.rotation.y=ed3dRotY*Math.PI/180;ed3dGroup.rotation.x=ed3dRotX*Math.PI/180;
+      ed3dRenderer.render(ed3dScene,ed3dCamera);
+    })();
+  }
+
+  function paintSkin3D(e,wrap){
+    if(!ed3dRaycaster||!ed3dGroup||!ed3dCamera)return;
+    const rect=wrap.getBoundingClientRect();
+    const mx=((e.clientX-rect.left)/rect.width)*2-1;
+    const my=-((e.clientY-rect.top)/rect.height)*2+1;
+    ed3dRaycaster.setFromCamera(new THREE.Vector2(mx,my),ed3dCamera);
+    const hits=ed3dRaycaster.intersectObjects(ed3dGroup.children,true);
+    if(hits.length>0&&hits[0].uv){
+      const uv=hits[0].uv;
+      const px=Math.min(63,Math.max(0,Math.floor(uv.x*64)));
+      const py=Math.min(63,Math.max(0,Math.floor((1-uv.y)*64)));
+      const color=hexToRgba(colorInput.value);
+      if(currentTool==='pencil')setPixel(px,py,color);
+      else if(currentTool==='eraser')setPixel(px,py,'rgba(0,0,0,0)');
+      else if(currentTool==='fill')floodFill(px,py,color);
+      else if(currentTool==='eyedropper'){
+        const c=getPixel(px,py);
+        if(c&&c!=='rgba(0,0,0,0)'){
+          const m=c.match(/[\d.]+/g);
+          if(m)colorInput.value='#'+[m[0],m[1],m[2]].map(v=>(+v).toString(16).padStart(2,'0')).join('');
+        }
+      }
+      if(ed3dTex)ed3dTex.needsUpdate=true;
+    }
+  }
+
+  function buildEditorSkinMesh(group,tex){
+    while(group.children.length)group.remove(group.children[0]);
+    const U=0.25,isSlim=skinModel==='slim',armW=isSlim?3:4,armX=isSlim?5.5:6;
+    const hg=new THREE.Group();hg.position.set(0,U*22,0);
+    hg.add(skinBox(U*8,U*8,U*8,0,0,0,tex,uv(8,8,8,8),uv(24,8,8,8),uv(8,0,8,8),uv(16,0,8,8),uv(16,8,8,8),uv(0,8,8,8)));
+    if(tex){const ov=skinBox(U*9,U*9,U*9,0,0,0,tex,uv(40,8,8,8),uv(56,8,8,8),uv(40,0,8,8),uv(48,0,8,8),uv(48,8,8,8),uv(32,8,8,8));ov.renderOrder=1;hg.add(ov);}
+    group.add(hg);
+    group.add(skinBox(U*8,U*12,U*4,0,U*12,0,tex,uv(20,20,8,12),uv(32,20,8,12),uv(20,16,8,4),uv(28,16,8,4),uv(28,20,4,12),uv(16,20,4,12)));
+    if(tex){const j=skinBox(U*8.5,U*12.5,U*4.5,0,U*12,0,tex,uv(20,36,8,12),uv(32,36,8,12),uv(20,32,8,4),uv(28,32,8,4),uv(28,36,4,12),uv(16,36,4,12));j.renderOrder=1;group.add(j);}
+    group.add(skinBox(U*armW,U*12,U*4,U*armX,U*12,0,tex,uv(44,20,armW,12),uv(44+armW+4,20,armW,12),uv(44,16,armW,4),uv(44+armW,16,armW,4),uv(44+armW,20,armW,12),uv(44-4,20,armW,12)));
+    if(tex){const s=skinBox(U*(armW+.5),U*12.5,U*4.5,U*armX,U*12,0,tex,uv(44,36,armW,12),uv(44+armW+4,36,armW,12),uv(44,32,armW,4),uv(44+armW,32,armW,4),uv(44+armW,36,armW,12),uv(44-4,36,armW,12));s.renderOrder=1;group.add(s);}
+    group.add(skinBox(U*armW,U*12,U*4,-U*armX,U*12,0,tex,uv(36,52,armW,12),uv(36+armW+4,52,armW,12),uv(36,48,armW,4),uv(36+armW,48,armW,4),uv(36+armW,52,armW,12),uv(36-4,52,armW,12)));
+    if(tex){const s=skinBox(U*(armW+.5),U*12.5,U*4.5,-U*armX,U*12,0,tex,uv(52,52,armW,12),uv(52+armW+4,52,armW,12),uv(52,48,armW,4),uv(52+armW,48,armW,4),uv(52+armW,52,armW,12),uv(52-4,52,armW,12));s.renderOrder=1;group.add(s);}
+    group.add(skinBox(U*4,U*12,U*4,U*2,0,0,tex,uv(4,20,4,12),uv(12,20,4,12),uv(4,16,4,4),uv(8,16,4,4),uv(8,20,4,12),uv(0,20,4,12)));
+    if(tex){const p=skinBox(U*4.5,U*12.5,U*4.5,U*2,0,0,tex,uv(4,36,4,12),uv(12,36,4,12),uv(4,32,4,4),uv(8,32,4,4),uv(8,36,4,12),uv(0,36,4,12));p.renderOrder=1;group.add(p);}
+    group.add(skinBox(U*4,U*12,U*4,-U*2,0,0,tex,uv(20,52,4,12),uv(28,52,4,12),uv(20,48,4,4),uv(24,48,4,4),uv(24,52,4,12),uv(16,52,4,12)));
+    if(tex){const p=skinBox(U*4.5,U*12.5,U*4.5,-U*2,0,0,tex,uv(4,52,4,12),uv(12,52,4,12),uv(4,48,4,4),uv(8,48,4,4),uv(8,52,4,12),uv(0,52,4,12));p.renderOrder=1;group.add(p);}
+    group.position.set(0,-U*12,0);
+  }
 })();
 
 // ════════════════════════════════════════
@@ -3882,6 +4000,7 @@ loadSkinList();
   const coordsEl = document.getElementById('cape-ed-coords');
   const CAPE_W=22, CAPE_H=17;
   let currentTool='pencil', isDrawing=false;
+  let capeEd3dTex=null;
 
   const displaySize = Math.min(440, window.innerWidth*0.6);
   canvas.style.width = displaySize+'px';
@@ -3979,12 +4098,13 @@ loadSkinList();
         if(m)colorInput.value='#'+[m[0],m[1],m[2]].map(v=>(+v).toString(16).padStart(2,'0')).join('');
       }
     }
+    if(capeEd3dTex)capeEd3dTex.needsUpdate=true;
   }
 
   canvas.addEventListener('mousedown',e=>{
     isDrawing=true;
     const {x,y}=getPixelCoords(e);
-    if(currentTool==='fill'){floodFill(x,y,hexToRgba(colorInput.value));isDrawing=false;return;}
+    if(currentTool==='fill'){floodFill(x,y,hexToRgba(colorInput.value));isDrawing=false;if(capeEd3dTex)capeEd3dTex.needsUpdate=true;return;}
     if(currentTool==='eyedropper'){
       const c=getPixel(x,y);
       if(c&&c!=='rgba(0,0,0,0)'){
@@ -4015,7 +4135,7 @@ loadSkinList();
     ctx.clearRect(0,0,CAPE_W,CAPE_H);
   });
 
-  document.getElementById('cape-editor-btn').addEventListener('click',()=>overlay.classList.add('open'));
+  document.getElementById('cape-editor-btn').addEventListener('click',()=>{overlay.classList.add('open');setTimeout(initCapeEditor3D,100);});
   document.getElementById('cape-ed-close').addEventListener('click',()=>overlay.classList.remove('open'));
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.classList.remove('open');});
 
@@ -4065,6 +4185,95 @@ loadSkinList();
     const result=await ipcRenderer.invoke('toggle-custom-cape');
     if(result?.success) updateToggleBtn(result.disabled);
   });
+
+  // ── Cape 3D Editor ──
+  let capeEd3dRenderer=null, capeEd3dScene=null, capeEd3dCamera=null, capeEd3dGroup=null, capeEd3dRaycaster=null;
+  let capeEd3dRotY=30, capeEd3dRotX=10;
+
+  function initCapeEditor3D(){
+    if(!window.THREE)return;
+    const wrap=document.getElementById('cape-ed-3d-wrap');
+    if(!wrap)return;
+    const W=wrap.clientWidth||300, H=wrap.clientHeight||400;
+    capeEd3dScene=new THREE.Scene();
+    capeEd3dCamera=new THREE.PerspectiveCamera(30,W/H,0.1,100);
+    capeEd3dCamera.position.set(0,0,6);capeEd3dCamera.lookAt(0,0,0);
+    capeEd3dRenderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+    capeEd3dRenderer.setSize(W,H);capeEd3dRenderer.setClearColor(0x000000,0);
+    capeEd3dRenderer.setPixelRatio(window.devicePixelRatio||1);
+    wrap.innerHTML='';wrap.appendChild(capeEd3dRenderer.domElement);
+    capeEd3dRenderer.domElement.style.width='100%';capeEd3dRenderer.domElement.style.height='100%';
+    capeEd3dScene.add(new THREE.AmbientLight(0xffffff,0.8));
+    const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(3,5,4);capeEd3dScene.add(dl);
+    const dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-3,-1,-2);capeEd3dScene.add(dl2);
+    capeEd3dGroup=new THREE.Group();capeEd3dScene.add(capeEd3dGroup);
+    capeEd3dTex=new THREE.CanvasTexture(canvas);
+    capeEd3dTex.magFilter=THREE.NearestFilter;capeEd3dTex.minFilter=THREE.NearestFilter;
+    const capeFront=new THREE.Mesh(new THREE.PlaneGeometry(2.8,3.5),new THREE.MeshLambertMaterial({map:capeEd3dTex}));
+    capeEd3dGroup.add(capeFront);
+    const capeBack=new THREE.Mesh(new THREE.PlaneGeometry(2.8,3.5),new THREE.MeshLambertMaterial({map:capeEd3dTex,side:THREE.BackSide}));
+    capeBack.position.z=-0.02;capeEd3dGroup.add(capeBack);
+    capeEd3dGroup.rotation.y=Math.PI;
+    capeEd3dRaycaster=new THREE.Raycaster();
+    let drag={active:false,sx:0,sy:0,ry:capeEd3dRotY,rx:capeEd3dRotX};
+    wrap.addEventListener('contextmenu',e=>e.preventDefault());
+    wrap.addEventListener('mousedown',e=>{
+      if(e.button===0){
+        paintCape3D(e,wrap);
+        const onMove=ev=>paintCape3D(ev,wrap);
+        const onUp=()=>{document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
+        document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+      }else{
+        drag.active=true;drag.sx=e.clientX;drag.sy=e.clientY;drag.ry=capeEd3dRotY;drag.rx=capeEd3dRotX;
+        const onMove=ev=>{
+          if(!drag.active)return;
+          capeEd3dRotY=drag.ry+(ev.clientX-drag.sx)*0.7;
+          capeEd3dRotX=Math.max(-40,Math.min(40,drag.rx+(ev.clientY-drag.sy)*0.4));
+        };
+        const onUp=()=>{drag.active=false;document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
+        document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+      }
+    });
+    wrap.addEventListener('wheel',e=>{e.preventDefault();capeEd3dCamera.position.z=Math.max(3,Math.min(12,capeEd3dCamera.position.z+e.deltaY*0.005));},{passive:false});
+    let tStart=null;
+    wrap.addEventListener('touchstart',e=>{const t=e.touches[0];tStart={x:t.clientX,y:t.clientY};drag.ry=capeEd3dRotY;drag.rx=capeEd3dRotX;});
+    wrap.addEventListener('touchmove',e=>{if(!tStart)return;const t=e.touches[0];capeEd3dRotY=drag.ry+(t.clientX-tStart.x)*0.7;capeEd3dRotX=Math.max(-40,Math.min(40,drag.rx+(t.clientY-tStart.y)*0.4));e.preventDefault();},{passive:false});
+    wrap.addEventListener('touchend',()=>tStart=null);
+    const ro=new ResizeObserver(()=>{const w=wrap.clientWidth,h=wrap.clientHeight;if(w>0&&h>0){capeEd3dRenderer.setSize(w,h);capeEd3dCamera.aspect=w/h;capeEd3dCamera.updateProjectionMatrix();}});
+    ro.observe(wrap);
+    (function loop(){
+      if(!wrap.isConnected){capeEd3dRenderer.dispose();return;}
+      requestAnimationFrame(loop);
+      capeEd3dGroup.rotation.y=capeEd3dRotY*Math.PI/180;capeEd3dGroup.rotation.x=capeEd3dRotX*Math.PI/180;
+      capeEd3dRenderer.render(capeEd3dScene,capeEd3dCamera);
+    })();
+  }
+
+  function paintCape3D(e,wrap){
+    if(!capeEd3dRaycaster||!capeEd3dGroup||!capeEd3dCamera)return;
+    const rect=wrap.getBoundingClientRect();
+    const mx=((e.clientX-rect.left)/rect.width)*2-1;
+    const my=-((e.clientY-rect.top)/rect.height)*2+1;
+    capeEd3dRaycaster.setFromCamera(new THREE.Vector2(mx,my),capeEd3dCamera);
+    const hits=capeEd3dRaycaster.intersectObjects(capeEd3dGroup.children,true);
+    if(hits.length>0&&hits[0].uv){
+      const uv=hits[0].uv;
+      const px=Math.min(CAPE_W-1,Math.max(0,Math.floor(uv.x*CAPE_W)));
+      const py=Math.min(CAPE_H-1,Math.max(0,Math.floor((1-uv.y)*CAPE_H)));
+      const color=hexToRgba(colorInput.value);
+      if(currentTool==='pencil')setPixel(px,py,color);
+      else if(currentTool==='eraser')setPixel(px,py,'rgba(0,0,0,0)');
+      else if(currentTool==='fill')floodFill(px,py,color);
+      else if(currentTool==='eyedropper'){
+        const c=getPixel(px,py);
+        if(c&&c!=='rgba(0,0,0,0)'){
+          const m=c.match(/[\d.]+/g);
+          if(m)colorInput.value='#'+[m[0],m[1],m[2]].map(v=>(+v).toString(16).padStart(2,'0')).join('');
+        }
+      }
+      if(capeEd3dTex)capeEd3dTex.needsUpdate=true;
+    }
+  }
 })();
 
 // ════════════════════════════════════════
