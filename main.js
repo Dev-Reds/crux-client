@@ -60,21 +60,38 @@ app.setPath('cache', path.join(base,'Cache'));
 
 // ── Window ─────────────────────────────────────────────────────────────────────
 function createWindow() {
+  console.log('[Crux] Creating window...');
+  logDebug('createWindow called');
   mainWindow = new BrowserWindow({
     width:1200, height:800, minWidth:900, minHeight:600,
     autoHideMenuBar:true,
     icon: path.join(__dirname, 'icons', 'icon.ico'),
+    show: false,
     webPreferences:{ nodeIntegration:true, contextIsolation:false }
   });
   mainWindow.setMenu(null);
   mainWindow.loadFile('index.html');
+  mainWindow.once('ready-to-show', () => {
+    console.log('[Crux] Window ready-to-show');
+    logDebug('ready-to-show');
+    mainWindow.show();
+    mainWindow.focus();
+  });
   mainWindow.webContents.on('did-finish-load', () => {
+    console.log('[Crux] did-finish-load');
+    logDebug('did-finish-load');
     mainWindow.webContents.on('before-input-event', (e, input) => {
       if (input.key === 'F12') { mainWindow.webContents.toggleDevTools(); }
     });
   });
+  mainWindow.webContents.on('did-fail-load', (e, code, desc) => {
+    console.error('[Crux] did-fail-load:', code, desc);
+    logDebug('did-fail-load: ' + code + ' ' + desc);
+  });
 }
 app.whenReady().then(async () => {
+  console.log('[Crux] app.whenReady');
+  logDebug('app.whenReady');
   // Create directories async (non-blocking)
   await Promise.all(['Cache','javaInstallations','client-mods','minecraft','servers'].map(d =>
     fs.promises.mkdir(path.join(base, d), { recursive: true }).catch(()=>{})
