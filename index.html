@@ -266,12 +266,12 @@ body.light .mod-result-name{color:#111;}
 
 /* ── Profile page ── */
 .profile-list{width:100%;border:1px solid #1a1a1a;border-radius:var(--r);background:#0d0d0d;overflow:hidden;margin-bottom:.8em;}
-.profile-item{display:flex;align-items:center;gap:.7em;padding:.7em .9em;border-bottom:1px solid #141414;font-size:.82em;cursor:pointer;}
+.profile-item{display:flex;align-items:center;gap:.7em;padding:.7em .9em;border-bottom:1px solid #141414;font-size:.82em;cursor:pointer;overflow:hidden;}
 .profile-item:last-child{border-bottom:none;}
 .profile-item:hover{background:#141414;}
 .profile-item.sel{border-left:3px solid var(--acc);padding-left:calc(.9em - 3px);background:#0d1a2e;}
-.profile-name{font-weight:bold;flex:1;}
-.profile-meta{color:#555;font-size:.76em;}
+.profile-name{font-weight:bold;flex-shrink:0;white-space:nowrap;}
+.profile-meta{color:#555;font-size:.76em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:95%;flex-shrink:1;min-width:0;}
 .profile-edit-btn{width:auto;padding:.22em .65em;font-size:.72em;background:transparent;border-color:#2a2a2a;color:#666;border-radius:.35em;}
 .profile-edit-btn:hover{border-color:var(--acc);color:var(--acc);}
 .profile-share-btn{width:auto;padding:.22em .5em;font-size:.72em;background:transparent;border-color:#2a2a2a;color:#1bd96a;border-radius:.35em;}
@@ -359,15 +359,15 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 <div id="launcher-screen" style="display:flex">
   <div class="toolbar">
     <button class="tb-btn active" data-page="launch-page" data-i18n="tab_launch">Launch</button>
-    <button class="tb-btn" data-page="recent-page">Recent</button>
+    <button class="tb-btn" data-page="recent-page" data-i18n="tab_recent">Recent</button>
     <button class="tb-btn" data-page="mods-page" data-i18n="tab_mods">Client Options</button>
     <button class="tb-btn" data-page="profiles-page" data-i18n="tab_profiles">Profiles</button>
     <button class="tb-btn" data-page="cape-page" data-i18n="tab_cape">Capes</button>
     <button class="tb-btn" data-page="settings-page" data-i18n="tab_settings">Settings</button>
     <button class="tb-btn" data-page="logs-page" data-i18n="tab_logs">Logs<span id="running-badge" style="display:none;margin-left:.3em;background:#1bd96a;color:#000;border-radius:999px;font-size:.7em;padding:.05em .45em;font-weight:bold"></span></button>
     <button class="tb-btn" data-page="instances-page" data-i18n="tab_instances">Instances</button>
-    <button class="tb-btn" data-page="servers-page">Servers</button>
-    <button class="tb-btn" data-page="bugreport-page">Bug Report</button>
+    <button class="tb-btn" data-page="servers-page" data-i18n="tab_servers">Servers</button>
+    <button class="tb-btn" data-page="bugreport-page" data-i18n="tab_bugreport">Bug Report</button>
     <button class="tb-btn" id="toolbar-theme" title="Toggle theme">
       <svg id="icon-moon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       <svg id="icon-sun" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -379,9 +379,9 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
   </div>
 
   <div id="stop-bar" style="display:flex;gap:.5em;padding:.35em .8em;background:#0d0d0d;border-bottom:1px solid #1a1a1a;align-items:center;min-height:2em">
-    <span style="font-size:.78em;color:#555;margin-right:.4em">Actions:</span>
+    <span style="font-size:.78em;color:#555;margin-right:.4em" data-i18n="lbl_actions">Actions:</span>
     <button class="btn" id="stop-btn" style="width:auto;padding:.35em .7em;font-size:.78em;border-color:#f4444444;color:#f44;display:none;white-space:nowrap" title="Stop selected instance" data-i18n="btn_stop">■ Stop</button>
-    <button class="btn" id="stop-all-btn" style="width:auto;padding:.35em .7em;font-size:.78em;border-color:#f4444444;color:#f44;display:none;white-space:nowrap" title="Stop all running instances">■ Stop All</button>
+    <button class="btn" id="stop-all-btn" style="width:auto;padding:.35em .7em;font-size:.78em;border-color:#f4444444;color:#f44;display:none;white-space:nowrap" title="Stop all running instances" data-i18n="btn_stop_all">■ Stop All</button>
   </div>
   <div class="pages">
 
@@ -421,19 +421,19 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
           <div class="skin-name-display" id="skin-name-display">No account</div>
           <div class="skin-version-display" id="skin-version-display">—</div>
           <div style="width:100%;font-size:.78em">
-            <div class="skin-change-label" style="color:#555;margin-bottom:.3em">Change Skin:</div>
+            <div class="skin-change-label" style="color:#555;margin-bottom:.3em" data-i18n="lbl_change_skin">Change Skin:</div>
             <div style="display:flex;gap:.3em;margin-bottom:.3em">
               <input type="text" id="skin-url-input" placeholder="Skin URL..." style="flex:1;padding:.3em .5em;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
-              <button class="btn btn-sm btn-primary" id="skin-url-apply-btn" style="width:auto;font-size:.78em">Add</button>
+              <button class="btn btn-sm btn-primary" id="skin-url-apply-btn" style="width:auto;font-size:.78em" data-i18n="btn_add">Add</button>
             </div>
-            <label class="btn skin-file-btn" style="cursor:pointer;display:block;text-align:center;font-size:.82em;padding:.35em">
+            <label class="btn skin-file-btn" style="cursor:pointer;display:block;text-align:center;font-size:.82em;padding:.35em" data-i18n="btn_add_png">
               📁 Add PNG to List
               <input type="file" id="skin-file-input" accept="image/png" style="display:none">
             </label>
             <div id="skin-upload-status" style="color:#1bd96a;font-size:.72em;margin-top:.25em;text-align:center;min-height:1em"></div>
             <div style="display:flex;gap:.3em;margin-top:.3em">
-              <button class="btn btn-sm" id="skin-editor-btn" style="flex:1;font-size:.8em">🎨 Pixel Editor</button>
-              <button class="btn btn-sm btn-primary" id="skin-list-btn" style="flex:1;font-size:.8em">📋 Skin List</button>
+              <button class="btn btn-sm" id="skin-editor-btn" style="flex:1;font-size:.8em" data-i18n="btn_pixel_editor">🎨 Pixel Editor</button>
+              <button class="btn btn-sm btn-primary" id="skin-list-btn" style="flex:1;font-size:.8em" data-i18n="btn_skin_list">📋 Skin List</button>
             </div>
           </div>
         </div>
@@ -445,42 +445,42 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div class="mods-header">
         <h1 data-i18n="h_mods">Client Options</h1>
         <div class="mods-actions">
-          <button class="btn btn-sm btn-modrinth" id="btn-modrinth-global">Modrinth</button>
-          <button class="btn btn-sm btn-curseforge" id="btn-curseforge-global">CurseForge</button>
+          <button class="btn btn-sm btn-modrinth" id="btn-modrinth-global" data-i18n="btn_modrinth">Modrinth</button>
+          <button class="btn btn-sm btn-curseforge" id="btn-curseforge-global" data-i18n="btn_curseforge">CurseForge</button>
         </div>
 
       </div>
       <div style="display:flex;gap:.4em;margin-bottom:.6em">
-        <button class="btn btn-sm mod-filter-btn active" data-filter="all" id="filter-all">All</button>
+        <button class="btn btn-sm mod-filter-btn active" data-filter="all" id="filter-all" data-i18n="filter_all">All</button>
         <button class="btn btn-sm mod-filter-btn" data-filter="fabric" id="filter-fabric" style="border-color:#1bd96a55;color:#1bd96a">Fabric</button>
         <button class="btn btn-sm mod-filter-btn" data-filter="quilt" id="filter-quilt" style="border-color:#cc559955;color:#cc5599">Quilt</button>
         <button class="btn btn-sm mod-filter-btn" data-filter="forge" id="filter-forge" style="border-color:#f1642255;color:#f16422">Forge</button>
         <button class="btn btn-sm mod-filter-btn" data-filter="neoforge" id="filter-neoforge" style="border-color:#ff880055;color:#ff8800">NeoForge</button>
-        <button class="btn btn-sm mod-filter-btn" data-filter="disabled" id="filter-disabled">Disabled</button>
+        <button class="btn btn-sm mod-filter-btn" data-filter="disabled" id="filter-disabled" data-i18n="filter_disabled">Disabled</button>
       </div>
       <div class="mod-list" id="mod-list">
-        <div class="mod-list-empty" id="mod-list-empty">No mods installed yet.</div>
+        <div class="mod-list-empty" id="mod-list-empty" data-i18n="no_mods_installed">No mods installed yet.</div>
       </div>
 
       <!-- ── Resource Packs Section ── -->
       <div style="margin-top:1.4em;border-top:1px solid #1e1e1e;padding-top:1em">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6em;flex-wrap:wrap;gap:.4em">
-          <h2 style="font-size:.95em;margin:0;color:#ccc">Client Resource Packs</h2>
+          <h2 style="font-size:.95em;margin:0;color:#ccc" data-i18n="client_rp_title">Client Resource Packs</h2>
           <div style="display:flex;gap:.4em;align-items:center">
             <button class="btn btn-sm btn-modrinth" id="btn-rp-modrinth-global">Modrinth</button>
             <button class="btn btn-sm btn-curseforge" id="btn-rp-curseforge-global">CurseForge</button>
             <label style="display:flex;align-items:center;gap:.5em;cursor:pointer;font-size:.82em;color:#ccc;user-select:none">
-              <span>Auto-use</span>
+              <span data-i18n="auto_use">Auto-use</span>
               <div id="auto-rp-toggle" style="width:2.4em;height:1.3em;border-radius:999px;background:#333;border:1px solid #444;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
                 <div id="auto-rp-knob" style="position:absolute;top:.15em;left:.15em;width:.95em;height:.95em;border-radius:50%;background:#888;transition:left .2s,background .2s"></div>
               </div>
             </label>
           </div>
         </div>
-        <p style="color:#555;font-size:.75em;margin-bottom:.7em">When enabled, adds <strong style="color:#ccc">Open Loader</strong> to your client mods — it automatically loads all resource packs listed below without touching in-game settings.</p>
+        <p style="color:#555;font-size:.75em;margin-bottom:.7em" data-i18n="desc_rp_auto">When enabled, adds <strong style="color:#ccc">Open Loader</strong> to your client mods — it automatically loads all resource packs listed below without touching in-game settings.</p>
         <div style="display:flex;gap:.4em;margin-bottom:.5em;flex-wrap:wrap">
           <input type="text" id="client-rp-input" placeholder="Resource pack name or URL..." style="flex:1;min-width:10em;padding:.38em .6em;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.78em;outline:none">
-          <button class="btn btn-sm btn-primary" id="client-rp-add-btn" style="width:auto">+ Add</button>
+          <button class="btn btn-sm btn-primary" id="client-rp-add-btn" style="width:auto" data-i18n="btn_add_rp">+ Add</button>
         </div>
         <div id="client-rp-list" style="display:flex;flex-wrap:wrap;gap:.35em;min-height:1.5em"></div>
       </div>
@@ -493,9 +493,9 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8em;flex-wrap:wrap;gap:.4em">
         <h1 style="margin:0" data-i18n="h_profiles">Profiles</h1>
         <div style="display:flex;gap:.4em">
-          <button class="btn btn-sm btn-modrinth" id="import-modpack-modrinth-btn">📦 Modrinth</button>
-          <button class="btn btn-sm btn-curseforge" id="import-modpack-curseforge-btn">📦 CurseForge</button>
-          <button class="btn btn-sm" id="import-share-btn" style="border-color:#1bd96a44;color:#1bd96a">📋 Import Share Code</button>
+          <button class="btn btn-sm btn-modrinth" id="import-modpack-modrinth-btn" data-i18n="btn_import_modpack_modrinth">📦 Modrinth</button>
+          <button class="btn btn-sm btn-curseforge" id="import-modpack-curseforge-btn" data-i18n="btn_import_modpack_curseforge">📦 CurseForge</button>
+          <button class="btn btn-sm" id="import-share-btn" style="border-color:#1bd96a44;color:#1bd96a" data-i18n="btn_import_share">📋 Import Share Code</button>
           <button class="btn btn-sm btn-primary" id="new-profile-btn" data-i18n="new_profile">+ New Profile</button>
         </div>
       </div>
@@ -508,9 +508,9 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 
     <!-- ══ RECENT PLAYED ══ -->
     <div id="recent-page" class="page" style="display:none">
-      <h1>Recent Played</h1>
+      <h1 data-i18n="h_recent">Recent Played</h1>
       <div style="display:flex;gap:.4em;margin-bottom:.8em;align-items:center">
-        <button class="btn btn-sm" id="recent-clear-btn" style="color:#f44;width:auto">Clear History</button>
+        <button class="btn btn-sm" id="recent-clear-btn" style="color:#f44;width:auto" data-i18n="btn_clear_history">Clear History</button>
         <span style="font-size:.8em;color:#555" id="recent-count"></span>
       </div>
       <div id="recent-sections"></div>
@@ -520,26 +520,32 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     <div id="cape-page" class="page" style="display:none">
       <h1 data-i18n="h_cape">Capes</h1>
       <div class="settings-section">
-        <h2>Minecraft Capes</h2>
-        <p style="color:#666;font-size:.82em;margin-bottom:.8em">Load your capes from your Minecraft account. Select a cape to switch.</p>
+        <h2 data-i18n="sec_mc_capes">Minecraft Capes</h2>
+        <p style="color:#666;font-size:.82em;margin-bottom:.8em" data-i18n="desc_mc_capes">Load your capes from your Minecraft account. Select a cape to switch.</p>
         <div id="capes-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(10em,1fr));gap:.5em;min-height:5em"></div>
-        <p id="capes-loading" style="color:#888;font-size:.82em">Loading capes...</p>
-        <p id="capes-empty" style="color:#555;font-size:.82em;display:none">No capes found.</p>
+        <p id="capes-loading" style="color:#888;font-size:.82em" data-i18n="capes_loading">Loading capes...</p>
+        <p id="capes-empty" style="color:#555;font-size:.82em;display:none" data-i18n="capes_empty">No capes found.</p>
         <p id="capes-status" style="font-size:.82em;color:#888;margin-top:.4em"></p>
         <div style="display:flex;gap:.4em;margin-top:.5em">
-          <button class="btn btn-primary btn-sm" id="capes-refresh-btn" style="width:auto">Refresh</button>
-          <button class="btn btn-sm" id="capes-remove-btn" style="width:auto">Remove Cape</button>
+          <button class="btn btn-primary btn-sm" id="capes-refresh-btn" style="width:auto" data-i18n="btn_refresh">Refresh</button>
+          <button class="btn btn-sm" id="capes-remove-btn" style="width:auto" data-i18n="btn_remove_cape">Remove Cape</button>
         </div>
       </div>
       <div class="settings-section" style="margin-top:1.5em">
-        <h2>Custom Cape</h2>
-        <p style="color:#666;font-size:.82em;margin-bottom:.8em">Design your own cape. It will be loaded as a resource pack every time you launch.</p>
+        <h2 data-i18n="sec_custom_cape">Custom Cape</h2>
+        <p style="color:#666;font-size:.82em;margin-bottom:.8em" data-i18n="desc_custom_cape">Design your own cape. It will be loaded as a resource pack every time you launch.</p>
         <div style="display:flex;gap:.4em;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-primary btn-sm" id="cape-editor-btn" style="width:auto">Open Cape Editor</button>
+          <button class="btn btn-primary btn-sm" id="cape-editor-btn" style="width:auto" data-i18n="btn_open_cape_editor">Open Cape Editor</button>
           <span id="cape-custom-status" style="font-size:.78em;color:#888"></span>
-          <button class="btn btn-sm" id="cape-custom-toggle" style="width:auto;display:none">Disable Cape</button>
-          <button class="btn btn-sm" id="cape-custom-remove" style="width:auto;color:#f44;border-color:#f4455">Remove Custom Cape</button>
+          <button class="btn btn-sm" id="cape-custom-toggle" style="width:auto;display:none" data-i18n="btn_disable_cape">Disable Cape</button>
+          <button class="btn btn-sm" id="cape-custom-remove" style="width:auto;color:#f44;border-color:#f4455" data-i18n="btn_remove_custom_cape">Remove Custom Cape</button>
         </div>
+      </div>
+      <div class="settings-section" style="margin-top:1.5em">
+        <h2 data-i18n="h_custom_cape_list">Custom Cape List</h2>
+        <p style="color:#666;font-size:.82em;margin-bottom:.8em" data-i18n="desc_custom_cape_list">Your saved custom capes. Click a cape to equip it.</p>
+        <div id="custom-cape-list-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(8em,1fr));gap:.5em;min-height:3em"></div>
+        <p id="custom-cape-list-empty" style="color:#555;font-size:.82em;display:none" data-i18n="no_custom_capes">No custom capes saved yet.</p>
       </div>
     </div>
 
@@ -551,20 +557,20 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <h2 data-i18n="sec_ram">RAM for Minecraft</h2>
         <div class="form-row" style="max-width:100%">
           <div style="display:flex;align-items:center;gap:.6em;margin-bottom:.4em">
-            <label style="margin:0">RAM: <span id="ramValue">1</span> <span id="ramUnitLabel">GB</span></label>
+            <label style="margin:0" data-i18n="lbl_ram">RAM: <span id="ramValue">1</span> <span id="ramUnitLabel">GB</span></label>
             <button class="btn btn-sm" id="ram-unit-btn" style="width:auto;padding:.2em .6em;font-size:.72em">Switch to MB</button>
           </div>
           <input type="range" id="ramSlider" min="1" max="8" step="1" value="1">
         </div>
       </div>
       <div class="settings-section">
-        <h2>RAM for Crux Client</h2>
+        <h2 data-i18n="sec_ram_launcher">RAM for Crux Client</h2>
         <div class="form-row" style="max-width:100%">
           <div style="display:flex;align-items:center;gap:.6em;margin-bottom:.4em">
-            <label style="margin:0">Launcher RAM: <span id="launcherRamValue">1</span> GB</label>
+            <label style="margin:0" data-i18n="lbl_launcher_ram">Launcher RAM: <span id="launcherRamValue">1</span> GB</label>
           </div>
           <input type="range" id="launcherRamSlider" min="1" max="8" step="1" value="1">
-          <div class="status-text">Controls how much memory the launcher itself uses. Requires restart.</div>
+          <div class="status-text" data-i18n="desc_ram_launcher">Controls how much memory the launcher itself uses. Requires restart.</div>
         </div>
       </div>
       <div class="settings-section">
@@ -591,42 +597,42 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <div class="color-grid" id="color-grid"></div>
       </div>
       <div class="settings-section">
-        <h2>Launch Mode</h2>
+        <h2 data-i18n="sec_launch_mode">Launch Mode</h2>
         <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc">
           <input type="checkbox" id="use-original-launcher-toggle" style="width:1.1em;height:1.1em;cursor:pointer">
-          Launch via original Minecraft Launcher
+          <span data-i18n="launch_via_launcher">Launch via original Minecraft Launcher</span>
         </label>
-        <p style="color:#555;font-size:.76em;margin-top:.3em">Opens the official Minecraft Launcher (Java Edition) instead of launching directly.</p>
+        <p style="color:#555;font-size:.76em;margin-top:.3em" data-i18n="desc_launch_mode_detail">Opens the official Minecraft Launcher (Java Edition) instead of launching directly.</p>
       </div>
       <div class="settings-section">
-        <h2>After Launch</h2>
+        <h2 data-i18n="sec_after_launch">After Launch</h2>
         <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc">
           <input type="checkbox" id="open-logs-toggle" style="width:1.1em;height:1.1em;cursor:pointer">
-          Open logs after launch
+          <span data-i18n="after_launch_logs">Open logs after launch</span>
         </label>
         <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc;margin-top:.4em">
           <input type="checkbox" id="close-launcher-toggle" style="width:1.1em;height:1.1em;cursor:pointer">
-          Close launcher while playing
+          <span data-i18n="after_launch_close">Close launcher while playing</span>
         </label>
       </div>
 
       <div class="settings-section">
-        <h2>Reset</h2>
-        <button class="btn" id="reset-all-btn" style="border-color:#f4444444;color:#f44">Reset Launcher</button>
-        <p style="color:#555;font-size:.76em;margin-top:.3em">Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.</p>
+        <h2 data-i18n="sec_reset">Reset</h2>
+        <button class="btn" id="reset-all-btn" style="border-color:#f4444444;color:#f44" data-i18n="btn_reset">Reset Launcher</button>
+        <p style="color:#555;font-size:.76em;margin-top:.3em" data-i18n="desc_reset">Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.</p>
       </div>
 
       <div class="settings-section">
-        <h2>Updates</h2>
-        <button class="btn" id="check-update-btn">Check for Updates</button>
-        <p style="color:#555;font-size:.76em;margin-top:.3em">Current version: <span id="current-version-label">1.0.0</span></p>
+        <h2 data-i18n="sec_updates">Updates</h2>
+        <button class="btn" id="check-update-btn" data-i18n="btn_check_update">Check for Updates</button>
+        <p style="color:#555;font-size:.76em;margin-top:.3em"><span data-i18n="desc_current_version">Current version:</span> <span id="current-version-label">1.0.0</span></p>
         <div id="update-debug" style="margin-top:.5em;padding:.5em;background:#0a0a0a;border:1px solid #222;border-radius:var(--r);font-family:monospace;font-size:.72em;color:#888;max-height:120px;overflow-y:auto;display:none"></div>
       </div>
 
       <div class="settings-section" style="border-top:1px solid #333;padding-top:1em">
-        <h2 style="color:#f88">Uninstall</h2>
-        <button class="btn" id="uninstall-btn" style="border-color:#f4444444;color:#f44">Uninstall Crux Client</button>
-        <p style="color:#555;font-size:.76em;margin-top:.3em">Removes the launcher and all its data from your system.</p>
+        <h2 style="color:#f88" data-i18n="sec_uninstall">Uninstall</h2>
+        <button class="btn" id="uninstall-btn" style="border-color:#f4444444;color:#f44" data-i18n="btn_uninstall">Uninstall Crux Client</button>
+        <p style="color:#555;font-size:.76em;margin-top:.3em" data-i18n="desc_uninstall">Removes the launcher and all its data from your system.</p>
       </div>
     </div>
 
@@ -635,12 +641,12 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5em;flex-wrap:wrap;gap:.4em">
         <h1 style="margin:0" data-i18n="h_logs">Logs</h1>
         <div style="display:flex;gap:.4em">
-          <button class="btn btn-sm" id="copy-logs-btn">📋 Copy</button>
+          <button class="btn btn-sm" id="copy-logs-btn" data-i18n="btn_copy">📋 Copy</button>
           <button class="btn btn-sm" id="clear-logs-btn" data-i18n="clear_logs">Clear</button>
         </div>
       </div>
       <div class="log-select-row">
-        <label>Instance:</label>
+        <label data-i18n="lbl_instance">Instance:</label>
         <select id="log-instance-select" style="width:auto;min-width:16em;padding:.3em .6em;font-size:.78em"></select>
       </div>
       <div class="lp-wrap" id="lp-wrap-logs" style="margin-bottom:.4em">
@@ -654,97 +660,97 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     <div id="instances-page" class="page" style="display:none">
       <h1 data-i18n="h_instances">Instances</h1>
       <div class="instance-list" id="instance-list">
-        <div class="mod-list-empty">No instances launched yet.</div>
+        <div class="mod-list-empty" data-i18n="no_instances">No instances launched yet.</div>
       </div>
     </div>
 
     <!-- ══ SERVERS ══ -->
     <div id="servers-page" class="page" style="display:none">
-      <h1>Servers</h1>
+      <h1 data-i18n="h_servers">Servers</h1>
       <div style="display:flex;align-items:center;gap:.5em;margin-bottom:1em">
-        <button class="btn btn-primary btn-sm" id="server-create-btn" style="width:auto;padding:.4em 1em">+ New Server</button>
+        <button class="btn btn-primary btn-sm" id="server-create-btn" style="width:auto;padding:.4em 1em" data-i18n="btn_new_server">+ New Server</button>
         <span style="font-size:.75em;color:#555" id="server-count-label">0 / 5 servers</span>
         <span style="font-size:.75em;color:#555;margin-left:auto" id="server-running-label"></span>
       </div>
 
       <!-- Server list -->
       <div class="server-list" id="server-list">
-        <div class="mod-list-empty">No servers created yet. Click "+ New Server" to start.</div>
+        <div class="mod-list-empty" data-i18n="no_servers">No servers created yet. Click "+ New Server" to start.</div>
       </div>
 
       <!-- Server wizard (hidden by default) -->
       <div id="server-editor" style="display:none;margin-bottom:1.5em;padding:1em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);">
         <!-- Step indicator -->
         <div id="server-wizard-steps" style="display:flex;gap:.5em;margin-bottom:1em;font-size:.75em;color:#555">
-          <span id="ws-step1" style="color:var(--acc)">① Type</span>
-          <span id="ws-step2">② Version</span>
-          <span id="ws-step3">③ Mods</span>
-          <span id="ws-step4">④ Settings</span>
+          <span id="ws-step1" style="color:var(--acc)" data-i18n="ws_step1">① Type</span>
+          <span id="ws-step2" data-i18n="ws_step2">② Version</span>
+          <span id="ws-step3" data-i18n="ws_step3">③ Mods</span>
+          <span id="ws-step4" data-i18n="ws_step4">④ Settings</span>
         </div>
 
         <!-- STEP 1: Server Type -->
         <div id="server-step-type" class="server-wizard-step">
-          <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc">Choose Server Type</h3>
+          <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc" data-i18n="sv_choose_type">Choose Server Type</h3>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(10em,1fr));gap:.5em" id="server-type-grid">
             <div class="server-type-card" data-type="vanilla">
               <div style="font-size:1.4em">🟫</div>
               <div style="font-weight:bold;font-size:.9em">Vanilla</div>
-              <div style="font-size:.65em;color:#666">Standard Minecraft</div>
+              <div style="font-size:.65em;color:#666" data-i18n="sv_type_vanilla">Standard Minecraft</div>
             </div>
             <div class="server-type-card" data-type="paper">
               <div style="font-size:1.4em">📄</div>
               <div style="font-weight:bold;font-size:.9em">Paper</div>
-              <div style="font-size:.65em;color:#666">Optimized + Plugins</div>
+              <div style="font-size:.65em;color:#666" data-i18n="sv_type_paper">Optimized + Plugins</div>
             </div>
             <div class="server-type-card" data-type="spigot">
               <div style="font-size:1.4em">🪵</div>
               <div style="font-weight:bold;font-size:.9em">Spigot</div>
-              <div style="font-size:.65em;color:#666">Plugins + Performance</div>
+              <div style="font-size:.65em;color:#666" data-i18n="sv_type_spigot">Plugins + Performance</div>
             </div>
             <div class="server-type-card" data-type="purpur">
               <div style="font-size:1.4em">🟣</div>
               <div style="font-weight:bold;font-size:.9em">Purpur</div>
-              <div style="font-size:.65em;color:#666">Paper fork + Extra options</div>
+              <div style="font-size:.65em;color:#666" data-i18n="sv_type_purpur">Paper fork + Extra options</div>
             </div>
             <div class="server-type-card" data-type="fabric">
               <div style="font-size:1.4em">🧵</div>
               <div style="font-weight:bold;font-size:.9em">Fabric</div>
-              <div style="font-size:.65em;color:#666">Mod loader server</div>
+              <div style="font-size:.65em;color:#666" data-i18n="sv_type_fabric">Mod loader server</div>
             </div>
             <div class="server-type-card" data-type="quilt">
               <div style="font-size:1.4em">🪡</div>
               <div style="font-weight:bold;font-size:.9em">Quilt</div>
-              <div style="font-size:.65em;color:#666">Fabric fork mod loader</div>
+              <div style="font-size:.65em;color:#666" data-i18n="sv_type_quilt">Fabric fork mod loader</div>
             </div>
             <div class="server-type-card" data-type="forge">
               <div style="font-size:1.4em">⬛</div>
               <div style="font-weight:bold;font-size:.9em">Forge</div>
-              <div style="font-size:.65em;color:#666">Classic mod loader</div>
+              <div style="font-size:.65em;color:#666" data-i18n="sv_type_forge">Classic mod loader</div>
             </div>
             <div class="server-type-card" data-type="neoforge">
               <div style="font-size:1.4em">🔶</div>
               <div style="font-weight:bold;font-size:.9em">NeoForge</div>
-              <div style="font-size:.65em;color:#666">Forge fork for modern MC</div>
+              <div style="font-size:.65em;color:#666" data-i18n="sv_type_neoforge">Forge fork for modern MC</div>
             </div>
             <div class="server-type-card" data-type="modpack">
               <div style="font-size:1.4em">📦</div>
               <div style="font-weight:bold;font-size:.9em">Modpack</div>
-              <div style="font-size:.65em;color:#666">Modpack server + Loader</div>
+              <div style="font-size:.65em;color:#666" data-i18n="sv_type_modpack">Modpack server + Loader</div>
             </div>
           </div>
           <div style="display:flex;gap:.4em;margin-top:.8em">
-            <button class="btn btn-sm" id="server-cancel-btn" style="width:auto;padding:.4em 1em">Cancel</button>
+            <button class="btn btn-sm" id="server-cancel-btn" style="width:auto;padding:.4em 1em" data-i18n="btn_cancel">Cancel</button>
           </div>
         </div>
 
         <!-- STEP 2: MC Version -->
         <div id="server-step-version" class="server-wizard-step" style="display:none">
-          <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc">Choose MC Version</h3>
+          <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc" data-i18n="sv_choose_version">Choose MC Version</h3>
           <div class="form-row" style="max-width:20em">
             <select id="server-version-select" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em"></select>
           </div>
           <div id="server-modloader-row" class="form-row" style="max-width:20em;margin-top:.5em;display:none">
-            <label>Mod Loader</label>
+            <label data-i18n="lbl_mod_loader">Mod Loader</label>
             <select id="server-modloader-select" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em">
               <option value="fabric">Fabric</option>
               <option value="forge">Forge</option>
@@ -753,54 +759,54 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
             </select>
           </div>
           <div style="display:flex;gap:.4em;margin-top:.8em">
-            <button class="btn btn-primary btn-sm" id="server-next-btn" style="width:auto;padding:.4em 1em">Next →</button>
-            <button class="btn btn-sm" id="server-back-btn" style="width:auto;padding:.4em 1em">← Back</button>
+            <button class="btn btn-primary btn-sm" id="server-next-btn" style="width:auto;padding:.4em 1em" data-i18n="btn_next">Next →</button>
+            <button class="btn btn-sm" id="server-back-btn" style="width:auto;padding:.4em 1em" data-i18n="btn_back">← Back</button>
           </div>
         </div>
 
         <!-- STEP 3: Mods/Plugins (skipped for vanilla) -->
         <div id="server-step-mods" class="server-wizard-step" style="display:none">
-          <h3 style="margin:0 0 .3em;font-size:1em;color:#ccc" id="server-mods-title">Add Mods</h3>
-          <div style="font-size:.72em;color:#555;margin-bottom:.6em" id="server-mods-desc">Search and add mods for your server.</div>
+          <h3 style="margin:0 0 .3em;font-size:1em;color:#ccc" id="server-mods-title" data-i18n="sv_add_mods">Add Mods</h3>
+          <div style="font-size:.72em;color:#555;margin-bottom:.6em" id="server-mods-desc" data-i18n="sv_add_mods_desc">Search and add mods for your server.</div>
           <div style="margin-bottom:.6em">
             <input type="text" id="server-mod-search" placeholder="Search mods..." style="width:100%;padding:.35em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
           </div>
           <div id="server-mod-results" style="max-height:15em;overflow-y:auto;margin-bottom:.5em"></div>
-          <div style="font-size:.75em;color:#555;margin-bottom:.3em">Added:</div>
+          <div style="font-size:.75em;color:#555;margin-bottom:.3em" data-i18n="lbl_added">Added:</div>
           <div id="server-mod-added" style="display:flex;flex-wrap:wrap;gap:.3em;margin-bottom:.6em;min-height:1.5em"></div>
           <div style="display:flex;gap:.4em">
-            <button class="btn btn-primary btn-sm" id="server-next-btn2" style="width:auto;padding:.4em 1em">Next →</button>
-            <button class="btn btn-sm" id="server-back-btn2" style="width:auto;padding:.4em 1em">← Back</button>
-            <button class="btn btn-sm" id="server-skip-mods" style="width:auto;padding:.4em 1em;margin-left:auto">Skip</button>
+            <button class="btn btn-primary btn-sm" id="server-next-btn2" style="width:auto;padding:.4em 1em" data-i18n="btn_next">Next →</button>
+            <button class="btn btn-sm" id="server-back-btn2" style="width:auto;padding:.4em 1em" data-i18n="btn_back">← Back</button>
+            <button class="btn btn-sm" id="server-skip-mods" style="width:auto;padding:.4em 1em;margin-left:auto" data-i18n="btn_skip">Skip</button>
           </div>
         </div>
 
         <!-- STEP 4: Settings -->
         <div id="server-step-settings" class="server-wizard-step" style="display:none">
-          <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc">Server Settings</h3>
+          <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc" data-i18n="sv_settings">Server Settings</h3>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6em;max-width:30em">
             <div class="form-row">
-              <label>Server Name</label>
+              <label data-i18n="sv_name">Server Name</label>
               <input type="text" id="server-name-input" placeholder="My Server" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
             </div>
             <div class="form-row">
-              <label>Address</label>
+              <label data-i18n="sv_address">Address</label>
               <input type="text" id="server-address-input" value="localhost" placeholder="localhost" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
             </div>
             <div class="form-row">
-              <label>Port</label>
+              <label data-i18n="sv_port">Port</label>
               <input type="number" id="server-port-input" value="25565" min="1" max="65535" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
             </div>
             <div class="form-row">
-              <label>RAM (GB)</label>
+              <label data-i18n="sv_ram">RAM (GB)</label>
               <input type="number" id="server-ram-input" value="2" min="1" max="8" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
             </div>
             <div class="form-row">
-              <label>Max Players</label>
+              <label data-i18n="sv_max_players">Max Players</label>
               <input type="number" id="server-maxplayers-input" value="20" min="1" max="100" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
             </div>
             <div class="form-row">
-              <label>Gamemode</label>
+              <label data-i18n="sv_gamemode">Gamemode</label>
               <select id="server-gamemode-select" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em">
                 <option value="survival">Survival</option>
                 <option value="creative">Creative</option>
@@ -809,7 +815,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
               </select>
             </div>
             <div class="form-row">
-              <label>Difficulty</label>
+              <label data-i18n="sv_difficulty">Difficulty</label>
               <select id="server-difficulty-select" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em">
                 <option value="peaceful">Peaceful</option>
                 <option value="easy">Easy</option>
@@ -818,112 +824,112 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
               </select>
             </div>
             <div class="form-row">
-              <label>MOTD</label>
+              <label data-i18n="sv_motd">MOTD</label>
               <input type="text" id="server-motd-input" value="Crux Server" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
             </div>
             <div class="form-row">
               <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                <input type="checkbox" id="server-online-mode" checked style="accent-color:var(--acc)"> Online Mode
+                <input type="checkbox" id="server-online-mode" checked style="accent-color:var(--acc)"> <span data-i18n="sv_online_mode">Online Mode</span>
               </label>
             </div>
             <div class="form-row">
               <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                <input type="checkbox" id="server-pvp" checked style="accent-color:var(--acc)"> PvP
+                <input type="checkbox" id="server-pvp" checked style="accent-color:var(--acc)"> <span data-i18n="sv_pvp">PvP</span>
               </label>
             </div>
             <div class="form-row">
               <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                <input type="checkbox" id="server-cmdblocks" checked style="accent-color:var(--acc)"> Command Blocks
+                <input type="checkbox" id="server-cmdblocks" checked style="accent-color:var(--acc)"> <span data-i18n="sv_command_blocks">Command Blocks</span>
               </label>
             </div>
             <div class="form-row">
               <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                <input type="checkbox" id="server-whitelist" style="accent-color:var(--acc)"> Whitelist
+                <input type="checkbox" id="server-whitelist" style="accent-color:var(--acc)"> <span data-i18n="sv_whitelist">Whitelist</span>
               </label>
             </div>
             <div class="form-row">
-              <label>Resource Pack URL</label>
+              <label data-i18n="sv_rp_url">Resource Pack URL</label>
               <input type="text" id="server-rp-url" placeholder="" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
             </div>
             <div class="form-row">
-              <label>Resource Pack Upload (.zip)</label>
+              <label data-i18n="sv_rp_upload">Resource Pack Upload (.zip)</label>
               <input type="file" id="server-rp-file" accept=".zip" style="color:#fff;font-size:.85em">
             </div>
           </div>
 
           <div style="margin-top:.8em">
-            <button class="btn btn-sm" id="server-advanced-toggle" style="width:auto;padding:.3em .8em;background:var(--bg2);border:1px solid #2a2a2a">▶ Advanced Settings</button>
+            <button class="btn btn-sm" id="server-advanced-toggle" style="width:auto;padding:.3em .8em;background:var(--bg2);border:1px solid #2a2a2a" data-i18n="sv_advanced">▶ Advanced Settings</button>
           </div>
 
           <div id="server-advanced-settings" style="display:none;margin-top:.6em">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6em;max-width:40em">
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-allow-flight" style="accent-color:var(--acc)"> Allow Flight
+                  <input type="checkbox" id="server-allow-flight" style="accent-color:var(--acc)"> <span data-i18n="sv_allow_flight">Allow Flight</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-spawn-animals" checked style="accent-color:var(--acc)"> Spawn Animals
+                  <input type="checkbox" id="server-spawn-animals" checked style="accent-color:var(--acc)"> <span data-i18n="sv_spawn_animals">Spawn Animals</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-spawn-monsters" checked style="accent-color:var(--acc)"> Spawn Monsters
+                  <input type="checkbox" id="server-spawn-monsters" checked style="accent-color:var(--acc)"> <span data-i18n="sv_spawn_monsters">Spawn Monsters</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-spawn-npcs" checked style="accent-color:var(--acc)"> Spawn NPCs
+                  <input type="checkbox" id="server-spawn-npcs" checked style="accent-color:var(--acc)"> <span data-i18n="sv_spawn_npcs">Spawn NPCs</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-allow-nether" checked style="accent-color:var(--acc)"> Allow Nether
+                  <input type="checkbox" id="server-allow-nether" checked style="accent-color:var(--acc)"> <span data-i18n="sv_allow_nether">Allow Nether</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-force-gamemode" style="accent-color:var(--acc)"> Force Gamemode
+                  <input type="checkbox" id="server-force-gamemode" style="accent-color:var(--acc)"> <span data-i18n="sv_force_gamemode">Force Gamemode</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-prevent-proxy" style="accent-color:var(--acc)"> Prevent Proxy
+                  <input type="checkbox" id="server-prevent-proxy" style="accent-color:var(--acc)"> <span data-i18n="sv_prevent_proxy">Prevent Proxy</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-sync-chunks" checked style="accent-color:var(--acc)"> Sync Chunk Writes
+                  <input type="checkbox" id="server-sync-chunks" checked style="accent-color:var(--acc)"> <span data-i18n="sv_sync_chunks">Sync Chunk Writes</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-hide-players" style="accent-color:var(--acc)"> Hide Online Players
+                  <input type="checkbox" id="server-hide-players" style="accent-color:var(--acc)"> <span data-i18n="sv_hide_players">Hide Online Players</span>
                 </label>
               </div>
               <div class="form-row">
-                <label>Spawn Protection</label>
+                <label data-i18n="sv_spawn_protection">Spawn Protection</label>
                 <input type="number" id="server-spawn-protection" value="0" min="0" max="16" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
               </div>
               <div class="form-row">
-                <label>View Distance</label>
+                <label data-i18n="sv_view_distance">View Distance</label>
                 <input type="number" id="server-view-distance" value="10" min="1" max="32" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
               </div>
               <div class="form-row">
-                <label>Simulation Distance</label>
+                <label data-i18n="sv_sim_distance">Simulation Distance</label>
                 <input type="number" id="server-sim-distance" value="10" min="1" max="32" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
               </div>
               <div class="form-row">
-                <label>Level Seed</label>
+                <label data-i18n="sv_seed">Level Seed</label>
                 <input type="text" id="server-seed" placeholder="" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
               </div>
               <div class="form-row">
-                <label>Level Name</label>
+                <label data-i18n="sv_level_name">Level Name</label>
                 <input type="text" id="server-level-name" value="world" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
               </div>
               <div class="form-row">
-                <label>Level Type</label>
+                <label data-i18n="sv_level_type">Level Type</label>
                 <select id="server-level-type" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em">
                   <option value="minecraft:normal">Normal</option>
                   <option value="minecraft:flat">Flat</option>
@@ -933,15 +939,15 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
                 </select>
               </div>
               <div class="form-row">
-                <label>Player Idle Timeout</label>
+                <label data-i18n="sv_idle_timeout">Player Idle Timeout</label>
                 <input type="number" id="server-idle-timeout" value="0" min="0" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
               </div>
               <div class="form-row">
-                <label>Max Tick Time</label>
+                <label data-i18n="sv_max_tick_time">Max Tick Time</label>
                 <input type="number" id="server-max-tick-time" value="60000" min="0" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
               </div>
               <div class="form-row">
-                <label>Op Permission Level</label>
+                <label data-i18n="sv_op_level">Op Permission Level</label>
                 <select id="server-op-level" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em">
                   <option value="1">1</option>
                   <option value="2">2</option>
@@ -950,23 +956,23 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
                 </select>
               </div>
               <div class="form-row">
-                <label>Network Compression</label>
+                <label data-i18n="sv_compression">Network Compression</label>
                 <input type="number" id="server-compression" value="256" min="0" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
               </div>
               <div class="form-row">
-                <label>Entity Broadcast Range</label>
+                <label data-i18n="sv_broadcast_range">Entity Broadcast Range</label>
                 <input type="number" id="server-broadcast-range" value="100" min="0" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
               </div>
               <div class="form-row">
-                <label>Rate Limit</label>
+                <label data-i18n="sv_rate_limit">Rate Limit</label>
                 <input type="number" id="server-rate-limit" value="0" min="0" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;width:100%">
               </div>
             </div>
           </div>
 
           <div style="display:flex;gap:.4em;margin-top:.8em">
-            <button class="btn btn-primary btn-sm" id="server-save-btn" style="width:auto;padding:.4em 1em">Create Server</button>
-            <button class="btn btn-sm" id="server-back-btn3" style="width:auto;padding:.4em 1em">← Back</button>
+            <button class="btn btn-primary btn-sm" id="server-save-btn" style="width:auto;padding:.4em 1em" data-i18n="sv_create">Create Server</button>
+            <button class="btn btn-sm" id="server-back-btn3" style="width:auto;padding:.4em 1em" data-i18n="btn_back">← Back</button>
           </div>
         </div>
       </div>
@@ -974,24 +980,24 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <!-- Server console (hidden by default) -->
       <div id="server-console-wrap" style="display:none">
         <div style="display:flex;align-items:center;gap:.5em;margin-bottom:.5em">
-          <h3 style="margin:0;font-size:.9em;color:#ccc" id="server-console-title">Console</h3>
+          <h3 style="margin:0;font-size:.9em;color:#ccc" id="server-console-title" data-i18n="sv_console">Console</h3>
           <span style="font-size:.72em;color:#555" id="server-console-status"></span>
         </div>
         <div class="server-console" id="server-console"></div>
         <div class="server-console-input">
           <input type="text" id="server-command-input" placeholder="Type command...">
-          <button class="btn btn-sm" id="server-command-send" style="width:auto;padding:.3em .8em">Send</button>
+          <button class="btn btn-sm" id="server-command-send" style="width:auto;padding:.3em .8em" data-i18n="sv_send">Send</button>
         </div>
         <div class="server-cmd-btns">
-          <button class="btn btn-sm" id="server-stop-btn" style="width:auto;padding:.3em .8em;color:#f44;border-color:#f4444444">■ Stop Server</button>
-          <button class="btn btn-sm" id="server-op-btn" style="width:auto;padding:.3em .8em">OP Player</button>
-          <button class="btn btn-sm" id="server-whitelist-btn" style="width:auto;padding:.3em .8em">Whitelist</button>
-          <button class="btn btn-sm" id="server-backup-btn" style="width:auto;padding:.3em .8em">Backup World</button>
+          <button class="btn btn-sm" id="server-stop-btn" style="width:auto;padding:.3em .8em;color:#f44;border-color:#f4444444" data-i18n="btn_stop_server">■ Stop Server</button>
+          <button class="btn btn-sm" id="server-op-btn" style="width:auto;padding:.3em .8em" data-i18n="btn_op_player">OP Player</button>
+          <button class="btn btn-sm" id="server-whitelist-btn" style="width:auto;padding:.3em .8em" data-i18n="btn_whitelist">Whitelist</button>
+          <button class="btn btn-sm" id="server-backup-btn" style="width:auto;padding:.3em .8em" data-i18n="btn_backup_world">Backup World</button>
         </div>
         <div id="server-whitelist-panel" style="display:none;margin-top:.5em;padding:.5em;background:var(--bg2);border-radius:var(--r)">
           <div style="display:flex;gap:.4em;margin-bottom:.4em">
             <input type="text" id="server-whitelist-input" placeholder="Player name..." style="flex:1;padding:.3em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
-            <button class="btn btn-sm" id="server-whitelist-add-btn" style="width:auto;padding:.3em .8em">Add</button>
+            <button class="btn btn-sm" id="server-whitelist-add-btn" style="width:auto;padding:.3em .8em" data-i18n="btn_add">Add</button>
           </div>
           <div id="server-whitelist-list" style="max-height:10em;overflow-y:auto"></div>
         </div>
@@ -1003,7 +1009,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <h1 data-i18n="h_account">MC Account</h1>
       <div class="account-panel">
         <div class="account-list" id="account-list">
-          <div class="mod-list-empty">No accounts added yet.</div>
+          <div class="mod-list-empty" data-i18n="no_accounts">No accounts added yet.</div>
         </div>
         <div class="account-add-btns">
           <button class="btn btn-sm btn-ms" id="btn-add-ms" data-i18n="add_ms">+ Microsoft</button>
@@ -1014,11 +1020,11 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 
     <!-- ══ BUG REPORT ══ -->
     <div id="bugreport-page" class="page" style="display:none">
-      <h1>Bug Report</h1>
+      <h1 data-i18n="h_bugreport">Bug Report</h1>
       <div style="max-width:500px;margin:1em auto;text-align:center;line-height:1.8">
-        <p style="color:#aaa;margin-bottom:1.5em">Found a bug? Report it on GitHub so we can fix it.</p>
-        <button class="btn btn-primary" id="bugreport-github-btn" style="font-size:1em;padding:.6em 1.5em">🐛 Report on GitHub</button>
-        <p style="color:#666;margin-top:1em;font-size:.82em">You can also check existing issues or feature requests.</p>
+        <p style="color:#aaa;margin-bottom:1.5em" data-i18n="bugreport_desc">Found a bug? Report it on GitHub so we can fix it.</p>
+        <button class="btn btn-primary" id="bugreport-github-btn" style="font-size:1em;padding:.6em 1.5em" data-i18n="btn_report_github">🐛 Report on GitHub</button>
+        <p style="color:#666;margin-top:1em;font-size:.82em" data-i18n="bugreport_note">You can also check existing issues or feature requests.</p>
       </div>
     </div>
 
@@ -1049,10 +1055,10 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       </div>
       <div class="modal-search-row">
         <input type="text" class="mod-search-input" id="mod-search-input" placeholder="Search...">
-        <button class="btn mod-search-btn" id="mod-search-btn">Search</button>
+        <button class="btn mod-search-btn" id="mod-search-btn" data-i18n="btn_search">Search</button>
       </div>
       <div id="mod-results" class="mod-results">
-        <div class="modal-loading">Loading popular mods...</div>
+        <div class="modal-loading" data-i18n="loading_popular_mods">Loading popular mods...</div>
       </div>
     </div>
   </div>
@@ -1062,13 +1068,13 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 <div id="share-modal" class="modal-overlay" style="display:none">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
-      <h2>Share Profile</h2>
+      <h2 data-i18n="modal_share">Share Profile</h2>
       <button class="btn modal-close" onclick="document.getElementById('share-modal').style.display='none'">✕</button>
     </div>
     <div style="padding:1rem">
-      <p style="color:#888;font-size:.82em;margin-bottom:.6em">Copy this code and send it to someone. They can import it in their Crux Launcher.</p>
+      <p style="color:#888;font-size:.82em;margin-bottom:.6em" data-i18n="modal_share_desc">Copy this code and send it to someone. They can import it in their Crux Launcher.</p>
       <textarea id="share-code-output" readonly style="width:100%;height:120px;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#1bd96a;font-family:monospace;font-size:.75em;padding:.5em;resize:none"></textarea>
-      <button class="btn btn-sm" id="share-copy-btn" style="width:auto;margin-top:.5em;border-color:#1bd96a44;color:#1bd96a">📋 Copy Code</button>
+      <button class="btn btn-sm" id="share-copy-btn" style="width:auto;margin-top:.5em;border-color:#1bd96a44;color:#1bd96a" data-i18n="btn_copy_code">📋 Copy Code</button>
     </div>
   </div>
 </div>
@@ -1077,14 +1083,14 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 <div id="import-share-modal" class="modal-overlay" style="display:none">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
-      <h2>Import Profile</h2>
+      <h2 data-i18n="modal_import">Import Profile</h2>
       <button class="btn modal-close" onclick="document.getElementById('import-share-modal').style.display='none'">✕</button>
     </div>
     <div style="padding:1rem">
-      <p style="color:#888;font-size:.82em;margin-bottom:.6em">Paste a share code from another Crux Launcher user.</p>
+      <p style="color:#888;font-size:.82em;margin-bottom:.6em" data-i18n="modal_import_desc">Paste a share code from another Crux Launcher user.</p>
       <textarea id="share-code-input" placeholder="Paste share code here..." style="width:100%;height:120px;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-family:monospace;font-size:.75em;padding:.5em;resize:none"></textarea>
       <div id="import-share-status" style="font-size:.8em;color:#888;margin-top:.4em;min-height:1.2em"></div>
-      <button class="btn btn-sm btn-primary" id="import-share-confirm-btn" style="width:auto;margin-top:.5em">Import Profile</button>
+      <button class="btn btn-sm btn-primary" id="import-share-confirm-btn" style="width:auto;margin-top:.5em" data-i18n="btn_import_profile">Import Profile</button>
     </div>
   </div>
 </div>
@@ -1093,7 +1099,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 <div id="profile-modal" class="modal-overlay profile-modal" style="display:none">
   <div class="modal">
     <div class="modal-header">
-      <h2>Edit Profile</h2>
+      <h2 data-i18n="modal_edit_profile">Edit Profile</h2>
       <button class="btn modal-close" id="profile-modal-close">✕</button>
     </div>
     <div class="modal-body">
@@ -1106,7 +1112,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <select id="profile-version-select" style="padding:.5em .85em;border:1px solid #2a2a2a;border-radius:var(--r);background:#111;color:#fff;font-size:.85em;width:100%"></select>
       </div>
       <div class="form-row" style="max-width:100%">
-        <label>Mod Loader:</label>
+        <label data-i18n="lbl_mod_loader">Mod Loader:</label>
         <div style="display:flex;gap:.5em">
           <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="fabric" id="ml-fabric" checked> Fabric</label>
           <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="quilt" id="ml-quilt"> Quilt</label>
@@ -1116,7 +1122,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         </div>
       </div>
       <div class="form-row" style="max-width:100%">
-        <label>Rendering API:</label>
+        <label data-i18n="lbl_render_api">Rendering API:</label>
         <select id="profile-render-api" style="padding:.5em .85em;border:1px solid #2a2a2a;border-radius:var(--r);background:#111;color:#fff;font-size:.85em;width:100%">
           <option value="opengl">OpenGL (Standard)</option>
           <option value="vulkan">Vulkan</option>
@@ -1183,9 +1189,9 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         </label>
       </div>
       <div style="display:flex;gap:.5em;margin-top:.8em">
-        <button class="btn btn-primary btn-sm" id="save-profile-btn" style="width:auto">Save</button>
-        <button class="btn btn-sm" id="share-profile-btn" style="width:auto;border-color:#1bd96a44;color:#1bd96a">Share</button>
-        <button class="btn btn-sm" id="delete-profile-btn" style="width:auto;border-color:#f4444444;color:#f44">Delete</button>
+        <button class="btn btn-primary btn-sm" id="save-profile-btn" style="width:auto" data-i18n="btn_save">Save</button>
+        <button class="btn btn-sm" id="share-profile-btn" style="width:auto;border-color:#1bd96a44;color:#1bd96a" data-i18n="btn_share">Share</button>
+        <button class="btn btn-sm" id="delete-profile-btn" style="width:auto;border-color:#f4444444;color:#f44" data-i18n="btn_delete">Delete</button>
       </div>
     </div>
   </div>
@@ -1195,21 +1201,21 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 <div id="mojang-modal" class="modal-overlay login-modal" style="display:none">
   <div class="modal">
     <div class="modal-header">
-      <h2>Mojang Login</h2>
+      <h2 data-i18n="modal_mojang_login">Mojang Login</h2>
       <button class="btn modal-close" id="mojang-modal-close">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-row" style="max-width:100%">
-        <label>Email:</label>
+        <label data-i18n="lbl_email">Email:</label>
         <input type="email" class="pack-input" id="mojang-email" placeholder="you@example.com">
       </div>
       <div class="form-row" style="max-width:100%">
-        <label>Password:</label>
+        <label data-i18n="lbl_password">Password:</label>
         <input type="password" class="pack-input" id="mojang-password" placeholder="••••••••">
       </div>
       <div id="mojang-error" style="color:#f44;font-size:.78em;margin-bottom:.5em;display:none"></div>
-      <button class="btn btn-primary btn-sm" id="mojang-login-btn" style="width:auto">Login</button>
-      <p style="color:#555;font-size:.72em;margin-top:.6em">Note: Mojang accounts migrated to Microsoft should use the Microsoft option.</p>
+      <button class="btn btn-primary btn-sm" id="mojang-login-btn" style="width:auto" data-i18n="btn_login">Login</button>
+      <p style="color:#555;font-size:.72em;margin-top:.6em" data-i18n="mojang_note">Note: Mojang accounts migrated to Microsoft should use the Microsoft option.</p>
     </div>
   </div>
 </div>
@@ -1226,6 +1232,14 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div class="sep"></div>
       <input type="color" id="skin-ed-color" value="#ffffff" title="Color">
       <div class="sep"></div>
+      <div style="display:flex;align-items:center;gap:.3em;font-size:.72em;color:#888">
+        <span>Inner</span>
+        <div id="skin-ed-layer-toggle" style="width:2.4em;height:1.3em;border-radius:999px;background:#333;border:1px solid #444;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0" title="Toggle Inner/Outer layer">
+          <div id="skin-ed-layer-knob" style="position:absolute;top:.15em;left:.15em;width:.95em;height:.95em;border-radius:50%;background:#888;transition:left .2s,background .2s"></div>
+        </div>
+        <span>Outer</span>
+      </div>
+      <div class="sep"></div>
       <button class="tool-btn" id="skin-ed-clear" title="Clear All">🗑️</button>
       <button class="tool-btn" id="skin-ed-template" title="Show Template">📐</button>
       <div class="sep"></div>
@@ -1237,12 +1251,12 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       </div>
       <div class="skin-editor-3d-wrap" id="skin-ed-3d-wrap"></div>
     </div>
-    <div class="skin-editor-body-labels">Head · Body · Right Arm · Left Arm · Right Leg · Left Leg — drag to rotate the 3D preview</div>
+    <div class="skin-editor-body-labels" id="skin-ed-body-labels">Inner Layer — Head(8,8) · Body(20,20) · Right Arm(44,20) · Left Arm(36,52) · Right Leg(4,20) · Left Leg(20,52) — drag to rotate 3D preview</div>
     <div class="skin-editor-actions">
-      <button class="btn btn-sm btn-primary" id="skin-ed-apply">Apply to Skin</button>
-      <button class="btn btn-sm" id="skin-ed-export">Export PNG</button>
-      <button class="btn btn-sm" id="skin-ed-import">Import PNG</button>
-      <button class="btn btn-sm" id="skin-ed-close">Close</button>
+      <button class="btn btn-sm btn-primary" id="skin-ed-apply" data-i18n="btn_apply_skin">Apply to Skin</button>
+      <button class="btn btn-sm" id="skin-ed-export" data-i18n="btn_export_png">Export PNG</button>
+      <button class="btn btn-sm" id="skin-ed-import" data-i18n="btn_import_png">Import PNG</button>
+      <button class="btn btn-sm" id="skin-ed-close" data-i18n="btn_close">Close</button>
     </div>
       </div>
     </div>
@@ -1272,10 +1286,10 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div class="skin-editor-3d-wrap" id="cape-ed-3d-wrap"></div>
     </div>
     <div class="skin-editor-actions">
-      <button class="btn btn-sm btn-primary" id="cape-ed-save">Save Cape</button>
-      <button class="btn btn-sm" id="cape-ed-export">Export PNG</button>
-      <button class="btn btn-sm" id="cape-ed-import">Import PNG</button>
-      <button class="btn btn-sm" id="cape-ed-close">Close</button>
+      <button class="btn btn-sm btn-primary" id="cape-ed-save" data-i18n="btn_save_cape">Save Cape</button>
+      <button class="btn btn-sm" id="cape-ed-export" data-i18n="btn_export_png">Export PNG</button>
+      <button class="btn btn-sm" id="cape-ed-import" data-i18n="btn_import_png">Import PNG</button>
+      <button class="btn btn-sm" id="cape-ed-close" data-i18n="btn_close">Close</button>
     </div>
   </div>
 </div>
@@ -1283,12 +1297,21 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 <!-- ══ SKIN LIST OVERLAY ══ -->
 <div class="skin-editor-overlay" id="skin-list-overlay">
   <div class="skin-editor-panel" style="max-width:600px">
-    <h2>📋 Skin List</h2>
-    <p style="color:#888;font-size:.8em;margin-bottom:.8em">Click a skin to apply it. Skins are saved locally.</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5em">
+      <h2 style="margin:0" data-i18n="skin_list_title">📋 Skin List</h2>
+      <div style="display:flex;align-items:center;gap:.4em">
+        <span style="font-size:.72em;color:#888" id="skin-list-view-label">2D</span>
+        <div id="skin-list-view-toggle" style="width:2.4em;height:1.3em;border-radius:999px;background:#333;border:1px solid #444;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0" title="Toggle 2D/3D preview">
+          <div id="skin-list-view-knob" style="position:absolute;top:.15em;left:.15em;width:.95em;height:.95em;border-radius:50%;background:#888;transition:left .2s,background .2s"></div>
+        </div>
+        <span style="font-size:.72em;color:#888" id="skin-list-view-label2">3D</span>
+      </div>
+    </div>
+    <p style="color:#888;font-size:.8em;margin-bottom:.8em" data-i18n="skin_list_desc">Click a skin to apply it. Skins are saved locally.</p>
     <div id="skin-list-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(8em,1fr));gap:.5em;min-height:5em;margin-bottom:1em"></div>
-    <p id="skin-list-empty" style="color:#555;font-size:.82em;text-align:center;display:none">No skins saved yet.</p>
+    <p id="skin-list-empty" style="color:#555;font-size:.82em;text-align:center;display:none" data-i18n="skin_list_empty">No skins saved yet.</p>
     <div class="skin-editor-actions">
-      <button class="btn btn-sm" id="skin-list-close">Close</button>
+      <button class="btn btn-sm" id="skin-list-close" data-i18n="btn_close">Close</button>
     </div>
   </div>
 </div>
@@ -1305,11 +1328,11 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       </div>
       <p id="update-progress-text" style="color:#aaa;font-size:.8em;margin:0"></p>
     </div>
-    <p id="update-wait-text" style="color:#ffa500;font-size:.85em;margin-top:.5em;display:none">Please wait a few minutes for the download and restart button to appear.</p>
+    <p id="update-wait-text" style="color:#ffa500;font-size:.85em;margin-top:.5em;display:none" data-i18n="update_wait_text">Please wait a few minutes for the download and restart button to appear.</p>
     <div style="display:flex;gap:.8em;justify-content:center">
-      <button class="btn btn-primary" id="update-install-btn" style="display:none">Update & Restart</button>
-      <button class="btn" id="update-github-btn" style="display:none">Download from GitHub</button>
-      <button class="btn" id="update-bugreport-btn" style="border-color:#f44;color:#f44">🐛 Bug Report</button>
+      <button class="btn btn-primary" id="update-install-btn" style="display:none" data-i18n="update_install">Update & Restart</button>
+      <button class="btn" id="update-github-btn" style="display:none" data-i18n="update_github">Download from GitHub</button>
+      <button class="btn" id="update-bugreport-btn" style="border-color:#f44;color:#f44" data-i18n="update_bugreport">🐛 Bug Report</button>
     </div>
     <p id="update-error-text" style="color:#f44;font-size:.85em;margin-top:1em;display:none"></p>
     <p id="update-done-text" style="color:#5f5;font-size:.85em;margin-top:1em;display:none"></p>
@@ -1487,7 +1510,7 @@ function showPage(id){
   if(id==='logs-page'){ refreshLogSelect(); updateStopButtons(); }
   if(id==='instances-page') renderInstanceList();
   if(id==='recent-page') renderRecentList();
-  if(id==='cape-page') loadMCCapes();
+  if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
   if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); }
 }
 
@@ -1620,71 +1643,372 @@ function renderCapePreview(url){
 const LANGS={
   en:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes',
-    tab_settings:'Settings', tab_logs:'Logs', tab_instances:'Instances', tab_account:'MC-Account',
+    tab_settings:'Settings', tab_logs:'Logs', tab_instances:'Instances', tab_account:'MC-Account', tab_recent:'Recent', tab_servers:'Servers', tab_bugreport:'Bug Report',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
-    h_logs:'Logs', h_instances:'Instances', h_account:'MC Account', h_cape:'Capes',
-    lbl_profile:'Profile:', lbl_version:'Version:',
-    btn_launch:'▶ Launch Minecraft', btn_stop:'■ Stop',
+    h_logs:'Logs', h_instances:'Instances', h_account:'MC Account', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report',
+    lbl_profile:'Profile:', lbl_version:'Version:', lbl_change_skin:'Change Skin:', lbl_actions:'Actions:', lbl_ram:'RAM:', lbl_instance:'Instance:',
+    lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod Loader', lbl_render_api:'Rendering API:', lbl_added:'Added:',
+    lbl_email:'Email:', lbl_password:'Password:',
+    btn_launch:'▶ Launch Minecraft', btn_stop:'■ Stop', btn_stop_all:'■ Stop All',
+    btn_add:'Add', btn_add_png:'📁 Add PNG to List', btn_pixel_editor:'🎨 Pixel Editor', btn_skin_list:'📋 Skin List',
+    btn_apply_skin:'Apply to Skin', btn_export_png:'Export PNG', btn_import_png:'Import PNG', btn_close:'Close',
+    btn_save_cape:'Save Cape', btn_open_cape_editor:'Open Cape Editor', btn_disable_cape:'Disable Cape',
+    btn_enable_cape:'Enable Cape', btn_remove_custom_cape:'Remove Custom Cape',
+    btn_refresh:'Refresh', btn_remove_cape:'Remove Cape',
+    btn_cancel:'Cancel', btn_next:'Next →', btn_back:'← Back', btn_skip:'Skip',
+    btn_save:'Save', btn_delete:'Delete', btn_login:'Login', btn_search:'Search',
+    btn_copy:'📋 Copy', btn_clear:'Clear', btn_clear_history:'Clear History',
+    btn_copy_code:'📋 Copy Code', btn_import_profile:'Import Profile',
+    btn_report_github:'🐛 Report on GitHub',
     status_ready:'Ready.', status_loading:'Loading versions...',
     sec_java:'Java Installation', sec_ram:'RAM for Minecraft', sec_lang:'Language', sec_color:'Active Tab Color (16 colors)',
     btn_rescan:'↻ Rescan Java', btn_dl21:'Download Java 21', btn_dl17:'Download Java 17',
     new_profile:'+ New Profile', edit:'Edit', save:'Save', delete:'Delete',
     no_mods:'No mods installed yet.', no_profiles:'No profiles yet.', no_accounts:'No accounts added yet.', no_instances:'No instances launched yet.',
+    no_custom_capes:'No custom capes saved yet.', no_servers:'No servers created yet. Click "+ New Server" to start.', skin_list_empty:'No skins saved yet.',
     add_ms:'+ Microsoft', add_mojang:'+ Mojang', add_offline:'+ Offline',
     ver_latest:'— Latest Release —', ver_latest_snap:'— Latest Snapshot —', ver_releases:'Releases', ver_snapshots:'Snapshots', ver_other:'Other',
-    profile_name:'Name:', profile_version:'Minecraft Version:', profile_mods:'Mods', profile_datapacks:'Datapacks', profile_resourcepacks:'Resource Packs', profile_shaderpacks:'Shader Packs',
+    profile_name:'Name:', profile_version:'Minecraft Version:', profile_mods:'Mods', profile_datapacks:'Datapacks',
+    profile_resourcepacks:'Resource Packs', profile_shaderpacks:'Shader Packs',
     clear_logs:'Clear',
+    sec_mc_capes:'Minecraft Capes', desc_mc_capes:'Load your capes from your Minecraft account. Select a cape to switch.',
+    sec_custom_cape:'Custom Cape', desc_custom_cape:'Design your own cape. It will be loaded as a resource pack every time you launch.',
+    h_custom_cape_list:'Custom Cape List', desc_custom_cape_list:'Your saved custom capes. Click a cape to equip it.',
+    capes_loading:'Loading capes...', capes_empty:'No capes found.',
+    sec_ram_launcher:'RAM for Crux Client', desc_ram_launcher:'Controls how much memory the launcher itself uses. Requires restart.',
+    sec_launch_mode:'Launch Mode', desc_launch_mode:'Launch via original Minecraft Launcher',
+    desc_launch_mode_detail:'Opens the official Minecraft Launcher (Java Edition) instead of launching directly.',
+    sec_after_launch:'After Launch', desc_open_logs:'Open logs after launch', desc_close_launcher:'Close launcher while playing',
+    sec_reset:'Reset', desc_reset:'Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.',
+    btn_reset:'Reset Launcher', sec_updates:'Updates', btn_check_update:'Check for Updates',
+    desc_current_version:'Current version:',
+    sec_uninstall:'Uninstall', btn_uninstall:'Uninstall Crux Client', desc_uninstall:'Removes the launcher and all its data from your system.',
+    btn_use_client_mods:'Use Client Mods (from Client Options tab)',
+    btn_use_client_rps:'Use Client Resource Packs (from Client Options tab)',
+    btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
+    btn_import_share:'📋 Import Share Code', btn_share:'Share',
+    btn_stop_server:'■ Stop Server', btn_op_player:'OP Player', btn_whitelist:'Whitelist', btn_backup_world:'Backup World',
+    btn_new_server:'+ New Server', server_count:'servers',
+    btn_microsoft:'Microsoft', btn_mojang_login:'Mojang', mojang_note:'Note: Mojang accounts migrated to Microsoft should use the Microsoft option.',
+    skin_editor_title:'Skin Pixel Editor', skin_editor_size:'64×64',
+    cape_editor_title:'Cape Pixel Editor', cape_editor_size:'22×17',
+    skin_list_title:'📋 Skin List', skin_list_desc:'Click a skin to apply it. Skins are saved locally.',
+    skin_template_toggle:'Show Template',
+    mc_capes:'Minecraft Capes', custom_cape:'Custom Cape',
+    auto_use:'Auto-use',
+    desc_rp_auto:'When enabled, adds Open Loader to your client mods — it automatically loads all resource packs listed below without touching in-game settings.',
+    rp_input_placeholder:'Resource pack name or URL...',
+    btn_add_rp:'+ Add', client_rp_title:'Client Resource Packs',
+    desc_client_rp:'Client resource packs are applied to all profiles.',
+    btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
+    filter_all:'All', filter_disabled:'Disabled',
+    btn_new_profile:'+ New Profile', no_mods_installed:'No mods installed yet.',
+    launch_via_launcher:'Launch via original Minecraft Launcher',
+    after_launch_logs:'Open logs after launch',
+    after_launch_close:'Close launcher while playing',
+    bugreport_desc:'Found a bug? Report it on GitHub so we can fix it.',
+    bugreport_note:'You can also check existing issues or feature requests.',
+    loading_popular_mods:'Loading popular mods...',
+    modal_share:'Share Profile', modal_share_desc:'Copy this code and send it to someone. They can import it in their Crux Launcher.',
+    modal_import:'Import Profile', modal_import_desc:'Paste a share code from another Crux Launcher user.',
+    modal_edit_profile:'Edit Profile', modal_mojang_login:'Mojang Login',
+    ws_step1:'① Type', ws_step2:'② Version', ws_step3:'③ Mods', ws_step4:'④ Settings',
+    sv_choose_type:'Choose Server Type', sv_choose_version:'Choose MC Version',
+    sv_add_mods:'Add Mods', sv_add_mods_desc:'Search and add mods for your server.',
+    sv_settings:'Server Settings', sv_create:'Create Server', sv_console:'Console', sv_send:'Send',
+    sv_name:'Server Name', sv_address:'Address', sv_port:'Port', sv_ram:'RAM (GB)',
+    sv_max_players:'Max Players', sv_gamemode:'Gamemode', sv_difficulty:'Difficulty', sv_motd:'MOTD',
+    sv_online_mode:'Online Mode', sv_pvp:'PvP', sv_command_blocks:'Command Blocks', sv_whitelist:'Whitelist',
+    sv_rp_url:'Resource Pack URL', sv_rp_upload:'Resource Pack Upload (.zip)',
+    sv_advanced:'▶ Advanced Settings',
+    sv_allow_flight:'Allow Flight', sv_spawn_animals:'Spawn Animals', sv_spawn_monsters:'Spawn Monsters',
+    sv_spawn_npcs:'Spawn NPCs', sv_allow_nether:'Allow Nether', sv_force_gamemode:'Force Gamemode',
+    sv_prevent_proxy:'Prevent Proxy', sv_sync_chunks:'Sync Chunk Writes', sv_hide_players:'Hide Online Players',
+    sv_spawn_protection:'Spawn Protection', sv_view_distance:'View Distance', sv_sim_distance:'Simulation Distance',
+    sv_seed:'Level Seed', sv_level_name:'Level Name', sv_level_type:'Level Type',
+    sv_idle_timeout:'Player Idle Timeout', sv_max_tick_time:'Max Tick Time', sv_op_level:'Op Permission Level',
+    sv_compression:'Network Compression', sv_broadcast_range:'Entity Broadcast Range', sv_rate_limit:'Rate Limit',
+    sv_type_vanilla:'Standard Minecraft', sv_type_paper:'Optimized + Plugins',
+    sv_type_spigot:'Plugins + Performance', sv_type_purpur:'Paper fork + Extra options',
+    sv_type_fabric:'Mod loader server', sv_type_quilt:'Fabric fork mod loader',
+    sv_type_forge:'Classic mod loader', sv_type_neoforge:'Forge fork for modern MC',
+    sv_type_modpack:'Modpack server + Loader',
+    update_wait_text:'Please wait a few minutes for the download and restart button to appear.',
+    update_install:'Update & Restart', update_github:'Download from GitHub', update_bugreport:'🐛 Bug Report',
   },
   de:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes',
-    tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_instances:'Instanzen', tab_account:'MC-Konto',
+    tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_instances:'Instanzen', tab_account:'MC-Konto', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_bugreport:'Fehler melden',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
-    h_logs:'Protokolle', h_instances:'Instanzen', h_account:'MC-Konto', h_cape:'Capes',
-    lbl_profile:'Profil:', lbl_version:'Version:',
-    btn_launch:'▶ Minecraft starten', btn_stop:'■ Stoppen',
+    h_logs:'Protokolle', h_instances:'Instanzen', h_account:'MC-Konto', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden',
+    lbl_profile:'Profil:', lbl_version:'Version:', lbl_change_skin:'Skin wechseln:', lbl_actions:'Aktionen:', lbl_ram:'RAM:', lbl_instance:'Instanz:',
+    lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod-Loader', lbl_render_api:'Rendering-API:', lbl_added:'Hinzugefügt:',
+    lbl_email:'E-Mail:', lbl_password:'Passwort:',
+    btn_launch:'▶ Minecraft starten', btn_stop:'■ Stoppen', btn_stop_all:'■ Alle stoppen',
+    btn_add:'Hinzufügen', btn_add_png:'📁 PNG zur Liste hinzufügen', btn_pixel_editor:'🎨 Pixel Editor', btn_skin_list:'📋 Skin Liste',
+    btn_apply_skin:'Auf Skin anwenden', btn_export_png:'PNG exportieren', btn_import_png:'PNG importieren', btn_close:'Schließen',
+    btn_save_cape:'Cape speichern', btn_open_cape_editor:'Cape Editor öffnen', btn_disable_cape:'Cape deaktivieren',
+    btn_enable_cape:'Cape aktivieren', btn_remove_custom_cape:'Custom Cape entfernen',
+    btn_refresh:'Aktualisieren', btn_remove_cape:'Cape entfernen',
+    btn_cancel:'Abbrechen', btn_next:'Weiter →', btn_back:'← Zurück', btn_skip:'Überspringen',
+    btn_save:'Speichern', btn_delete:'Löschen', btn_login:'Anmelden', btn_search:'Suchen',
+    btn_copy:'📋 Kopieren', btn_clear:'Leeren', btn_clear_history:'Verlauf löschen',
+    btn_copy_code:'📋 Code kopieren', btn_import_profile:'Profil importieren',
+    btn_report_github:'🐛 Auf GitHub melden',
     status_ready:'Bereit.', status_loading:'Versionen laden...',
     sec_java:'Java-Installation', sec_ram:'RAM für Minecraft', sec_lang:'Sprache', sec_color:'Tab-Farbe (16 Farben)',
     btn_rescan:'↻ Java scannen', btn_dl21:'Java 21 herunterladen', btn_dl17:'Java 17 herunterladen',
     new_profile:'+ Neues Profil', edit:'Bearbeiten', save:'Speichern', delete:'Löschen',
     no_mods:'Keine Mods installiert.', no_profiles:'Keine Profile vorhanden.', no_accounts:'Keine Konten vorhanden.', no_instances:'Keine Instanzen gestartet.',
+    no_custom_capes:'Noch keine Custom Capes gespeichert.', no_servers:'Noch keine Server erstellt. Klicke auf "+ Neuer Server" zum Starten.', skin_list_empty:'Noch keine Skins gespeichert.',
     add_ms:'+ Microsoft', add_mojang:'+ Mojang', add_offline:'+ Offline',
     ver_latest:'— Neueste Version —', ver_latest_snap:'— Neuester Snapshot —', ver_releases:'Vollversionen', ver_snapshots:'Snapshots', ver_other:'Sonstige',
-    profile_name:'Name:', profile_version:'Minecraft-Version:', profile_mods:'Mods', profile_datapacks:'Datenpakete', profile_resourcepacks:'Ressourcenpakete', profile_shaderpacks:'Shaderpakete',
+    profile_name:'Name:', profile_version:'Minecraft-Version:', profile_mods:'Mods', profile_datapacks:'Datenpakete',
+    profile_resourcepacks:'Ressourcenpakete', profile_shaderpacks:'Shaderpakete',
     clear_logs:'Leeren',
+    sec_mc_capes:'Minecraft Capes', desc_mc_capes:'Lade deine Capes von deinem Minecraft-Konto. Wähle ein Cape zum Wechseln.',
+    sec_custom_cape:'Custom Cape', desc_custom_cape:'Gestalte dein eigenes Cape. Es wird als Ressourcenpaket bei jedem Start geladen.',
+    h_custom_cape_list:'Custom Cape Liste', desc_custom_cape_list:'Deine gespeicherten Custom Capes. Klicke auf ein Cape, um es anzulegen.',
+    capes_loading:'Capes werden geladen...', capes_empty:'Keine Capes gefunden.',
+    sec_ram_launcher:'RAM für Crux Client', desc_ram_launcher:'Steuert, wie viel Speicher der Launcher selbst nutzt. Start erfordert Neustart.',
+    sec_launch_mode:'Startmodus', desc_launch_mode:'Über den offiziellen Minecraft Launcher starten',
+    desc_launch_mode_detail:'Öffnet den offiziellen Minecraft Launcher (Java Edition) anstatt direkt zu starten.',
+    sec_after_launch:'Nach dem Start', desc_open_logs:'Protokolle nach dem Start öffnen', desc_close_launcher:'Launcher beim Spielen schließen',
+    sec_reset:'Zurücksetzen', desc_reset:'Löscht alle Konten, Profile, Einstellungen und Mods. Der Launcher startet wie beim ersten Mal.',
+    btn_reset:'Launcher zurücksetzen', sec_updates:'Updates', btn_check_update:'Nach Updates suchen',
+    desc_current_version:'Aktuelle Version:',
+    sec_uninstall:'Deinstallieren', btn_uninstall:'Crux Client deinstallieren', desc_uninstall:'Entfernt den Launcher und alle seine Daten von deinem System.',
+    btn_use_client_mods:'Client Mods verwenden (aus Client Options Tab)',
+    btn_use_client_rps:'Client Ressourcenpakete verwenden (aus Client Options Tab)',
+    btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
+    btn_import_share:'📋 Import-Code', btn_share:'Teilen',
+    btn_stop_server:'■ Server stoppen', btn_op_player:'OP Spieler', btn_whitelist:'Whitelist', btn_backup_world:'Welt sichern',
+    btn_new_server:'+ Neuer Server', server_count:'Server',
+    btn_microsoft:'Microsoft', btn_mojang_login:'Mojang', mojang_note:'Hinweis: Mojang-Konten, die zu Microsoft migriert sind, sollten die Microsoft-Option verwenden.',
+    skin_editor_title:'Skin Pixel Editor', skin_editor_size:'64×64',
+    cape_editor_title:'Cape Pixel Editor', cape_editor_size:'22×17',
+    skin_list_title:'📋 Skin Liste', skin_list_desc:'Klicke auf einen Skin, um ihn anzuwenden. Skins werden lokal gespeichert.',
+    skin_template_toggle:'Vorlage anzeigen',
+    mc_capes:'Minecraft Capes', custom_cape:'Custom Cape',
+    auto_use:'Automatisch',
+    desc_rp_auto:'Wenn aktiviert, fügt Open Loader zu deinen Client Mods hinzu — lädt automatisch alle unten aufgelisteten Ressourcenpakete ohne Änderung der Spieleinstellungen.',
+    rp_input_placeholder:'Ressourcenpaket Name oder URL...',
+    btn_add_rp:'+ Hinzufügen', client_rp_title:'Client Ressourcenpakete',
+    desc_client_rp:'Client Ressourcenpakete werden auf alle Profile angewendet.',
+    btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
+    filter_all:'Alle', filter_disabled:'Deaktiviert',
+    btn_new_profile:'+ Neues Profil', no_mods_installed:'Noch keine Mods installiert.',
+    launch_via_launcher:'Über den offiziellen Minecraft Launcher starten',
+    after_launch_logs:'Protokolle nach dem Start öffnen',
+    after_launch_close:'Launcher beim Spielen schließen',
+    bugreport_desc:'Fehler gefunden? Meldet ihn auf GitHub, damit wir ihn beheben können.',
+    bugreport_note:'Du kannst auch vorhandene Probleme oder Feature-Anfragen überprüfen.',
+    loading_popular_mods:'Beliebte Mods werden geladen...',
+    modal_share:'Profil teilen', modal_share_desc:'Kopiere diesen Code und sende ihn jemandem. Er kann ihn in seinem Crux Launcher importieren.',
+    modal_import:'Profil importieren', modal_import_desc:'Füge einen Share-Code von einem anderen Crux Launcher Benutzer ein.',
+    modal_edit_profile:'Profil bearbeiten', modal_mojang_login:'Mojang Anmeldung',
+    ws_step1:'① Typ', ws_step2:'② Version', ws_step3:'③ Mods', ws_step4:'④ Einstellungen',
+    sv_choose_type:'Servertyp wählen', sv_choose_version:'MC-Version wählen',
+    sv_add_mods:'Mods hinzufügen', sv_add_mods_desc:'Suche und füge Mods für deinen Server hinzu.',
+    sv_settings:'Server-Einstellungen', sv_create:'Server erstellen', sv_console:'Konsole', sv_send:'Senden',
+    sv_name:'Servername', sv_address:'Adresse', sv_port:'Port', sv_ram:'RAM (GB)',
+    sv_max_players:'Max. Spieler', sv_gamemode:'Spielmodus', sv_difficulty:'Schwierigkeit', sv_motd:'MOTD',
+    sv_online_mode:'Online-Modus', sv_pvp:'PvP', sv_command_blocks:'Kommandoblöcke', sv_whitelist:'Whitelist',
+    sv_rp_url:'Ressourcenpaket URL', sv_rp_upload:'Ressourcenpaket hochladen (.zip)',
+    sv_advanced:'▶ Erweiterte Einstellungen',
+    sv_allow_flight:'Flug erlauben', sv_spawn_animals:'Tiere spawnen', sv_spawn_monsters:'Monster spawnen',
+    sv_spawn_npcs:'NPCs spawnen', sv_allow_nether:'Nether erlauben', sv_force_gamemode:'Spielmodus erzwingen',
+    sv_prevent_proxy:'Proxy verhindern', sv_sync_chunks:'Chunk-Sync', sv_hide_players:'Online-Spieler verstecken',
+    sv_spawn_protection:'Spawn-Schutz', sv_view_distance:'Sichtweite', sv_sim_distance:'Simulationsweite',
+    sv_seed:'Level-Saat', sv_level_name:'Level-Name', sv_level_type:'Level-Typ',
+    sv_idle_timeout:'Spieler-Timeout', sv_max_tick_time:'Max. Tick-Zeit', sv_op_level:'OP-Berechtigungsstufe',
+    sv_compression:'Netzwerkkomprimierung', sv_broadcast_range:'Entity-Bereich', sv_rate_limit:'Ratenlimit',
+    sv_type_vanilla:'Standard Minecraft', sv_type_paper:'Optimiert + Plugins',
+    sv_type_spigot:'Plugins + Performance', sv_type_purpur:'Paper Fork + Extra-Optionen',
+    sv_type_fabric:'Mod-Loader Server', sv_type_quilt:'Fabric Fork Mod-Loader',
+    sv_type_forge:'Klassischer Mod-Loader', sv_type_neoforge:'Forge Fork für modernes MC',
+    sv_type_modpack:'Modpack-Server + Loader',
+    update_wait_text:'Bitte warte ein paar Minuten, bis der Download- und Neustart-Button erscheint.',
+    update_install:'Aktualisieren & Neustart', update_github:'Von GitHub herunterladen', update_bugreport:'🐛 Fehler melden',
   },
   fr:{
-    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profils', tab_cape:'Capes',
-    tab_settings:'Paramètres', tab_logs:'Journaux', tab_instances:'Instances', tab_account:'Compte MC',
-    h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profils', h_settings:'Paramètres',
-    h_logs:'Journaux', h_instances:'Instances', h_account:'Compte MC', h_cape:'Capes',
-    lbl_profile:'Profil :', lbl_version:'Version :',
-    btn_launch:'▶ Lancer Minecraft', btn_stop:'■ Arrêter',
+    tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes',
+    tab_settings:'Paramètres', tab_logs:'Journaux', tab_instances:'Instances', tab_account:'Compte MC', tab_recent:'Récents', tab_servers:'Serveurs', tab_bugreport:'Signaler un bug',
+    h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
+    h_logs:'Journaux', h_instances:'Instances', h_account:'Compte MC', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug',
+    lbl_profile:'Profil :', lbl_version:'Version :', lbl_change_skin:'Changer de skin :', lbl_actions:'Actions :', lbl_ram:'RAM :', lbl_instance:'Instance :',
+    lbl_launcher_ram:'RAM du Lanceur :', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de rendu :', lbl_added:'Ajouté :',
+    lbl_email:'E-mail :', lbl_password:'Mot de passe :',
+    btn_launch:'▶ Lancer Minecraft', btn_stop:'■ Arrêter', btn_stop_all:'■ Tout arrêter',
+    btn_add:'Ajouter', btn_add_png:'📁 Ajouter PNG à la liste', btn_pixel_editor:'🎨 Éditeur Pixel', btn_skin_list:'📋 Liste de Skins',
+    btn_apply_skin:'Appliquer au Skin', btn_export_png:'Exporter PNG', btn_import_png:'Importer PNG', btn_close:'Fermer',
+    btn_save_cape:'Sauvegarder Cape', btn_open_cape_editor:'Ouvrir l\'éditeur de Cape', btn_disable_cape:'Désactiver la Cape',
+    btn_enable_cape:'Activer la Cape', btn_remove_custom_cape:'Supprimer la Cape custom',
+    btn_refresh:'Actualiser', btn_remove_cape:'Supprimer la Cape',
+    btn_cancel:'Annuler', btn_next:'Suivant →', btn_back:'← Retour', btn_skip:'Passer',
+    btn_save:'Enregistrer', btn_delete:'Supprimer', btn_login:'Connexion', btn_search:'Rechercher',
+    btn_copy:'📋 Copier', btn_clear:'Effacer', btn_clear_history:'Effacer l\'historique',
+    btn_copy_code:'📋 Copier le code', btn_import_profile:'Importer le profil',
+    btn_report_github:'🐛 Signaler sur GitHub',
     status_ready:'Prêt.', status_loading:'Chargement des versions...',
     sec_java:'Installation Java', sec_ram:'RAM pour Minecraft', sec_lang:'Langue', sec_color:'Couleur de l\'onglet actif',
     btn_rescan:'↻ Analyser Java', btn_dl21:'Télécharger Java 21', btn_dl17:'Télécharger Java 17',
     new_profile:'+ Nouveau profil', edit:'Modifier', save:'Enregistrer', delete:'Supprimer',
     no_mods:'Aucun mod installé.', no_profiles:'Aucun profil.', no_accounts:'Aucun compte.', no_instances:'Aucune instance.',
+    no_custom_capes:'Aucune cape custom sauvegardée.', no_servers:'Aucun serveur créé. Cliquez sur "+ Nouveau Serveur" pour commencer.', skin_list_empty:'Aucun skin sauvegardé.',
     add_ms:'+ Microsoft', add_mojang:'+ Mojang', add_offline:'+ Hors ligne',
     ver_latest:'— Dernière version —', ver_latest_snap:'— Dernier instantané —', ver_releases:'Versions', ver_snapshots:'Instantanés', ver_other:'Autres',
-    profile_name:'Nom :', profile_version:'Version Minecraft :', profile_mods:'Mods', profile_datapacks:'Datapacks', profile_resourcepacks:'Packs de ressources', profile_shaderpacks:'Packs de shaders',
+    profile_name:'Nom :', profile_version:'Version Minecraft :', profile_mods:'Mods', profile_datapacks:'Datapacks',
+    profile_resourcepacks:'Packs de ressources', profile_shaderpacks:'Packs de shaders',
     clear_logs:'Effacer',
+    sec_mc_capes:'Capes Minecraft', desc_mc_capes:'Chargez vos capes depuis votre compte Minecraft. Sélectionnez une cape pour la changer.',
+    sec_custom_cape:'Cape Custom', desc_custom_cape:'Créez votre propre cape. Elle sera chargée comme pack de ressources à chaque lancement.',
+    h_custom_cape_list:'Liste de Capes Custom', desc_custom_cape_list:'Vos capes custom sauvegardées. Cliquez sur une cape pour l\'équiper.',
+    capes_loading:'Chargement des capes...', capes_empty:'Aucune cape trouvée.',
+    sec_ram_launcher:'RAM pour Crux Client', desc_ram_launcher:'Contrôle la mémoire utilisée par le launcher. Nécessite un redémarrage.',
+    sec_launch_mode:'Mode de lancement', desc_launch_mode:'Lancer via le lanceur Minecraft original',
+    desc_launch_mode_detail:'Ouvre le lanceur Minecraft officiel (Java Edition) au lieu de lancer directement.',
+    sec_after_launch:'Après le lancement', desc_open_logs:'Ouvrir les journaux après le lancement', desc_close_launcher:'Fermer le lanceur pendant le jeu',
+    sec_reset:'Réinitialiser', desc_reset:'Supprime tous les comptes, profils, paramètres et mods. Le lanceur redémarrera comme au premier lancement.',
+    btn_reset:'Réinitialiser le Lanceur', sec_updates:'Mises à jour', btn_check_update:'Vérifier les mises à jour',
+    desc_current_version:'Version actuelle :',
+    sec_uninstall:'Désinstaller', btn_uninstall:'Désinstaller Crux Client', desc_uninstall:'Supprime le lanceur et toutes ses données de votre système.',
+    btn_use_client_mods:'Utiliser les Mods Client (onglet Options Client)',
+    btn_use_client_rps:'Utiliser les Packs de Ressources Client (onglet Options Client)',
+    btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
+    btn_import_share:'📋 Importer un code', btn_share:'Partager',
+    btn_stop_server:'■ Arrêter le Serveur', btn_op_player:'OP Joueur', btn_whitelist:'Whitelist', btn_backup_world:'Sauvegarder le monde',
+    btn_new_server:'+ Nouveau Serveur', server_count:'serveurs',
+    btn_microsoft:'Microsoft', btn_mojang_login:'Mojang', mojang_note:'Note : Les comptes Mojang migrés vers Microsoft devraient utiliser l\'option Microsoft.',
+    skin_editor_title:'Éditeur Pixel de Skin', skin_editor_size:'64×64',
+    cape_editor_title:'Éditeur Pixel de Cape', cape_editor_size:'22×17',
+    skin_list_title:'📋 Liste de Skins', skin_list_desc:'Cliquez sur un skin pour l\'appliquer. Les skins sont sauvegardés localement.',
+    skin_template_toggle:'Afficher le modèle',
+    mc_capes:'Capes Minecraft', custom_cape:'Cape Custom',
+    auto_use:'Automatique',
+    rp_input_placeholder:'Nom ou URL du pack de ressources...',
+    btn_add_rp:'+ Ajouter', client_rp_title:'Packs de Ressources Client',
+    btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
+    filter_all:'Tous', filter_disabled:'Désactivés',
+    btn_new_profile:'+ Nouveau profil', no_mods_installed:'Aucun mod installé.',
+    launch_via_launcher:'Lancer via le lanceur Minecraft original',
+    after_launch_logs:'Ouvrir les journaux après le lancement',
+    after_launch_close:'Fermer le lanceur pendant le jeu',
+    bugreport_desc:'Un bug ? Signalez-le sur GitHub pour que nous puissions le corriger.',
+    bugreport_note:'Vous pouvez aussi vérifier les problèmes existants ou les demandes de fonctionnalités.',
+    loading_popular_mods:'Chargement des mods populaires...',
+    modal_share:'Partager le Profil', modal_share_desc:'Copiez ce code et envoyez-le à quelqu\'un. Il peut l\'importer dans son Crux Launcher.',
+    modal_import:'Importer le Profil', modal_import_desc:'Collez un code de partage d\'un autre utilisateur Crux Launcher.',
+    modal_edit_profile:'Modifier le Profil', modal_mojang_login:'Connexion Mojang',
+    ws_step1:'① Type', ws_step2:'② Version', ws_step3:'③ Mods', ws_step4:'④ Paramètres',
+    sv_choose_type:'Choisir le type de serveur', sv_choose_version:'Choisir la version MC',
+    sv_add_mods:'Ajouter des Mods', sv_add_mods_desc:'Recherchez et ajoutez des mods pour votre serveur.',
+    sv_settings:'Paramètres du Serveur', sv_create:'Créer le Serveur', sv_console:'Console', sv_send:'Envoyer',
+    sv_name:'Nom du Serveur', sv_address:'Adresse', sv_port:'Port', sv_ram:'RAM (GB)',
+    sv_max_players:'Max Joueurs', sv_gamemode:'Mode de jeu', sv_difficulty:'Difficulté', sv_motd:'MOTD',
+    sv_online_mode:'Mode En ligne', sv_pvp:'PvP', sv_command_blocks:'Blocs de commande', sv_whitelist:'Whitelist',
+    sv_rp_url:'URL du Pack de Ressources', sv_rp_upload:'Télécharger un Pack de Ressources (.zip)',
+    sv_advanced:'▶ Paramètres avancés',
+    sv_allow_flight:'Autoriser le vol', sv_spawn_animals:'Apparaître animaux', sv_spawn_monsters:'Apparaître monstres',
+    sv_spawn_npcs:'Apparaître PNJ', sv_allow_nether:'Autoriser le Nether', sv_force_gamemode:'Forcer le mode de jeu',
+    sv_prevent_proxy:'Empêcher le proxy', sv_sync_chunks:'Synchronisation des chunks', sv_hide_players:'Masquer les joueurs en ligne',
+    sv_spawn_protection:'Protection d\'apparition', sv_view_distance:'Distance de vision', sv_sim_distance:'Distance de simulation',
+    sv_seed:'Graine du monde', sv_level_name:'Nom du monde', sv_level_type:'Type de monde',
+    sv_idle_timeout:'Timeout joueur', sv_max_tick_time:'Temps max tick', sv_op_level:'Niveau OP',
+    sv_compression:'Compression réseau', sv_broadcast_range:'Portée diffusion entité', sv_rate_limit:'Limite de débit',
+    sv_type_vanilla:'Minecraft standard', sv_type_paper:'Optimisé + Plugins',
+    sv_type_spigot:'Plugins + Performance', sv_type_purpur:'Fork Paper + Options supplémentaires',
+    sv_type_fabric:'Serveur Mod Loader', sv_type_quilt:'Fork Fabric Mod Loader',
+    sv_type_forge:'Mod Loader classique', sv_type_neoforge:'Fork Forge pour MC moderne',
+    sv_type_modpack:'Serveur Modpack + Loader',
+    update_wait_text:'Veuillez patienter quelques minutes pour que le bouton de téléchargement et de redémarrage apparaisse.',
+    update_install:'Mettre à jour & Redémarrer', update_github:'Télécharger depuis GitHub', update_bugreport:'🐛 Signaler un bug',
   },
   es:{
-    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Perfiles', tab_cape:'Capes',
-    tab_settings:'Ajustes', tab_logs:'Registros', tab_instances:'Instancias', tab_account:'Cuenta MC',
-    h_launch:'Launch', h_mods:'Client Options', h_profiles:'Perfiles', h_settings:'Ajustes',
-    h_logs:'Registros', h_instances:'Instancias', h_account:'Cuenta MC', h_cape:'Capes',
-    lbl_profile:'Perfil:', lbl_version:'Versión:',
-    btn_launch:'▶ Iniciar Minecraft', btn_stop:'■ Detener',
+    tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas',
+    tab_settings:'Ajustes', tab_logs:'Registros', tab_instances:'Instancias', tab_account:'Cuenta MC', tab_recent:'Recientes', tab_servers:'Servidores', tab_bugreport:'Reportar bug',
+    h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
+    h_logs:'Registros', h_instances:'Instancias', h_account:'Cuenta MC', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug',
+    lbl_profile:'Perfil:', lbl_version:'Versión:', lbl_change_skin:'Cambiar Skin:', lbl_actions:'Acciones:', lbl_ram:'RAM:', lbl_instance:'Instancia:',
+    lbl_launcher_ram:'RAM del Launcher:', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de Renderizado:', lbl_added:'Añadido:',
+    lbl_email:'Correo:', lbl_password:'Contraseña:',
+    btn_launch:'▶ Iniciar Minecraft', btn_stop:'■ Detener', btn_stop_all:'■ Detener Todo',
+    btn_add:'Agregar', btn_add_png:'📁 Agregar PNG a la lista', btn_pixel_editor:'🎨 Editor de Píxeles', btn_skin_list:'📋 Lista de Skins',
+    btn_apply_skin:'Aplicar al Skin', btn_export_png:'Exportar PNG', btn_import_png:'Importar PNG', btn_close:'Cerrar',
+    btn_save_cape:'Guardar Capa', btn_open_cape_editor:'Abrir Editor de Capa', btn_disable_cape:'Desactivar Capa',
+    btn_enable_cape:'Activar Capa', btn_remove_custom_cape:'Eliminar Capa personalizada',
+    btn_refresh:'Actualizar', btn_remove_cape:'Eliminar Capa',
+    btn_cancel:'Cancelar', btn_next:'Siguiente →', btn_back:'← Atrás', btn_skip:'Omitir',
+    btn_save:'Guardar', btn_delete:'Eliminar', btn_login:'Iniciar sesión', btn_search:'Buscar',
+    btn_copy:'📋 Copiar', btn_clear:'Limpiar', btn_clear_history:'Limpiar historial',
+    btn_copy_code:'📋 Copiar código', btn_import_profile:'Importar perfil',
+    btn_report_github:'🐛 Reportar en GitHub',
     status_ready:'Listo.', status_loading:'Cargando versiones...',
     sec_java:'Instalación de Java', sec_ram:'RAM para Minecraft', sec_lang:'Idioma', sec_color:'Color de pestaña activa',
     btn_rescan:'↻ Buscar Java', btn_dl21:'Descargar Java 21', btn_dl17:'Descargar Java 17',
     new_profile:'+ Nuevo perfil', edit:'Editar', save:'Guardar', delete:'Eliminar',
     no_mods:'Sin mods instalados.', no_profiles:'Sin perfiles.', no_accounts:'Sin cuentas.', no_instances:'Sin instancias.',
+    no_custom_capes:'No hay capas personalizadas guardadas.', no_servers:'No hay servidores creados. Haz clic en "+ Nuevo Servidor" para empezar.', skin_list_empty:'No hay skins guardados.',
     add_ms:'+ Microsoft', add_mojang:'+ Mojang', add_offline:'+ Sin conexión',
     ver_latest:'— Última versión —', ver_latest_snap:'— Último instantáneo —', ver_releases:'Versiones', ver_snapshots:'Instantáneas', ver_other:'Otras',
-    profile_name:'Nombre:', profile_version:'Versión de Minecraft:', profile_mods:'Mods', profile_datapacks:'Datapacks', profile_resourcepacks:'Paquetes de recursos', profile_shaderpacks:'Paquetes de shaders',
+    profile_name:'Nombre:', profile_version:'Versión de Minecraft:', profile_mods:'Mods', profile_datapacks:'Datapacks',
+    profile_resourcepacks:'Paquetes de recursos', profile_shaderpacks:'Paquetes de shaders',
     clear_logs:'Limpiar',
+    sec_mc_capes:'Capas de Minecraft', desc_mc_capes:'Carga tus capas desde tu cuenta de Minecraft. Selecciona una capa para cambiar.',
+    sec_custom_cape:'Capa personalizada', desc_custom_cape:'Diseña tu propia capa. Se cargará como paquete de recursos cada vez que inicies.',
+    h_custom_cape_list:'Lista de Capas Personalizadas', desc_custom_cape_list:'Tus capas personalizadas guardadas. Haz clic en una capa para equiparla.',
+    capes_loading:'Cargando capas...', capes_empty:'No se encontraron capas.',
+    sec_ram_launcher:'RAM para Crux Client', desc_ram_launcher:'Controla cuánta memoria usa el launcher. Requiere reinicio.',
+    sec_launch_mode:'Modo de lanzamiento', desc_launch_mode:'Iniciar a través del Minecraft Launcher original',
+    desc_launch_mode_detail:'Abre el Minecraft Launcher oficial (Java Edition) en lugar de iniciar directamente.',
+    sec_after_launch:'Después de iniciar', desc_open_logs:'Abrir registros después de iniciar', desc_close_launcher:'Cerrar launcher mientras juegas',
+    sec_reset:'Restablecer', desc_reset:'Elimina todas las cuentas, perfiles, ajustes y mods. El launcher se reiniciará como si se abriera por primera vez.',
+    btn_reset:'Restablecer Launcher', sec_updates:'Actualizaciones', btn_check_update:'Buscar actualizaciones',
+    desc_current_version:'Versión actual:',
+    sec_uninstall:'Desinstalar', btn_uninstall:'Desinstalar Crux Client', desc_uninstall:'Elimina el launcher y todos sus datos del sistema.',
+    btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
+    btn_import_share:'📋 Importar código', btn_share:'Compartir',
+    btn_stop_server:'■ Detener Servidor', btn_op_player:'OP Jugador', btn_whitelist:'Whitelist', btn_backup_world:'Copiar mundo',
+    btn_new_server:'+ Nuevo Servidor', server_count:'servidores',
+    btn_microsoft:'Microsoft', btn_mojang_login:'Mojang',
+    skin_editor_title:'Editor de Pixel de Skin', skin_editor_size:'64×64',
+    cape_editor_title:'Editor de Pixel de Capa', cape_editor_size:'22×17',
+    skin_list_title:'📋 Lista de Skins', skin_list_desc:'Haz clic en un skin para aplicarlo. Los skins se guardan localmente.',
+    skin_template_toggle:'Mostrar plantilla',
+    mc_capes:'Capas de Minecraft', custom_cape:'Capa Personalizada',
+    btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
+    filter_all:'Todos', filter_disabled:'Desactivados',
+    btn_new_profile:'+ Nuevo perfil', no_mods_installed:'Sin mods instalados.',
+    launch_via_launcher:'Iniciar a través del Minecraft Launcher original',
+    after_launch_logs:'Abrir registros después de iniciar',
+    after_launch_close:'Cerrar launcher mientras juegas',
+    bugreport_desc:'¿Encontraste un bug? Repórtalo en GitHub para que podamos corregirlo.',
+    bugreport_note:'También puedes verificar problemas existentes o solicitudes de funciones.',
+    loading_popular_mods:'Cargando mods populares...',
+    modal_share:'Compartir Perfil', modal_share_desc:'Copia este código y envíalo a alguien. Puede importarlo en su Crux Launcher.',
+    modal_import:'Importar Perfil', modal_import_desc:'Pega un código de otro usuario de Crux Launcher.',
+    modal_edit_profile:'Editar Perfil', modal_mojang_login:'Inicio de sesión Mojang',
+    ws_step1:'① Tipo', ws_step2:'② Versión', ws_step3:'③ Mods', ws_step4:'④ Ajustes',
+    sv_choose_type:'Elegir tipo de servidor', sv_choose_version:'Elegir versión MC',
+    sv_add_mods:'Agregar Mods', sv_add_mods_desc:'Busca y agrega mods para tu servidor.',
+    sv_settings:'Ajustes del Servidor', sv_create:'Crear Servidor', sv_console:'Consola', sv_send:'Enviar',
+    sv_name:'Nombre del Servidor', sv_address:'Dirección', sv_port:'Puerto', sv_ram:'RAM (GB)',
+    sv_max_players:'Max Jugadores', sv_gamemode:'Modo de juego', sv_difficulty:'Dificultad', sv_motd:'MOTD',
+    sv_online_mode:'Modo en línea', sv_pvp:'PvP', sv_command_blocks:'Bloques de comandos', sv_whitelist:'Whitelist',
+    sv_rp_url:'URL del Pack de Recursos', sv_rp_upload:'Subir Pack de Recursos (.zip)',
+    sv_advanced:'▶ Ajustes Avanzados',
+    sv_allow_flight:'Permitir vuelo', sv_spawn_animals:'Generar animales', sv_spawn_monsters:'Generar monstruos',
+    sv_spawn_npcs:'Generar NPCs', sv_allow_nether:'Permitir Nether', sv_force_gamemode:'Forzar modo de juego',
+    sv_prevent_proxy:'Prevenir proxy', sv_sync_chunks:'Sincronizar chunks', sv_hide_players:'Ocultar jugadores en línea',
+    sv_spawn_protection:'Protección de aparición', sv_view_distance:'Distancia de visión', sv_sim_distance:'Distancia de simulación',
+    sv_seed:'Semilla del mundo', sv_level_name:'Nombre del mundo', sv_level_type:'Tipo de mundo',
+    sv_idle_timeout:'Timeout de jugador', sv_max_tick_time:'Tiempo max tick', sv_op_level:'Nivel OP',
+    sv_compression:'Compresión de red', sv_broadcast_range:'Rango de difusión', sv_rate_limit:'Límite de velocidad',
+    sv_type_vanilla:'Minecraft estándar', sv_type_paper:'Optimizado + Plugins',
+    sv_type_spigot:'Plugins + Rendimiento', sv_type_purpur:'Fork Paper + Opciones extra',
+    sv_type_fabric:'Servidor Mod Loader', sv_type_quilt:'Fork Fabric Mod Loader',
+    sv_type_forge:'Mod Loader clásico', sv_type_neoforge:'Fork Forge para MC moderno',
+    sv_type_modpack:'Servidor Modpack + Loader',
   },
 };
 
@@ -1706,6 +2030,18 @@ function applyLanguage(lang){
     } else {
       el.textContent=val;
     }
+  });
+  // Update placeholder attributes
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+    const key=el.dataset.i18nPh;
+    const val=t(key);
+    if(val) el.placeholder=val;
+  });
+  // Update title attributes
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{
+    const key=el.dataset.i18nTitle;
+    const val=t(key);
+    if(val) el.title=val;
   });
   // Re-apply active button styling after text change
   applyAccent(currentAccentIdx);
@@ -2364,6 +2700,77 @@ document.getElementById('capes-remove-btn').addEventListener('click',async()=>{
   } catch(e){ document.getElementById('capes-status').textContent='Error: '+e.message; }
 });
 
+// ══ CUSTOM CAPE LIST ══
+let customCapeList = [];
+async function loadCustomCapeList() {
+  try { customCapeList = await ipcRenderer.invoke('load-custom-cape-list'); if (!Array.isArray(customCapeList)) customCapeList = []; } catch { customCapeList = []; }
+}
+function saveCustomCapeList() { ipcRenderer.send('save-custom-cape-list', customCapeList); }
+loadCustomCapeList();
+
+function renderCustomCapeList() {
+  const container = document.getElementById('custom-cape-list-container');
+  const emptyEl = document.getElementById('custom-cape-list-empty');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!customCapeList.length) { emptyEl.style.display = ''; return; }
+  emptyEl.style.display = 'none';
+  customCapeList.forEach((cape, idx) => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:.4em;cursor:pointer;text-align:center;transition:all .15s';
+    card.onmouseenter = () => card.style.borderColor = 'var(--acc,#0088ff)';
+    card.onmouseleave = () => card.style.borderColor = '#2a2a2a';
+    const thumb = document.createElement('canvas');
+    thumb.width = 88; thumb.height = 68;
+    thumb.style.cssText = 'width:100%;image-rendering:pixelated;border-radius:4px;margin-bottom:.3em;display:block';
+    if (cape.dataUrl) renderCape3D(thumb, cape.dataUrl);
+    const label = document.createElement('div');
+    label.textContent = cape.name || 'Cape ' + (idx + 1);
+    label.style.cssText = 'font-size:.72em;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    const btns = document.createElement('div');
+    btns.style.cssText = 'display:flex;gap:.25em;margin-top:.3em;justify-content:center';
+    const equipBtn = document.createElement('button');
+    equipBtn.className = 'btn btn-sm btn-primary';
+    equipBtn.style.cssText = 'width:auto;font-size:.68em;padding:.2em .5em';
+    equipBtn.textContent = 'Use';
+    equipBtn.onclick = (e) => { e.stopPropagation(); useCustomCape(cape); };
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-sm';
+    delBtn.style.cssText = 'width:auto;font-size:.68em;padding:.2em .5em;color:#f44;border-color:#f4455';
+    delBtn.textContent = '\u2715';
+    delBtn.onclick = (e) => { e.stopPropagation(); customCapeList.splice(idx, 1); saveCustomCapeList(); renderCustomCapeList(); };
+    btns.appendChild(equipBtn); btns.appendChild(delBtn);
+    card.appendChild(thumb); card.appendChild(label); card.appendChild(btns);
+    card.onclick = () => useCustomCape(cape);
+    container.appendChild(card);
+  });
+}
+
+async function useCustomCape(cape) {
+  if (!cape || !cape.dataUrl) return;
+  const result = await ipcRenderer.invoke('save-custom-cape', cape.dataUrl);
+  if (result?.success) {
+    document.getElementById('cape-custom-status').textContent = 'Equipped: ' + (cape.name || 'Custom Cape');
+    document.getElementById('cape-custom-status').style.color = '#1bd96a';
+    document.getElementById('cape-custom-toggle').style.display = '';
+  }
+}
+
+// Save current editor cape to list
+const _origCapeEdSave = document.getElementById('cape-ed-save');
+if (_origCapeEdSave) {
+  _origCapeEdSave.addEventListener('click', () => {
+    const canvas = document.getElementById('cape-ed-canvas');
+    if (canvas) {
+      const dataUrl = canvas.toDataURL('image/png');
+      const name = 'Cape ' + (customCapeList.length + 1);
+      customCapeList.push({ name, dataUrl, addedAt: Date.now() });
+      saveCustomCapeList();
+      renderCustomCapeList();
+    }
+  });
+}
+
 function openProfileModal(profileId){
   editingProfileId=profileId;
   const p=profiles.find(x=>x.id===profileId); if(!p)return;
@@ -2811,17 +3218,10 @@ function renderCape3D(targetCanvas,capeUrl){
   const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(3,5,4);scene.add(dl);
   const dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-3,-1,-2);scene.add(dl2);
   const grp=new THREE.Group();scene.add(grp);
-  function makeDrape(){
-    const segsW=8,segsH=12,CW=2.0,CH=4.0;
-    const v2=[],u2=[],ix=[];
-    for(let j=0;j<=segsH;j++){const fv=j/segsH;for(let i=0;i<=segsW;i++){const ft=i/segsW;v2.push((ft-0.5)*CW,CH*0.5-fv*CH,Math.sin(fv*Math.PI)*0.2+Math.sin(ft*Math.PI)*0.08*fv);u2.push(ft,fv);}}
-    for(let j=0;j<segsH;j++)for(let i=0;i<segsW;i++){const a=j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;ix.push(a,c,b,b,c,d);}
-    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));g.setIndex(ix);g.computeVertexNormals();return g;
-  }
   function makeDrapeBack(){
     const segsW=8,segsH=12,CW=2.0,CH=4.0;
     const v2=[],u2=[],ix=[];
-    for(let j=0;j<=segsH;j++){const fv=j/segsH;for(let i=0;i<=segsW;i++){const ft=i/segsW;v2.push((ft-0.5)*CW,CH*0.5-fv*CH,-0.2+Math.sin(fv*Math.PI)*0.2+Math.sin(ft*Math.PI)*0.08*fv);u2.push(ft,fv);}}
+    for(let j=0;j<=segsH;j++){const fv=j/segsH;for(let i=0;i<=segsW;i++){const ft=i/segsW;v2.push((ft-0.5)*CW,CH*0.5-fv*CH,-0.2+Math.sin(fv*Math.PI)*0.2+Math.sin(ft*Math.PI)*0.08*fv);u2.push(1-ft,fv);}}
     for(let j=0;j<segsH;j++)for(let i=0;i<segsW;i++){const a=j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;ix.push(a,b,c,b,d,c);}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));g.setIndex(ix);g.computeVertexNormals();return g;
   }
@@ -2833,13 +3233,9 @@ function renderCape3D(targetCanvas,capeUrl){
       ctx.drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
       const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
     }
-    const frontTex=cropCape(15,1,10,20);
     const backTex=cropCape(1,1,10,20);
-    const front=new THREE.Mesh(makeDrape(),new THREE.MeshLambertMaterial({map:frontTex,side:THREE.DoubleSide}));
-    grp.add(front);
-    const back=new THREE.Mesh(makeDrapeBack(),new THREE.MeshLambertMaterial({map:backTex,side:THREE.DoubleSide}));
+    const back=new THREE.Mesh(makeDrapeBack(),new THREE.MeshLambertMaterial({map:backTex,side:THREE.FrontSide}));
     grp.add(back);
-    grp.rotation.y=Math.PI;
     grp.position.set(0,0,0);
     renderer.render(scene,camera);
     const ctx2=targetCanvas.getContext('2d');
@@ -3682,20 +4078,37 @@ document.getElementById('skin-url-apply-btn').addEventListener('click', async ()
 });
 
 // Skin List overlay
+let skinListViewMode = '2d';
 function renderSkinList() {
   const container = document.getElementById('skin-list-container');
   const emptyEl = document.getElementById('skin-list-empty');
   container.innerHTML = '';
   if (!skinList.length) { emptyEl.style.display = ''; return; }
   emptyEl.style.display = 'none';
+  const is3d = skinListViewMode === '3d';
+  container.style.gridTemplateColumns = is3d
+    ? 'repeat(auto-fill,minmax(12em,1fr))'
+    : 'repeat(auto-fill,minmax(8em,1fr))';
   skinList.forEach((skin, idx) => {
     const card = document.createElement('div');
     card.style.cssText = 'background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:.4em;cursor:pointer;text-align:center;transition:all .15s';
     card.onmouseenter = () => card.style.borderColor = 'var(--acc,#0088ff)';
     card.onmouseleave = () => card.style.borderColor = '#2a2a2a';
-    const thumb = document.createElement('img');
-    thumb.src = skin.dataUrl;
-    thumb.style.cssText = 'width:4em;height:4em;image-rendering:pixelated;border-radius:4px;margin-bottom:.3em;display:block;margin-left:auto;margin-right:auto';
+    if (is3d) {
+      const wrap3d = document.createElement('div');
+      wrap3d.style.cssText = 'width:100%;aspect-ratio:.7;background:#0a0a0a;border-radius:6px;overflow:hidden;margin-bottom:.3em;position:relative';
+      const cvs3d = document.createElement('canvas');
+      cvs3d.width = 200; cvs3d.height = 280;
+      cvs3d.style.cssText = 'width:100%;height:100%;display:block';
+      wrap3d.appendChild(cvs3d);
+      card.appendChild(wrap3d);
+      setTimeout(() => renderSkin3DMini(cvs3d, skin.dataUrl), 50 + idx * 30);
+    } else {
+      const thumb = document.createElement('img');
+      thumb.src = skin.dataUrl;
+      thumb.style.cssText = 'width:4em;height:4em;image-rendering:pixelated;border-radius:4px;margin-bottom:.3em;display:block;margin-left:auto;margin-right:auto';
+      card.appendChild(thumb);
+    }
     const label = document.createElement('div');
     label.textContent = skin.name || 'Skin '+(idx+1);
     label.style.cssText = 'font-size:.72em;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
@@ -3709,14 +4122,101 @@ function renderSkinList() {
     const delBtn = document.createElement('button');
     delBtn.className = 'btn btn-sm';
     delBtn.style.cssText = 'width:auto;font-size:.68em;padding:.2em .5em;color:#f44;border-color:#f4455';
-    delBtn.textContent = '✕';
+    delBtn.textContent = '\u2715';
     delBtn.onclick = (e) => { e.stopPropagation(); skinList.splice(idx,1); saveSkinList(); renderSkinList(); };
     btns.appendChild(applyBtn); btns.appendChild(delBtn);
-    card.appendChild(thumb); card.appendChild(label); card.appendChild(btns);
+    card.appendChild(label); card.appendChild(btns);
     card.onclick = () => { applySkinFromDataUrl(skin.dataUrl); setSkinUploadStatus('Applied: ' + skin.name); document.getElementById('skin-list-overlay').classList.remove('open'); };
     container.appendChild(card);
   });
 }
+
+function renderSkin3DMini(targetCanvas, skinUrl) {
+  if (!window.THREE || !skinUrl) return;
+  try {
+    const W = 200, H = 280;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(35, W/H, 0.1, 100);
+    camera.position.set(0, 1.3, 11); camera.lookAt(0, 0, 0);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H); renderer.setClearColor(0x000000, 0); renderer.setPixelRatio(1);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.8); d1.position.set(2,4,3); scene.add(d1);
+    const grp = new THREE.Group(); scene.add(grp);
+    const loader = new THREE.TextureLoader();
+    const isDataUrl = skinUrl.startsWith('data:');
+    function buildWithTex(tex) {
+      const U = 0.25;
+      function sb(gw,gh,gd,px,py,pz,faces) {
+        const geo = new THREE.BoxGeometry(gw,gh,gd);
+        const uvAttr = geo.attributes.uv;
+        for(let fi=0;fi<6;fi++){const f=faces[fi],i=fi*4;uvAttr.setXY(i,f[0],f[1]);uvAttr.setXY(i+1,f[2],f[1]);uvAttr.setXY(i+3,f[3],f[4]);uvAttr.setXY(i+2,f[0],f[4]);}
+        uvAttr.needsUpdate=true;
+        const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({map:tex,transparent:true,alphaTest:0.05}));
+        m.position.set(px,py,pz); return m;
+      }
+      function uv(sx,sy,sw,sh){return[sx/64,(sx+sw)/64,1-sy/64,1-(sy+sh)/64];}
+      const hg = new THREE.Group(); hg.position.set(0,U*22,0);
+      hg.add(sb(U*8,U*8,U*8,0,0,0,[uv(8,8,8,8),uv(24,8,8,8),uv(8,0,8,8),uv(16,0,8,8),uv(16,8,8,8),uv(0,8,8,8)]));
+      {const ov=sb(U*9,U*9,U*9,0,0,0,[uv(40,8,8,8),uv(56,8,8,8),uv(40,0,8,8),uv(48,0,8,8),uv(48,8,8,8),uv(32,8,8,8)]);ov.renderOrder=1;hg.add(ov);}
+      grp.add(hg);
+      grp.add(sb(U*8,U*12,U*4,0,U*12,0,[uv(20,20,8,12),uv(32,20,8,12),uv(20,16,8,4),uv(28,16,8,4),uv(28,20,4,12),uv(16,20,4,12)]));
+      {const j=sb(U*8.5,U*12.5,U*4.5,0,U*12,0,[uv(20,36,8,12),uv(32,36,8,12),uv(20,32,8,4),uv(28,32,8,4),uv(28,36,4,12),uv(16,36,4,12)]);j.renderOrder=1;grp.add(j);}
+      grp.add(sb(U*4,U*12,U*4,U*2,0,0,[uv(4,20,4,12),uv(12,20,4,12),uv(4,16,4,4),uv(8,16,4,4),uv(8,20,4,12),uv(0,20,4,12)]));
+      {const p=sb(U*4.5,U*12.5,U*4.5,U*2,0,0,[uv(4,36,4,12),uv(12,36,4,12),uv(4,32,4,4),uv(8,32,4,4),uv(8,36,4,12),uv(0,36,4,12)]);p.renderOrder=1;grp.add(p);}
+      grp.add(sb(U*4,U*12,U*4,-U*2,0,0,[uv(20,52,4,12),uv(28,52,4,12),uv(20,48,4,4),uv(24,48,4,4),uv(24,52,4,12),uv(16,52,4,12)]));
+      {const p=sb(U*4.5,U*12.5,U*4.5,-U*2,0,0,[uv(4,52,4,12),uv(12,52,4,12),uv(4,48,4,4),uv(8,48,4,4),uv(8,52,4,12),uv(0,52,4,12)]);p.renderOrder=1;grp.add(p);}
+      grp.add(sb(U*4,U*12,U*4,U*6,0,0,[uv(44,20,4,12),uv(52,20,4,12),uv(44,16,4,4),uv(48,16,4,4),uv(48,20,4,12),uv(40,20,4,12)]));
+      {const s=sb(U*4.5,U*12.5,U*4.5,U*6,0,0,[uv(44,36,4,12),uv(52,36,4,12),uv(44,32,4,4),uv(48,32,4,4),uv(48,36,4,12),uv(40,36,4,12)]);s.renderOrder=1;grp.add(s);}
+      grp.add(sb(U*4,U*12,U*4,-U*6,0,0,[uv(36,52,4,12),uv(44,52,4,12),uv(36,48,4,4),uv(40,48,4,4),uv(40,52,4,12),uv(32,52,4,12)]));
+      {const s=sb(U*4.5,U*12.5,U*4.5,-U*6,0,0,[uv(52,52,4,12),uv(60,52,4,12),uv(52,48,4,4),uv(56,48,4,4),uv(56,52,4,12),uv(48,52,4,12)]);s.renderOrder=1;grp.add(s);}
+      grp.position.set(0,-U*12,0);
+      grp.rotation.y = 30 * Math.PI / 180;
+      grp.rotation.x = 10 * Math.PI / 180;
+      renderer.render(scene, camera);
+      const ctx2 = targetCanvas.getContext('2d');
+      ctx2.clearRect(0, 0, W, H);
+      ctx2.drawImage(renderer.domElement, 0, 0);
+      renderer.dispose();
+    }
+    if (isDataUrl) {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+        c.getContext('2d').drawImage(img, 0, 0);
+        const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
+        buildWithTex(t);
+      };
+      img.src = skinUrl;
+    } else {
+      loader.load(skinUrl, t => { t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; buildWithTex(t); });
+    }
+  } catch {}
+}
+
+// Skin list 2D/3D toggle
+(function(){
+  const toggle = document.getElementById('skin-list-view-toggle');
+  const knob = document.getElementById('skin-list-view-knob');
+  if(!toggle) return;
+  function updateViewToggle(){
+    if(skinListViewMode==='3d'){
+      toggle.style.background='var(--acc,#0088ff)';
+      knob.style.left='calc(100% - 1.1em)';
+      knob.style.background='#fff';
+    } else {
+      toggle.style.background='#333';
+      knob.style.left='.15em';
+      knob.style.background='#888';
+    }
+  }
+  toggle.addEventListener('click',()=>{
+    skinListViewMode = skinListViewMode==='2d' ? '3d' : '2d';
+    updateViewToggle();
+    renderSkinList();
+  });
+  updateViewToggle();
+})();
 
 document.getElementById('skin-list-btn').addEventListener('click', () => { renderSkinList(); document.getElementById('skin-list-overlay').classList.add('open'); });
 document.getElementById('skin-list-close').addEventListener('click', () => document.getElementById('skin-list-overlay').classList.remove('open'));
@@ -3818,6 +4318,7 @@ function drawSteveSkin(c){
   let isDrawing = false;
   let showTemplate = false;
   let ed3dTex = null;
+  let skinEdLayer = 'inner';
 
   // Skin UV template overlay (body part outlines)
   const templateOverlay = document.createElement('canvas');
@@ -3825,28 +4326,100 @@ function drawSteveSkin(c){
   const tctx = templateOverlay.getContext('2d');
   function drawTemplate(){
     tctx.clearRect(0,0,64,64);
-    tctx.strokeStyle='rgba(255,255,255,0.3)'; tctx.lineWidth=0.3;
-    // Head
-    tctx.strokeRect(8,8,8,8); tctx.strokeRect(32,8,8,8);
-    tctx.fillStyle='rgba(255,255,255,0.15)'; tctx.font='2px sans-serif';
-    tctx.fillText('Head',9,14);
-    // Body
-    tctx.strokeRect(20,20,8,12); tctx.strokeRect(32,36,8,12);
-    tctx.fillText('Body',21,27);
-    // Right Arm
-    tctx.strokeRect(44,20,4,12); tctx.strokeRect(44,36,4,12);
-    tctx.fillText('RA',44.5,27);
-    // Left Arm
-    tctx.strokeRect(36,52,4,12); tctx.strokeRect(52,52,4,12);
-    tctx.fillText('LA',36.5,59);
-    // Right Leg
-    tctx.strokeRect(4,20,4,12); tctx.strokeRect(4,36,4,12);
-    tctx.fillText('RL',4.5,27);
-    // Left Leg
-    tctx.strokeRect(20,52,4,12); tctx.strokeRect(36,36,4,12);
-    tctx.fillText('LL',20.5,59);
+    const isOuter = skinEdLayer === 'outer';
+    tctx.strokeStyle='rgba(255,255,255,0.35)'; tctx.lineWidth=0.4;
+    tctx.fillStyle='rgba(255,255,255,0.12)'; tctx.font='2.2px sans-serif';
+    if(!isOuter){
+      // Inner layer regions
+      // Head
+      tctx.strokeRect(8,8,8,8);
+      tctx.fillText('Head',9.5,14);
+      // Body
+      tctx.strokeRect(20,20,8,12);
+      tctx.fillText('Body',21,27);
+      // Right Arm
+      tctx.strokeRect(44,20,4,12);
+      tctx.fillText('RArm',44,27);
+      // Left Arm
+      tctx.strokeRect(36,52,4,12);
+      tctx.fillText('LArm',36.5,59);
+      // Right Leg
+      tctx.strokeRect(4,20,4,12);
+      tctx.fillText('RLeg',4,27);
+      // Left Leg
+      tctx.strokeRect(20,52,4,12);
+      tctx.fillText('LLeg',20.5,59);
+      // Mark outer layer areas as dimmed
+      tctx.fillStyle='rgba(0,0,0,0.25)';
+      tctx.fillRect(40,0,24,16);
+      tctx.fillRect(16,32,32,16);
+      tctx.fillRect(32,48,32,16);
+      tctx.fillRect(0,32,16,16);
+      tctx.fillStyle='rgba(255,255,255,0.12)';
+      tctx.font='1.8px sans-serif';
+      tctx.fillText('Outer layer (hidden)',36,8);
+    } else {
+      // Outer layer regions
+      // Head overlay
+      tctx.strokeRect(40,0,8,8);
+      tctx.fillText('Hat',41,5);
+      tctx.strokeRect(48,0,8,8);
+      tctx.strokeRect(40,8,8,8);
+      tctx.strokeRect(48,8,8,8);
+      tctx.strokeRect(32,8,8,8);
+      tctx.strokeRect(56,8,8,8);
+      // Body overlay
+      tctx.strokeRect(20,36,8,12);
+      tctx.fillText('Jacket',20.5,43);
+      tctx.strokeRect(32,36,8,12);
+      tctx.strokeRect(20,32,8,4);
+      tctx.strokeRect(28,32,8,4);
+      tctx.strokeRect(28,36,4,12);
+      tctx.strokeRect(16,36,4,12);
+      // Right Arm overlay
+      tctx.strokeRect(44,36,4,12);
+      tctx.fillText('RSleeve',44,43);
+      tctx.strokeRect(52,36,4,12);
+      tctx.strokeRect(44,32,4,4);
+      tctx.strokeRect(48,32,4,4);
+      tctx.strokeRect(48,36,4,12);
+      tctx.strokeRect(40,36,4,12);
+      // Left Arm overlay
+      tctx.strokeRect(36,36,4,12);
+      tctx.fillText('LSleeve',36.5,43);
+      tctx.strokeRect(44,36,4,12);
+      tctx.strokeRect(36,32,4,4);
+      tctx.strokeRect(40,32,4,4);
+      tctx.strokeRect(40,36,4,12);
+      tctx.strokeRect(32,36,4,12);
+      // Right Leg overlay
+      tctx.strokeRect(4,36,4,12);
+      tctx.fillText('RPants',4,43);
+      tctx.strokeRect(8,36,4,12);
+      tctx.strokeRect(12,36,4,12);
+      tctx.strokeRect(0,36,4,12);
+      // Left Leg overlay
+      tctx.strokeRect(20,36,4,12);
+      tctx.fillRect(20,48,16,16);
+      tctx.fillText('LPants',20.5,55);
+      tctx.strokeRect(24,36,4,12);
+      tctx.strokeRect(28,36,4,12);
+      tctx.strokeRect(16,36,4,12);
+      // Mark inner layer areas as dimmed
+      tctx.fillStyle='rgba(0,0,0,0.25)';
+      tctx.fillRect(8,8,8,8);
+      tctx.fillRect(20,20,8,12);
+      tctx.fillRect(44,20,4,12);
+      tctx.fillRect(36,52,4,12);
+      tctx.fillRect(4,20,4,12);
+      tctx.fillRect(20,52,4,12);
+      tctx.fillStyle='rgba(255,255,255,0.12)';
+      tctx.font='1.8px sans-serif';
+      tctx.fillText('Inner layer (hidden)',8,62);
+    }
   }
   drawTemplate();
+  function updateTemplateOverlay(){ drawTemplate(); }
 
   // Scale canvas display
   const displaySize = Math.min(512, window.innerWidth * 0.7);
@@ -3954,6 +4527,35 @@ function drawSteveSkin(c){
       currentTool=btn.dataset.tool;
     });
   });
+
+  // Layer toggle
+  const layerToggle = document.getElementById('skin-ed-layer-toggle');
+  const layerKnob = document.getElementById('skin-ed-layer-knob');
+  function updateLayerToggle(){
+    if(skinEdLayer==='outer'){
+      layerToggle.style.background='var(--acc,#0088ff)';
+      layerKnob.style.left='calc(100% - 1.1em)';
+      layerKnob.style.background='#fff';
+    } else {
+      layerToggle.style.background='#333';
+      layerKnob.style.left='.15em';
+      layerKnob.style.background='#888';
+    }
+    const labelsEl = document.getElementById('skin-ed-body-labels');
+    if(labelsEl){
+      if(skinEdLayer==='outer'){
+        labelsEl.textContent='Outer Layer — Hat(40,0) · Jacket(20,36) · R.Sleeve(44,36) · L.Sleeve(36,36) · R.Pants(4,36) · L.Pants(20,36) — drag to rotate 3D preview';
+      } else {
+        labelsEl.textContent='Inner Layer — Head(8,8) · Body(20,20) · Right Arm(44,20) · Left Arm(36,52) · Right Leg(4,20) · Left Leg(20,52) — drag to rotate 3D preview';
+      }
+    }
+  }
+  if(layerToggle) layerToggle.addEventListener('click',()=>{
+    skinEdLayer = skinEdLayer==='inner' ? 'outer' : 'inner';
+    updateLayerToggle();
+    updateTemplateOverlay();
+  });
+  updateLayerToggle();
 
   // Clear
   document.getElementById('skin-ed-clear').addEventListener('click',()=>{
