@@ -3213,7 +3213,7 @@ function renderCape3D(targetCanvas,capeUrl){
   const scene=new THREE.Scene();
   const camera=new THREE.PerspectiveCamera(30,W/H,0.1,100);
   camera.position.set(0,0,9);camera.lookAt(0,0,0);
-  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
   renderer.setSize(W,H);renderer.setClearColor(0x000000,0);renderer.setPixelRatio(1);
   scene.add(new THREE.AmbientLight(0xffffff,0.8));
   const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(3,5,4);scene.add(dl);
@@ -3226,7 +3226,7 @@ function renderCape3D(targetCanvas,capeUrl){
     for(let j=0;j<segsH;j++)for(let i=0;i<segsW;i++){const a=j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;ix.push(a,b,c,b,d,c);}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));g.setIndex(ix);g.computeVertexNormals();return g;
   }
-  new THREE.TextureLoader().load(capeUrl,(fullTex)=>{
+  function paintCape(fullTex){
     const img=fullTex.image;
     function cropCape(sx,sy,sw,sh){
       const c=document.createElement('canvas');c.width=sw;c.height=sh;
@@ -3243,7 +3243,12 @@ function renderCape3D(targetCanvas,capeUrl){
     ctx2.clearRect(0,0,W,H);
     ctx2.drawImage(renderer.domElement,0,0);
     renderer.dispose();
-  },undefined,()=>{renderer.dispose();});
+  }
+  ipcRenderer.invoke('fetch-image-dataurl',capeUrl).then(dataUrl=>{
+    new THREE.TextureLoader().load(dataUrl,(tex)=>paintCape(tex),undefined,()=>{renderer.dispose();});
+  }).catch(()=>{
+    new THREE.TextureLoader().load(capeUrl,(tex)=>paintCape(tex),undefined,()=>{renderer.dispose();});
+  });
 }
 
 function initCape3D(wrap, capeUrl){

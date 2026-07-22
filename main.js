@@ -2875,6 +2875,15 @@ function fetchJsonNoCors(url) {
   });
 }
 ipcMain.handle('fetch-json-no-cors', async (e, url) => { logDebug('fetchJsonNoCors: ' + url); return fetchJsonNoCors(url); });
+ipcMain.handle('fetch-image-dataurl', async (e, url) => {
+  logDebug('fetchImageDataUrl: ' + url);
+  const tmpFile = path.join(base, 'Cache', `img_${Date.now()}_${Math.random().toString(36).slice(2,8)}`);
+  await fetchBufferToPath(url, tmpFile);
+  const buf = fs.readFileSync(tmpFile);
+  fs.unlinkSync(tmpFile);
+  const ext = url.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+  return `data:${ext};base64,` + buf.toString('base64');
+});
 ipcMain.handle('fetch-buffer', async (e, url) => {
   logDebug('fetchBuffer: ' + url);
   const tmpFile = path.join(base, 'Cache', `dl_${Date.now()}_${Math.random().toString(36).slice(2,8)}`);
