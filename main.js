@@ -118,25 +118,30 @@ app.whenReady().then(async () => {
       const batchPath = path.join(os.tmpdir(), 'crux-update-' + Date.now() + '.bat');
       const batchContent = [
         '@echo off',
-        'echo Waiting for ' + launcherExe + ' to close...',
         ':waitloop',
         'timeout /t 1 /nobreak >nul',
         'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
         'if %errorlevel%==0 goto waitloop',
-        'echo Launcher closed. Starting installer...',
         'start /wait "" "' + pendingUpdatePath + '" /S',
-        'echo Installer finished. Starting launcher...',
         'start "" "' + path.dirname(app.getPath('exe')) + '\\' + launcherExe + '"',
         'del "%~f0"',
       ].join('\r\n');
       await fs.promises.writeFile(batchPath, batchContent, 'utf8');
       console.log('[UPDATE] Update batch script created. Closing launcher to run installer...');
-      // Start the batch script detached, then quit the app
+      // Create a VBS wrapper to run the batch completely hidden (no console window)
+      const vbsPath = path.join(os.tmpdir(), 'crux-update-hidden-' + Date.now() + '.vbs');
+      const vbsContent = 'Set s = CreateObject("WScript.Shell")\r\ns.Run "cmd /c """ & WScript.Arguments(0) & """", 0, False\r\n';
+      await fs.promises.writeFile(vbsPath, vbsContent, 'utf8');
+      // Start via VBS wrapper (completely hidden), then quit the app
       try {
-        spawn('cmd.exe', ['/c', batchPath], { shell: false, detached: true, stdio: 'ignore', windowsHide: true }).unref();
+        spawn('wscript.exe', [vbsPath, batchPath], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
       } catch (e) {
-        console.log('[UPDATE] Batch spawn failed: ' + e.message + ', trying direct start...');
-        exec(`start "" "${batchPath}"`, { shell: true });
+        console.log('[UPDATE] VBS spawn failed: ' + e.message + ', trying PowerShell fallback...');
+        try {
+          spawn('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-Command', 'Start-Process cmd -ArgumentList \'/c\', \'' + batchPath.replace(/\\/g, '\\\\') + '\' -WindowStyle Hidden'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+        } catch (e2) {
+          console.log('[UPDATE] All spawn methods failed: ' + e2.message);
+        }
       }
       await new Promise(r => setTimeout(r, 500));
       app.quit();
@@ -2348,7 +2353,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
     updateLog('Installer downloaded. Removing security block (Zone.Identifier)...');
     try {
       await new Promise((resolve, reject) => {
-        exec(`powershell -NoProfile -Command "Unblock-File -Path '${installerPath}'"`, { timeout: 10000, shell: true }, (err) => {
+        exec(`powershell -NoProfile -WindowStyle Hidden -Command "Unblock-File -Path '${installerPath}'"`, { timeout: 10000, shell: true }, (err) => {
           if (err) updateLog('Unblock-File warning: ' + (err.message || err));
           resolve();
         });
@@ -2360,26 +2365,32 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
     const batchPath = path.join(os.tmpdir(), 'crux-update-' + Date.now() + '.bat');
     const batchContent = [
       '@echo off',
-      'echo Waiting for ' + launcherExe + ' to close...',
       ':waitloop',
       'timeout /t 1 /nobreak >nul',
       'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
       'if %errorlevel%==0 goto waitloop',
-      'echo Launcher closed. Starting installer...',
       'start /wait "" "' + installerPath + '" /S',
-      'echo Installer finished. Starting launcher...',
       'start "" "' + path.dirname(app.getPath('exe')) + '\\' + launcherExe + '"',
       'del "%~f0"',
     ].join('\r\n');
     await fs.promises.writeFile(batchPath, batchContent, 'utf8');
     updateLog('Update batch script created. Closing launcher to run installer...');
 
-    // Start the batch script detached, then quit the app
+    // Create a VBS wrapper to run the batch completely hidden (no console window)
+    const vbsPath = path.join(os.tmpdir(), 'crux-update-hidden-' + Date.now() + '.vbs');
+    const vbsContent = 'Set s = CreateObject("WScript.Shell")\r\ns.Run "cmd /c """ & WScript.Arguments(0) & """", 0, False\r\n';
+    await fs.promises.writeFile(vbsPath, vbsContent, 'utf8');
+
+    // Start via VBS wrapper (completely hidden), then quit the app
     try {
-      spawn('cmd.exe', ['/c', batchPath], { shell: false, detached: true, stdio: 'ignore', windowsHide: true }).unref();
+      spawn('wscript.exe', [vbsPath, batchPath], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
     } catch (e) {
-      updateLog('Batch spawn failed: ' + e.message + ', trying direct start...');
-      exec(`start "" "${batchPath}"`, { shell: true });
+      updateLog('VBS spawn failed: ' + e.message + ', trying PowerShell fallback...');
+      try {
+        spawn('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-Command', 'Start-Process cmd -ArgumentList \'/c\', \'' + batchPath.replace(/\\/g, '\\\\') + '\' -WindowStyle Hidden'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+      } catch (e2) {
+        updateLog('All spawn methods failed: ' + e2.message);
+      }
     }
     await new Promise(r => setTimeout(r, 500));
     app.quit();
