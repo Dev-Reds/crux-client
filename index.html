@@ -167,7 +167,7 @@ body.light .launch-right{background:#e8e8e8;border-left-color:#ddd;}
 body.light .launch-left{background:#f0f0f0;}
 
 /* 3D skin canvas */
-.skin3d-wrap{width:50%;max-width:14vw;aspect-ratio:.7;background:#0a0a0a;border-radius:var(--r);overflow:hidden;position:relative;cursor:grab;margin:0 auto;}
+.skin3d-wrap{width:40%;max-width:11.2vw;aspect-ratio:.7;background:#0a0a0a;border-radius:var(--r);overflow:hidden;position:relative;cursor:grab;margin:0 auto;transition:width .3s,max-width .3s;}
 body.light .skin3d-wrap{background:#e0e0e0;}
 .skin3d-wrap:active{cursor:grabbing;}
 .skin3d-canvas{width:100%;height:100%;display:block;}
@@ -190,7 +190,7 @@ body.light .skin3d-wrap{background:#e0e0e0;}
 .skin-editor-canvas-wrap{position:relative;display:flex;justify-content:center;margin-bottom:.7em;}
 .skin-editor-canvas{image-rendering:pixelated;cursor:crosshair;border:1px solid #333;background:repeating-conic-gradient(#2a2a2a 0% 25%, #222 0% 50%) 0 0 / 16px 16px;}
 .skin-editor-dual{display:flex;gap:1em;justify-content:center;align-items:flex-start;flex-wrap:wrap;margin-bottom:.7em;}
-.skin-editor-3d-wrap{width:300px;height:400px;min-width:220px;background:#0a0a0a;border:1px solid #333;border-radius:8px;cursor:grab;position:relative;overflow:hidden;}
+.skin-editor-3d-wrap{width:240px;height:320px;min-width:220px;background:#0a0a0a;border:1px solid #333;border-radius:8px;cursor:grab;position:relative;overflow:hidden;transition:width .3s,height .3s;}
 .skin-editor-3d-wrap:active{cursor:grabbing;}
 .skin-editor-3d-wrap canvas{width:100%!important;height:100%!important;display:block;}
 .skin-editor-body-labels{font-size:.6em;color:#555;text-align:center;margin-bottom:.5em;}
@@ -4086,9 +4086,7 @@ function renderSkinList() {
   if (!skinList.length) { emptyEl.style.display = ''; return; }
   emptyEl.style.display = 'none';
   const is3d = skinListViewMode === '3d';
-  container.style.gridTemplateColumns = is3d
-    ? 'repeat(auto-fill,minmax(12em,1fr))'
-    : 'repeat(auto-fill,minmax(8em,1fr))';
+  container.style.gridTemplateColumns = 'repeat(auto-fill,minmax(8em,1fr))';
   skinList.forEach((skin, idx) => {
     const card = document.createElement('div');
     card.style.cssText = 'background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:.4em;cursor:pointer;text-align:center;transition:all .15s';
@@ -4096,10 +4094,10 @@ function renderSkinList() {
     card.onmouseleave = () => card.style.borderColor = '#2a2a2a';
     if (is3d) {
       const wrap3d = document.createElement('div');
-      wrap3d.style.cssText = 'width:100%;aspect-ratio:.7;background:#0a0a0a;border-radius:6px;overflow:hidden;margin-bottom:.3em;position:relative';
+      wrap3d.style.cssText = 'width:4em;height:4em;background:#0a0a0a;border-radius:4px;overflow:hidden;margin:0 auto .3em;position:relative';
       const cvs3d = document.createElement('canvas');
       cvs3d.width = 200; cvs3d.height = 280;
-      cvs3d.style.cssText = 'width:100%;height:100%;display:block';
+      cvs3d.style.cssText = 'width:100%;height:100%;display:block;image-rendering:auto';
       wrap3d.appendChild(cvs3d);
       card.appendChild(wrap3d);
       setTimeout(() => renderSkin3DMini(cvs3d, skin.dataUrl), 50 + idx * 30);
