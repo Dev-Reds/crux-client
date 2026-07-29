@@ -161,6 +161,11 @@ app.whenReady().then(async () => {
       console.log('[UPDATE] Settings restored after update.');
     } catch {}
   }
+  // Clean up downloaded installer and flag so we don't loop on next startup
+  if (fs.existsSync(updateDoneFlag)) {
+    try { fs.unlinkSync(updateDoneFlag); } catch {}
+  }
+  try { fs.unlinkSync(pendingUpdatePath); console.log('[UPDATE] Installer cleaned up.'); } catch {}
 
   createWindow();
   // Auto-scan Java in background after window loads
@@ -2441,7 +2446,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
       'timeout /t 1 /nobreak >nul',
       'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
       'if %errorlevel%==0 goto waitloop',
-      '"' + installerPath + '"',
+      '"' + installerPath + '" /S',
       'del "%~f0"',
     ].join('\r\n');
     await fs.promises.writeFile(batchPath, batchContent, 'utf8');

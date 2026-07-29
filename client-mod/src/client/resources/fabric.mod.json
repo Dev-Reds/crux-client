@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "cruxclient",
+  "version": "${version}",
+  "name": "Crux Client",
+  "description": "A clean client mod with essential features - no hacks, no cheats.",
+  "authors": [
+    "Crux"
+  ],
+  "contact": {
+    "homepage": "https://github.com/cruxclient/cruxclient"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.crux.client.CruxClient"
+    ]
+  },
+  "mixins": [
+    {
+      "config": "cruxclient.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": ">=1.20.1 <1.25",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

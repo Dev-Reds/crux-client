@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "com.crux.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+  ],
+  "client": [
+    "NoHurtcamMixin",
+    "NoFogMixin",
+    "ClearBackgroundMixin",
+    "HitColorMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
