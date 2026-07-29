@@ -6,11 +6,11 @@
   Var chkRunApp
 
   Function finishPageShow
-    !insertmacro MUI_HEADER_TEXT "$(mui.finishpage.title)" "$(mui.finishpage.subtitle)"
+    !insertmacro MUI_HEADER_TEXT "Completing Crux Client Setup" "Setup has completed successfully."
     nsDialogs::Create 1018
     Pop $0
 
-    ${NSD_CreateLabel} 0u 10u 100% 20u "$(mui.finishpage.text)"
+    ${NSD_CreateLabel} 0u 10u 100% 20u "Setup has completed successfully. Select additional options below:"
     Pop $0
 
     ${NSD_CreateCheckbox} 10u 50u 200u 12u "Create desktop shortcut"
@@ -31,19 +31,18 @@
   Function finishPageLeave
     ${NSD_GetState} $chkDesktop $0
     ${If} $0 == ${BST_CHECKED}
-      CreateShortCut "$DESKTOP\${SHORTCUT_NAME}.lnk" "$appExe"
-      WinShell::SetLnkAUMI "$DESKTOP\${SHORTCUT_NAME}.lnk" "${APP_ID}"
+      CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+      ClearErrors
+      WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
     ${EndIf}
 
     ${NSD_GetState} $chkStartMenu $0
     ${If} $0 == ${BST_CHECKED}
-      !ifdef MENU_FILENAME
-        CreateDirectory "$SMPROGRAMS\${MENU_FILENAME}"
-        CreateShortCut "$SMPROGRAMS\${MENU_FILENAME}\${SHORTCUT_NAME}.lnk" "$appExe"
-      !else
-        CreateShortCut "$SMPROGRAMS\${SHORTCUT_NAME}.lnk" "$appExe"
-      !endif
-      WinShell::SetLnkAUMI "$SMPROGRAMS\${SHORTCUT_NAME}.lnk" "${APP_ID}"
+      !insertmacro cleanupOldMenuDirectory
+      !insertmacro createMenuDirectory
+      CreateShortCut "$newStartMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+      ClearErrors
+      WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
     ${EndIf}
 
     System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
