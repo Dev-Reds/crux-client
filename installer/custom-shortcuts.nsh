@@ -38,8 +38,9 @@
 
     ${NSD_GetState} $chkStartMenu $0
     ${If} $0 == ${BST_CHECKED}
-      !insertmacro cleanupOldMenuDirectory
-      !insertmacro createMenuDirectory
+      !ifdef MENU_FILENAME
+        CreateDirectory "$SMPROGRAMS\${MENU_FILENAME}"
+      !endif
       CreateShortCut "$newStartMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
       ClearErrors
       WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
