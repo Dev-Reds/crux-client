@@ -1,5 +1,16 @@
 !macro customInstall
-  ; Shortcuts werden jetzt in customFinishPage per Checkbox erstellt
+  CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+  ClearErrors
+  WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
+
+  !ifdef MENU_FILENAME
+    CreateDirectory "$SMPROGRAMS\${MENU_FILENAME}"
+  !endif
+  CreateShortCut "$newStartMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+  ClearErrors
+  WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
+
+  System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
 !macroend
 
 !macro customFinishPage
@@ -34,20 +45,13 @@
 
   Function finishPageLeave
     ${NSD_GetState} $chkDesktop $0
-    ${If} $0 == ${BST_CHECKED}
-      CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-      ClearErrors
-      WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
+    ${If} $0 == ${BST_UNCHECKED}
+      Delete "$newDesktopLink"
     ${EndIf}
 
     ${NSD_GetState} $chkStartMenu $0
-    ${If} $0 == ${BST_CHECKED}
-      !ifdef MENU_FILENAME
-        CreateDirectory "$SMPROGRAMS\${MENU_FILENAME}"
-      !endif
-      CreateShortCut "$newStartMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-      ClearErrors
-      WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
+    ${If} $0 == ${BST_UNCHECKED}
+      Delete "$newStartMenuLink"
     ${EndIf}
 
     System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
