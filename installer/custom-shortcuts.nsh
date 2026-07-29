@@ -1,39 +1,62 @@
-; custom-shortcuts.nsh - Custom shortcut selection page for Crux Client installer
+!macro customFinishPage
+  Page custom finishPageShow finishPageLeave
 
-Var chkDesktopShortcut
-Var chkStartMenuShortcut
-Var createDesktop
-Var createStartMenu
+  Var chkDesktop
+  Var chkStartMenu
+  Var chkRunApp
 
-!macro customHeader
-  Page custom nsisShortcutsPageShow nsisShortcutsPageLeave
-
-  Function nsisShortcutsPageShow
+  Function finishPageShow
+    !insertmacro MUI_HEADER_TEXT "$(mui.finishpage.title)" "$(mui.finishpage.subtitle)"
     nsDialogs::Create 1018
     Pop $0
-    ${NSD_CreateLabel} 0u 10u 100% 20u "Select additional tasks:"
+
+    ${NSD_CreateLabel} 0u 10u 100% 20u "$(mui.finishpage.text)"
     Pop $0
-    ${NSD_CreateCheckbox} 10u 40u 200u 12u "Create desktop shortcut"
-    Pop $chkDesktopShortcut
-    ${NSD_Check} $chkDesktopShortcut
-    ${NSD_CreateCheckbox} 10u 60u 200u 12u "Create start menu shortcut"
-    Pop $chkStartMenuShortcut
-    ${NSD_Check} $chkStartMenuShortcut
+
+    ${NSD_CreateCheckbox} 10u 50u 200u 12u "Create desktop shortcut"
+    Pop $chkDesktop
+    ${NSD_Check} $chkDesktop
+
+    ${NSD_CreateCheckbox} 10u 70u 200u 12u "Create start menu shortcut"
+    Pop $chkStartMenu
+    ${NSD_Check} $chkStartMenu
+
+    ${NSD_CreateCheckbox} 10u 90u 200u 12u "Run Crux Client"
+    Pop $chkRunApp
+    ${NSD_Check} $chkRunApp
+
     nsDialogs::Show
   FunctionEnd
 
-  Function nsisShortcutsPageLeave
-    ${NSD_GetState} $chkDesktopShortcut $createDesktop
-    ${NSD_GetState} $chkStartMenuShortcut $createStartMenu
-  FunctionEnd
-!macroend
+  Function finishPageLeave
+    ${NSD_GetState} $chkDesktop $0
+    ${If} $0 == ${BST_CHECKED}
+      CreateShortCut "$DESKTOP\${SHORTCUT_NAME}.lnk" "$appExe"
+      WinShell::SetLnkAUMI "$DESKTOP\${SHORTCUT_NAME}.lnk" "${APP_ID}"
+    ${EndIf}
 
-!macro customInstall
-  ${If} $createDesktop == ${BST_CHECKED}
-    CreateShortCut "$DESKTOP\Crux Client.lnk" "$INSTDIR\Crux Client.exe"
-  ${EndIf}
-  ${If} $createStartMenu == ${BST_CHECKED}
-    CreateDirectory "$SMPROGRAMS\Crux Client"
-    CreateShortCut "$SMPROGRAMS\Crux Client\Crux Client.lnk" "$INSTDIR\Crux Client.exe"
-  ${EndIf}
+    ${NSD_GetState} $chkStartMenu $0
+    ${If} $0 == ${BST_CHECKED}
+      !ifdef MENU_FILENAME
+        CreateDirectory "$SMPROGRAMS\${MENU_FILENAME}"
+        CreateShortCut "$SMPROGRAMS\${MENU_FILENAME}\${SHORTCUT_NAME}.lnk" "$appExe"
+      !else
+        CreateShortCut "$SMPROGRAMS\${SHORTCUT_NAME}.lnk" "$appExe"
+      !endif
+      WinShell::SetLnkAUMI "$SMPROGRAMS\${SHORTCUT_NAME}.lnk" "${APP_ID}"
+    ${EndIf}
+
+    System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
+
+    ${NSD_GetState} $chkRunApp $0
+    ${If} $0 == ${BST_CHECKED}
+      HideWindow
+      ${if} ${isUpdated}
+        StrCpy $1 "--updated"
+      ${else}
+        StrCpy $1 ""
+      ${endif}
+      ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "$1"
+    ${EndIf}
+  FunctionEnd
 !macroend

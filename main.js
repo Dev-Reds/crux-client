@@ -2441,8 +2441,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
       'timeout /t 1 /nobreak >nul',
       'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
       'if %errorlevel%==0 goto waitloop',
-      'start /wait "" "' + installerPath + '" /S',
-      'start "" "' + path.dirname(app.getPath('exe')) + '\\' + launcherExe + '"',
+      '"' + installerPath + '"',
       'del "%~f0"',
     ].join('\r\n');
     await fs.promises.writeFile(batchPath, batchContent, 'utf8');
