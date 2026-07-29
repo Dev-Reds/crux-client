@@ -30,10 +30,10 @@ Var createStartMenu
 
 !macro customInstall
   ${If} $createDesktop == ${BST_CHECKED}
-    CreateShortCut "$DESKTOP\Crux Client.lnk" "$INSTDIR\Crux Client.exe" "" "$INSTDIR\icons\icon.ico"
+    CreateShortCut "$DESKTOP\Crux Client.lnk" "$INSTDIR\Crux Client.exe"
   ${EndIf}
   ${If} $createStartMenu == ${BST_CHECKED}
     CreateDirectory "$SMPROGRAMS\Crux Client"
-    CreateShortCut "$SMPROGRAMS\Crux Client\Crux Client.lnk" "$INSTDIR\Crux Client.exe" "" "$INSTDIR\icons\icon.ico"
+    CreateShortCut "$SMPROGRAMS\Crux Client\Crux Client.lnk" "$INSTDIR\Crux Client.exe"
   ${EndIf}
 !macroend
