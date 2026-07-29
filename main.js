@@ -1423,7 +1423,23 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         try { fs.unlinkSync(path.join(modsDir, jar)); } catch {}
       }
 
-      // Refresh existingFiles after cleanup
+      // Re-deploy mrpack mods (they were wiped by the cleanup above)
+      if (mrpackMods && mrpackMods.length) {
+        for (const mod of mrpackMods) {
+          try {
+            if (mod.diskPath && fs.existsSync(mod.diskPath)) {
+              const dest = path.join(modsDir, mod.fileName || `mod-${(mod.name||'unknown').replace(/[^a-zA-Z0-9._-]/g,'_')}.jar`);
+              if (!fs.existsSync(dest)) await fs.promises.copyFile(mod.diskPath, dest);
+            } else if (mod.data && mod.data.length) {
+              const buf = Buffer.from(mod.data);
+              const dest = path.join(modsDir, mod.fileName || `mod-${(mod.name||'unknown').replace(/[^a-zA-Z0-9._-]/g,'_')}.jar`);
+              if (!fs.existsSync(dest)) await fs.promises.writeFile(dest, buf);
+            }
+          } catch(e) { send('instance-log', { instanceId, line:`[MODPACK] Re-deploy failed ${mod.name}: ${e.message}` }); }
+        }
+      }
+
+      // Refresh existingFiles after cleanup + mrpack redeploy
       existingFiles.length = 0;
       existingFiles.push(...fs.readdirSync(modsDir).filter(f => f.endsWith('.jar')));
 
@@ -1976,17 +1992,34 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       jvmArgs.push('-Dfml.earlyWindowControl=false');
       jvmArgs.push('-Dforge.eagerGlVersion=4.5');
       jvmArgs.push('-Dminecraft.window.title=Crux Client');
-      // Use Mesa3D software OpenGL if available (for broken GPU drivers)
-      const mesaGL = await ensureMesa();
+      // Force Mesa3D software OpenGL (for broken GPU drivers)
+      const launchSettings = await load(P.settings, {}).catch(()=>({}));
+      let mesaGL = await ensureMesa();
+      // If forceSoftwareGL is set but Mesa3D isn't ready yet, retry the setup
+      if (!mesaGL && launchSettings.forceSoftwareGL) {
+        send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL aktiv — versuche Mesa3D-Setup erneut...' });
+        mesaGL = await ensureMesa();
+      }
       if (mesaGL) {
         const mesaDir = path.dirname(mesaGL);
         jvmArgs.push(`-Dorg.lwjgl.opengl.libpath=${mesaDir}`);
         jvmArgs.push('-Dorg.lwjgl.opengl.libname=opengl32');
+        installMesaToGameDir(mesaGL, P.mc);
+        // Preload Mesa via Java agent (runs in premain BEFORE any Minecraft code)
+        const agentJar = await ensureMesaAgent(mesaGL, resolvedJava);
+        if (agentJar) {
+          jvmArgs.unshift(`-javaagent:${agentJar}=${mesaGL}`);
+          send('instance-log', { instanceId, line: `[LAUNCH] Java Agent: preloads Mesa opengl32.dll via premain()` });
+        }
         send('instance-log', { instanceId, line: `[LAUNCH] Using Mesa3D software OpenGL from: ${mesaDir}` });
+      }
+      if (launchSettings.forceSoftwareGL) {
+        jvmArgs.push('-Dorg.lwjgl.opengl.allowSoftwareOpenGL=true');
+        if (!mesaGL) send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL gesetzt aber Mesa3D nicht verfügbar — AMD-Treiber kann weiterhin crashen!' });
       }
       if (data.renderApi === 'vulkan') jvmArgs.push('-Dorg.lwjgl.vulkan.libname=vulkan-1');
 
-      return { javaPath: resolvedJava, mainClass, jvmArgs, gameArgs };
+      return { javaPath: resolvedJava, mainClass, jvmArgs, gameArgs, mesaActive: !!mesaGL };
     }
 
     async function mclcLaunchOnce() {
@@ -2018,15 +2051,19 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             send('instance-log', { instanceId, line: `[NEOFORGE] fml.toml patch skipped: ${e.message}` });
           }
 
-          const { javaPath, mainClass, jvmArgs, gameArgs } = await buildNeoForgeLaunch();
+          const { javaPath, mainClass, jvmArgs, gameArgs, mesaActive } = await buildNeoForgeLaunch();
           send('launch-progress', { instanceId, percent:20, message:`Launching NeoForge with ${mainClass}...` });
           send('instance-log', { instanceId, line: `[NEOFORGE] Java: ${javaPath}` });
-          send('instance-log', { instanceId, line: `[NEOFORGE] Main: ${mainClass}` });
 
           const allArgs = [...jvmArgs, mainClass, ...gameArgs];
           send('instance-log', { instanceId, line: `[NEOFORGE] Args: ${allArgs.slice(0, 10).join(' ')}...` });
 
-          const proc = spawn(javaPath, allArgs, { cwd: P.mc, detached: false, stdio: ['ignore', 'pipe', 'pipe'] });
+          const spawnOpts = { cwd: P.mc, detached: false, stdio: ['ignore', 'pipe', 'pipe'] };
+          if (mesaActive) {
+            spawnOpts.env = { ...process.env, GALLIUM_DRIVER: 'zink' };
+            send('instance-log', { instanceId, line: `[LAUNCH] GALLIUM_DRIVER=zink (OpenGL→Vulkan via Zink)` });
+          }
+          const proc = spawn(javaPath, allArgs, spawnOpts);
           if (proc) instances[instanceId].process = proc;
 
           let modCrash = false;
@@ -2050,20 +2087,34 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           proc.stderr.on('data', d => d.toString().split('\n').forEach(handleLine));
 
           return new Promise((resolve) => {
-            proc.on('close', (code) => {
-              // Restore EarlyDisplay JAR after launch
-              try {
-                if (fs.existsSync(earlyDisplayDisabled)) {
-                  fs.renameSync(earlyDisplayDisabled, earlyDisplayJar);
-                }
-              } catch {}
-              if (gpuDriverCrash) {
+              proc.on('close', async (code) => {
+                // Restore EarlyDisplay JAR after launch
+                try {
+                  if (fs.existsSync(earlyDisplayDisabled)) {
+                    fs.renameSync(earlyDisplayDisabled, earlyDisplayJar);
+                  }
+                } catch {}
+                cleanupMesaFromGameDir(P.mc);
+                if (gpuDriverCrash) {
                 send('launch-error', 'GPU-Treiber-Problem: atio6axx.dll crasht bei OpenGL. Bitte aktualisiere deinen AMD Radeon Treiber auf Version 26.6.4 oder neuer: https://www.amd.com/en/support/download/drivers.html');
+                try {
+                  const cur = await load(P.settings, {});
+                  if (!cur.forceSoftwareGL) {
+                    cur.forceSoftwareGL = true;
+                    await save(P.settings, cur);
+                    send('instance-log', { instanceId, line: '[LAUNCH] AMD GPU-Treiber-Crash erkannt — Software-Rendering wird für zukünftige Starts automatisch aktiviert.' });
+                  }
+                } catch {}
+                // Kickstart Mesa3D download so it's cached for the next launch
+                ensureMesa().then(mesaPath => {
+                  if (mesaPath) send('instance-log', { instanceId, line: `[LAUNCH] Mesa3D wurde heruntergeladen — nächster Start sollte stabil sein.` });
+                }).catch(() => {});
               }
               resolve({ code, modCrash });
             });
             proc.on('error', (err) => {
               try { if (fs.existsSync(earlyDisplayDisabled)) fs.renameSync(earlyDisplayDisabled, earlyDisplayJar); } catch {}
+              cleanupMesaFromGameDir(P.mc);
               send('instance-log', { instanceId, line:`[LAUNCH ERROR] ${err.message}` });
               resolve({ code: -1, modCrash: false });
             });
@@ -2075,12 +2126,27 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       }
 
       // For other loaders: use mclc
-      const mclcMesaGL = await ensureMesa();
+      const mclcSettings = await load(P.settings, {}).catch(()=>({}));
+      let mclcMesaGL = await ensureMesa();
+      if (!mclcMesaGL && mclcSettings.forceSoftwareGL) {
+        mclcMesaGL = await ensureMesa();
+      }
       const mclcCustomArgs = ['-Dminecraft.window.title=Crux Client'];
       if (mclcMesaGL) {
         const mclcMesaDir = path.dirname(mclcMesaGL);
         mclcCustomArgs.push(`-Dorg.lwjgl.opengl.libpath=${mclcMesaDir}`);
         mclcCustomArgs.push('-Dorg.lwjgl.opengl.libname=opengl32');
+        installMesaToGameDir(mclcMesaGL, P.mc);
+        const agentJar = await ensureMesaAgent(mclcMesaGL, resolvedJava);
+        if (agentJar) {
+          mclcCustomArgs.unshift(`-javaagent:${agentJar}=${mclcMesaGL}`);
+          send('instance-log', { instanceId, line: `[LAUNCH] Java Agent: preloads Mesa opengl32.dll via premain()` });
+        }
+        send('instance-log', { instanceId, line: `[LAUNCH] Using Mesa3D software OpenGL from: ${mclcMesaDir}` });
+      }
+      if (mclcSettings.forceSoftwareGL) {
+        mclcCustomArgs.push('-Dorg.lwjgl.opengl.allowSoftwareOpenGL=true');
+        if (!mclcMesaGL) send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL gesetzt aber Mesa3D nicht verfügbar — AMD-Treiber kann weiterhin crashen!' });
       }
       // Direct server connect from Recent
       const mclcVersionObj = JSON.parse(JSON.stringify(versionObj));
@@ -2101,7 +2167,10 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           memory: { max: maxRam, min: minRam },
           javaPath: resolvedJava,
           customArgs: mclcCustomArgs,
-          overrides: { detached: false },
+          overrides: { 
+            detached: false,
+            ...(mclcMesaGL ? { env: { ...process.env, GALLIUM_DRIVER: 'zink' } } : {}),
+          },
         };
         let modCrash = false;
 
@@ -2137,18 +2206,21 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           }
         });
         launcher.on('error', err => {
+          cleanupMesaFromGameDir(P.mc);
           const msg = err.message || String(err);
           instances[instanceId].logs.push('[ERROR] ' + msg);
           send('instance-log', { instanceId, line:'[ERROR] '+msg });
           send('launch-progress', { instanceId, percent:0, message:'', done:true });
         });
         launcher.on('close', (code) => {
+          cleanupMesaFromGameDir(P.mc);
           resolve({ code, modCrash });
         });
 
         launcher.launch(launchOpts).then(proc => {
           if (proc) instances[instanceId].process = proc;
         }).catch(err => {
+          cleanupMesaFromGameDir(P.mc);
           send('instance-log', { instanceId, line:`[LAUNCH ERROR] ${err.message}` });
           resolve({ code: -1, modCrash: false });
         });
@@ -2421,31 +2493,62 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
 
 // ── Uninstall ─────────────────────────────────────────────────────────────────
 ipcMain.handle('uninstall-app', async () => {
+  // Stop all servers
+  stopAllServers();
+
+  // Kill running MC instances
+  for (const inst of Object.values(instances)) {
+    if (inst.process && inst.process.pid) {
+      try { exec(`taskkill /PID ${inst.process.pid} /F /T`, () => {}); } catch {}
+    }
+  }
+
   if (mainWindow) mainWindow.destroy();
 
   // Delete client data folder
+  const dataDir = path.join(process.env.APPDATA || process.env.LOCALAPPDATA || '', 'Crux Client');
   try {
-    const dataDir = path.join(process.env.APPDATA || process.env.LOCALAPPDATA || '', 'Crux Client');
     if (fs.existsSync(dataDir)) {
-      await fs.promises.rm(dataDir, { recursive: true, force: true });
+      await fs.promises.rm(dataDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 500 });
     }
-  } catch {}
+  } catch (e) {
+    console.error('[Uninstall] Failed to delete data dir:', e.message);
+  }
 
+  // Find and run the NSIS uninstaller
   const exePath = app.getPath('exe');
   const appDir = path.dirname(exePath);
-  const uninstallName = `Uninstall ${path.basename(exePath, '.exe')}.exe`;
-  const uninstallPath = path.join(appDir, uninstallName);
-  if (fs.existsSync(uninstallPath)) {
-    exec(`"${uninstallPath}"`, () => app.quit());
-  } else {
-    const altDir = path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Crux Client');
-    const altPath = path.join(altDir, uninstallName);
-    if (fs.existsSync(altPath)) {
-      exec(`"${altPath}"`, () => app.quit());
-    } else {
-      app.quit();
+  const exeName = path.basename(exePath, '.exe');
+  const uninstallName = `Uninstall ${exeName}.exe`;
+
+  // Common installation directories
+  const candidates = [
+    path.join(appDir, uninstallName),
+    path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Crux Client', uninstallName),
+    path.join(process.env.LOCALAPPDATA || '', 'Programs', exeName, uninstallName),
+    path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Crux Client', uninstallName),
+    path.join(process.env.PROGRAMFILES || 'C:\\Program Files', exeName, uninstallName),
+  ];
+
+  for (const uninstallPath of candidates) {
+    if (fs.existsSync(uninstallPath)) {
+      try {
+        // _?= prefix tells NSIS to run from its own directory for proper self-deletion
+        const cmd = `"${uninstallPath}" _?="${path.dirname(uninstallPath)}"`;
+        exec(cmd, (err) => {
+          if (err) console.error('[Uninstall] Uninstaller error:', err.message);
+          app.quit();
+        });
+        return;
+      } catch (e) {
+        console.error('[Uninstall] Failed to launch uninstaller:', e.message);
+      }
     }
   }
+
+  // No uninstaller found – just quit
+  console.error('[Uninstall] No uninstaller found at any known location');
+  app.quit();
 });
 
 // ── System info ──────────────────────────────────────────────────────────────
@@ -3004,71 +3107,263 @@ function downloadFile(url, dest, progressCallback) {
   });
 }
 
+// ── Mesa3D helpers ──────────────────────────────────────────────────────────────
+// Install Mesa DLLs into the game directory (cwd) so LoadLibrary("opengl32.dll")
+// finds them before C:\Windows\System32\opengl32.dll.
+const MESA_DLLS = [
+  'opengl32.dll', 'libgallium_wgl.dll', 'libglapi.dll',
+  'libEGL.dll', 'libGLESv1_CM.dll', 'libGLESv2.dll',
+  'libdlclose-skip.dll', 'clon12compiler.dll', 'd3d10warp.dll',
+  'dxil.dll', 'libspirv_to_dxil.dll', 'openclon12.dll',
+  'spirv2dxil.exe', 'va.dll', 'vaon12_drv_video.dll',
+  'va_win32.dll', 'vulkan_dzn.dll', 'vulkan_lvp.dll',
+  'libVkLayer_MESA_anti_lag.dll', 'libVkLayer_MESA_overlay.dll', 'libVkLayer_MESA_vram_report_limit.dll',
+];
+
+function installMesaToGameDir(mesaGL, gameDir) {
+  const srcDir = path.dirname(mesaGL);
+  for (const file of MESA_DLLS) {
+    const src = path.join(srcDir, file);
+    try {
+      if (fs.statSync(src).isFile()) fs.copyFileSync(src, path.join(gameDir, file));
+    } catch {}
+  }
+}
+
+function cleanupMesaFromGameDir(gameDir) {
+  for (const file of MESA_DLLS) {
+    try { fs.unlinkSync(path.join(gameDir, file)); } catch {}
+  }
+}
+
+// ── Mesa3D Java Agent ─────────────────────────────────────────────────────────
+// Creates a Java agent JAR that calls System.load(Mesa's opengl32.dll) in
+// premain(), BEFORE any Minecraft/GLFW code runs. This pre-loads Mesa's
+// opengl32.dll into the process, so GLFW's later LoadLibrary("opengl32.dll")
+// finds the already-loaded Mesa version instead of the system one.
+const MESA_AGENT_DIR = path.join(__dirname, 'mesa-agent');
+let _cachedMesaAgentJar = null;
+async function ensureMesaAgent(mesaGL, javaPath) {
+  if (_cachedMesaAgentJar && fs.existsSync(_cachedMesaAgentJar)) return _cachedMesaAgentJar;
+  try {
+    const agentDir = MESA_AGENT_DIR;
+    await fs.promises.mkdir(agentDir, { recursive: true });
+    const javaFile = path.join(agentDir, 'MesaAgent.java');
+    const classFile = path.join(agentDir, 'MesaAgent.class');
+    const jarFile = path.join(agentDir, 'MesaAgent.jar');
+    const manifestFile = path.join(agentDir, 'MANIFEST.MF');
+
+    if (!fs.existsSync(jarFile)) {
+      const code = [
+        'import java.lang.instrument.Instrumentation;',
+        'public class MesaAgent {',
+        '  public static void premain(String args, Instrumentation inst) {',
+        '    if (args == null || args.isEmpty()) {',
+        '      System.err.println("[MESA_AGENT] No Mesa DLL path specified");',
+        '      return;',
+        '    }',
+        '    try {',
+        '      System.load(args);',
+        '    } catch (Throwable t) {',
+        '      System.err.println("[MESA_AGENT] Failed to preload Mesa: " + t);',
+        '    }',
+        '  }',
+        '}',
+      ].join('\n');
+      await fs.promises.writeFile(javaFile, code, 'utf8');
+      await fs.promises.writeFile(manifestFile, 'Premain-Class: MesaAgent\n', 'utf8');
+
+      const jdkDir = path.dirname(javaPath);
+      const javacPath = path.join(jdkDir, 'javac.exe');
+      const jarPath = path.join(jdkDir, 'jar.exe');
+      execSync(`"${javacPath}" MesaAgent.java`, { cwd: agentDir, stdio: 'ignore' });
+      execSync(`"${jarPath}" cfm MesaAgent.jar MANIFEST.MF MesaAgent.class`, { cwd: agentDir, stdio: 'ignore' });
+    }
+    _cachedMesaAgentJar = jarFile;
+    return jarFile;
+  } catch (e) {
+    console.error('[MESA_AGENT] Failed to create agent jar:', e.message);
+    return null;
+  }
+}
+
 // ── Mesa3D Auto-Setup ─────────────────────────────────────────────────────────
 // Automatically downloads Mesa3D software OpenGL for systems with broken GPU drivers
 const MESA_URL = 'https://github.com/pal1000/mesa-dist-win/releases/download/26.1.3/mesa3d-26.1.3-release-mingw.7z';
-const MESA_7Z_SIZE = 57000000; // ~54MB
 
 async function ensureMesa() {
   const mesaDir = path.join(base, 'mesa');
   const mesaGL = path.join(mesaDir, 'x64', 'opengl32.dll');
   if (fs.existsSync(mesaGL)) return mesaGL;
 
+  const sendLog = (line) => {
+    try { if (mainWindow) mainWindow.webContents.send('instance-log', { instanceId: '_mesa', line }); } catch {}
+  };
+  const sendStatus = (msg) => {
+    try { if (mainWindow) mainWindow.webContents.send('launch-status', msg); } catch {}
+  };
+
   const tmpDir = path.join(base, '_mesa_tmp');
-  const mesa7z = path.join(tmpDir, 'mesa.7z');
-  try { await fs.promises.mkdir(tmpDir, { recursive: true }); } catch {}
+  try { await fs.promises.mkdir(tmpDir, { recursive: true }); } catch { return null; }
 
   try {
-    mainWindow.webContents.send('launch-status', 'Lade Mesa3D Software-OpenGL herunter (~54MB)...');
+    sendStatus('Lade Mesa3D Software-OpenGL herunter (~54MB)...');
 
-    await downloadFile(MESA_URL, mesa7z, (pct) => {
-      const msg = `Mesa3D Download: ${Math.round(pct)}%`;
-      try { mainWindow.webContents.send('launch-progress', { instanceId: '_mesa', percent: Math.round(pct * 0.7), message: msg }); } catch {}
-    });
+    // Try 7z method first (needs node-7z)
+    let extracted = false;
+    try {
+      sendLog('[MESA] Lade Mesa3D von GitHub herunter (7z, ~54MB)...');
+      const mesa7z = path.join(tmpDir, 'mesa.7z');
+      await downloadFile(MESA_URL, mesa7z, () => {});
+      sendStatus('Entpacke Mesa3D...');
 
-    mainWindow.webContents.send('launch-status', 'Entpacke Mesa3D...');
-
-    const script = `
-      const path = require('path');
-      const fs = require('fs');
-      const tmpDir = ${JSON.stringify(tmpDir)};
-      const mesaDir = ${JSON.stringify(mesaDir)};
-
-      async function extract() {
-        let _7z;
-        try { _7z = require('node-7z'); } catch(e) {
-          const { execSync } = require('child_process');
-          execSync('npm install node-7z --prefix ' + JSON.stringify(tmpDir) + ' --no-save', { stdio: 'ignore' });
-          _7z = require(path.join(tmpDir, 'node_modules', 'node-7z'));
+      const script = `
+        const path = require('path');
+        const fs = require('fs');
+        const tmpDir = ${JSON.stringify(tmpDir)};
+        const mesaDir = ${JSON.stringify(mesaDir)};
+        const mesa7z = ${JSON.stringify(mesa7z)};
+        async function extract() {
+          let _7z;
+          try { _7z = require('node-7z'); } catch(e) {
+            const { execSync } = require('child_process');
+            execSync('npm install node-7z --prefix ' + JSON.stringify(tmpDir) + ' --no-save', { stdio: 'ignore' });
+            _7z = require(path.join(tmpDir, 'node_modules', 'node-7z'));
+          }
+          const stream = await _7z.extractFull(mesa7z, tmpDir, { recursive: true });
+          return new Promise((resolve, reject) => {
+            stream.on('end', resolve);
+            stream.on('error', reject);
+          });
         }
-        const stream = await _7z.extractFull(path.join(tmpDir, 'mesa.7z'), tmpDir, { recursive: true });
-        return new Promise((resolve, reject) => {
-          stream.on('end', resolve);
-          stream.on('error', reject);
+        extract().then(() => {
+          fs.mkdirSync(mesaDir, { recursive: true });
+          // List all files in tmpDir for debugging
+          function listFiles(dir, indent) {
+            if (!fs.existsSync(dir)) return;
+            const items = fs.readdirSync(dir);
+            for (const item of items) {
+              const full = path.join(dir, item);
+              try {
+                const stat = fs.statSync(full);
+                console.log(indent + item + (stat.isDirectory() ? '/' : ' (' + stat.size + ' bytes)'));
+                if (stat.isDirectory()) listFiles(full, indent + '  ');
+              } catch(e) { console.log(indent + item + ' (error: ' + e.message + ')'); }
+            }
+          }
+          console.log('Extracted files in ' + tmpDir + ':');
+          listFiles(tmpDir, '  ');
+          // The archive may have a root folder like mesa3d-26.1.3-release-mingw/
+          // Search recursively for x64/opengl32.dll anywhere in tmpDir
+          function findOpengl32(dir) {
+            if (!fs.existsSync(dir)) return null;
+            const items = fs.readdirSync(dir);
+            for (const item of items) {
+              const full = path.join(dir, item);
+              try {
+                if (item === 'opengl32.dll' && path.basename(dir) === 'x64') return dir;
+                if (fs.statSync(full).isDirectory()) {
+                  const found = findOpengl32(full);
+                  if (found) return found;
+                }
+              } catch {}
+            }
+            return null;
+          }
+          const x64Dir = findOpengl32(tmpDir);
+          if (x64Dir) {
+            console.log('Found x64 dir: ' + x64Dir);
+            const dst = path.join(mesaDir, 'x64');
+            fs.cpSync(x64Dir, dst, { recursive: true });
+            console.log('OK:' + dst);
+          } else {
+            console.error('x64/opengl32.dll not found in extracted files');
+            process.exit(1);
+          }
+        }).catch(e => { console.error(e.message); process.exit(1); });
+      `;
+      await new Promise((resolve, reject) => {
+        const c = exec(`node -e "${script.replace(/"/g, '\\"')}"`, { stdio: 'pipe', timeout: 120000 }, (err, stdout) => {
+          if (err) reject(err); else { console.log('[MESA] Extract stdout:', stdout); resolve(); }
         });
-      }
-      extract().then(() => {
-        fs.mkdirSync(mesaDir, { recursive: true });
-        const src = path.join(tmpDir, 'x64');
-        const dst = path.join(mesaDir, 'x64');
-        if (fs.existsSync(src)) fs.cpSync(src, dst, { recursive: true });
-        console.log('OK');
-      }).catch(e => { console.error(e.message); process.exit(1); });
-    `;
-    await new Promise((resolve, reject) => {
-      const c = exec(`node -e "${script.replace(/"/g, '\\"')}"`, { stdio: 'pipe', timeout: 120000 }, (err) => {
-        if (err) reject(err); else resolve();
+        c.on('error', reject);
       });
-      c.on('error', reject);
-    });
 
-    if (fs.existsSync(mesaGL)) {
-      mainWindow.webContents.send('launch-status', 'Mesa3D installiert!');
+      if (fs.existsSync(mesaGL)) {
+        sendLog('[MESA] Mesa3D erfolgreich installiert (7z).');
+        sendStatus('Mesa3D installiert!');
+        extracted = true;
+      } else {
+        sendLog('[MESA] 7z-Extraktion beendet, aber opengl32.dll nicht gefunden.');
+      }
+    } catch (e) {
+      sendLog(`[MESA] 7z-Methode fehlgeschlagen: ${e.message}`);
+    }
+
+    // Fallback: download standalone 7zr.exe and extract
+    if (!extracted) {
+      try {
+        sendLog('[MESA] Lade 7zr.exe (standalone 7-Zip) herunter...');
+        const mesa7z = path.join(tmpDir, 'mesa.7z');
+        const szExe = path.join(tmpDir, '7zr.exe');
+        const SZR_URL = 'https://www.7-zip.org/a/7zr.exe';
+        try {
+          await downloadFile(SZR_URL, szExe, () => {});
+        } catch {
+          sendLog('[MESA] 7zr.exe Download fehlgeschlagen, versuche alternativen Mirror...');
+          const SZR_MIRROR = 'https://github.com/ip7z/7zip/raw/main/7zr.exe';
+          await downloadFile(SZR_MIRROR, szExe, () => {});
+        }
+        if (fs.existsSync(szExe)) {
+          sendLog('[MESA] Extrahiere Mesa3D mit 7zr.exe...');
+          await new Promise((resolve, reject) => {
+            exec(`"${szExe}" x "${mesa7z}" -o"${tmpDir}" -y`, { timeout: 120000 }, (err) => {
+              if (err) reject(err); else resolve();
+            });
+          });
+        }
+
+        // Copy x64/opengl32.dll to mesaDir (search recursively)
+        function findOpengl32(dir) {
+          if (!fs.existsSync(dir)) return null;
+          const items = fs.readdirSync(dir);
+          for (const item of items) {
+            const full = path.join(dir, item);
+            try {
+              if (item === 'opengl32.dll' && path.basename(dir) === 'x64') return dir;
+              if (fs.statSync(full).isDirectory()) { const f = findOpengl32(full); if (f) return f; }
+            } catch {}
+          }
+          return null;
+        }
+        const x64Dir = findOpengl32(tmpDir);
+        if (x64Dir) {
+          await fs.promises.mkdir(path.join(mesaDir, 'x64'), { recursive: true });
+          fs.cpSync(x64Dir, path.join(mesaDir, 'x64'), { recursive: true });
+        }
+        if (fs.existsSync(mesaGL)) {
+          sendLog('[MESA] Mesa3D erfolgreich installiert (7zr.exe).');
+          sendStatus('Mesa3D installiert!');
+          extracted = true;
+        } else {
+          sendLog('[MESA] 7zr-Extraktion beendet, aber opengl32.dll nicht gefunden.');
+        }
+      } catch (e2) {
+        sendLog(`[MESA] 7zr-Fallback fehlgeschlagen: ${e2.message}`);
+      }
+    }
+
+    if (extracted) {
       try { await fs.promises.rm(tmpDir, { recursive: true, force: true }); } catch {}
       return mesaGL;
     }
+
+    // If all methods failed, clear temp and return null
+    sendLog('[MESA] Alle Methoden fehlgeschlagen — Mesa3D nicht verfügbar.');
+    sendStatus('Mesa3D Setup fehlgeschlagen');
   } catch (e) {
-    try { mainWindow.webContents.send('instance-log', { instanceId: '_mesa', line: `[MESA] Setup failed: ${e.message}` }); } catch {}
+    sendLog(`[MESA] Setup fehlgeschlagen: ${e.message}`);
+    sendStatus('Mesa3D Setup fehlgeschlagen');
   }
   try { await fs.promises.rm(tmpDir, { recursive: true, force: true }); } catch {}
   return null;

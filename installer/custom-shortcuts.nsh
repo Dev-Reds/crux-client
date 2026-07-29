@@ -6,8 +6,6 @@ Var createDesktop
 Var createStartMenu
 
 !macro customHeader
-  !define DONT_RUN_APP_AFTER_INSTALL
-
   Page custom nsisShortcutsPageShow nsisShortcutsPageLeave
 
   Function nsisShortcutsPageShow

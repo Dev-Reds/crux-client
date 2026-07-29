@@ -380,6 +380,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 
   <div id="stop-bar" style="display:flex;gap:.5em;padding:.35em .8em;background:#0d0d0d;border-bottom:1px solid #1a1a1a;align-items:center;min-height:2em">
     <span style="font-size:.78em;color:#555;margin-right:.4em" data-i18n="lbl_actions">Actions:</span>
+    <select id="stop-instance-select" style="display:none;background:#1a1a1a;color:#ccc;border:1px solid #333;border-radius:4px;padding:.25em .4em;font-size:.78em;max-width:220px"></select>
     <button class="btn" id="stop-btn" style="width:auto;padding:.35em .7em;font-size:.78em;border-color:#f4444444;color:#f44;display:none;white-space:nowrap" title="Stop selected instance" data-i18n="btn_stop">■ Stop</button>
     <button class="btn" id="stop-all-btn" style="width:auto;padding:.35em .7em;font-size:.78em;border-color:#f4444444;color:#f44;display:none;white-space:nowrap" title="Stop all running instances" data-i18n="btn_stop_all">■ Stop All</button>
   </div>
@@ -643,6 +644,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <div style="display:flex;gap:.4em">
           <button class="btn btn-sm" id="copy-logs-btn" data-i18n="btn_copy">📋 Copy</button>
           <button class="btn btn-sm" id="clear-logs-btn" data-i18n="clear_logs">Clear</button>
+          <button class="btn btn-sm" id="autoscroll-btn" style="border-color:#7ec8e344;color:#7ec8e3" title="Auto-scroll to bottom">📌 Auto-scroll</button>
         </div>
       </div>
       <div class="log-select-row">
@@ -1354,7 +1356,7 @@ let currentSource='modrinth', profileModMode=false, profilePackMode=null;
 let editingProfileId=null, editingPackData={};
 let currentAccentIdx=5;
 let searchDebounce=null, modSearchOffset=0, modSearchQuery='', isLoadingMods=false;
-let instances={}, selectedInstanceId=null;
+let instances={}, selectedInstanceId=null, autoScrollLogs=true;
 let pendingLaunchServer=null;
 const PAGE_SIZE=15;
 
@@ -1486,10 +1488,24 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 // SCREEN / NAV
 // ════════════════════════════════════════
 function updateStopButtons(){
-  const hasRunning = Object.values(instances).some(i=>i.status==='running');
-  const runningCount = Object.values(instances).filter(i=>i.status==='running').length;
-  document.getElementById('stop-btn').style.display = hasRunning ? '' : 'none';
-  document.getElementById('stop-all-btn').style.display = runningCount >= 2 ? '' : 'none';
+  const running = Object.values(instances).filter(i=>i.status==='running');
+  const hasRunning = running.length > 0;
+  const sel = document.getElementById('stop-instance-select');
+  const stopBtn = document.getElementById('stop-btn');
+  const stopAllBtn = document.getElementById('stop-all-btn');
+  sel.innerHTML = '<option value="">— Select instance —</option>';
+  running.forEach((inst, idx)=>{
+    const o = document.createElement('option');
+    o.value = inst.id;
+    const profileName = inst.profileName ? ` · ${inst.profileName}` : '';
+    const displayName = inst.version + profileName + ' (' + new Date(inst.startTime).toLocaleTimeString() + ')';
+    o.textContent = '#' + (idx+1) + ' ' + displayName;
+    sel.appendChild(o);
+  });
+  if (running.length === 1) { sel.value = running[0].id; }
+  sel.style.display = hasRunning ? '' : 'none';
+  stopBtn.style.display = hasRunning ? '' : 'none';
+  stopAllBtn.style.display = running.length >= 2 ? '' : 'none';
   if(!hasRunning) document.getElementById('launch-btn').disabled=false;
 }
 function showLauncher(){
@@ -2218,8 +2234,9 @@ ipcRenderer.on('no-account-found',()=>{
 });
 
 document.getElementById('stop-btn').addEventListener('click',()=>{
-  const toStop = selectedInstanceId || currentInstanceId;
-  if(toStop){
+  const sel = document.getElementById('stop-instance-select');
+  const toStop = sel.value || selectedInstanceId || currentInstanceId;
+  if(toStop && toStop !== ''){
     if(instances[toStop]) instances[toStop].status='closed';
     if(currentInstanceId===toStop) currentInstanceId=null;
     updateStopButtons(); updateRunningBadge(); renderInstanceList();
@@ -2294,6 +2311,7 @@ ipcRenderer.on('instance-started',(_,inst)=>{
   settings.recentHistory=recentHistory; saveSettings();
 });
 ipcRenderer.on('instance-log',(_,{instanceId,line})=>{
+  if(instanceId === '_mesa'){ appendLogLine('[MESA] ' + line); return; }
   if(!instances[instanceId])return;
   if(!instances[instanceId].logs)instances[instanceId].logs=[];
   instances[instanceId].logs.push(line);
@@ -2419,7 +2437,7 @@ function renderLogsForInstance(instanceId){
   const c=document.getElementById('logs-container'); c.innerHTML='';
   const inst=instances[instanceId]; if(!inst)return;
   (inst.logs||[]).forEach(l=>appendLogLine(l));
-  c.scrollTop=c.scrollHeight;
+  if(autoScrollLogs) c.scrollTop=c.scrollHeight;
 }
 
 function appendLogLine(line){
@@ -2429,10 +2447,28 @@ function appendLogLine(line){
   d.className='log-line'+(l.includes('error')||l.includes('exception')||l.includes('crash')?' err':l.includes('warn')?' warn':l.includes('info')||l.includes('[main/')?' info':'');
   d.textContent=line;
   c.appendChild(d);
-  if(c.scrollTop+c.clientHeight>c.scrollHeight-80)c.scrollTop=c.scrollHeight;
+  if(autoScrollLogs)c.scrollTop=c.scrollHeight;
+  else if(c.scrollTop+c.clientHeight>c.scrollHeight-80)c.scrollTop=c.scrollHeight;
 }
 
 document.getElementById('clear-logs-btn').addEventListener('click',()=>{ document.getElementById('logs-container').innerHTML=''; });
+
+document.getElementById('autoscroll-btn').addEventListener('click',()=>{
+  autoScrollLogs = !autoScrollLogs;
+  const btn = document.getElementById('autoscroll-btn');
+  if(autoScrollLogs){
+    btn.style.borderColor = '#7ec8e344';
+    btn.style.color = '#7ec8e3';
+    btn.textContent = '📌 Auto-scroll';
+    // Scroll to bottom immediately
+    const c = document.getElementById('logs-container');
+    c.scrollTop = c.scrollHeight;
+  } else {
+    btn.style.borderColor = '#55555544';
+    btn.style.color = '#555';
+    btn.textContent = '📌 Auto-scroll OFF';
+  }
+});
 
 // ════════════════════════════════════════
 // PROFILES
@@ -5104,10 +5140,13 @@ function drawSteveSkin(c){
 // ════════════════════════════════════════
 // UNINSTALL
 // ════════════════════════════════════════
-document.getElementById('uninstall-btn').addEventListener('click', () => {
+document.getElementById('uninstall-btn').addEventListener('click', async () => {
   if (!confirm('Uninstall Crux Client?\n\nThis will remove the launcher and all its data from your system.')) return;
-  ipcRenderer.send('close-launcher');
-  ipcRenderer.invoke('uninstall-app');
+  try {
+    await ipcRenderer.invoke('uninstall-app');
+  } catch (e) {
+    console.error('Uninstall failed:', e);
+  }
 });
 
 // ════════════════════════════════════════
