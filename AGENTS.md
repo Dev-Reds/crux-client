@@ -27,7 +27,8 @@ AMD-Treiber (`atio6axx.dll`) stürzt Minecraft mit `EXCEPTION_ACCESS_VIOLATION` 
 4. **Integration in main.js**:
    - `ensureMesaAgent()` ~line 3120: lädt Mesa, kompiliert Agent, fügt JVM-Args hinzu
    - `getMesaDlls()`: findet `opengl32.dll` im Mesa-Ordner
-   - Wird vor jedem Minecraft-Start aufgerufen
+   - **Native GPU ist der Standard** — Mesa/Zink wird NUR geladen, wenn `forceSoftwareGL` gesetzt ist
+   - Läuft ein AMD-Treiber-Crash ohne `forceSoftwareGL`, wird der Flag automatisch gesetzt (nächster Start nutzt Mesa)
 
 ### Release-Prozess
 

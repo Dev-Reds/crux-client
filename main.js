@@ -622,16 +622,74 @@ ipcMain.handle('get-skin-variant', async (e, accessToken) => {
   } catch { return { variant: 'classic' }; }
 });
 
+// ── Refresh account token (for profile/cape/skin API calls) ───────────────────
+ipcMain.handle('refresh-mc-token', async (e, acc) => {
+  try {
+    if (!acc || !acc.accessToken) return { error: 'No account' };
+
+    if (acc.type === 'Mojang') {
+      try {
+        const refreshRes = await postJson('https://authserver.mojang.com/refresh', {
+          accessToken: acc.accessToken,
+          clientToken: acc.clientToken || require('crypto').randomBytes(16).toString('hex')
+        });
+        if (refreshRes.error || refreshRes.errorMessage) return { error: refreshRes.errorMessage || 'Mojang session expired' };
+        return { accessToken: refreshRes.accessToken, clientToken: refreshRes.clientToken, type: 'Mojang' };
+      } catch (err) { return { error: err.message }; }
+    }
+
+    if (acc.refreshToken) {
+      try {
+        const refreshed = await postForm('https://login.live.com/oauth20_token.srf', {
+          client_id: '00000000402b5328',
+          refresh_token: acc.refreshToken,
+          grant_type: 'refresh_token',
+          scope: 'XboxLive.signin offline_access'
+        });
+        if (!refreshed.error && refreshed.access_token) {
+          const xblRes = await postJson('https://user.auth.xboxlive.com/user/authenticate', {
+            Properties: { AuthMethod: 'RPS', SiteName: 'user.auth.xboxlive.com', RpsTicket: `d=${refreshed.access_token}` },
+            RelyingParty: 'http://auth.xboxlive.com', TokenType: 'JWT'
+          });
+          const xstsRes = await postJson('https://xsts.auth.xboxlive.com/xsts/authorize', {
+            Properties: { SandboxId: 'RETAIL', UserTokens: [xblRes.Token] },
+            RelyingParty: 'rp://api.minecraftservices.com/', TokenType: 'JWT'
+          });
+          const mcRes = await postJson('https://api.minecraftservices.com/authentication/login_with_xbox', {
+            identityToken: `XBL3.0 x=${xblRes.DisplayClaims.xui[0].uhs};${xstsRes.Token}`
+          });
+          if (mcRes.access_token) {
+            return { accessToken: mcRes.access_token, refreshToken: refreshed.refresh_token, type: 'Microsoft' };
+          }
+        }
+      } catch (err) {
+        logDebug('[AUTH] Microsoft refresh failed: ' + err.message);
+      }
+    }
+
+    // Fallback: existing token still valid?
+    try {
+      const profile = await getJson('https://api.minecraftservices.com/minecraft/profile', acc.accessToken);
+      if (profile && !profile.error) return { accessToken: acc.accessToken, type: acc.type };
+    } catch {}
+
+    return { error: 'Session expired. Please log in again in the MC-Account tab.' };
+  } catch (err) { return { error: err.message }; }
+});
+
 // ── Instances ──────────────────────────────────────────────────────────────────
 const instances = {};
 let instanceCounter = 0;
 let lastLaunchData = null;
+const stoppedInstances = new Set();
 ipcMain.handle('get-instance-logs', (e, instanceId) => instances[instanceId]?.logs || []);
 ipcMain.handle('get-instances', () => Object.values(instances).map(i=>({id:i.id,version:i.version,startTime:i.startTime,crashed:i.crashed})));
 
 ipcMain.on('stop-minecraft', (e, instanceId) => {
+  stoppedInstances.add(instanceId);
   const inst = instances[instanceId];
   if (!inst) return;
+  inst.stopped = true;
   const cp = require('child_process');
 
   // 1. Kill the direct child process (the one we spawned) - also kill javaw
@@ -668,7 +726,6 @@ ipcMain.on('stop-minecraft', (e, instanceId) => {
 
   inst.crashed = false;
   try { mainWindow.webContents.send('instance-closed', { instanceId, code: 0 }); } catch {}
-  delete instances[instanceId];
 });
 
 // ── Launch ─────────────────────────────────────────────────────────────────────
@@ -693,12 +750,12 @@ ipcMain.on('launch-minecraft', async (event, data) => {
   instances[instanceId] = { id:instanceId, version, startTime:Date.now(), logs:[], crashed:false, process:null, sessionRetried:false };
   mainWindow.webContents.send('instance-started', { id:instanceId, version, profileId, profileName, startTime:instances[instanceId].startTime, serverAddress: data.serverAddress||null, serverPort: data.serverPort||null, serverName: data.serverName||null });
 
-  const send = (ch,...a) => { try { mainWindow.webContents.send(ch,...a); } catch {} };
+  const send = (ch,...a) => { try { if (ch === 'launch-progress' && a[0] && a[0].instanceId && stoppedInstances.has(a[0].instanceId)) return; mainWindow.webContents.send(ch,...a); } catch {} };
 
   // Safety timeout: if nothing happens for 5 min, reset UI
   const safetyTimer = setTimeout(() => {
     try {
-      if (instances[instanceId] && !instances[instanceId].crashed) {
+      if (instances[instanceId] && !instances[instanceId].crashed && !stoppedInstances.has(instanceId)) {
         send('launch-status', 'Something took too long — please try again.');
         send('launch-progress', { instanceId, percent:0, message:'', done:true });
       }
@@ -1496,6 +1553,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     }
 
     // ── Deploy mrpack resource packs ──────────────────────────────────────────
+    let mrpackDeployedNames = [];
     if (mrpackRPs && mrpackRPs.length) {
       const rpDir = path.join(P.mc, 'resourcepacks');
       await fs.promises.mkdir(rpDir, { recursive: true });
@@ -1504,18 +1562,25 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           if (rp.diskPath && fs.existsSync(rp.diskPath)) {
             const dest = path.join(rpDir, rp.fileName || `rp-${Date.now()}.zip`);
             if (!fs.existsSync(dest)) await fs.promises.copyFile(rp.diskPath, dest);
+            await patchResourcePackFormat(dest, version);
+            mrpackDeployedNames.push(rp.fileName || path.basename(dest));
           } else if (rp.data && rp.data.length) {
             const buf = Buffer.from(rp.data);
             const dest = path.join(rpDir, rp.fileName || `rp-${Date.now()}.zip`);
             if (!fs.existsSync(dest)) await fs.promises.writeFile(dest, buf);
+            await patchResourcePackFormat(dest, version);
+            mrpackDeployedNames.push(rp.fileName || path.basename(dest));
           }
         } catch {}
+      }
+      if (mrpackDeployedNames.length) {
+        send('instance-log', { instanceId, line:`[RP] Deployed ${mrpackDeployedNames.length} mrpack resource pack(s).` });
       }
     }
 
     // ── Deploy resource packs (all loaders, including vanilla) ─────────────
     const rpList = (data.useClientRPs !== false) ? (data.clientResourcePacks || []) : [];
-    if (rpList.length) {
+    if (rpList.length || mrpackDeployedNames.length) {
       const rpDir = path.join(P.mc, 'resourcepacks');
       await fs.promises.mkdir(rpDir, { recursive: true });
 
@@ -1528,7 +1593,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             const vd = await fetchJson(`https://api.modrinth.com/v2/project/${rp.modrinthId}/version`).catch(() => null);
             if (vd && vd.length) {
               const file = vd[0].files?.find(f => f.primary) || vd[0].files?.[0];
-              if (file) { downloadUrl = file.url; fname = `rp-${rp.modrinthId}-${file.filename}`; }
+              if (file) { downloadUrl = file.url; fname = file.filename; }
             }
             if (!downloadUrl) {
               send('instance-log', { instanceId, line:`[RP] Failed to fetch download for ${rp.name || rp.modrinthId}` });
@@ -1551,16 +1616,18 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             send('launch-progress', { instanceId, percent:47, message:`Downloading RP: ${fname}` });
             await downloadFile(downloadUrl, dest);
           }
+          await patchResourcePackFormat(dest, version);
           deployedRpNames.push(fname);
         } catch(e) { send('instance-log', { instanceId, line:`[RP] Failed: ${e.message}` }); }
       }
 
-      if (deployedRpNames.length) {
+      if (deployedRpNames.length || mrpackDeployedNames.length) {
         const optionsPath = path.join(P.mc, 'options.txt');
         let options = '';
         if (fs.existsSync(optionsPath)) options = await fs.promises.readFile(optionsPath, 'utf8');
 
-        const rpEntries = deployedRpNames.map(n => {
+        const allRpNames = [...new Set([...mrpackDeployedNames, ...deployedRpNames])];
+        const rpEntries = allRpNames.map(n => {
           if (n.startsWith('file/') || n === 'vanilla') return `"${n}"`;
           return `"file/${n}"`;
         });
@@ -1584,7 +1651,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         send('instance-log', { instanceId, line: `[RP] Written to ${optionsPath}: resourcePacks:${rpEntry}` });
       }
 
-      send('launch-progress', { instanceId, percent:50, message:`${deployedRpNames.length} resource pack(s) activated.` });
+      send('launch-progress', { instanceId, percent:50, message:`${new Set([...mrpackDeployedNames, ...deployedRpNames]).size} resource pack(s) activated.` });
     } else {
       // If no RPs configured, don't clear user's existing options.txt RP settings
     }
@@ -1750,6 +1817,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       // Launch official launcher and detect mod crashes
       const cp = require('child_process');
       (async () => {
+        if (stoppedInstances.has(instanceId)) return;
         // Spawn launcher and wait for it to close
         await new Promise((resolve) => {
           const proc = cp.spawn(exe, [], { stdio: 'ignore' });
@@ -1997,30 +2065,34 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       jvmArgs.push('-Dfml.earlyWindowControl=false');
       jvmArgs.push('-Dforge.eagerGlVersion=4.5');
       jvmArgs.push('-Dminecraft.window.title=Crux Client');
-      // Force Mesa3D software OpenGL (for broken GPU drivers)
+      // Mesa3D software OpenGL only when forceSoftwareGL is set (broken GPU drivers).
+      // By default use the native GPU driver for best performance & correct textures.
       const launchSettings = await load(P.settings, {}).catch(()=>({}));
-      let mesaGL = await ensureMesa();
-      // If forceSoftwareGL is set but Mesa3D isn't ready yet, retry the setup
-      if (!mesaGL && launchSettings.forceSoftwareGL) {
-        send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL aktiv — versuche Mesa3D-Setup erneut...' });
-        mesaGL = await ensureMesa();
-      }
-      if (mesaGL) {
-        const mesaDir = path.dirname(mesaGL);
-        jvmArgs.push(`-Dorg.lwjgl.opengl.libpath=${mesaDir}`);
-        jvmArgs.push('-Dorg.lwjgl.opengl.libname=opengl32');
-        installMesaToGameDir(mesaGL, P.mc);
-        // Preload Mesa via Java agent (runs in premain BEFORE any Minecraft code)
-        const agentJar = await ensureMesaAgent(mesaGL, resolvedJava);
-        if (agentJar) {
-          jvmArgs.unshift(`-javaagent:${agentJar}=${mesaGL}`);
-          send('instance-log', { instanceId, line: `[LAUNCH] Java Agent: preloads Mesa opengl32.dll via premain()` });
-        }
-        send('instance-log', { instanceId, line: `[LAUNCH] Using Mesa3D software OpenGL from: ${mesaDir}` });
-      }
+      let mesaGL = null;
       if (launchSettings.forceSoftwareGL) {
+        send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL aktiv — verwende Mesa3D Software-OpenGL' });
+        mesaGL = await ensureMesa();
+        if (!mesaGL) {
+          send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL gesetzt — versuche Mesa3D-Setup erneut...' });
+          mesaGL = await ensureMesa();
+        }
+        if (mesaGL) {
+          const mesaDir = path.dirname(mesaGL);
+          jvmArgs.push(`-Dorg.lwjgl.opengl.libpath=${mesaDir}`);
+          jvmArgs.push('-Dorg.lwjgl.opengl.libname=opengl32');
+          installMesaToGameDir(mesaGL, P.mc);
+          // Preload Mesa via Java agent (runs in premain BEFORE any Minecraft code)
+          const agentJar = await ensureMesaAgent(mesaGL, resolvedJava);
+          if (agentJar) {
+            jvmArgs.unshift(`-javaagent:${agentJar}=${mesaGL}`);
+            send('instance-log', { instanceId, line: `[LAUNCH] Java Agent: preloads Mesa opengl32.dll via premain()` });
+          }
+          send('instance-log', { instanceId, line: `[LAUNCH] Using Mesa3D software OpenGL from: ${mesaDir}` });
+        }
         jvmArgs.push('-Dorg.lwjgl.opengl.allowSoftwareOpenGL=true');
         if (!mesaGL) send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL gesetzt aber Mesa3D nicht verfügbar — AMD-Treiber kann weiterhin crashen!' });
+      } else {
+        send('instance-log', { instanceId, line: '[LAUNCH] Native GPU-Treiber (Mesa3D nicht aktiv, da forceSoftwareGL aus)' });
       }
       if (data.renderApi === 'vulkan') jvmArgs.push('-Dorg.lwjgl.vulkan.libname=vulkan-1');
 
@@ -2054,6 +2126,12 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             send('instance-log', { instanceId, line: `[NEOFORGE] Patched fml.toml: disabled early window` });
           } catch (e) {
             send('instance-log', { instanceId, line: `[NEOFORGE] fml.toml patch skipped: ${e.message}` });
+          }
+
+          if (stoppedInstances.has(instanceId)) {
+            try { if (fs.existsSync(earlyDisplayDisabled)) fs.renameSync(earlyDisplayDisabled, earlyDisplayJar); } catch {}
+            cleanupMesaFromGameDir(P.mc);
+            return { code: 0, modCrash: false };
           }
 
           const { javaPath, mainClass, jvmArgs, gameArgs, mesaActive } = await buildNeoForgeLaunch();
@@ -2132,26 +2210,31 @@ ipcMain.on('launch-minecraft', async (event, data) => {
 
       // For other loaders: use mclc
       const mclcSettings = await load(P.settings, {}).catch(()=>({}));
-      let mclcMesaGL = await ensureMesa();
-      if (!mclcMesaGL && mclcSettings.forceSoftwareGL) {
-        mclcMesaGL = await ensureMesa();
-      }
+      let mclcMesaGL = null;
       const mclcCustomArgs = ['-Dminecraft.window.title=Crux Client'];
-      if (mclcMesaGL) {
-        const mclcMesaDir = path.dirname(mclcMesaGL);
-        mclcCustomArgs.push(`-Dorg.lwjgl.opengl.libpath=${mclcMesaDir}`);
-        mclcCustomArgs.push('-Dorg.lwjgl.opengl.libname=opengl32');
-        installMesaToGameDir(mclcMesaGL, P.mc);
-        const agentJar = await ensureMesaAgent(mclcMesaGL, resolvedJava);
-        if (agentJar) {
-          mclcCustomArgs.unshift(`-javaagent:${agentJar}=${mclcMesaGL}`);
-          send('instance-log', { instanceId, line: `[LAUNCH] Java Agent: preloads Mesa opengl32.dll via premain()` });
-        }
-        send('instance-log', { instanceId, line: `[LAUNCH] Using Mesa3D software OpenGL from: ${mclcMesaDir}` });
-      }
       if (mclcSettings.forceSoftwareGL) {
+        send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL aktiv — verwende Mesa3D Software-OpenGL' });
+        mclcMesaGL = await ensureMesa();
+        if (!mclcMesaGL) {
+          send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL gesetzt — versuche Mesa3D-Setup erneut...' });
+          mclcMesaGL = await ensureMesa();
+        }
+        if (mclcMesaGL) {
+          const mclcMesaDir = path.dirname(mclcMesaGL);
+          mclcCustomArgs.push(`-Dorg.lwjgl.opengl.libpath=${mclcMesaDir}`);
+          mclcCustomArgs.push('-Dorg.lwjgl.opengl.libname=opengl32');
+          installMesaToGameDir(mclcMesaGL, P.mc);
+          const agentJar = await ensureMesaAgent(mclcMesaGL, resolvedJava);
+          if (agentJar) {
+            mclcCustomArgs.unshift(`-javaagent:${agentJar}=${mclcMesaGL}`);
+            send('instance-log', { instanceId, line: `[LAUNCH] Java Agent: preloads Mesa opengl32.dll via premain()` });
+          }
+          send('instance-log', { instanceId, line: `[LAUNCH] Using Mesa3D software OpenGL from: ${mclcMesaDir}` });
+        }
         mclcCustomArgs.push('-Dorg.lwjgl.opengl.allowSoftwareOpenGL=true');
         if (!mclcMesaGL) send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL gesetzt aber Mesa3D nicht verfügbar — AMD-Treiber kann weiterhin crashen!' });
+      } else {
+        send('instance-log', { instanceId, line: '[LAUNCH] Native GPU-Treiber (Mesa3D nicht aktiv, da forceSoftwareGL aus)' });
       }
       // Direct server connect from Recent
       const mclcVersionObj = JSON.parse(JSON.stringify(versionObj));
@@ -2162,6 +2245,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         if (data.serverPort) mclcVersionObj.arguments.game.push('--port', String(data.serverPort));
         send('instance-log', { instanceId, line: `[LAUNCH] Direct connect: ${data.serverAddress}:${data.serverPort || 25565}` });
       }
+      if (stoppedInstances.has(instanceId)) return { code: 0, modCrash: false };
       return new Promise((resolve) => {
         const launcher = new Client();
         const launchOpts = {
@@ -2241,7 +2325,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     send('instance-log', { instanceId, line:`--- Process exited (code ${mclcResult.code}) ---` });
     send('launch-progress', { instanceId, percent:0, message:'', done:true });
     send('instance-closed', { instanceId, code: mclcResult.code });
-    if (mclcResult.code !== 0 && mclcResult.code !== null) {
+    if (mclcResult.code !== 0 && mclcResult.code !== null && !stoppedInstances.has(instanceId)) {
       instances[instanceId].crashed = true;
       if (!mclcResult.modCrash) showCrashWindow(instanceId, mclcResult.code, instances[instanceId].logs.slice(-80).join('\n'));
       send('instance-crashed', { instanceId, code: mclcResult.code });
@@ -2988,7 +3072,14 @@ ipcMain.handle('fetch-image-dataurl', async (e, url) => {
   await fetchBufferToPath(url, tmpFile);
   const buf = fs.readFileSync(tmpFile);
   fs.unlinkSync(tmpFile);
-  const ext = url.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+  let ext = 'image/jpeg';
+  if (buf.length >= 8) {
+    const magic = buf.slice(0, 8).toString('hex');
+    if (magic.startsWith('89504e470d0a1a0a')) ext = 'image/png';
+    else if (magic.startsWith('ffd8ff')) ext = 'image/jpeg';
+    else if (magic.startsWith('47494638')) ext = 'image/gif';
+    else if (magic.startsWith('524946')) ext = 'image/webp';
+  }
   return `data:${ext};base64,` + buf.toString('base64');
 });
 ipcMain.handle('fetch-buffer', async (e, url) => {
@@ -3109,6 +3200,68 @@ function downloadFile(url, dest, progressCallback) {
     };
     go(url);
   });
+}
+
+function packFormatForVersion(version) {
+  const v = String(version || '').split('.');
+  const maj = parseInt(v[0], 10), min = parseInt(v[1], 10), pat = parseInt(v[2], 10);
+  if (maj === 1) {
+    if (min >= 22) return 75;
+    if (min === 21) {
+      if (pat >= 9) return 75;
+      if (pat >= 8) return 72;
+      if (pat >= 7) return 68;
+      if (pat >= 6) return 63;
+      if (pat >= 5) return 61;
+      if (pat >= 4) return 55;
+      if (pat >= 2) return 46;
+      return 34;
+    }
+    if (min === 20) {
+      if (pat >= 5) return 32;
+      if (pat >= 3) return 22;
+      if (pat >= 2) return 18;
+      return 15;
+    }
+    if (min === 19) {
+      if (pat >= 4) return 13;
+      if (pat >= 3) return 12;
+      return 9;
+    }
+    if (min === 18) return 8;
+    if (min === 17) return 7;
+    if (min === 16 && pat >= 2) return 6;
+    if (min >= 15) return 5;
+    if (min >= 13) return 4;
+    if (min === 12) return 3;
+    if (min === 11) return 3;
+    if (min >= 9) return 2;
+    if (min >= 6) return 1;
+  }
+  return null;
+}
+
+// Rewrite pack.mcmeta pack_format to match the target MC version so that older
+// resource packs are treated as compatible and auto-enabled by the game.
+async function patchResourcePackFormat(filePath, version) {
+  const pf = packFormatForVersion(version);
+  if (!pf) return false;
+  try {
+    const JSZip = require('jszip');
+    const buf = fs.readFileSync(filePath);
+    const zip = await JSZip.loadAsync(buf);
+    const meta = zip.file('pack.mcmeta');
+    if (!meta) return false;
+    const json = JSON.parse(await meta.async('string'));
+    if (!json || typeof json !== 'object') return false;
+    if (!json.pack) json.pack = {};
+    if (json.pack.pack_format === pf) return false;
+    json.pack.pack_format = pf;
+    zip.file('pack.mcmeta', JSON.stringify(json));
+    const out = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+    fs.writeFileSync(filePath, out);
+    return true;
+  } catch (e) { return false; }
 }
 
 // ── Mesa3D helpers ──────────────────────────────────────────────────────────────

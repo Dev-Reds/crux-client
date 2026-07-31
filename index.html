@@ -1234,13 +1234,15 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div class="sep"></div>
       <input type="color" id="skin-ed-color" value="#ffffff" title="Color">
       <div class="sep"></div>
-      <div style="display:flex;align-items:center;gap:.3em;font-size:.72em;color:#888">
+      <div style="display:none;align-items:center;gap:.3em;font-size:.72em;color:#888" id="skin-ed-layer-wrap">
         <span>Inner</span>
         <div id="skin-ed-layer-toggle" style="width:2.4em;height:1.3em;border-radius:999px;background:#333;border:1px solid #444;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0" title="Toggle Inner/Outer layer">
           <div id="skin-ed-layer-knob" style="position:absolute;top:.15em;left:.15em;width:.95em;height:.95em;border-radius:50%;background:#888;transition:left .2s,background .2s"></div>
         </div>
         <span>Outer</span>
       </div>
+      <div class="sep"></div>
+      <button class="tool-btn" id="skin-ed-model-toggle" title="Toggle Classic/Slim model">🧍 Classic</button>
       <div class="sep"></div>
       <button class="tool-btn" id="skin-ed-clear" title="Clear All">🗑️</button>
       <button class="tool-btn" id="skin-ed-template" title="Show Template">📐</button>
@@ -1283,7 +1285,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     </div>
     <div class="skin-editor-dual">
       <div class="skin-editor-canvas-wrap">
-        <canvas class="skin-editor-canvas" id="cape-ed-canvas" width="22" height="17"></canvas>
+        <canvas class="skin-editor-canvas" id="cape-ed-canvas" width="64" height="32"></canvas>
       </div>
       <div class="skin-editor-3d-wrap" id="cape-ed-3d-wrap"></div>
     </div>
@@ -2233,12 +2235,16 @@ ipcRenderer.on('no-account-found',()=>{
   document.getElementById('launch-btn').disabled=false;
 });
 
+const _stoppedInstances = new Set();
 document.getElementById('stop-btn').addEventListener('click',()=>{
   const sel = document.getElementById('stop-instance-select');
   const toStop = sel.value || selectedInstanceId || currentInstanceId;
   if(toStop && toStop !== ''){
+    _stoppedInstances.add(toStop);
     if(instances[toStop]) instances[toStop].status='closed';
     if(currentInstanceId===toStop) currentInstanceId=null;
+    const lpWrap=document.getElementById('lp-wrap'); if(lpWrap)lpWrap.classList.remove('vis');
+    const lpWrapL=document.getElementById('lp-wrap-logs'); if(lpWrapL)lpWrapL.classList.remove('vis');
     updateStopButtons(); updateRunningBadge(); renderInstanceList();
     ipcRenderer.send('stop-minecraft', toStop);
   }
@@ -2246,10 +2252,13 @@ document.getElementById('stop-btn').addEventListener('click',()=>{
 document.getElementById('stop-all-btn').addEventListener('click',()=>{
   const running = Object.values(instances).filter(i=>i.status==='running');
   running.forEach(inst => {
+    _stoppedInstances.add(inst.id);
     inst.status='closed';
     ipcRenderer.send('stop-minecraft', inst.id);
   });
   currentInstanceId=null;
+  const lpWrap=document.getElementById('lp-wrap'); if(lpWrap)lpWrap.classList.remove('vis');
+  const lpWrapL=document.getElementById('lp-wrap-logs'); if(lpWrapL)lpWrapL.classList.remove('vis');
   updateStopButtons(); updateRunningBadge(); renderInstanceList();
 });
 
@@ -2260,6 +2269,7 @@ ipcRenderer.on('launch-error',(_,msg)=>{
 });
 let _lpLastUpdate=0,_lpPending=null;
 function _applyLaunchProgress(d){
+  if(d && d.instanceId && _stoppedInstances.has(d.instanceId)) return;
   const lpWrap=document.getElementById('lp-wrap'),lpFill=document.getElementById('lp-fill'),lpLabel=document.getElementById('lp-label');
   const lpWrapL=document.getElementById('lp-wrap-logs'),lpFillL=document.getElementById('lp-fill-logs'),lpLabelL=document.getElementById('lp-label-logs');
   lpWrap.classList.add('vis'); lpFill.style.width=(d.percent||0)+'%'; lpLabel.textContent=d.message||'';
@@ -2279,6 +2289,7 @@ ipcRenderer.on('launch-progress',(_,d)=>{
 });
 // Switch to logs tab when MC actually starts
 ipcRenderer.on('mc-launched',(_,instanceId)=>{
+  if(_stoppedInstances.has(instanceId)) return;
   if(settings.openLogsAfterLaunch) showPage('logs-page');
 });
 ipcRenderer.on('instance-started',(_,inst)=>{
@@ -2675,13 +2686,30 @@ function renderRecentList(){
 document.getElementById('recent-clear-btn').addEventListener('click',()=>{ recentHistory=[]; settings.recentHistory=[]; saveSettings(); renderRecentList(); });
 
 // ══ CAPES ══
+async function refreshAccountToken(acc){
+  if(!acc || !acc.accessToken) return acc;
+  try {
+    const r = await ipcRenderer.invoke('refresh-mc-token', acc);
+    if (r && r.accessToken) {
+      let changed = false;
+      if (r.accessToken !== acc.accessToken) { acc.accessToken = r.accessToken; changed = true; }
+      if (r.refreshToken && r.refreshToken !== acc.refreshToken) { acc.refreshToken = r.refreshToken; changed = true; }
+      if (r.clientToken && r.clientToken !== acc.clientToken) { acc.clientToken = r.clientToken; changed = true; }
+      if (changed) ipcRenderer.send('save-accounts', accounts);
+      return acc;
+    }
+    return null;
+  } catch { return null; }
+}
 async function loadMCCapes(){
   const container=document.getElementById('capes-container'); container.innerHTML='';
   document.getElementById('capes-loading').style.display='';
   document.getElementById('capes-empty').style.display='none';
   document.getElementById('capes-status').textContent='';
-  const acc=getSelectedAccount();
+  let acc=getSelectedAccount();
   if(!acc||!acc.accessToken){ document.getElementById('capes-loading').style.display='none'; document.getElementById('capes-status').textContent='No account selected.'; return; }
+  acc = await refreshAccountToken(acc);
+  if(!acc){ document.getElementById('capes-loading').style.display='none'; document.getElementById('capes-status').textContent='Session expired. Please log in again.'; return; }
   try {
     const res=await fetch('https://api.minecraftservices.com/minecraft/profile',{ headers:{'Authorization':`Bearer ${acc.accessToken}`}});
     if(!res.ok){ const body=await res.text().catch(()=>''); throw new Error(`HTTP ${res.status}: ${body.slice(0,120)}`); }
@@ -2715,7 +2743,9 @@ async function loadMCCapes(){
         btn.textContent='Equip';
         btn.addEventListener('click',async()=>{
           try {
-            const res2=await fetch('https://api.minecraftservices.com/minecraft/profile/capes/active',{ method:'PUT', headers:{'Authorization':`Bearer ${acc.accessToken}`,'Content-Type':'application/json'}, body:JSON.stringify({capeId:cape.id})});
+            const fresh=await refreshAccountToken(acc);
+            if(!fresh){ document.getElementById('capes-status').textContent='Session expired. Please log in again.'; return; }
+            const res2=await fetch('https://api.minecraftservices.com/minecraft/profile/capes/active',{ method:'PUT', headers:{'Authorization':`Bearer ${fresh.accessToken}`,'Content-Type':'application/json'}, body:JSON.stringify({capeId:cape.id})});
             if(res2.ok){ document.getElementById('capes-status').textContent=`Equipped: ${cape.name||cape.id}`; loadMCCapes(); }
             else{ const errBody=await res2.text().catch(()=>''); document.getElementById('capes-status').textContent=`Failed (${res2.status}): ${errBody.slice(0,80)}`; }
           } catch(e){ document.getElementById('capes-status').textContent='Error: '+e.message; }
@@ -2728,7 +2758,9 @@ async function loadMCCapes(){
 }
 document.getElementById('capes-refresh-btn').addEventListener('click',loadMCCapes);
 document.getElementById('capes-remove-btn').addEventListener('click',async()=>{
-  const acc=getSelectedAccount(); if(!acc||!acc.accessToken)return;
+  let acc=getSelectedAccount(); if(!acc||!acc.accessToken)return;
+  acc = await refreshAccountToken(acc);
+  if(!acc){ document.getElementById('capes-status').textContent='Session expired. Please log in again.'; return; }
   try {
     const res=await fetch('https://api.minecraftservices.com/minecraft/profile/capes/active',{ method:'DELETE', headers:{'Authorization':`Bearer ${acc.accessToken}`,'Content-Type':'application/json'}});
     if(res.ok){ document.getElementById('capes-status').textContent='Cape removed.'; loadMCCapes(); }
@@ -3113,8 +3145,8 @@ function init3DSkin(){
   const W=wrap.clientWidth||200, H=wrap.clientHeight||300;
   threeScene=new THREE.Scene();
   threeCamera=new THREE.PerspectiveCamera(35,W/H,0.1,100);
-  threeCamera.position.set(0,1.3,11);
-  threeCamera.lookAt(0,0,0);
+  threeCamera.position.set(0,0.8,11);
+  threeCamera.lookAt(0,-0.6,0);
   threeRenderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
   threeRenderer.setSize(W,H);
   threeRenderer.setClearColor(0x000000,0);
@@ -3246,10 +3278,35 @@ function drawSkin3D(){}
 function renderCape3D(targetCanvas,capeUrl){
   if(!window.THREE){setTimeout(()=>renderCape3D(targetCanvas,capeUrl),300);return;}
   const W=200,H=280;
+  const capeSrc=String(capeUrl||'').replace(/^http:\/\//,'https://');
+  const ctx2=targetCanvas.getContext('2d');
+  function drawFlatCape(img){
+    try{
+      ctx2.clearRect(0,0,W,H);
+      ctx2.imageSmoothingEnabled=false;
+      const dw=W*0.6,dh=H*0.55,dx=W/2-dw/2,dy=H/2-dh/2;
+      if(img){
+        const official=img.width===64&&img.height===32;
+        const sw=official?10:11,sh=official?16:17;
+        ctx2.drawImage(img,0,0,sw,sh,dx,dy,dw,dh);
+        return;
+      }
+      ctx2.fillStyle='#3a3a3a';
+      ctx2.beginPath();
+      ctx2.moveTo(dx,dy+dh);
+      ctx2.quadraticCurveTo(dx+dw/2,dy-dh*0.15,dx+dw,dy+dh);
+      ctx2.closePath();
+      ctx2.fill();
+      ctx2.strokeStyle='#555';ctx2.lineWidth=2;ctx2.stroke();
+    }catch(e){}
+  }
   const scene=new THREE.Scene();
   const camera=new THREE.PerspectiveCamera(30,W/H,0.1,100);
   camera.position.set(0,0,9);camera.lookAt(0,0,0);
-  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+  let renderer;
+  try{
+    renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+  }catch(e){ drawFlatCape(null); return; }
   renderer.setSize(W,H);renderer.setClearColor(0x000000,0);renderer.setPixelRatio(1);
   scene.add(new THREE.AmbientLight(0xffffff,0.8));
   const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(3,5,4);scene.add(dl);
@@ -3270,20 +3327,27 @@ function renderCape3D(targetCanvas,capeUrl){
       ctx.drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
       const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
     }
-    const backTex=cropCape(1,1,10,20);
+    const official=img.width===64&&img.height===32;
+    const backTex=official?cropCape(0,0,10,16):cropCape(0,0,11,17);
     const back=new THREE.Mesh(makeDrapeBack(),new THREE.MeshLambertMaterial({map:backTex,side:THREE.FrontSide}));
     grp.add(back);
     grp.position.set(0,0,0);
     renderer.render(scene,camera);
-    const ctx2=targetCanvas.getContext('2d');
     ctx2.clearRect(0,0,W,H);
     ctx2.drawImage(renderer.domElement,0,0);
-    renderer.dispose();
   }
-  ipcRenderer.invoke('fetch-image-dataurl',capeUrl).then(dataUrl=>{
-    new THREE.TextureLoader().load(dataUrl,(tex)=>paintCape(tex),undefined,()=>{renderer.dispose();});
+  function doLoad(url){
+    try{
+      new THREE.TextureLoader().load(url,(tex)=>{
+        try{ paintCape(tex); }catch(e){ drawFlatCape(tex.image); }
+        renderer.dispose();
+      },undefined,()=>{ drawFlatCape(null); renderer.dispose(); });
+    }catch(e){ drawFlatCape(null); }
+  }
+  ipcRenderer.invoke('fetch-image-dataurl',capeSrc).then(dataUrl=>{
+    doLoad(dataUrl);
   }).catch(()=>{
-    new THREE.TextureLoader().load(capeUrl,(tex)=>paintCape(tex),undefined,()=>{renderer.dispose();});
+    doLoad(capeSrc);
   });
 }
 
@@ -3332,10 +3396,11 @@ function initCape3D(wrap, capeUrl){
       for(let j=0;j<segsH;j++)for(let i=0;i<segsW;i++){const a=j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;ix.push(a,b,c,b,d,c);}
       const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));g.setIndex(ix);g.computeVertexNormals();return g;
     }
-    const frontTex=cropCape(18,0,11,16);
+    const official=img.width===64&&img.height===32;
+    const frontTex=official?cropCape(11,0,10,16):cropCape(11,0,11,17);
     capeFront.geometry.dispose();capeFront.geometry=makeDrape();
     capeFront.material=new THREE.MeshLambertMaterial({map:frontTex,side:THREE.DoubleSide});
-    const backTex=cropCape(4,0,11,16);
+    const backTex=official?cropCape(0,0,10,16):cropCape(0,0,11,17);
     const capeBack=new THREE.Mesh(makeDrapeBack(),new THREE.MeshLambertMaterial({map:backTex,side:THREE.DoubleSide}));
     capeGroup.add(capeBack);
   },undefined,()=>{});
@@ -3458,7 +3523,7 @@ async function fetchModrinthPage(q,offset){
       if (loaderVal && loaderVal !== 'vanilla') {
         facets.push(['categories:' + loaderVal]);
       }
-    } else if (profilePackMode !== 'modpack' && modFilter !== 'all' && modFilter !== 'disabled') {
+    } else if (!profilePackMode && modFilter !== 'all' && modFilter !== 'disabled') {
       facets.push(['categories:' + modFilter]);
     }
     const facet=JSON.stringify(facets);
@@ -4052,9 +4117,18 @@ function setSkinUploadStatus(msg, color='#1bd96a') {
   if (el) { el.textContent = msg; el.style.color = color; }
 }
 
-async function applySkinFromDataUrl(dataUrl) {
-  const acc = getSelectedAccount();
+async function applySkinFromDataUrl(dataUrl, model) {
+  let acc = getSelectedAccount();
   if (!acc) { setSkinUploadStatus('No account selected', '#f44'); return; }
+  if (!model && typeof dataUrl === 'string') {
+    try {
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl; });
+      model = detectSlimFromTexture(img);
+    } catch {}
+  }
+  acc = await refreshAccountToken(acc);
+  if (!acc) { setSkinUploadStatus('Session expired. Please log in again.', '#f44'); return; }
+  if (model) acc.skinModel = model;
   acc.skinUrl = dataUrl;
   ipcRenderer.send('save-accounts', accounts);
   loadSkinTexture(dataUrl);
@@ -4062,7 +4136,7 @@ async function applySkinFromDataUrl(dataUrl) {
   renderAccountList();
   if (acc.accessToken) {
     setSkinUploadStatus('Uploading skin...');
-    const result = await ipcRenderer.invoke('upload-skin', { accessToken: acc.accessToken, skinDataUrl: dataUrl, variant: 'classic' });
+    const result = await ipcRenderer.invoke('upload-skin', { accessToken: acc.accessToken, skinDataUrl: dataUrl, variant: acc.skinModel || 'classic' });
     if (result.success) setSkinUploadStatus('✓ Skin updated!');
     else setSkinUploadStatus('Upload failed: ' + result.error, '#f5a623');
   } else {
@@ -4070,9 +4144,9 @@ async function applySkinFromDataUrl(dataUrl) {
   }
 }
 
-function addSkinToList(dataUrl, name, silent) {
-  const exists = skinList.some(s => s.dataUrl === dataUrl);
-  if (exists) { if(!silent) setSkinUploadStatus('Skin already in list', '#f5a623'); return; }
+function addSkinToList(dataUrl, name, silent, model) {
+  const existing = skinList.find(s => s.dataUrl === dataUrl);
+  if (existing) { if (model && existing.model !== model) { existing.model = model; saveSkinList(); } if(!silent) setSkinUploadStatus('Skin already in list', '#f5a623'); return; }
   // If it's an HTTP URL, download and convert to data URL for persistent storage
   if (dataUrl.startsWith('http')) {
     fetch(dataUrl).then(r=>r.blob()).then(blob=>{
@@ -4080,7 +4154,7 @@ function addSkinToList(dataUrl, name, silent) {
       reader.onload = ev => {
         const base64 = ev.target.result;
         if (skinList.some(s => s.dataUrl === base64)) return;
-        skinList.push({ name: name || 'Skin ' + (skinList.length+1), dataUrl: base64, addedAt: Date.now() });
+        skinList.push({ name: name || 'Skin ' + (skinList.length+1), dataUrl: base64, model: model || null, addedAt: Date.now() });
         saveSkinList();
         if(!silent) setSkinUploadStatus('✓ Added to skin list!');
       };
@@ -4088,7 +4162,7 @@ function addSkinToList(dataUrl, name, silent) {
     }).catch(()=>{});
     return;
   }
-  skinList.push({ name: name || 'Skin ' + (skinList.length+1), dataUrl, addedAt: Date.now() });
+  skinList.push({ name: name || 'Skin ' + (skinList.length+1), dataUrl, model: model || null, addedAt: Date.now() });
   saveSkinList();
   if(!silent) setSkinUploadStatus('✓ Added to skin list!');
 }
@@ -4158,7 +4232,7 @@ function renderSkinList() {
     applyBtn.className = 'btn btn-sm btn-primary';
     applyBtn.style.cssText = 'width:auto;font-size:.68em;padding:.2em .5em';
     applyBtn.textContent = 'Apply';
-    applyBtn.onclick = (e) => { e.stopPropagation(); applySkinFromDataUrl(skin.dataUrl); setSkinUploadStatus('Applied: ' + skin.name); };
+    applyBtn.onclick = (e) => { e.stopPropagation(); applySkinFromDataUrl(skin.dataUrl, skin.model || undefined); setSkinUploadStatus('Applied: ' + skin.name); };
     const delBtn = document.createElement('button');
     delBtn.className = 'btn btn-sm';
     delBtn.style.cssText = 'width:auto;font-size:.68em;padding:.2em .5em;color:#f44;border-color:#f4455';
@@ -4166,7 +4240,7 @@ function renderSkinList() {
     delBtn.onclick = (e) => { e.stopPropagation(); skinList.splice(idx,1); saveSkinList(); renderSkinList(); };
     btns.appendChild(applyBtn); btns.appendChild(delBtn);
     card.appendChild(label); card.appendChild(btns);
-    card.onclick = () => { applySkinFromDataUrl(skin.dataUrl); setSkinUploadStatus('Applied: ' + skin.name); document.getElementById('skin-list-overlay').classList.remove('open'); };
+    card.onclick = () => { applySkinFromDataUrl(skin.dataUrl, skin.model || undefined); setSkinUploadStatus('Applied: ' + skin.name); document.getElementById('skin-list-overlay').classList.remove('open'); };
     container.appendChild(card);
   });
 }
@@ -4177,13 +4251,14 @@ function renderSkin3DMini(targetCanvas, skinUrl) {
     const W = 200, H = 280;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(35, W/H, 0.1, 100);
-    camera.position.set(0, 1.3, 11); camera.lookAt(0, 0, 0);
+    camera.position.set(0, 0.8, 11); camera.lookAt(0, -0.6, 0);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(W, H); renderer.setClearColor(0x000000, 0); renderer.setPixelRatio(1);
     scene.add(new THREE.AmbientLight(0xffffff, 0.7));
     const d1 = new THREE.DirectionalLight(0xffffff, 0.8); d1.position.set(2,4,3); scene.add(d1);
     const d2 = new THREE.DirectionalLight(0xaabbff, 0.3); d2.position.set(-2,-1,-2); scene.add(d2);
     const grp = new THREE.Group(); scene.add(grp);
+    grp.scale.set(0.8,0.8,0.8);
     const loader = new THREE.TextureLoader();
     const isDataUrl = skinUrl.startsWith('data:');
     function buildWithTex(tex) {
@@ -4383,7 +4458,7 @@ function drawSteveSkin(c){
       tctx.fillRect(0,32,16,16);
       tctx.fillStyle='rgba(255,255,255,0.12)';
       tctx.font='1.8px sans-serif';
-      tctx.fillText('Outer layer (hidden)',36,8);
+      tctx.fillText('Outer layer (in 3D)',36,8);
     } else {
       // Outer layer regions
       // Head overlay
@@ -4583,10 +4658,27 @@ function drawSteveSkin(c){
   });
   updateLayerToggle();
 
+  // Skin model (Classic/Slim) toggle — persists per skin/account
+  const modelToggle = document.getElementById('skin-ed-model-toggle');
+  function updateModelToggle(){
+    if(!modelToggle)return;
+    modelToggle.textContent = skinModel==='slim' ? '🧍 Slim' : '🧍 Classic';
+    modelToggle.title = skinModel==='slim' ? 'Current: Slim (schmale Arme) — klicken für Classic' : 'Current: Classic (breite Arme) — klicken für Slim';
+  }
+  if(modelToggle) modelToggle.addEventListener('click',()=>{
+    skinModel = skinModel==='slim' ? 'classic' : 'slim';
+    const acc=getSelectedAccount();
+    if(acc){acc.skinModel=skinModel;ipcRenderer.send('save-accounts',accounts);}
+    updateModelToggle();
+    if(ed3dGroup&&ed3dTex)buildEditorSkinMesh(ed3dGroup,ed3dTex);
+  });
+  updateModelToggle();
+
   // Clear
   document.getElementById('skin-ed-clear').addEventListener('click',()=>{
     if(!confirm('Clear entire skin?'))return;
     ctx.clearRect(0,0,64,64);
+    if(ed3dTex)ed3dTex.needsUpdate=true;
   });
 
   // Template toggle - draws grid overlay on display canvas only
@@ -4601,9 +4693,31 @@ function drawSteveSkin(c){
     // The actual pixel data is always in ctx, template is cosmetic
   }
 
-  // Open editor
+  // Open editor — load currently selected skin into the canvas
+  function drawEditorImage(src){
+    ctx.clearRect(0,0,64,64);
+    if(!src){ drawSteveSkin(ctx); if(ed3dTex)ed3dTex.needsUpdate=true; return; }
+    if(typeof src==='object' && src.width!==undefined){
+      ctx.drawImage(src,0,0,64,64);
+      if(ed3dTex)ed3dTex.needsUpdate=true;
+      return;
+    }
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>{ ctx.clearRect(0,0,64,64); ctx.drawImage(img,0,0,64,64); if(ed3dTex)ed3dTex.needsUpdate=true; };
+    img.src=src;
+  }
+  function loadSelectedSkinIntoEditor(){
+    const acc=getSelectedAccount();
+    if(acc && acc.skinModel) skinModel=acc.skinModel;
+    let src=null;
+    if(acc && acc.skinUrl) src=acc.skinUrl;
+    else if(skinTexture && skinTexture.image) src=skinTexture.image;
+    drawEditorImage(src);
+    updateModelToggle();
+  }
   document.getElementById('skin-editor-btn').addEventListener('click',()=>{
     overlay.classList.add('open');
+    loadSelectedSkinIntoEditor();
     setTimeout(initSkinEditor3D, 100);
   });
 
@@ -4616,7 +4730,7 @@ function drawSteveSkin(c){
   // Add to skin list from editor
   document.getElementById('skin-ed-apply').addEventListener('click',()=>{
     const dataUrl = canvas.toDataURL('image/png');
-    addSkinToList(dataUrl, 'Pixel Editor Skin');
+    addSkinToList(dataUrl, 'Pixel Editor Skin', false, skinModel);
     setSkinUploadStatus('Added to skin list!');
     overlay.classList.remove('open');
   });
@@ -4662,7 +4776,7 @@ function drawSteveSkin(c){
     const W=wrap.clientWidth||300, H=wrap.clientHeight||400;
     ed3dScene=new THREE.Scene();
     ed3dCamera=new THREE.PerspectiveCamera(35,W/H,0.1,100);
-    ed3dCamera.position.set(0,1.3,11);ed3dCamera.lookAt(0,0,0);
+    ed3dCamera.position.set(0,0.8,11);ed3dCamera.lookAt(0,-0.6,0);
     ed3dRenderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
     ed3dRenderer.setSize(W,H);ed3dRenderer.setClearColor(0x000000,0);
     ed3dRenderer.setPixelRatio(window.devicePixelRatio||1);
@@ -4767,15 +4881,16 @@ function drawSteveSkin(c){
   const ctx = canvas.getContext('2d');
   const colorInput = document.getElementById('cape-ed-color');
   const coordsEl = document.getElementById('cape-ed-coords');
-  const CAPE_W=22, CAPE_H=17;
+  const CANVAS_W=64, CANVAS_H=32;
+  const ART_W=22, ART_H=17;
   let currentTool='pencil', isDrawing=false;
 
   const displaySize = Math.min(440, window.innerWidth*0.6);
   canvas.style.width = displaySize+'px';
-  canvas.style.height = (displaySize*CAPE_H/CAPE_W)+'px';
+  canvas.style.height = (displaySize*CANVAS_H/CANVAS_W)+'px';
 
   ctx.fillStyle='#FFFFFF';
-  ctx.fillRect(0,0,CAPE_W,CAPE_H);
+  ctx.fillRect(0,0,ART_W,ART_H);
 
   // Load saved cape
   (async()=>{
@@ -4783,7 +4898,7 @@ function drawSteveSkin(c){
       const saved=await ipcRenderer.invoke('load-custom-cape');
       if(saved){
         const img=new Image();
-        img.onload=()=>{ctx.clearRect(0,0,CAPE_W,CAPE_H);ctx.drawImage(img,0,0,CAPE_W,CAPE_H);};
+      img.onload=()=>{ctx.clearRect(0,0,CANVAS_W,CANVAS_H);if(img.width===ART_W&&img.height===ART_H){ctx.drawImage(img,0,0);}else{ctx.drawImage(img,0,0,CANVAS_W,CANVAS_H);}if(window._capeEdRebuild)window._capeEdRebuild();};
         img.src=saved;
         document.getElementById('cape-custom-status').textContent='Custom cape active';
         document.getElementById('cape-custom-status').style.color='#1bd96a';
@@ -4810,19 +4925,19 @@ function drawSteveSkin(c){
 
   function getPixelCoords(e){
     const rect=canvas.getBoundingClientRect();
-    const scaleX=CAPE_W/rect.width, scaleY=CAPE_H/rect.height;
+    const scaleX=CANVAS_W/rect.width, scaleY=CANVAS_H/rect.height;
     const clientX=e.touches?e.touches[0].clientX:e.clientX;
     const clientY=e.touches?e.touches[0].clientY:e.clientY;
     return {x:Math.floor((clientX-rect.left)*scaleX), y:Math.floor((clientY-rect.top)*scaleY)};
   }
 
   function setPixel(x,y,color){
-    if(x<0||x>=CAPE_W||y<0||y>=CAPE_H)return;
+    if(x<0||x>=CANVAS_W||y<0||y>=CANVAS_H)return;
     ctx.fillStyle=color; ctx.fillRect(x,y,1,1);
   }
 
   function getPixel(x,y){
-    if(x<0||x>=CAPE_W||y<0||y>=CAPE_H)return null;
+    if(x<0||x>=CANVAS_W||y<0||y>=CANVAS_H)return null;
     const d=ctx.getImageData(x,y,1,1).data;
     return `rgba(${d[0]},${d[1]},${d[2]},${d[3]/255})`;
   }
@@ -4833,17 +4948,17 @@ function drawSteveSkin(c){
   }
 
   function floodFill(sx,sy,fillColor){
-    const imageData=ctx.getImageData(0,0,CAPE_W,CAPE_H);
+    const imageData=ctx.getImageData(0,0,CANVAS_W,CANVAS_H);
     const data=imageData.data;
-    const targetIdx=(sy*CAPE_W+sx)*4;
+    const targetIdx=(sy*CANVAS_W+sx)*4;
     const tr=data[targetIdx],tg=data[targetIdx+1],tb=data[targetIdx+2],ta=data[targetIdx+3];
     const fc=fillColor.match(/\d+/g).map(Number);
     if(tr===fc[0]&&tg===fc[1]&&tb===fc[2]&&ta===fc[3])return;
     const stack=[[sx,sy]],visited=new Set();
     while(stack.length){
       const [x,y]=stack.pop();
-      if(x<0||x>=CAPE_W||y<0||y>=CAPE_H)continue;
-      const key=y*CAPE_W+x;
+      if(x<0||x>=CANVAS_W||y<0||y>=CANVAS_H)continue;
+      const key=y*CANVAS_W+x;
       if(visited.has(key))continue;visited.add(key);
       const idx=key*4;
       if(Math.abs(data[idx]-tr)>2||Math.abs(data[idx+1]-tg)>2||Math.abs(data[idx+2]-tb)>2||Math.abs(data[idx+3]-ta)>2)continue;
@@ -4901,7 +5016,8 @@ function drawSteveSkin(c){
 
   document.getElementById('cape-ed-clear').addEventListener('click',()=>{
     if(!confirm('Clear entire cape?'))return;
-    ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,CAPE_W,CAPE_H);
+    ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+    ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,ART_W,ART_H);
   });
 
   document.getElementById('cape-ed-elytra').addEventListener('click',()=>{
@@ -4942,7 +5058,7 @@ function drawSteveSkin(c){
     inp.onchange=e=>{
       const file=e.target.files[0];if(!file)return;
       const img=new Image();
-      img.onload=()=>{ctx.clearRect(0,0,CAPE_W,CAPE_H);ctx.drawImage(img,0,0,CAPE_W,CAPE_H);};
+      img.onload=()=>{ctx.clearRect(0,0,CANVAS_W,CANVAS_H);if(img.width===ART_W&&img.height===ART_H){ctx.drawImage(img,0,0);}else{ctx.drawImage(img,0,0,CANVAS_W,CANVAS_H);}};
       img.src=URL.createObjectURL(file);
     };
     inp.click();
@@ -4950,7 +5066,7 @@ function drawSteveSkin(c){
 
   document.getElementById('cape-custom-remove').addEventListener('click',async()=>{
     await ipcRenderer.invoke('remove-custom-cape');
-    ctx.clearRect(0,0,CAPE_W,CAPE_H);
+    ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
     document.getElementById('cape-custom-status').textContent='Custom cape removed';
     document.getElementById('cape-custom-status').style.color='#888';
     document.getElementById('cape-custom-toggle').style.display='none';
@@ -4964,10 +5080,14 @@ function drawSteveSkin(c){
   // ── Cape 3D Editor ──
   let capeEd3dRenderer=null, capeEd3dScene=null, capeEd3dCamera=null, capeEd3dGroup=null, capeEd3dRaycaster=null;
   let capeEd3dRotY=30, capeEd3dRotX=10, capeEd3dIsElytra=false;
-  let capeEdFrontTex=null, capeEdBackTex=null;
+  let capeEdFrontTex=null, capeEdBackTex=null, capeEdTopTex=null, capeEdBottomTex=null, capeEdLeftTex=null, capeEdRightTex=null;
   function refreshCape3DTextures(){
-    if(capeEdFrontTex){const c=document.createElement('canvas');c.width=11;c.height=CAPE_H;c.getContext('2d').drawImage(canvas,11,0,11,CAPE_H,0,0,11,CAPE_H);capeEdFrontTex.image=c;capeEdFrontTex.needsUpdate=true;}
-    if(capeEdBackTex){const c=document.createElement('canvas');c.width=11;c.height=CAPE_H;c.getContext('2d').drawImage(canvas,0,0,11,CAPE_H,0,0,11,CAPE_H);capeEdBackTex.image=c;capeEdBackTex.needsUpdate=true;}
+    if(capeEdFrontTex){const c=document.createElement('canvas');c.width=11;c.height=ART_H;c.getContext('2d').drawImage(canvas,11,0,11,ART_H,0,0,11,ART_H);capeEdFrontTex.image=c;capeEdFrontTex.needsUpdate=true;}
+    if(capeEdBackTex){const c=document.createElement('canvas');c.width=11;c.height=ART_H;c.getContext('2d').drawImage(canvas,0,0,11,ART_H,0,0,11,ART_H);capeEdBackTex.image=c;capeEdBackTex.needsUpdate=true;}
+    if(capeEdTopTex){const c=document.createElement('canvas');c.width=ART_W;c.height=1;c.getContext('2d').drawImage(canvas,0,0,ART_W,1,0,0,ART_W,1);capeEdTopTex.image=c;capeEdTopTex.needsUpdate=true;}
+    if(capeEdBottomTex){const c=document.createElement('canvas');c.width=ART_W;c.height=1;c.getContext('2d').drawImage(canvas,0,ART_H-1,ART_W,1,0,0,ART_W,1);capeEdBottomTex.image=c;capeEdBottomTex.needsUpdate=true;}
+    if(capeEdLeftTex){const c=document.createElement('canvas');c.width=1;c.height=ART_H;c.getContext('2d').drawImage(canvas,0,0,1,ART_H,0,0,1,ART_H);capeEdLeftTex.image=c;capeEdLeftTex.needsUpdate=true;}
+    if(capeEdRightTex){const c=document.createElement('canvas');c.width=1;c.height=ART_H;c.getContext('2d').drawImage(canvas,ART_W-1,0,1,ART_H,0,0,1,ART_H);capeEdRightTex.image=c;capeEdRightTex.needsUpdate=true;}
   }
   function makeElytraGeo(){
     const segsW=8,segsH=8;
@@ -5019,14 +5139,18 @@ function drawSteveSkin(c){
     capeEd3dGroup.scale.set(0.8,0.8,0.8);
 
     function cropEditorHalf(side){
-      const c=document.createElement('canvas');c.width=11;c.height=CAPE_H;
-      c.getContext('2d').drawImage(canvas,side*11,0,11,CAPE_H,0,0,11,CAPE_H);
+      const c=document.createElement('canvas');c.width=11;c.height=ART_H;
+      c.getContext('2d').drawImage(canvas,side*11,0,11,ART_H,0,0,11,ART_H);
       const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
     }
     function cropEditorEdge(col){
-      const c=document.createElement('canvas');c.width=1;c.height=CAPE_H;
-      c.getContext('2d').drawImage(canvas,col,0,1,CAPE_H,0,0,1,CAPE_H);
-      c.getContext('2d').drawImage(canvas,col,0,1,CAPE_H,0,0,1,CAPE_H);
+      const c=document.createElement('canvas');c.width=1;c.height=ART_H;
+      c.getContext('2d').drawImage(canvas,col,0,1,ART_H,0,0,1,ART_H);
+      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
+    }
+    function cropEditorRow(row){
+      const c=document.createElement('canvas');c.width=ART_W;c.height=1;
+      c.getContext('2d').drawImage(canvas,0,row,ART_W,1,0,0,ART_W,1);
       const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
     }
 
@@ -5052,14 +5176,24 @@ function drawSteveSkin(c){
         const back=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_H),new THREE.MeshLambertMaterial({map:capeEdBackTex,side:THREE.DoubleSide}));
         back.position.z=-ED_DEPH;back.userData={uvHalf:'back'};
         capeEd3dGroup.add(back);
-        const leftEdgeTex=cropEditorEdge(0);
-        const leftSide=new THREE.Mesh(new THREE.PlaneGeometry(ED_DEPTH,ED_H),new THREE.MeshLambertMaterial({map:leftEdgeTex,side:THREE.DoubleSide}));
+        capeEdLeftTex=cropEditorEdge(0);
+        const leftSide=new THREE.Mesh(new THREE.PlaneGeometry(ED_DEPTH,ED_H),new THREE.MeshLambertMaterial({map:capeEdLeftTex,side:THREE.DoubleSide}));
         leftSide.rotation.y=Math.PI/2;leftSide.position.x=-ED_HALF;leftSide.userData={uvHalf:'back'};
         capeEd3dGroup.add(leftSide);
-        const rightEdgeTex=cropEditorEdge(21);
-        const rightSide=new THREE.Mesh(new THREE.PlaneGeometry(ED_DEPTH,ED_H),new THREE.MeshLambertMaterial({map:rightEdgeTex,side:THREE.DoubleSide}));
+        capeEdRightTex=cropEditorEdge(ART_W-1);
+        const rightSide=new THREE.Mesh(new THREE.PlaneGeometry(ED_DEPTH,ED_H),new THREE.MeshLambertMaterial({map:capeEdRightTex,side:THREE.DoubleSide}));
         rightSide.rotation.y=-Math.PI/2;rightSide.position.x=ED_HALF;rightSide.userData={uvHalf:'front'};
         capeEd3dGroup.add(rightSide);
+        // Top face — paints row 0 of the texture
+        capeEdTopTex=cropEditorRow(0);
+        const top=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_DEPTH),new THREE.MeshLambertMaterial({map:capeEdTopTex,side:THREE.DoubleSide}));
+        top.rotation.x=-Math.PI/2;top.position.y=ED_H/2;top.userData={uvRow:0};
+        capeEd3dGroup.add(top);
+        // Bottom face — paints the last row of the texture
+        capeEdBottomTex=cropEditorRow(ART_H-1);
+        const bottom=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_DEPTH),new THREE.MeshLambertMaterial({map:capeEdBottomTex,side:THREE.DoubleSide}));
+        bottom.rotation.x=Math.PI/2;bottom.position.y=-ED_H/2;bottom.userData={uvRow:ART_H-1};
+        capeEd3dGroup.add(bottom);
       }
       capeEd3dGroup.position.set(0,0,0);
     }
@@ -5110,17 +5244,21 @@ function drawSteveSkin(c){
     if(hits.length>0&&hits[0].uv){
       const uv=hits[0].uv;
       const half=hits[0].object.userData?.uvHalf;
+      const row=hits[0].object.userData?.uvRow;
       const halfW=11;
       let px,py;
-      if(half==='front'||half==='right'){
+      if(row!==undefined){
+        px=Math.floor(uv.x*ART_W);
+        py=row;
+      }else if(half==='front'||half==='right'){
         px=halfW+Math.floor(uv.x*halfW);
-        py=Math.floor((1-uv.y)*CAPE_H);
+        py=Math.floor((1-uv.y)*ART_H);
       }else{
         px=Math.floor(uv.x*halfW);
-        py=Math.floor((1-uv.y)*CAPE_H);
+        py=Math.floor((1-uv.y)*ART_H);
       }
-      px=Math.max(0,Math.min(CAPE_W-1,px));
-      py=Math.max(0,Math.min(CAPE_H-1,py));
+      px=Math.max(0,Math.min(ART_W-1,px));
+      py=Math.max(0,Math.min(ART_H-1,py));
       const color=hexToRgba(colorInput.value);
       if(currentTool==='pencil')setPixel(px,py,color);
       else if(currentTool==='eraser')setPixel(px,py,'rgba(0,0,0,0)');
