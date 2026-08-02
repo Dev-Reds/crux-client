@@ -1763,7 +1763,7 @@ function bindSettings(){
   // Presence server URL
   const psInput=document.getElementById('presence-server-input');
   if(psInput){
-    psInput.value=settings.presenceServer||'';
+    psInput.value=settings.presenceServer || 'https://crux-presence.onrender.com';
     psInput.addEventListener('change',()=>{ settings.presenceServer=psInput.value.trim(); saveSettings(); });
   }
   // Bug report webhook URL

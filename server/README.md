@@ -22,11 +22,17 @@ curl http://localhost:8787/v1/health
 
 ## Deploy on Render (free)
 
-1. Push this repo to GitHub.
-2. Go to https://render.com → **New → Blueprint** and pick the repo.
+1. Push this repo to GitHub (`Dev-Reds/crux-client`).
+2. Click this one-click deploy button (uses the existing `render.yaml`):
+
+   [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Dev-Reds/crux-client&branch=crux-client)
+
+   Or: https://render.com → **New → Blueprint** and pick the repo.
 3. Render finds `render.yaml` (service `crux-presence`) and deploys automatically.
-4. Open **Dashboard → crux-presence → Settings** and copy the URL, e.g.
-   `https://crux-presence.onrender.com`.
+4. Open **Dashboard → crux-presence → Settings** and copy the URL. The default is
+   `https://crux-presence.onrender.com`, which is already hard-coded as the launcher
+   default in `main.js` (`DEFAULT_PRESENCE_SERVER`). If Render assigns a different
+   URL, update that constant (and the `presence-server-input` fallback in `index.html`).
 
 > Note: the free tier sleeps after ~15 min idle (first request after waking takes
 > ~1 min) and the disk is ephemeral — friend requests survive instance restarts

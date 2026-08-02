@@ -70,6 +70,10 @@ const P = {
 app.setPath('userData', base);
 app.setPath('cache', path.join(base,'Cache'));
 
+// Default presence server so the Friends tab works out of the box.
+// Points to the Render Blueprint service defined in render.yaml (see server/README.md).
+const DEFAULT_PRESENCE_SERVER = 'https://crux-presence.onrender.com';
+
 // ── Window ─────────────────────────────────────────────────────────────────────
 function createWindow() {
   console.log('[Crux] Creating window...');
@@ -237,7 +241,23 @@ const saveSettings = async (data) => {
   } catch {}
 };
 
-ipcMain.handle('load-settings',          async () => load(P.settings, {}));
+// Auto-configure the default presence server on first run so installed clients
+// have the Friends tab ready without manual setup.
+async function ensureDefaultPresenceServer() {
+  try {
+    const s = await load(P.settings, {});
+    if (s.presenceServer === undefined || s.presenceServer === null) {
+      s.presenceServer = DEFAULT_PRESENCE_SERVER;
+      await save(P.settings, s);
+      console.log('[Crux] Presence server default applied: ' + DEFAULT_PRESENCE_SERVER);
+    }
+  } catch {}
+}
+
+ipcMain.handle('load-settings',          async () => {
+  await ensureDefaultPresenceServer();
+  return load(P.settings, {});
+});
 ipcMain.handle('load-accounts',          async () => load(P.accounts, []));
 ipcMain.handle('load-profiles',          async () => load(P.profiles, [{ id:'default', name:'Default', mcVersion:'', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] }]));
 ipcMain.handle('load-mods',              async () => load(P.mods, []));
