@@ -74,6 +74,10 @@ app.setPath('cache', path.join(base,'Cache'));
 // Points to the Render Blueprint service defined in render.yaml (see server/README.md).
 const DEFAULT_PRESENCE_SERVER = 'https://crux-presence.onrender.com';
 
+// Default chat server so the Chat tab works out of the box.
+// Points to the Deno Deploy app (server/chat-server.ts, see server/README.md).
+const DEFAULT_CHAT_SERVER = 'https://crux-chat.dev-reds.deno.net';
+
 // ── Window ─────────────────────────────────────────────────────────────────────
 function createWindow() {
   console.log('[Crux] Creating window...');
@@ -241,21 +245,28 @@ const saveSettings = async (data) => {
   } catch {}
 };
 
-// Auto-configure the default presence server on first run so installed clients
-// have the Friends tab ready without manual setup.
-async function ensureDefaultPresenceServer() {
+// Auto-configure the default servers on first run so installed clients
+// have the Friends and Chat tabs ready without manual setup.
+async function ensureDefaultServers() {
   try {
     const s = await load(P.settings, {});
-    if (s.presenceServer === undefined || s.presenceServer === null) {
+    let changed = false;
+    if (s.presenceServer === undefined || s.presenceServer === null || s.presenceServer === '') {
       s.presenceServer = DEFAULT_PRESENCE_SERVER;
-      await save(P.settings, s);
       console.log('[Crux] Presence server default applied: ' + DEFAULT_PRESENCE_SERVER);
+      changed = true;
     }
+    if (s.chatServer === undefined || s.chatServer === null || s.chatServer === '') {
+      s.chatServer = DEFAULT_CHAT_SERVER;
+      console.log('[Crux] Chat server default applied: ' + DEFAULT_CHAT_SERVER);
+      changed = true;
+    }
+    if (changed) await save(P.settings, s);
   } catch {}
 }
 
 ipcMain.handle('load-settings',          async () => {
-  await ensureDefaultPresenceServer();
+  await ensureDefaultServers();
   return load(P.settings, {});
 });
 ipcMain.handle('load-accounts',          async () => load(P.accounts, []));
@@ -550,7 +561,8 @@ ipcMain.handle('presence-requests-consume', async (e, data) => {
 // ── Chat (friends messaging) ────────────────────────────────────────────────
 async function chatServerUrl() {
   const s = await load(P.settings, {});
-  return String(s.chatServer || '').trim().replace(/\/+$/, '');
+  const v = String(s.chatServer || '').trim().replace(/\/+$/, '');
+  return v || DEFAULT_CHAT_SERVER;
 }
 
 ipcMain.handle('chat-send', async (e, data) => {
