@@ -233,7 +233,7 @@ const saveSettings = async (data) => {
       'selectedProfile','selectedAccount','recentHistory',
       'openLogsAfterLaunch','closeLauncherWhilePlaying','useOriginalLauncher',
       'clientResourcePacks','autoUseResourcePacks',
-      'presenceServer','bugreportWebhook'
+      'presenceServer','bugreportWebhook','chatServer'
     ];
     const clean = {};
     for (const k of Object.keys(existing)) { if (KNOWN_KEYS.includes(k)) clean[k] = existing[k]; }
@@ -514,6 +514,23 @@ ipcMain.handle('presence-requests-respond', async (e, data) => {
   } catch { return { ok: false }; }
 });
 
+ipcMain.handle('presence-requests-withdraw', async (e, data) => {
+  try {
+    const srv = await presenceServerUrl();
+    if (!srv) return { ok: false, error: 'no-server' };
+    const res = await genericHttp(srv + '/v1/requests/withdraw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fromUuid: normUuidArg(data && data.fromUuid),
+        toUuid: normUuidArg(data && data.toUuid)
+      })
+    });
+    if (res.status !== 200) return { ok: false, error: 'http' };
+    try { return JSON.parse(res.data); } catch { return { ok: false, error: 'http' }; }
+  } catch { return { ok: false, error: 'network' }; }
+});
+
 ipcMain.handle('presence-requests-consume', async (e, data) => {
   try {
     const srv = await presenceServerUrl();
@@ -528,6 +545,63 @@ ipcMain.handle('presence-requests-consume', async (e, data) => {
     });
     return { ok: true };
   } catch { return { ok: false }; }
+});
+
+// ── Chat (friends messaging) ────────────────────────────────────────────────
+async function chatServerUrl() {
+  const s = await load(P.settings, {});
+  return String(s.chatServer || '').trim().replace(/\/+$/, '');
+}
+
+ipcMain.handle('chat-send', async (e, data) => {
+  try {
+    const srv = await chatServerUrl();
+    if (!srv) return { ok: false, error: 'no-server' };
+    const res = await genericHttp(srv + '/v1/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: normUuidArg(data && data.from),
+        to: normUuidArg(data && data.to),
+        text: String((data && data.text) || '')
+      })
+    });
+    if (res.status !== 200) return { ok: false, error: 'http' };
+    try { return JSON.parse(res.data); } catch { return { ok: false, error: 'http' }; }
+  } catch { return { ok: false, error: 'network' }; }
+});
+
+ipcMain.handle('chat-poll', async (e, data) => {
+  try {
+    const srv = await chatServerUrl();
+    if (!srv) return { messages: [] };
+    const from = normUuidArg(data && data.from);
+    const to = normUuidArg(data && data.to);
+    const after = parseInt(data && data.after, 10) || 0;
+    if (!from || !to) return { messages: [] };
+    const url = srv + '/v1/poll?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to) +
+      '&after=' + encodeURIComponent(after) + '&timeout=8000';
+    const res = await genericHttp(url, { timeout: 15000 });
+    if (res.status !== 200) return { messages: [] };
+    try { return JSON.parse(res.data); } catch { return { messages: [] }; }
+  } catch { return { messages: [] }; }
+});
+
+ipcMain.handle('chat-history', async (e, data) => {
+  try {
+    const srv = await chatServerUrl();
+    if (!srv) return { messages: [] };
+    const from = normUuidArg(data && data.from);
+    const to = normUuidArg(data && data.to);
+    const after = parseInt(data && data.after, 10) || 0;
+    const limit = parseInt(data && data.limit, 10) || 50;
+    if (!from || !to) return { messages: [] };
+    const url = srv + '/v1/messages?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to) +
+      '&after=' + encodeURIComponent(after) + '&limit=' + encodeURIComponent(limit);
+    const res = await genericHttp(url, {});
+    if (res.status !== 200) return { messages: [] };
+    try { return JSON.parse(res.data); } catch { return { messages: [] }; }
+  } catch { return { messages: [] }; }
 });
 
 // ── Bug Report (no GitHub account required) ────────────────────────────────────

@@ -40,6 +40,26 @@ curl http://localhost:8787/v1/health
 
 Other hosts that run Node.js work too (Railway, Fly.io, VPS with Nginx/Caddy for TLS).
 
+## Chat server (friends messaging) — Deno Deploy
+
+A separate **chat server** (`chat-server.ts`) powers the launcher's Chat tab.
+It uses **long-polling** (near-real-time) and persists messages in **Deno KV**
+(messages survive restarts AND redeploys on Deno Deploy). Deploy on Deno Deploy
+because it is free, always-on (no sleeping) and KV-backed:
+
+1. Sign in at https://dash.deno.com (GitHub login, no credit card).
+2. **New Project → Deploy from GitHub repository** → pick `Dev-Reds/crux-client`
+   and the `crux-client` branch.
+3. Set **Root directory** to `server` and **Entrypoint** to `chat-server.ts`.
+   (Optional: uncheck "Automatic deployment" if you don't want redeploys.)
+4. Deno Deploy creates a URL like `https://crux-chat.deno.dev` — copy it.
+5. In the launcher: **Settings → Friends & Bug Reports → Chat server URL** paste it.
+
+Verify: `curl https://<your>.deno.dev/v1/health` → `{"ok":true,...}`.
+
+> Note: chat works between the two friends only (identified by MC UUID). Anyone
+> who knows both UUIDs could read the conversation — fine for a hobby launcher.
+
 ## Launcher configuration
 
 1. Open the launcher **Settings → Friends & Bug Reports**.

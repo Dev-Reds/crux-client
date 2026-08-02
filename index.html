@@ -389,6 +389,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     <button class="tb-btn" data-page="profiles-page" data-i18n="tab_profiles">Profiles</button>
     <button class="tb-btn" data-page="cape-page" data-i18n="tab_cape">Capes</button>
     <button class="tb-btn" data-page="friends-page" data-i18n="tab_friends">Friends</button>
+    <button class="tb-btn" data-page="chat-page" data-i18n="tab_chat">Chat</button>
     <button class="tb-btn" data-page="settings-page" data-i18n="tab_settings">Settings</button>
     <button class="tb-btn" data-page="logs-page" data-i18n="tab_logs">Logs<span id="running-badge" style="display:none;margin-left:.3em;background:#1bd96a;color:#000;border-radius:999px;font-size:.7em;padding:.05em .45em;font-weight:bold"></span></button>
     <button class="tb-btn" data-page="instances-page" data-i18n="tab_instances">Instances</button>
@@ -649,6 +650,11 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
           <label data-i18n="lbl_presence_server">Presence server URL (Friends online status)</label>
           <input type="text" id="presence-server-input" placeholder="https://your-presence-server.example.com" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
           <div class="status-text" data-i18n="desc_presence_server">Leave empty to disable. A ready-to-deploy server is in server/presence-server.js.</div>
+        </div>
+        <div class="form-row" style="max-width:100%">
+          <label data-i18n="lbl_chat_server">Chat server URL (friend messaging)</label>
+          <input type="text" id="chat-server-input" placeholder="https://your-chat-server.deno.dev" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
+          <div class="status-text" data-i18n="desc_chat_server">Leave empty to disable. Deploy server/chat-server.ts on Deno Deploy (free, always-on).</div>
         </div>
         <div class="form-row" style="max-width:100%">
           <label data-i18n="lbl_bugreport_webhook">Bug report webhook URL (Discord or compatible)</label>
@@ -1082,6 +1088,24 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div id="friend-requests" style="max-width:520px;margin-bottom:1.2em"></div>
       <div id="friend-list" class="friend-list" style="max-width:520px"></div>
       <div id="friend-empty" class="mod-list-empty" style="padding:2em;text-align:center;max-width:520px" data-i18n="friends_empty">No friends yet. Send a friend request by username above.</div>
+    </div>
+
+    <!-- ══ CHAT ══ -->
+    <div id="chat-page" class="page" style="display:none">
+      <h1 data-i18n="tab_chat">Chat</h1>
+      <div id="chat-no-server" class="mod-list-empty" style="padding:2em;text-align:center;max-width:520px;display:none" data-i18n="chat_no_server">No chat server configured. Set the URL in Settings → Friends &amp; Bug Reports.</div>
+      <div id="chat-wrap" style="display:flex;gap:1em;align-items:stretch;max-width:900px;height:60vh">
+        <div id="chat-friends" style="flex:0 0 220px;overflow-y:auto;border:1px solid #2a2a2a;border-radius:var(--r);padding:.5em;display:flex;flex-direction:column;gap:.4em"></div>
+        <div id="chat-thread-wrap" style="flex:1;display:flex;flex-direction:column;border:1px solid #2a2a2a;border-radius:var(--r);min-width:0">
+          <div id="chat-thread-header" style="padding:.6em .9em;border-bottom:1px solid #2a2a2a;font-weight:bold;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+          <div id="chat-thread" style="flex:1;overflow-y:auto;padding:.8em;display:flex;flex-direction:column;gap:.4em;background:#0d0d0d"></div>
+          <div id="chat-empty" style="flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:.9em" data-i18n="chat_select">Select a friend to start chatting.</div>
+          <div id="chat-input-wrap" style="display:flex;gap:.5em;padding:.6em;border-top:1px solid #2a2a2a">
+            <input type="text" id="chat-input" data-i18n-ph="ph_chat" placeholder="Type a message..." style="flex:1;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
+            <button class="btn" id="chat-send-btn" data-i18n="chat_send">Send</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ══ BUG REPORT ══ -->
@@ -1643,6 +1667,7 @@ function showPage(id){
   if(id==='recent-page') renderRecentList();
   if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
   if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); }
+  if(id==='chat-page'){ refreshChat(); }
   if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); }
 }
 
@@ -1766,6 +1791,12 @@ function bindSettings(){
     psInput.value=settings.presenceServer || 'https://crux-presence.onrender.com';
     psInput.addEventListener('change',()=>{ settings.presenceServer=psInput.value.trim(); saveSettings(); });
   }
+  // Chat server URL
+  const csInput=document.getElementById('chat-server-input');
+  if(csInput){
+    csInput.value=settings.chatServer||'';
+    csInput.addEventListener('change',()=>{ settings.chatServer=csInput.value.trim(); saveSettings(); });
+  }
   // Bug report webhook URL
   const brInput=document.getElementById('bugreport-webhook-input');
   if(brInput){
@@ -1788,7 +1819,7 @@ function renderCapePreview(url){
 const LANGS={
   en:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes',
-    tab_settings:'Settings', tab_logs:'Logs', tab_instances:'Instances', tab_account:'MC-Account', tab_recent:'Recent', tab_servers:'Servers', tab_bugreport:'Bug Report', tab_friends:'Friends',
+    tab_settings:'Settings', tab_logs:'Logs', tab_instances:'Instances', tab_account:'MC-Account', tab_recent:'Recent', tab_servers:'Servers', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
     h_logs:'Logs', h_instances:'Instances', h_account:'MC Account', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends',
     lbl_profile:'Profile:', lbl_version:'Version:', lbl_change_skin:'Change Skin:', lbl_actions:'Actions:', lbl_ram:'RAM:', lbl_instance:'Instance:',
@@ -1863,6 +1894,8 @@ const LANGS={
     sec_social:'Friends & Bug Reports',
     lbl_presence_server:'Presence server URL (Friends online status)',
     desc_presence_server:'Leave empty to disable. A ready-to-deploy server is in server/presence-server.js.',
+    lbl_chat_server:'Chat server URL (friend messaging)', desc_chat_server:'Leave empty to disable. Deploy server/chat-server.ts on Deno Deploy (free, always-on).',
+    chat_no_server:'No chat server configured. Set the URL in Settings → Friends & Bug Reports.', chat_select:'Select a friend to start chatting.', chat_send:'Send', ph_chat:'Type a message...',
     lbl_bugreport_webhook:'Bug report webhook URL (Discord or compatible)',
     desc_bugreport_webhook:'Bug reports are sent here directly — no GitHub account needed.',
     ph_friend_add:'Send friend request by Minecraft username',
@@ -1878,6 +1911,7 @@ const LANGS={
     fr_req_accept:'Accept', fr_req_decline:'Decline',
     fr_req_added:'{name} is now your friend.', fr_req_declined:'Declined request from {name}.',
     fr_req_accepted_you:'{name} accepted your friend request.',
+    fr_req_outgoing:'Sent friend requests', fr_req_to:'Friend request to {name}', fr_req_withdraw:'Withdraw', fr_req_withdrawn:'Friend request to {name} withdrawn.',
     fr_status_online:'Online', fr_status_ingame:'In game', fr_status_offline:'Offline',
     fr_last_seen:'last seen {time}', fr_playing_on:'Playing on {server}', fr_copy_uuid:'Copy UUID',
     fr_copied:'UUID copied to clipboard.',
@@ -1911,7 +1945,7 @@ const LANGS={
   },
   de:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes',
-    tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_instances:'Instanzen', tab_account:'MC-Konto', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_bugreport:'Fehler melden', tab_friends:'Freunde',
+    tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_instances:'Instanzen', tab_account:'MC-Konto', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
     h_logs:'Protokolle', h_instances:'Instanzen', h_account:'MC-Konto', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde',
     lbl_profile:'Profil:', lbl_version:'Version:', lbl_change_skin:'Skin wechseln:', lbl_actions:'Aktionen:', lbl_ram:'RAM:', lbl_instance:'Instanz:',
@@ -1986,6 +2020,8 @@ const LANGS={
     sec_social:'Freunde & Bug-Reports',
     lbl_presence_server:'Presence-Server-URL (Freunde Online-Status)',
     desc_presence_server:'Leer lassen zum Deaktivieren. Einen einsatzbereiten Server gibt es in server/presence-server.js.',
+    lbl_chat_server:'Chat-Server-URL (Freunde-Nachrichten)', desc_chat_server:'Leer lassen zum Deaktivieren. Deploye server/chat-server.ts auf Deno Deploy (kostenlos, always-on).',
+    chat_no_server:'Kein Chat-Server konfiguriert. Setze die URL unter Einstellungen → Freunde & Bug-Reports.', chat_select:'Wähle einen Freund, um zu chatten.', chat_send:'Senden', ph_chat:'Nachricht eingeben...',
     lbl_bugreport_webhook:'Bug-Report-Webhook-URL (Discord oder kompatibel)',
     desc_bugreport_webhook:'Bug-Reports werden hierhin gesendet — ganz ohne GitHub-Account.',
     ph_friend_add:'Freundschaftsanfrage per Minecraft-Benutzername senden',
@@ -2001,6 +2037,7 @@ const LANGS={
     fr_req_accept:'Annehmen', fr_req_decline:'Ablehnen',
     fr_req_added:'{name} ist jetzt dein Freund.', fr_req_declined:'Anfrage von {name} abgelehnt.',
     fr_req_accepted_you:'{name} hat deine Freundschaftsanfrage angenommen.',
+    fr_req_outgoing:'Gesendete Freundschaftsanfragen', fr_req_to:'Freundschaftsanfrage an {name}', fr_req_withdraw:'Zurückziehen', fr_req_withdrawn:'Freundschaftsanfrage an {name} zurückgezogen.',
     fr_status_online:'Online', fr_status_ingame:'Im Spiel', fr_status_offline:'Offline',
     fr_last_seen:'zuletzt gesehen {time}', fr_playing_on:'Spielt auf {server}', fr_copy_uuid:'UUID kopieren',
     fr_copied:'UUID in die Zwischenablage kopiert.',
@@ -2034,7 +2071,7 @@ const LANGS={
   },
   fr:{
     tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes',
-    tab_settings:'Paramètres', tab_logs:'Journaux', tab_instances:'Instances', tab_account:'Compte MC', tab_recent:'Récents', tab_servers:'Serveurs', tab_bugreport:'Signaler un bug', tab_friends:'Amis',
+    tab_settings:'Paramètres', tab_logs:'Journaux', tab_instances:'Instances', tab_account:'Compte MC', tab_recent:'Récents', tab_servers:'Serveurs', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
     h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
     h_logs:'Journaux', h_instances:'Instances', h_account:'Compte MC', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis',
     lbl_profile:'Profil :', lbl_version:'Version :', lbl_change_skin:'Changer de skin :', lbl_actions:'Actions :', lbl_ram:'RAM :', lbl_instance:'Instance :',
@@ -2107,6 +2144,8 @@ const LANGS={
     sec_social:'Amis & Bug Reports',
     lbl_presence_server:'URL du serveur de présence (statut en ligne des amis)',
     desc_presence_server:'Laisser vide pour désactiver. Un serveur prêt à déployer se trouve dans server/presence-server.js.',
+    lbl_chat_server:'URL du serveur de discussion (messages entre amis)', desc_chat_server:'Laisser vide pour désactiver. Déployez server/chat-server.ts sur Deno Deploy (gratuit, toujours actif).',
+    chat_no_server:'Aucun serveur de discussion configuré. Définissez l\'URL dans Paramètres → Amis & Bug Reports.', chat_select:'Sélectionnez un ami pour discuter.', chat_send:'Envoyer', ph_chat:'Écrivez un message...',
     lbl_bugreport_webhook:'URL du webhook de bug report (Discord ou compatible)',
     desc_bugreport_webhook:'Les rapports de bug sont envoyés ici directement — aucun compte GitHub requis.',
     ph_friend_add:'Envoyer une demande d\'ami par nom d\'utilisateur Minecraft',
@@ -2122,6 +2161,7 @@ const LANGS={
     fr_req_accept:'Accepter', fr_req_decline:'Refuser',
     fr_req_added:'{name} est maintenant votre ami.', fr_req_declined:'Demande de {name} refusée.',
     fr_req_accepted_you:'{name} a accepté votre demande d\'ami.',
+    fr_req_outgoing:'Demandes d\'ami envoyées', fr_req_to:'Demande d\'ami à {name}', fr_req_withdraw:'Retirer', fr_req_withdrawn:'Demande d\'ami à {name} retirée.',
     fr_status_online:'En ligne', fr_status_ingame:'En jeu', fr_status_offline:'Hors ligne',
     fr_last_seen:'vu {time}', fr_playing_on:'Joue sur {server}', fr_copy_uuid:'Copier l\'UUID',
     fr_copied:'UUID copié dans le presse-papiers.',
@@ -2155,7 +2195,7 @@ const LANGS={
   },
   es:{
     tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas',
-    tab_settings:'Ajustes', tab_logs:'Registros', tab_instances:'Instancias', tab_account:'Cuenta MC', tab_recent:'Recientes', tab_servers:'Servidores', tab_bugreport:'Reportar bug', tab_friends:'Amigos',
+    tab_settings:'Ajustes', tab_logs:'Registros', tab_instances:'Instancias', tab_account:'Cuenta MC', tab_recent:'Recientes', tab_servers:'Servidores', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
     h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
     h_logs:'Registros', h_instances:'Instancias', h_account:'Cuenta MC', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos',
     lbl_profile:'Perfil:', lbl_version:'Versión:', lbl_change_skin:'Cambiar Skin:', lbl_actions:'Acciones:', lbl_ram:'RAM:', lbl_instance:'Instancia:',
@@ -2223,6 +2263,8 @@ const LANGS={
     sec_social:'Amigos y Bug Reports',
     lbl_presence_server:'URL del servidor de presencia (estado en línea de amigos)',
     desc_presence_server:'Déjalo vacío para desactivar. Hay un servidor listo para desplegar en server/presence-server.js.',
+    lbl_chat_server:'URL del servidor de chat (mensajes entre amigos)', desc_chat_server:'Déjalo vacío para desactivar. Despliega server/chat-server.ts en Deno Deploy (gratis, siempre activo).',
+    chat_no_server:'No hay servidor de chat configurado. Define la URL en Ajustes → Amigos y Bug Reports.', chat_select:'Selecciona un amigo para chatear.', chat_send:'Enviar', ph_chat:'Escribe un mensaje...',
     lbl_bugreport_webhook:'URL del webhook de bug report (Discord o compatible)',
     desc_bugreport_webhook:'Los informes de bug se envían aquí directamente, sin cuenta de GitHub.',
     ph_friend_add:'Añadir amigo por nombre de usuario de Minecraft',
@@ -2238,6 +2280,7 @@ const LANGS={
     fr_req_accept:'Aceptar', fr_req_decline:'Rechazar',
     fr_req_added:'{name} ahora es tu amigo.', fr_req_declined:'Solicitud de {name} rechazada.',
     fr_req_accepted_you:'{name} aceptó tu solicitud de amistad.',
+    fr_req_outgoing:'Solicitudes de amistad enviadas', fr_req_to:'Solicitud de amistad a {name}', fr_req_withdraw:'Retirar', fr_req_withdrawn:'Solicitud de amistad a {name} retirada.',
     fr_status_online:'En línea', fr_status_ingame:'En juego', fr_status_offline:'Desconectado',
     fr_last_seen:'visto {time}', fr_playing_on:'Jugando en {server}', fr_copy_uuid:'Copiar UUID',
     fr_copied:'UUID copiado al portapapeles.',
@@ -6791,6 +6834,7 @@ document.getElementById('update-install-btn').addEventListener('click', async ()
 let friends = [];
 let friendStatuses = {};
 let friendRequests = [];
+let sentRequests = [];
 
 function hasPresenceServer(){
   return !!(settings && settings.presenceServer && String(settings.presenceServer).trim());
@@ -6955,7 +6999,11 @@ async function sendFriendRequest(){
       return;
     }
     if(r.status==='exists') flashMsg(fmtPlaceholder(t('fr_req_exists'),{name:display}));
-    else flashMsg(fmtPlaceholder(t('fr_req_sent'),{name:display}));
+    else {
+      sentRequests.push({ fromUuid:myUuid, toUuid:uuid, fromName:myName, toName:display });
+      renderFriendRequests();
+      flashMsg(fmtPlaceholder(t('fr_req_sent'),{name:display}));
+    }
   }catch{
     flashMsg(fmtPlaceholder(t('fr_not_found'),{name}));
   }
@@ -6983,49 +7031,91 @@ function renderFriendRequests(){
   const box=document.getElementById('friend-requests');
   if(!box) return;
   box.innerHTML='';
-  if(!friendRequests.length) return;
   const head=document.createElement('div');
   head.style.cssText='font-weight:bold;font-size:.85em;color:#aaa;margin-bottom:.4em';
-  head.textContent=t('fr_req_incoming');
-  box.appendChild(head);
-  for(const r of friendRequests){
-    const item=document.createElement('div');
-    item.className='friend-item';
-    const info=document.createElement('div');
-    info.className='friend-info';
-    const name=document.createElement('div');
-    name.className='friend-name';
-    name.textContent=r.fromName||'?';
-    info.appendChild(name);
-    const meta=document.createElement('div');
-    meta.className='friend-meta';
-    meta.textContent=r.message ? t('fr_req_wants')+': '+r.message : t('fr_req_wants');
-    info.appendChild(meta);
-    item.appendChild(info);
-    const actions=document.createElement('div');
-    actions.className='friend-actions';
-    const accBtn=document.createElement('button');
-    accBtn.className='btn';
-    accBtn.textContent=t('fr_req_accept');
-    accBtn.addEventListener('click',()=>respondToRequest(r,true));
-    const decBtn=document.createElement('button');
-    decBtn.className='btn';
-    decBtn.style.cssText='border-color:#f4444444;color:#f44';
-    decBtn.textContent=t('fr_req_decline');
-    decBtn.addEventListener('click',()=>respondToRequest(r,false));
-    actions.appendChild(accBtn);
-    actions.appendChild(decBtn);
-    item.appendChild(actions);
-    box.appendChild(item);
+  if(sentRequests.length){
+    head.textContent=t('fr_req_outgoing');
+    box.appendChild(head);
+    for(const r of sentRequests){
+      const item=document.createElement('div');
+      item.className='friend-item';
+      const info=document.createElement('div');
+      info.className='friend-info';
+      const name=document.createElement('div');
+      name.className='friend-name';
+      name.textContent=r.toName||'?';
+      info.appendChild(name);
+      const meta=document.createElement('div');
+      meta.className='friend-meta';
+      meta.textContent=fmtPlaceholder(t('fr_req_to'),{name:r.toName||'?'});
+      info.appendChild(meta);
+      item.appendChild(info);
+      const actions=document.createElement('div');
+      actions.className='friend-actions';
+      const wdBtn=document.createElement('button');
+      wdBtn.className='btn';
+      wdBtn.style.cssText='border-color:#f4444444;color:#f44';
+      wdBtn.textContent=t('fr_req_withdraw');
+      wdBtn.addEventListener('click',()=>withdrawRequest(r));
+      actions.appendChild(wdBtn);
+      item.appendChild(actions);
+      box.appendChild(item);
+    }
   }
+  if(friendRequests.length){
+    const head2=document.createElement('div');
+    head2.style.cssText='font-weight:bold;font-size:.85em;color:#aaa;margin-bottom:.4em'+(sentRequests.length?';margin-top:1em':'');
+    head2.textContent=t('fr_req_incoming');
+    box.appendChild(head2);
+    for(const r of friendRequests){
+      const item=document.createElement('div');
+      item.className='friend-item';
+      const info=document.createElement('div');
+      info.className='friend-info';
+      const name=document.createElement('div');
+      name.className='friend-name';
+      name.textContent=r.fromName||'?';
+      info.appendChild(name);
+      const meta=document.createElement('div');
+      meta.className='friend-meta';
+      meta.textContent=r.message ? t('fr_req_wants')+': '+r.message : t('fr_req_wants');
+      info.appendChild(meta);
+      item.appendChild(info);
+      const actions=document.createElement('div');
+      actions.className='friend-actions';
+      const accBtn=document.createElement('button');
+      accBtn.className='btn';
+      accBtn.textContent=t('fr_req_accept');
+      accBtn.addEventListener('click',()=>respondToRequest(r,true));
+      const decBtn=document.createElement('button');
+      decBtn.className='btn';
+      decBtn.style.cssText='border-color:#f4444444;color:#f44';
+      decBtn.textContent=t('fr_req_decline');
+      decBtn.addEventListener('click',()=>respondToRequest(r,false));
+      actions.appendChild(accBtn);
+      actions.appendChild(decBtn);
+      item.appendChild(actions);
+      box.appendChild(item);
+    }
+  }
+}
+
+async function withdrawRequest(req){
+  const myUuid=getMyUuid();
+  if(!myUuid) return;
+  const r=await ipcRenderer.invoke('presence-requests-withdraw',{ fromUuid:myUuid, toUuid:req.toUuid });
+  if(!r || !r.ok){ flashMsg(r && r.error==='no-server' ? t('fr_req_noserver') : t('fr_send_failed')); return; }
+  sentRequests=sentRequests.filter(x=>!(x.fromUuid===req.fromUuid && x.toUuid===req.toUuid));
+  renderFriendRequests();
+  flashMsg(fmtPlaceholder(t('fr_req_withdrawn'),{name:req.toName||'?'}));
 }
 
 async function refreshFriendRequests(){
   const box=document.getElementById('friend-requests');
   const myUuid=getMyUuid();
   if(!myUuid){ friendRequests=[]; if(box) box.innerHTML=''; return; }
-  let res={ requests:[], accepted:[] };
-  try{ res=await ipcRenderer.invoke('presence-requests-fetch', myUuid)||{requests:[],accepted:[]}; }catch{ res={requests:[],accepted:[]}; }
+  let res={ requests:[], sent:[], accepted:[] };
+  try{ res=await ipcRenderer.invoke('presence-requests-fetch', myUuid)||{requests:[],sent:[],accepted:[]}; }catch{ res={requests:[],sent:[],accepted:[]}; }
   const accepted=res.accepted||[];
   for(const a of accepted){
     if(!friends.some(f=>f.uuid===a.acceptor)){
@@ -7037,6 +7127,7 @@ async function refreshFriendRequests(){
     try{ await ipcRenderer.invoke('presence-requests-consume',{ uuid:myUuid, fromUuid:a.acceptor }); }catch{}
   }
   friendRequests=res.requests||[];
+  sentRequests=res.sent||[];
   renderFriendRequests();
 }
 
@@ -7049,9 +7140,180 @@ async function refreshFriendRequests(){
   const input=document.getElementById('friend-name-input');
   if(input) input.addEventListener('keydown',e=>{ if(e.key==='Enter') sendFriendRequest(); });
   reportPresence();
-  setInterval(()=>{ refreshFriendStatuses(); }, 15000);
+  setInterval(()=>{ refreshFriendStatuses(); renderChatFriends(); }, 15000);
   setInterval(()=>{ refreshFriendRequests(); }, 15000);
   setInterval(()=>{ reportPresence(); }, 30000);
+})();
+
+// ════════════════════════════════════════
+// CHAT (friend messaging, long-poll)
+// ════════════════════════════════════════
+let chatActive = null;
+let chatMsgs = {};
+let chatLastTs = {};
+let chatLooping = false;
+
+function chatConvKey(a,b){ return [a,b].sort().join(':'); }
+
+function hasChatServer(){ return !!(settings && settings.chatServer && String(settings.chatServer).trim()); }
+
+function refreshChat(){
+  const noServer=document.getElementById('chat-no-server');
+  const wrap=document.getElementById('chat-wrap');
+  const on=hasChatServer() && !!getMyUuid();
+  if(noServer) noServer.style.display = on ? 'none' : 'block';
+  if(wrap) wrap.style.display = on ? 'flex' : 'none';
+  if(!on){ chatActive=null; return; }
+  renderChatFriends();
+  chatLoop();
+}
+
+function renderChatFriends(){
+  const el=document.getElementById('chat-friends');
+  if(!el) return;
+  el.innerHTML='';
+  if(!friends.length){
+    const e=document.createElement('div');
+    e.style.cssText='color:#555;font-size:.85em;padding:.4em';
+    e.textContent=t('friends_empty');
+    el.appendChild(e);
+    return;
+  }
+  for(const f of friends){
+    const st=friendStatuses[f.uuid]||{ online:false };
+    const item=document.createElement('div');
+    item.className='chat-friend';
+    item.style.cssText='display:flex;align-items:center;gap:.5em;padding:.4em .5em;border-radius:.4em;cursor:pointer;border:1px solid #2a2a2a'+(chatActive===f.uuid?';background:#1a1a1a':'');
+    const dot=document.createElement('span');
+    dot.style.cssText='width:.6em;height:.6em;border-radius:50%;background:'+(st.online?'#1bd96a':'#555')+';flex:0 0 auto';
+    const nm=document.createElement('span');
+    nm.style.cssText='flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.85em;color:#ddd';
+    nm.textContent=f.name;
+    item.appendChild(dot);
+    item.appendChild(nm);
+    item.addEventListener('click',()=>openChat(f.uuid, f.name));
+    el.appendChild(item);
+  }
+}
+
+function openChat(uuid, name){
+  chatActive=uuid;
+  renderChatFriends();
+  const head=document.getElementById('chat-thread-header');
+  if(head) head.textContent=name||'?';
+  loadChatHistory();
+}
+
+async function loadChatHistory(){
+  const my=getMyUuid();
+  if(!my||!chatActive) return;
+  const conv=chatConvKey(my, chatActive);
+  let msgs=[];
+  try{
+    const res=await ipcRenderer.invoke('chat-history',{ from:my, to:chatActive, limit:50 });
+    msgs=(res&&res.messages)||[];
+  }catch{}
+  chatMsgs[conv]=[];
+  appendChatMsgs(msgs, true);
+}
+
+function appendChatMsgs(msgs, replace){
+  const my=getMyUuid();
+  if(!my||!chatActive) return;
+  const conv=chatConvKey(my, chatActive);
+  if(!chatMsgs[conv]) chatMsgs[conv]=[];
+  let changed=false;
+  for(const m of msgs){
+    if(!m || chatConvKey(m.from,m.to)!==conv) continue;
+    if(chatMsgs[conv].some(x=>x.id===m.id)) continue;
+    chatMsgs[conv].push(m);
+    chatLastTs[conv]=Math.max(chatLastTs[conv]||0, m.ts);
+    changed=true;
+  }
+  if(changed||replace) renderChatThread();
+}
+
+function renderChatThread(){
+  const thread=document.getElementById('chat-thread');
+  const empty=document.getElementById('chat-empty');
+  const my=getMyUuid();
+  if(!thread) return;
+  const conv=chatActive&&my?chatConvKey(my,chatActive):'';
+  const msgs=(chatMsgs[conv]||[]).slice().sort((a,b)=>a.ts-b.ts);
+  if(empty) empty.style.display = conv&&msgs.length ? 'none' : 'flex';
+  thread.innerHTML='';
+  for(const m of msgs){
+    const mine=m.from===my;
+    const wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;justify-content:'+(mine?'flex-end':'flex-start');
+    const bubble=document.createElement('div');
+    bubble.style.cssText='max-width:70%;padding:.45em .7em;border-radius:.6em;font-size:.85em;white-space:pre-wrap;word-break:break-word;'+(mine?'background:#1bd96a;color:#062':'background:#1e1e1e;color:#ddd');
+    const txt=document.createElement('div');
+    txt.textContent=m.text;
+    bubble.appendChild(txt);
+    const time=document.createElement('div');
+    time.style.cssText='font-size:.65em;opacity:.6;margin-top:.2em;text-align:'+(mine?'right':'left');
+    time.textContent=new Date(m.ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    bubble.appendChild(time);
+    wrap.appendChild(bubble);
+    thread.appendChild(wrap);
+  }
+  if(thread.scrollHeight>thread.clientHeight) thread.scrollTop=thread.scrollHeight;
+}
+
+async function chatSend(){
+  const input=document.getElementById('chat-input');
+  if(!input) return;
+  const text=(input.value||'').trim();
+  if(!text||!chatActive) return;
+  input.value='';
+  const my=getMyUuid();
+  const res=await ipcRenderer.invoke('chat-send',{ from:my, to:chatActive, text });
+  if(!res||!res.ok){
+    input.value=text;
+    flashMsg(res&&res.error==='no-server'?t('fr_req_noserver'):t('fr_send_failed'));
+    return;
+  }
+  const conv=chatConvKey(my,chatActive);
+  if(!chatMsgs[conv]) chatMsgs[conv]=[];
+  const m=res.msg;
+  if(m&&!chatMsgs[conv].some(x=>x.id===m.id)){
+    chatMsgs[conv].push(m);
+    chatLastTs[conv]=m.ts;
+    renderChatThread();
+  }
+}
+
+async function chatLoop(){
+  if(chatLooping) return;
+  chatLooping=true;
+  try{
+    while(chatActive){
+      const pg=document.getElementById('chat-page');
+      if(!pg || pg.style.display==='none' || pg.offsetParent===null) break;
+      const my=getMyUuid();
+      const to=chatActive;
+      if(!my||!hasChatServer()) break;
+      const conv=chatConvKey(my,to);
+      const after=chatLastTs[conv]||0;
+      let msgs=[];
+      try{
+        const res=await ipcRenderer.invoke('chat-poll',{ from:my, to, after });
+        msgs=(res&&res.messages)||[];
+      }catch{ msgs=[]; }
+      if(chatActive!==to) continue;
+      appendChatMsgs(msgs);
+    }
+  }finally{
+    chatLooping=false;
+  }
+}
+
+(function initChat(){
+  const sendBtn=document.getElementById('chat-send-btn');
+  if(sendBtn) sendBtn.addEventListener('click', chatSend);
+  const input=document.getElementById('chat-input');
+  if(input) input.addEventListener('keydown',e=>{ if(e.key==='Enter') chatSend(); });
 })();
 
 // ════════════════════════════════════════

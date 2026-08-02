@@ -188,8 +188,22 @@ const server = http.createServer(async (req, res) => {
     if (!uuid) { json(res, 400, { error: 'uuid required' }); return; }
     json(res, 200, {
       requests: db.requests.filter(r => r.toUuid === uuid),
+      sent: db.requests.filter(r => r.fromUuid === uuid),
       accepted: db.accepted.filter(a => a.requester === uuid)
     });
+    return;
+  }
+
+  if (p === '/v1/requests/withdraw' && req.method === 'POST') {
+    const body = await parseBody(req);
+    if (!body) { json(res, 400, { error: 'bad body' }); return; }
+    const fromUuid = normUuid(body.fromUuid);
+    const toUuid = normUuid(body.toUuid);
+    if (!fromUuid || !toUuid) { json(res, 400, { error: 'uuids required' }); return; }
+    const before = db.requests.length;
+    db.requests = db.requests.filter(r => !(r.fromUuid === fromUuid && r.toUuid === toUuid));
+    if (db.requests.length !== before) persistDebounced();
+    json(res, 200, { ok: true });
     return;
   }
 
