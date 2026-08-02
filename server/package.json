@@ -1,0 +1,13 @@
+{
+  "name": "crux-presence-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Crux Client presence + friend request server (dependency-free)",
+  "main": "presence-server.js",
+  "scripts": {
+    "start": "node presence-server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

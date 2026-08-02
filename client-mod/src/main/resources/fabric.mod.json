@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "torch-client",
+  "version": "${version}",
+  "name": "Torch Client",
+  "description": "Built-in client enhancements for Torch Launcher",
+  "authors": ["Torch"],
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.torch.client.TorchClientMod"]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "fabric": "*",
+    "minecraft": ">=1.20"
+  }
+}

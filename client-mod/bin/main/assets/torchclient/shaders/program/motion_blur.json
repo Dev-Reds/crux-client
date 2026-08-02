@@ -1,0 +1,8 @@
+{
+  "samplers": ["DiffuseSampler"],
+  "targets": ["swap", "main"],
+  "uniforms": [
+    { "name": "DiffuseSampler", "type": "sampler2D", "values": [0] },
+    { "name": "OutSize", "type": "vec2", "values": [0.0, 0.0] }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "targets": ["swap", "main"],
+  "passes": [
+    {
+      "name": "motion_blur",
+      "intarget": "main",
+      "outtarget": "swap",
+      "auxtargets": []
+    },
+    {
+      "name": "blit",
+      "intarget": "swap",
+      "outtarget": "main",
+      "auxtargets": []
+    }
+  ]
+}

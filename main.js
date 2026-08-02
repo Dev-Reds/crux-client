@@ -6,9 +6,13 @@ const fs   = require('fs');
 const path = require('path');
 const os   = require('os');
 const { URL } = require('url');
+const crypto = require('crypto');
 
 let mainWindow;
 let authWindow = null;
+
+// ── AppUserModelID (needed for proper taskbar pinning / grouping) ───────────
+try { app.setAppUserModelId('com.cruxclient.launcher'); } catch {}
 
 // ── Single instance lock ────────────────────────────────────────────────────
 const gotLock = app.requestSingleInstanceLock();
@@ -32,6 +36,14 @@ function logDebug(msg) {
 }
 process.on('uncaughtException', (err) => { logDebug('Uncaught: ' + err.stack); console.error('[Crux] Uncaught exception:', err); });
 process.on('unhandledRejection', (reason) => { logDebug('Unhandled: ' + reason); console.error('[Crux] Unhandled rejection:', reason); });
+
+// ── jszip (optional dependency, never abort module load if missing) ──────────
+let JSZip = null;
+try { JSZip = require('jszip'); } catch (e) { logDebug('jszip not available: ' + e.message); }
+function getJszip() {
+  if (!JSZip) throw new Error('jszip module not available');
+  return JSZip;
+}
 
 // ── Launcher RAM limit ────────────────────────────────────────────────────────
 try {
@@ -189,7 +201,15 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
 
 // Auto-stop servers on real quit (not when hiding)
 let isQuitting = false;
-app.on('before-quit', () => { isQuitting = true; stopAllServers(); });
+app.on('before-quit', () => {
+  isQuitting = true;
+  stopAllServers();
+  stopPlayitAgent();
+  // Best-effort: mark our presence offline before exiting
+  try {
+    if (myPresence) { myPresence.online = false; myPresence.inGame = false; postPresence(); }
+  } catch {}
+});
 
 // Override close to distinguish hide vs quit
 ipcMain.on('close-launcher', () => {
@@ -208,7 +228,8 @@ const saveSettings = async (data) => {
       'ram','ramUnit','theme','accentIdx','lang','javaPath','launcherRam',
       'selectedProfile','selectedAccount','recentHistory',
       'openLogsAfterLaunch','closeLauncherWhilePlaying','useOriginalLauncher',
-      'clientResourcePacks','autoUseResourcePacks'
+      'clientResourcePacks','autoUseResourcePacks',
+      'presenceServer','bugreportWebhook'
     ];
     const clean = {};
     for (const k of Object.keys(existing)) { if (KNOWN_KEYS.includes(k)) clean[k] = existing[k]; }
@@ -290,7 +311,7 @@ ipcMain.handle('get-custom-cape-state', async () => {
 });
 
 async function buildCustomCapeResourcePack(capeBuf) {
-  const JSZip = require('jszip');
+  const JSZip = getJszip();
   const zip = new JSZip();
   const packMeta = JSON.stringify({ pack:{ pack_format:15, description:'Crux Custom Cape' } });
   zip.file('pack.mcmeta', packMeta);
@@ -346,6 +367,272 @@ async function deployCustomCapeRp(optionsPath) {
   }
   return true;
 }
+
+// ── Friends & Presence ─────────────────────────────────────────────────────────
+const friendsPath = path.join(base, 'friends.json');
+ipcMain.handle('load-friends', async () => load(friendsPath, []));
+ipcMain.on('save-friends', async (e, d) => save(friendsPath, d));
+
+let myPresence = null;
+let presenceTimer = null;
+
+// Generic HTTP(S) request helper (returns { status, data, headers })
+function genericHttp(url, { method = 'GET', headers = {}, body = null, timeout = 8000 } = {}) {
+  return new Promise((resolve, reject) => {
+    const lib = String(url).startsWith('https') ? https : http;
+    const req = lib.request(url, { method, headers }, res => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => resolve({ status: res.statusCode, data, headers: res.headers }));
+    });
+    req.on('error', reject);
+    req.setTimeout(timeout, () => { req.destroy(); reject(new Error('Request timeout')); });
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
+async function postPresence() {
+  try {
+    const settings = await load(P.settings, {});
+    const srv = String(settings.presenceServer || '').trim();
+    if (!srv || !myPresence || !myPresence.uuid) return;
+    const url = srv.replace(/\/+$/, '') + '/v1/status';
+    await genericHttp(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(myPresence)
+    });
+  } catch {}
+}
+
+function schedulePresence() {
+  if (presenceTimer) clearInterval(presenceTimer);
+  presenceTimer = setInterval(postPresence, 15000);
+  postPresence();
+}
+
+ipcMain.on('presence-update', (e, data) => {
+  myPresence = {
+    uuid: String(data.uuid || '').replace(/-/g, '').toLowerCase(),
+    username: String(data.username || ''),
+    online: !!data.online,
+    inGame: !!data.inGame,
+    server: data.server || null,
+    instanceName: data.instanceName || null
+  };
+  if (myPresence.uuid) schedulePresence();
+});
+
+ipcMain.handle('presence-fetch', async (e, uuids) => {
+  try {
+    const settings = await load(P.settings, {});
+    const srv = String(settings.presenceServer || '').trim();
+    const list = (uuids || []).map(u => String(u).replace(/-/g, '').toLowerCase()).filter(Boolean);
+    if (!srv || !list.length) return { friends: {} };
+    const url = srv.replace(/\/+$/, '') + '/v1/status?friends=' + list.map(encodeURIComponent).join(',');
+    const res = await genericHttp(url, {});
+    if (res.status !== 200) return { friends: {} };
+    try { return JSON.parse(res.data); } catch { return { friends: {} }; }
+  } catch { return { friends: {} }; }
+});
+
+async function presenceServerUrl() {
+  const s = await load(P.settings, {});
+  return String(s.presenceServer || '').trim().replace(/\/+$/, '');
+}
+
+function normUuidArg(u) {
+  return String(u || '').replace(/-/g, '').toLowerCase();
+}
+
+ipcMain.handle('presence-requests-fetch', async (e, uuid) => {
+  try {
+    const srv = await presenceServerUrl();
+    const id = normUuidArg(uuid);
+    if (!srv || !id) return { requests: [], accepted: [] };
+    const res = await genericHttp(srv + '/v1/requests?uuid=' + encodeURIComponent(id), {});
+    if (res.status !== 200) return { requests: [], accepted: [] };
+    try { return JSON.parse(res.data); } catch { return { requests: [], accepted: [] }; }
+  } catch { return { requests: [], accepted: [] }; }
+});
+
+ipcMain.handle('presence-requests-send', async (e, data) => {
+  try {
+    const srv = await presenceServerUrl();
+    if (!srv) return { ok: false, error: 'no-server' };
+    const res = await genericHttp(srv + '/v1/requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fromUuid: normUuidArg(data && data.fromUuid),
+        fromName: String((data && data.fromName) || ''),
+        toUuid: normUuidArg(data && data.toUuid),
+        toName: String((data && data.toName) || '')
+      })
+    });
+    if (res.status !== 200) return { ok: false, error: 'http' };
+    try { return JSON.parse(res.data); } catch { return { ok: false, error: 'http' }; }
+  } catch { return { ok: false, error: 'network' }; }
+});
+
+ipcMain.handle('presence-requests-respond', async (e, data) => {
+  try {
+    const srv = await presenceServerUrl();
+    if (!srv) return { ok: false };
+    await genericHttp(srv + '/v1/requests/respond', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fromUuid: normUuidArg(data && data.fromUuid),
+        toUuid: normUuidArg(data && data.toUuid),
+        accept: !!(data && data.accept),
+        acceptorName: String((data && data.acceptorName) || '')
+      })
+    });
+    return { ok: true };
+  } catch { return { ok: false }; }
+});
+
+ipcMain.handle('presence-requests-consume', async (e, data) => {
+  try {
+    const srv = await presenceServerUrl();
+    if (!srv) return { ok: false };
+    await genericHttp(srv + '/v1/requests/consume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uuid: normUuidArg(data && data.uuid),
+        fromUuid: normUuidArg(data && data.fromUuid)
+      })
+    });
+    return { ok: true };
+  } catch { return { ok: false }; }
+});
+
+// ── Bug Report (no GitHub account required) ────────────────────────────────────
+function isDiscordWebhook(url) {
+  return /discord(app)?\.com\/api\/webhooks/i.test(url);
+}
+
+function buildMultipart(fields, fileField, filename, fileBuf, contentType) {
+  const boundary = '----Crux' + Date.now().toString(16) + Math.random().toString(16).slice(2);
+  const chunks = [];
+  for (const [k, v] of Object.entries(fields)) {
+    chunks.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${k}"\r\n\r\n${v}\r\n`));
+  }
+  chunks.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${fileField}"; filename="${filename}"\r\nContent-Type: ${contentType}\r\n\r\n`));
+  chunks.push(fileBuf);
+  chunks.push(Buffer.from(`\r\n--${boundary}--\r\n`));
+  return { boundary, body: Buffer.concat(chunks) };
+}
+
+async function collectBugReportContext(report) {
+  const settings = await load(P.settings, {});
+  const accs = await load(P.accounts, []);
+  const lines = [];
+  lines.push('Crux Client Bug Report');
+  lines.push('======================');
+  lines.push('');
+  lines.push('Title: ' + (report.title || ''));
+  lines.push('Category: ' + (report.category || ''));
+  lines.push('Description: ' + (report.description || ''));
+  lines.push('');
+  lines.push('--- System ---');
+  lines.push('OS: ' + os.type() + ' ' + os.release() + ' (' + process.platform + ' ' + process.arch + ')');
+  lines.push('Node: ' + process.versions.node);
+  lines.push('Electron: ' + process.versions.electron);
+  lines.push('Launcher version: ' + (app.getVersion ? app.getVersion() : ''));
+  lines.push('Total RAM: ' + Math.round(os.totalmem() / 1073741824) + ' GB');
+  lines.push('Launcher RAM: ' + (settings.launcherRam || 2) + ' GB');
+  lines.push('');
+  lines.push('--- Account ---');
+  lines.push('Username: ' + ((accs[0] && accs[0].name) || 'not logged in'));
+  lines.push('');
+  lines.push('--- Settings (no sensitive data) ---');
+  lines.push('RAM: ' + (settings.ram || ''));
+  lines.push('Theme: ' + (settings.theme || ''));
+  lines.push('Language: ' + (settings.lang || ''));
+  lines.push('Selected profile: ' + (settings.selectedProfile || ''));
+  lines.push('Last played: ' + ((settings.recentHistory || [])[0] && settings.recentHistory[0].version) || '');
+  lines.push('Presence server set: ' + (!!(settings.presenceServer && String(settings.presenceServer).trim())));
+  lines.push('');
+  lines.push('--- Launcher log (last 200 lines) ---');
+  try {
+    const log = fs.readFileSync(logFile, 'utf8');
+    lines.push(log.split('\n').slice(-200).join('\n'));
+  } catch {}
+  if (report.includeLogs) {
+    for (const inst of Object.values(instances)) {
+      lines.push('');
+      lines.push('--- Instance log: ' + inst.id + ' (' + (inst.status || '?') + ') ---');
+      lines.push((inst.logs || []).slice(-300).join('\n'));
+    }
+    const latest = path.join(P.mc, 'logs', 'latest.log');
+    try {
+      const content = await fs.promises.readFile(latest, 'utf8');
+      lines.push('');
+      lines.push('--- Minecraft latest.log (last 200 lines) ---');
+      lines.push(content.split('\n').slice(-200).join('\n'));
+    } catch {}
+    try {
+      const crashDir = path.join(P.mc, 'crash-reports');
+      const files = fs.readdirSync(crashDir).filter(f => f.endsWith('.txt')).sort();
+      if (files.length) {
+        const f = files[files.length - 1];
+        lines.push('');
+        lines.push('--- Latest crash report: ' + f + ' (first 120 lines) ---');
+        lines.push((await fs.promises.readFile(path.join(crashDir, f), 'utf8')).split('\n').slice(0, 120).join('\n'));
+      }
+    } catch {}
+  }
+  return lines.join('\n');
+}
+
+ipcMain.handle('send-bugreport', async (e, report) => {
+  try {
+    const settings = await load(P.settings, {});
+    const webhook = String(settings.bugreportWebhook || '').trim();
+    if (!webhook) return { success: false, error: 'NO_WEBHOOK' };
+    const text = await collectBugReportContext(report);
+    const title = String(report.title || 'Bug Report');
+    const category = String(report.category || 'Other');
+    const head = `**New Bug Report** (${category}) — ${title}`;
+
+    if (isDiscordWebhook(webhook)) {
+      const filename = 'bug-report-' + Date.now() + '.txt';
+      const m = buildMultipart({ content: head }, 'file', filename, Buffer.from(text, 'utf8'), 'text/plain');
+      const res = await genericHttp(webhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'multipart/form-data; boundary=' + m.boundary },
+        body: m.body,
+        timeout: 15000
+      });
+      if (res.status >= 200 && res.status < 300) return { success: true };
+      return { success: false, error: 'HTTP ' + res.status, body: res.data.slice(0, 500) };
+    }
+
+    // Generic webhook: JSON with embed
+    const payload = {
+      content: head,
+      embeds: [{
+        title,
+        description: String(report.description || 'No description').slice(0, 3500),
+        fields: [{ name: 'Details', value: '```text\n' + text.slice(0, 3900).replace(/`/g, '`\u200b') + '\n```' }]
+      }]
+    };
+    const res = await genericHttp(webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      timeout: 15000
+    });
+    if (res.status >= 200 && res.status < 300) return { success: true };
+    return { success: false, error: 'HTTP ' + res.status, body: res.data.slice(0, 500) };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
 
 let mcVersionList = [];
 
@@ -733,8 +1020,8 @@ ipcMain.on('launch-minecraft', async (event, data) => {
   lastLaunchData = data;
   const { version, javaPath, ram, ramUnit, profileMods, clientMods, clientResourcePacks, useClientMods, useClientRPs, accessToken, uuid, playerName: rawPlayerName, modLoader, useOriginalLauncher, profileId, profileName, mrpackMods, mrpackRPs, renderApi } = data;
 
-  // Prefix player name with Crux for all launched instances
-  const playerName = rawPlayerName ? `Crux ${rawPlayerName}` : 'Player';
+  // Valid Minecraft username (no spaces / invalid chars)
+  const playerName = (rawPlayerName || 'Player').replace(/[^a-zA-Z0-9_.-]/g, '_').slice(0, 16);
 
   // RAM
   let maxRam, minRam;
@@ -1426,6 +1713,15 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             }
           }
           const latestVer = versions[0];
+          // Guard against the "latest version anyway" fallback: never deploy a
+          // mod whose newest release does not support this MC version. Deploying
+          // an incompatible jar (e.g. LazyDFU 0.1.3 on 1.21.x) crashes Minecraft
+          // at startup with a Mixin error.
+          if (latestVer && Array.isArray(latestVer.game_versions) && latestVer.game_versions.length && !latestVer.game_versions.includes(version)) {
+            unavailableMods.add(mod.modrinthId);
+            send('instance-log', { instanceId, line:`[MODS] ${mod.name} — newest version ${latestVer.version_number || latestVer.id} does not support MC ${version} (${latestVer.game_versions[latestVer.game_versions.length-1]}), disabled` });
+            continue;
+          }
           const deps = latestVer.dependencies || [];
           modDepInfo.set(mod.modrinthId, deps);
           versionCache.set(mod.modrinthId, latestVer);
@@ -1528,7 +1824,17 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           if (hasJar) { deployed++; continue; }
 
           const cached = versionCache.get(mod.modrinthId);
-          const versionData = cached || await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version`).catch(() => null);
+          let versionData = cached;
+          if (!versionData) {
+            const allVersions = await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version`).catch(() => null);
+            if (!allVersions || !allVersions.length) continue;
+            // Pick the newest version that actually supports this MC version
+            versionData = allVersions.find(v => (v.game_versions || []).includes(version));
+            if (!versionData) {
+              send('instance-log', { instanceId, line:`[MODS] ${mod.name} — no version supports MC ${version}, disabled` });
+              continue;
+            }
+          }
           if (!versionData) continue;
 
           const file = versionData.files.find(f => f.primary) || versionData.files[0];
@@ -2361,7 +2667,6 @@ function showCrashWindow(instanceId, code, log) {
 // ── Update ────────────────────────────────────────────────────────────────────
 const CURRENT_VERSION = require('./package.json').version;
 const GITHUB_REPO = 'Dev-Reds/crux-client';
-const JSZip = require('jszip');
 
 function updateLog(msg) {
   console.log('[Crux Update]', msg);
@@ -2557,6 +2862,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
   } else {
     // Dev mode: extract zip over source files
     updateLog('Dev mode detected — extracting zip...');
+    if (!JSZip) throw new Error('jszip module not available');
     const buffer = await downloadBuffer(downloadUrl);
     const zip = await JSZip.loadAsync(buffer);
     const appDir = __dirname;
@@ -2898,6 +3204,10 @@ ipcMain.on('start-server', async (event, serverConfig) => {
     '-port', String(port || 25565),
   ];
 
+  // Kill leftover java processes that still lock this server's files
+  // (orphans from a previous launcher session would block session.lock / latest.log)
+  await killOrphanedServerProcesses(serverDir);
+
   const proc = cp.spawn(`"${javaPath}"`, args, {
     cwd: serverDir,
     shell: true,
@@ -3094,6 +3404,215 @@ ipcMain.handle('delete-temp', async (e, filePath) => {
   try { await fs.promises.unlink(filePath); } catch {}
 });
 ipcMain.on('renderer-log', (e, msg) => { logDebug('[RENDERER] ' + msg); });
+
+// ── playit.gg (free tunnel / custom domain for servers) ─────────────────────
+const PLAYIT_AGENT_VERSION = '0.17.1';
+const PLAYIT_DOWNLOAD_URL = 'https://github.com/playit-cloud/playit-agent/releases/download/v0.17.1/playit-windows-x86_64-signed.exe';
+const PLAYIT_DIR = path.join(base, 'playit');
+const PLAYIT_EXE = path.join(PLAYIT_DIR, 'playit.exe');
+const PLAYIT_LOG = path.join(PLAYIT_DIR, 'playit.log');
+const PLAYIT_API = 'https://api.playit.gg';
+let playitProcess = null;
+
+function playitConfigPath() {
+  const local = process.env.LOCALAPPDATA || path.join(process.env.APPDATA || '', '..', 'Local');
+  return path.join(local, 'playit_gg', 'playit.toml');
+}
+function readPlayitSecret() {
+  try {
+    const p = playitConfigPath();
+    if (!fs.existsSync(p)) return null;
+    let c = fs.readFileSync(p, 'utf8').trim();
+    if (c.includes('=')) {
+      const m = c.match(/secret_key\s*=\s*"([^"]+)"/) || c.match(/secret_key\s*=\s*'([^']+)'/);
+      if (!m) return null;
+      c = m[1].trim();
+    }
+    return /^[0-9a-fA-F]{16,}$/.test(c) ? c : null;
+  } catch { return null; }
+}
+function writePlayitSecret(secret) {
+  fs.mkdirSync(path.dirname(playitConfigPath()), { recursive: true });
+  fs.writeFileSync(playitConfigPath(), 'secret_key = "' + secret + '"\n');
+}
+function playitApi(path_, body, secret) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify(body || {});
+    const u = new URL(PLAYIT_API + path_);
+    const headers = {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(payload),
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Crux-Launcher'
+    };
+    if (secret) headers['Authorization'] = 'agent-key ' + secret;
+    const req = https.request({ hostname: u.hostname, path: u.pathname + u.search, method: 'POST', headers }, r => {
+      let d = ''; r.on('data', c => d += c);
+      r.on('end', () => {
+        try { resolve(JSON.parse(d)); }
+        catch (e) { reject(new Error('playit parse error: ' + d.slice(0, 200))); }
+      });
+    });
+    req.on('error', reject); req.write(payload); req.end();
+    req.setTimeout(25000, () => { req.destroy(); reject(new Error('playit api timeout')); });
+  });
+}
+function stopPlayitAgent() {
+  if (playitProcess && playitProcess.exitCode === null) {
+    try { playitProcess.kill(); } catch {}
+    playitProcess = null;
+  }
+}
+
+ipcMain.handle('playit-download', async (e) => {
+  try { if (fs.existsSync(PLAYIT_EXE) && fs.statSync(PLAYIT_EXE).size > 1000000) return { ok: true, path: PLAYIT_EXE }; } catch {}
+  fs.mkdirSync(PLAYIT_DIR, { recursive: true });
+  try {
+    await downloadFile(PLAYIT_DOWNLOAD_URL, PLAYIT_EXE, (p) => {
+      if (e.sender) e.sender.send('playit-download-progress', Math.round(p));
+    });
+    return { ok: true, path: PLAYIT_EXE };
+  } catch (err) {
+    logDebug('playit download failed: ' + err.message);
+    return { ok: false, error: err.message };
+  }
+});
+function playitTunnelTargetPort(t) {
+  if (!t) return null;
+  if (t.target != null) {
+    const tg = t.target;
+    if (typeof tg === 'number') return tg;
+    if (typeof tg === 'object') return tg.port != null ? Number(tg.port) : null;
+    const m = String(tg).match(/:(\d+)\s*$/);
+    return m ? Number(m[1]) : null;
+  }
+  const fields = t.agent_config && t.agent_config.fields;
+  if (Array.isArray(fields)) {
+    const lp = fields.find(f => f && f.name === 'local_port' || f && f.name === 'localPort');
+    if (lp && lp.value != null) return Number(lp.value);
+  }
+  return null;
+}
+ipcMain.handle('playit-status', async () => {
+  const secret = readPlayitSecret();
+  let claimed = !!secret, running = false, addresses = [], tunnels = [], agentId = null, accountUrl = null, error = null;
+  if (playitProcess && playitProcess.exitCode === null) running = true;
+  if (secret) {
+    try {
+      const res = await playitApi('/v1/agents/rundata', {}, secret);
+      if (res.status === 'success' && res.data) {
+        agentId = res.data.agent_id;
+        addresses = (res.data.tunnels || []).map(t => t.display_address).filter(Boolean);
+        tunnels = (res.data.tunnels || []).map(t => ({ address: t.display_address, targetPort: playitTunnelTargetPort(t) })).filter(t => t.address);
+        accountUrl = 'https://playit.gg/account/agents/' + agentId;
+      } else {
+        error = (res.data && res.data.type) || 'playit-api-error';
+        claimed = false;
+      }
+    } catch (err) { error = err.message; }
+  }
+  return { claimed, running, addresses, tunnels, agentId, accountUrl, error, secretExists: !!secret };
+});
+ipcMain.handle('playit-claim-begin', async () => {
+  const code = crypto.randomBytes(5).toString('hex');
+  return { code, url: 'https://playit.gg/claim/' + code };
+});
+ipcMain.handle('playit-claim-poll', async (e, code) => {
+  try {
+    const setup = await playitApi('/claim/setup', { code, agent_type: 'assignable', version: 'playit-cli ' + PLAYIT_AGENT_VERSION });
+    const state = setup.status === 'success' ? setup.data : null;
+    if (state === 'UserAccepted') {
+      const exch = await playitApi('/claim/exchange', { code });
+      if (exch.status === 'success' && exch.data && exch.data.secret_key) {
+        writePlayitSecret(exch.data.secret_key);
+        return { state: 'accepted' };
+      }
+      return { state: 'error', message: 'exchange failed' };
+    }
+    return { state: (state === 'WaitingForUserVisit' || state === 'WaitingForUser') ? 'waiting' : (state || 'error'), message: state === 'UserRejected' ? 'rejected' : undefined };
+  } catch (err) { return { state: 'error', message: err.message }; }
+});
+ipcMain.handle('playit-start', async () => {
+  const secret = readPlayitSecret();
+  if (!secret) return { ok: false, error: 'not-claimed' };
+  if (playitProcess && playitProcess.exitCode === null) return { ok: true, pid: playitProcess.pid };
+  if (!fs.existsSync(PLAYIT_EXE)) return { ok: false, error: 'not-downloaded' };
+  let logFds = [];
+  try {
+    logFds = [fs.openSync(PLAYIT_LOG, 'a'), fs.openSync(PLAYIT_LOG, 'a')];
+  } catch (err) { return { ok: false, error: 'could not open playit log: ' + err.message }; }
+  try {
+    playitProcess = spawn(PLAYIT_EXE, ['--stdout'], { stdio: ['ignore', logFds[0], logFds[1]], windowsHide: true });
+    playitProcess.on('exit', () => {
+      for (const fd of logFds) { try { fs.closeSync(fd); } catch {} }
+      playitProcess = null;
+    });
+  } catch (err) {
+    for (const fd of logFds) { try { fs.closeSync(fd); } catch {} }
+    return { ok: false, error: err.message };
+  }
+  return { ok: true, pid: playitProcess.pid };
+});
+ipcMain.handle('playit-create-tunnel', async (e, opts) => {
+  const secret = readPlayitSecret();
+  if (!secret) return { ok: false, error: 'not-claimed' };
+  const port = opts && opts.port ? Number(opts.port) : 25565;
+  const name = (opts && opts.name) || 'Crux Server';
+  try {
+    const rd = await playitApi('/v1/agents/rundata', {}, secret);
+    if (rd.status !== 'success') {
+      const t = rd.data && rd.data.type;
+      return { ok: false, error: (t === 'auth' ? 'invalid-secret' : t) || 'rundata-failed' };
+    }
+    const agentId = rd.data.agent_id;
+    const buildReq = (withPort) => ({
+      name,
+      protocol: { type: 'tunnel-type', details: 'minecraft-java' },
+      origin: {
+        type: 'agent',
+        data: {
+          agent_id: agentId,
+          config: { fields: [{ name: 'local_ip', value: '127.0.0.1' }].concat(withPort ? [{ name: 'local_port', value: String(port) }] : []) }
+        }
+      },
+      endpoint: { type: 'region', details: { region: 'global', port: null } },
+      enabled: true
+    });
+    let created = await playitApi('/v1/tunnels/create', buildReq(true), secret);
+    if (!(created.status === 'success' && created.data && created.data.id)) {
+      created = await playitApi('/v1/tunnels/create', buildReq(false), secret);
+    }
+    if (!(created.status === 'success' && created.data && created.data.id)) {
+      const authMsg = created.data && created.data.type === 'auth' ? (created.data.message || '') : '';
+      if (authMsg) {
+        return { ok: false, error: 'auth', message: authMsg, agentId };
+      }
+      const t = created.data && created.data.type;
+      return { ok: false, error: (t === 'auth' ? 'invalid-secret' : t) || 'create-failed' };
+    }
+    const tunnelId = created.data.id;
+    let address = null;
+    for (let i = 0; i < 20 && !address; i++) {
+      await new Promise(r => setTimeout(r, 1500));
+      const rd2 = await playitApi('/v1/agents/rundata', {}, secret);
+      if (rd2.status === 'success') {
+        const t = (rd2.data.tunnels || []).find(x => x.id === tunnelId);
+        if (t && t.display_address) address = t.display_address;
+      }
+    }
+    return { ok: true, tunnelId, address };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+ipcMain.handle('playit-stop', async () => {
+  stopPlayitAgent();
+  return { ok: true };
+});
+ipcMain.handle('playit-log', async () => {
+  try { return fs.readFileSync(PLAYIT_LOG, 'utf8').slice(-4000); } catch { return ''; }
+});
+
 ipcMain.handle('save-mrpack-mods', async (e, { profileId, files }) => {
   const dir = path.join(base, 'modpacks', profileId);
   await fs.promises.mkdir(dir, { recursive: true });
@@ -3107,12 +3626,39 @@ ipcMain.handle('save-mrpack-mods', async (e, { profileId, files }) => {
   return results;
 });
 
+// Kill any leftover java process still holding a server directory's locks
+// (orphans from a previous launcher session keep session.lock / logs/latest.log)
+function killOrphanedServerProcesses(serverDir) {
+  return new Promise((resolve) => {
+    const cp = require('child_process');
+    const needle = String(serverDir || '').replace(/\//g, '\\').toLowerCase();
+    if (!needle) return resolve();
+    const ps = 'powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name=\'java.exe\' or Name=\'javaw.exe\'\" | Select-Object ProcessId,CommandLine | ConvertTo-Json -Compress"';
+    cp.exec(ps, { timeout: 8000, windowsHide: true }, (err, stdout) => {
+      if (err || !stdout) return resolve();
+      let procs = [];
+      try {
+        const parsed = JSON.parse(stdout);
+        procs = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+      } catch { return resolve(); }
+      const targets = procs.filter(p => p && p.ProcessId && (String(p.CommandLine || '').replace(/\//g, '\\').toLowerCase().includes(needle)));
+      let pending = targets.length;
+      if (!pending) return resolve();
+      for (const t of targets) {
+        cp.exec(`taskkill /PID ${t.ProcessId} /F /T`, { windowsHide: true }, () => { if (--pending <= 0) resolve(); });
+      }
+    });
+  });
+}
+
 // Stop all servers (called on app quit)
 function stopAllServers() {
+  const cp = require('child_process');
   for (const [id, srv] of Object.entries(serverProcesses)) {
     if (srv.status === 'running' && srv.process) {
       try { srv.process.stdin.write('stop\n'); } catch {}
-      try { srv.process.kill('SIGKILL'); } catch {}
+      // kill the whole tree (cmd.exe -> java), proc.kill alone leaves java orphans
+      if (srv.process.pid) { try { cp.exec(`taskkill /PID ${srv.process.pid} /F /T`, () => {}); } catch {} }
       srv.status = 'stopped';
     }
   }
@@ -3247,7 +3793,7 @@ async function patchResourcePackFormat(filePath, version) {
   const pf = packFormatForVersion(version);
   if (!pf) return false;
   try {
-    const JSZip = require('jszip');
+    const JSZip = getJszip();
     const buf = fs.readFileSync(filePath);
     const zip = await JSZip.loadAsync(buf);
     const meta = zip.file('pack.mcmeta');

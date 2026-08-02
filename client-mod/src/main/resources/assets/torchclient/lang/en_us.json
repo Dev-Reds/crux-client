@@ -1,0 +1,13 @@
+{
+  "key.torchclient.menu": "Open Torch Client Menu",
+  "key.torchclient.category": "Torch Client",
+  "feature.torchclient.zoom": "Zoom",
+  "feature.torchclient.fullbright": "Fullbright",
+  "feature.torchclient.betterTooltips": "Better Tooltips",
+  "feature.torchclient.hitboxColors": "Colored Hitboxes",
+  "feature.torchclient.motionBlur": "Motion Blur",
+  "gui.torchclient.title": "Torch Client",
+  "gui.torchclient.close": "Close",
+  "gui.torchclient.enabled": "ON",
+  "gui.torchclient.disabled": "OFF"
+}

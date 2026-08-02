@@ -66,6 +66,8 @@ body.light input::placeholder{color:#777;}
 body.light .skin-change-label{color:#666;}
 body.light .skin-name-display, body.light .skin-version-display{color:#111;}
 body.light #skin-url-input{background:#fff!important;color:#111!important;border-color:#ccc!important;}
+body.light #presence-server-input, body.light #bugreport-webhook-input, body.light #bugreport-title, body.light #bugreport-desc{background:#fff!important;color:#111!important;border-color:#ccc!important;}
+body.light #presence-server-input::placeholder, body.light #bugreport-webhook-input::placeholder, body.light #bugreport-title::placeholder, body.light #bugreport-desc::placeholder{color:#777!important;}
 body.light #skin-url-input::placeholder{color:#777!important;}
 body.light .btn:hover{background:#eee;}
 body.light h1{color:#111;}
@@ -135,6 +137,29 @@ body.light .server-type-card.sel{background:#ddeeff;border-color:var(--acc);}
 .server-mod-added-tag .mod-tag-remove:hover{color:#f44;}
 body.light .server-mod-result{border-bottom-color:#eee;color:#111;}
 body.light .server-mod-added-tag{background:#eee;border-color:#ccc;color:#333;}
+
+/* ── Friends ── */
+.friend-list{display:flex;flex-direction:column;gap:.5em;}
+.friend-item{display:flex;align-items:center;gap:.8em;padding:.6em .8em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);}
+.friend-item .friend-head{width:2.2em;height:2.2em;border-radius:.2em;image-rendering:pixelated;background:#222;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#666;}
+.friend-item .friend-info{flex:1;min-width:0;}
+.friend-item .friend-name{font-weight:bold;font-size:.9em;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.friend-item .friend-meta{font-size:.72em;color:#555;margin-top:.15em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.friend-item .friend-status{width:.6em;height:.6em;border-radius:50%;flex-shrink:0;margin:0 .2em;}
+.friend-item .friend-status.online{background:#1bd96a;box-shadow:0 0 6px #1bd96a88;}
+.friend-item .friend-status.ingame{background:#3aa0ff;box-shadow:0 0 6px #3aa0ff88;}
+.friend-item .friend-status.offline{background:#555;}
+.friend-item .friend-actions{display:flex;gap:.3em;flex-shrink:0;}
+.friend-item .btn{width:auto;padding:.3em .6em;font-size:.7em;}
+.friend-add-row{display:flex;gap:.4em;margin-bottom:1.2em;max-width:520px;}
+.friend-add-row input{flex:1;padding:.5em .8em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none;min-width:0;}
+.friend-add-row input:focus{border-color:var(--acc);}
+.friend-add-row .btn{width:auto;white-space:nowrap;}
+body.light .friend-item{background:#fff;border-color:#ddd;}
+body.light .friend-item .friend-name{color:#111;}
+body.light .friend-add-row input{background:#fff;color:#111;border-color:#ccc;}
+body.light .friend-add-row input::placeholder{color:#777;}
+body.light .friend-item .friend-head{background:#eee;}
 body.light .mod-toggle{border-color:#ccc;color:#888;}
 body.light .mod-remove{border-color:#ccc;color:#888;}
 body.light #client-rp-input{background:#fff!important;color:#111!important;border-color:#ccc!important;}
@@ -363,6 +388,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     <button class="tb-btn" data-page="mods-page" data-i18n="tab_mods">Client Options</button>
     <button class="tb-btn" data-page="profiles-page" data-i18n="tab_profiles">Profiles</button>
     <button class="tb-btn" data-page="cape-page" data-i18n="tab_cape">Capes</button>
+    <button class="tb-btn" data-page="friends-page" data-i18n="tab_friends">Friends</button>
     <button class="tb-btn" data-page="settings-page" data-i18n="tab_settings">Settings</button>
     <button class="tb-btn" data-page="logs-page" data-i18n="tab_logs">Logs<span id="running-badge" style="display:none;margin-left:.3em;background:#1bd96a;color:#000;border-radius:999px;font-size:.7em;padding:.05em .45em;font-weight:bold"></span></button>
     <button class="tb-btn" data-page="instances-page" data-i18n="tab_instances">Instances</button>
@@ -615,6 +641,20 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
           <input type="checkbox" id="close-launcher-toggle" style="width:1.1em;height:1.1em;cursor:pointer">
           <span data-i18n="after_launch_close">Close launcher while playing</span>
         </label>
+      </div>
+
+      <div class="settings-section">
+        <h2 data-i18n="sec_social">Friends &amp; Bug Reports</h2>
+        <div class="form-row" style="max-width:100%">
+          <label data-i18n="lbl_presence_server">Presence server URL (Friends online status)</label>
+          <input type="text" id="presence-server-input" placeholder="https://your-presence-server.example.com" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
+          <div class="status-text" data-i18n="desc_presence_server">Leave empty to disable. A ready-to-deploy server is in server/presence-server.js.</div>
+        </div>
+        <div class="form-row" style="max-width:100%">
+          <label data-i18n="lbl_bugreport_webhook">Bug report webhook URL (Discord or compatible)</label>
+          <input type="text" id="bugreport-webhook-input" placeholder="https://discord.com/api/webhooks/..." style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
+          <div class="status-text" data-i18n="desc_bugreport_webhook">Bug reports are sent here directly — no GitHub account needed.</div>
+        </div>
       </div>
 
       <div class="settings-section">
@@ -1006,6 +1046,17 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       </div>
     </div>
 
+    <!-- ── playit.gg modal ── -->
+    <div id="playit-modal" class="modal-overlay" style="display:none;z-index:2300">
+      <div class="modal" style="max-width:560px">
+        <div class="modal-header">
+          <h2><span style="color:#7c6cf0">playit.gg</span> — <span id="playit-server-name"></span></h2>
+          <button class="btn modal-close" id="playit-modal-close">✕</button>
+        </div>
+        <div class="modal-body" id="playit-modal-body"></div>
+      </div>
+    </div>
+
     <!-- ══ ACCOUNT ══ -->
     <div id="account-page" class="page" style="display:none">
       <h1 data-i18n="h_account">MC Account</h1>
@@ -1020,13 +1071,54 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       </div>
     </div>
 
+    <!-- ══ FRIENDS ══ -->
+    <div id="friends-page" class="page" style="display:none">
+      <h1 data-i18n="h_friends">Friends</h1>
+      <div class="friend-add-row">
+        <input type="text" id="friend-name-input" data-i18n-ph="ph_friend_add" placeholder="Send friend request by Minecraft username">
+        <button class="btn" id="friend-add-btn" data-i18n="add_friend">+ Send Request</button>
+      </div>
+      <p class="status-text" id="friend-status-msg"></p>
+      <div id="friend-requests" style="max-width:520px;margin-bottom:1.2em"></div>
+      <div id="friend-list" class="friend-list" style="max-width:520px"></div>
+      <div id="friend-empty" class="mod-list-empty" style="padding:2em;text-align:center;max-width:520px" data-i18n="friends_empty">No friends yet. Send a friend request by username above.</div>
+    </div>
+
     <!-- ══ BUG REPORT ══ -->
     <div id="bugreport-page" class="page" style="display:none">
       <h1 data-i18n="h_bugreport">Bug Report</h1>
-      <div style="max-width:500px;margin:1em auto;text-align:center;line-height:1.8">
-        <p style="color:#aaa;margin-bottom:1.5em" data-i18n="bugreport_desc">Found a bug? Report it on GitHub so we can fix it.</p>
-        <button class="btn btn-primary" id="bugreport-github-btn" style="font-size:1em;padding:.6em 1.5em" data-i18n="btn_report_github">🐛 Report on GitHub</button>
-        <p style="color:#666;margin-top:1em;font-size:.82em" data-i18n="bugreport_note">You can also check existing issues or feature requests.</p>
+      <div style="max-width:560px">
+        <p style="color:#aaa;margin-bottom:1.5em;line-height:1.6" data-i18n="bugreport_desc">Found a bug? Report it. Attach launcher files and game logs.</p>
+        <div class="form-row">
+          <label data-i18n="bugreport_category">Category</label>
+          <select id="bugreport-category">
+            <option value="Launcher" data-i18n="bugreport_cat_launcher">Launcher</option>
+            <option value="Game Crash" data-i18n="bugreport_cat_crash">Game Crash</option>
+            <option value="Mods" data-i18n="bugreport_cat_mods">Mods</option>
+            <option value="Skin / Cape" data-i18n="bugreport_cat_skincape">Skin / Cape</option>
+            <option value="Installer" data-i18n="bugreport_cat_installer">Installer</option>
+            <option value="Servers" data-i18n="bugreport_cat_servers">Servers</option>
+            <option value="Other" data-i18n="bugreport_cat_other">Other</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label data-i18n="bugreport_title">Title</label>
+          <input type="text" id="bugreport-title" data-i18n-ph="ph_bugreport_title" placeholder="Short summary of the problem" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
+        </div>
+        <div class="form-row">
+          <label data-i18n="bugreport_desc_label">Description</label>
+          <textarea id="bugreport-desc" rows="5" placeholder="What happened? What did you expect?" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;font-family:inherit;resize:vertical;outline:none"></textarea>
+        </div>
+        <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc;margin-bottom:1em">
+          <input type="checkbox" id="bugreport-include-logs" style="width:1.1em;height:1.1em;cursor:pointer" checked>
+          <span data-i18n="bugreport_include_logs">Attach launcher &amp; game logs (recommended)</span>
+        </label>
+        <button class="btn btn-primary" id="bugreport-send-btn" style="font-size:1em;padding:.6em 1.5em" data-i18n="btn_report_send">📨 Send Report</button>
+        <p class="status-text" id="bugreport-status" style="min-height:1.2em"></p>
+        <div style="margin-top:1.5em;border-top:1px solid #2a2a2a;padding-top:1em;text-align:center">
+          <p style="color:#666;font-size:.82em;margin-bottom:.6em" data-i18n="bugreport_note">Prefer GitHub? You can also open an issue there (requires a GitHub account).</p>
+          <button class="btn" id="bugreport-github-btn" style="font-size:.9em" data-i18n="btn_report_github">🐛 Report on GitHub</button>
+        </div>
       </div>
     </div>
 
@@ -1268,7 +1360,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 <!-- ══ CAPE PIXEL EDITOR OVERLAY ══ -->
 <div class="skin-editor-overlay" id="cape-editor-overlay">
   <div class="skin-editor-panel">
-    <h2>🎨 Cape Pixel Editor <span style="font-size:.6em;color:#666;font-weight:normal">22×17</span></h2>
+    <h2>🎨 Cape Pixel Editor <span style="font-size:.6em;color:#666;font-weight:normal">64×32</span></h2>
     <div class="skin-editor-toolbar" id="cape-editor-toolbar">
       <button class="tool-btn active" data-tool="pencil" title="Pencil">✏️</button>
       <button class="tool-btn" data-tool="eraser" title="Eraser">🧹</button>
@@ -1285,7 +1377,10 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     </div>
     <div class="skin-editor-dual">
       <div class="skin-editor-canvas-wrap">
-        <canvas class="skin-editor-canvas" id="cape-ed-canvas" width="64" height="32"></canvas>
+        <div id="cape-ed-stage" style="position:relative;display:inline-block;line-height:0">
+          <canvas class="skin-editor-canvas" id="cape-ed-canvas" width="64" height="32"></canvas>
+          <div id="cape-ed-guides" style="position:absolute;inset:0;pointer-events:none;overflow:hidden"></div>
+        </div>
       </div>
       <div class="skin-editor-3d-wrap" id="cape-ed-3d-wrap"></div>
     </div>
@@ -1448,19 +1543,37 @@ async function bootLauncher(){
     renderAccountList();
     renderProfileList();
     updateLaunchProfileSelect();
-    // Fetch skinModel for existing accounts that don't have it
+    // Sync account skins with Mojang on every launch. If the server-side active
+    // skin changed, update it, equip it and add it to the skin list.
     let skinModelChanged=false;
+    await loadSkinList();
     for(const acc of accounts){
-      if(!acc.skinModel && acc.accessToken && acc.type==='Microsoft'){
-        try{const r=await ipcRenderer.invoke('get-skin-variant',acc.accessToken);acc.skinModel=r.variant||'classic';if(r.url)acc.skinUrl=r.url;skinModelChanged=true;}catch{acc.skinModel='classic';skinModelChanged=true;}
-      }
       if(!acc.skinModel){acc.skinModel='classic';skinModelChanged=true;}
+      if(!acc.accessToken) continue;
+      let token=acc.accessToken;
+      try{ const fresh=await refreshAccountToken(acc); if(fresh && fresh.accessToken) token=fresh.accessToken; }catch{}
+      if(acc.type==='Microsoft'){
+        try{
+          const r=await ipcRenderer.invoke('get-skin-variant',token);
+          if(r && r.url){
+            const newUrl=r.url;
+            const newModel=(r.variant||'classic').toLowerCase();
+            if(acc.skinUrl!==newUrl || acc.skinModel!==newModel){
+              acc.skinUrl=newUrl; acc.skinModel=newModel;
+              skinModelChanged=true;
+              addSkinToList(newUrl, acc.name||'Player', true, newModel);
+            }
+          }
+        }catch{}
+      }
     }
     if(skinModelChanged) ipcRenderer.send('save-accounts',accounts);
     updateSkinDisplay();
     init3DSkin();
     setInterval(()=>{ updateSkinDisplay(); },10000);
     loadClientRPSettings();
+    if(typeof reportPresence==='function') reportPresence();
+    if(typeof refreshFriendStatuses==='function') refreshFriendStatuses();
 
     // Set version label
     try { document.getElementById('current-version-label').textContent = require('./package.json').version; } catch {}
@@ -1529,6 +1642,7 @@ function showPage(id){
   if(id==='instances-page') renderInstanceList();
   if(id==='recent-page') renderRecentList();
   if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
+  if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); }
   if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); }
 }
 
@@ -1646,6 +1760,19 @@ function bindSettings(){
     applyLanguage(e.target.value);
   });
 
+  // Presence server URL
+  const psInput=document.getElementById('presence-server-input');
+  if(psInput){
+    psInput.value=settings.presenceServer||'';
+    psInput.addEventListener('change',()=>{ settings.presenceServer=psInput.value.trim(); saveSettings(); });
+  }
+  // Bug report webhook URL
+  const brInput=document.getElementById('bugreport-webhook-input');
+  if(brInput){
+    brInput.value=settings.bugreportWebhook||'';
+    brInput.addEventListener('change',()=>{ settings.bugreportWebhook=brInput.value.trim(); saveSettings(); });
+  }
+
 }
 
 function renderCapePreview(url){
@@ -1661,9 +1788,9 @@ function renderCapePreview(url){
 const LANGS={
   en:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes',
-    tab_settings:'Settings', tab_logs:'Logs', tab_instances:'Instances', tab_account:'MC-Account', tab_recent:'Recent', tab_servers:'Servers', tab_bugreport:'Bug Report',
+    tab_settings:'Settings', tab_logs:'Logs', tab_instances:'Instances', tab_account:'MC-Account', tab_recent:'Recent', tab_servers:'Servers', tab_bugreport:'Bug Report', tab_friends:'Friends',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
-    h_logs:'Logs', h_instances:'Instances', h_account:'MC Account', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report',
+    h_logs:'Logs', h_instances:'Instances', h_account:'MC Account', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends',
     lbl_profile:'Profile:', lbl_version:'Version:', lbl_change_skin:'Change Skin:', lbl_actions:'Actions:', lbl_ram:'RAM:', lbl_instance:'Instance:',
     lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod Loader', lbl_render_api:'Rendering API:', lbl_added:'Added:',
     lbl_email:'Email:', lbl_password:'Password:',
@@ -1724,8 +1851,36 @@ const LANGS={
     launch_via_launcher:'Launch via original Minecraft Launcher',
     after_launch_logs:'Open logs after launch',
     after_launch_close:'Close launcher while playing',
-    bugreport_desc:'Found a bug? Report it on GitHub so we can fix it.',
-    bugreport_note:'You can also check existing issues or feature requests.',
+    bugreport_desc:'Found a bug? Report it. Attach launcher files and game logs.',
+    bugreport_note:'Prefer GitHub? You can also open an issue there (requires a GitHub account).',
+    bugreport_category:'Category', bugreport_cat_launcher:'Launcher', bugreport_cat_crash:'Game Crash',
+    bugreport_cat_mods:'Mods', bugreport_cat_skincape:'Skin / Cape', bugreport_cat_installer:'Installer',
+    bugreport_cat_servers:'Servers', bugreport_cat_other:'Other',
+    bugreport_title:'Title', bugreport_desc_label:'Description', bugreport_include_logs:'Attach launcher & game logs (recommended)',
+    btn_report_send:'📨 Send Report',
+    br_sending:'Sending report...', br_sent:'Report sent. Thank you!', br_no_webhook:'No webhook configured. Set it in Settings → Friends & Bug Reports.',
+    br_failed:'Sending failed (HTTP {code}). Check the webhook URL in Settings.',
+    sec_social:'Friends & Bug Reports',
+    lbl_presence_server:'Presence server URL (Friends online status)',
+    desc_presence_server:'Leave empty to disable. A ready-to-deploy server is in server/presence-server.js.',
+    lbl_bugreport_webhook:'Bug report webhook URL (Discord or compatible)',
+    desc_bugreport_webhook:'Bug reports are sent here directly — no GitHub account needed.',
+    ph_friend_add:'Send friend request by Minecraft username',
+    add_friend:'+ Send Request',
+    friends_empty:'No friends yet. Send a friend request by username above.',
+    fr_adding:'Looking up player...', fr_added:'{name} added as friend.', fr_not_found:'Player "{name}" not found.',
+    fr_exists:'{name} is already in your friends list.', fr_removed:'{name} removed.',
+    fr_sending:'Sending friend request...', fr_send_failed:'Could not send request. Is the presence server reachable?',
+    fr_req_login:'Log in to an MC account first.', fr_req_self:'You can\'t send a request to yourself.',
+    fr_req_noserver:'No presence server configured. Set the URL in Settings → Friends & Bug Reports.',
+    fr_req_sent:'Friend request sent to {name}.', fr_req_exists:'A friend request with {name} already exists.',
+    fr_req_incoming:'Incoming friend requests', fr_req_wants:'wants to be your friend',
+    fr_req_accept:'Accept', fr_req_decline:'Decline',
+    fr_req_added:'{name} is now your friend.', fr_req_declined:'Declined request from {name}.',
+    fr_req_accepted_you:'{name} accepted your friend request.',
+    fr_status_online:'Online', fr_status_ingame:'In game', fr_status_offline:'Offline',
+    fr_last_seen:'last seen {time}', fr_playing_on:'Playing on {server}', fr_copy_uuid:'Copy UUID',
+    fr_copied:'UUID copied to clipboard.',
     loading_popular_mods:'Loading popular mods...',
     modal_share:'Share Profile', modal_share_desc:'Copy this code and send it to someone. They can import it in their Crux Launcher.',
     modal_import:'Import Profile', modal_import_desc:'Paste a share code from another Crux Launcher user.',
@@ -1756,9 +1911,9 @@ const LANGS={
   },
   de:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes',
-    tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_instances:'Instanzen', tab_account:'MC-Konto', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_bugreport:'Fehler melden',
+    tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_instances:'Instanzen', tab_account:'MC-Konto', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_bugreport:'Fehler melden', tab_friends:'Freunde',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
-    h_logs:'Protokolle', h_instances:'Instanzen', h_account:'MC-Konto', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden',
+    h_logs:'Protokolle', h_instances:'Instanzen', h_account:'MC-Konto', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde',
     lbl_profile:'Profil:', lbl_version:'Version:', lbl_change_skin:'Skin wechseln:', lbl_actions:'Aktionen:', lbl_ram:'RAM:', lbl_instance:'Instanz:',
     lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod-Loader', lbl_render_api:'Rendering-API:', lbl_added:'Hinzugefügt:',
     lbl_email:'E-Mail:', lbl_password:'Passwort:',
@@ -1819,8 +1974,36 @@ const LANGS={
     launch_via_launcher:'Über den offiziellen Minecraft Launcher starten',
     after_launch_logs:'Protokolle nach dem Start öffnen',
     after_launch_close:'Launcher beim Spielen schließen',
-    bugreport_desc:'Fehler gefunden? Meldet ihn auf GitHub, damit wir ihn beheben können.',
-    bugreport_note:'Du kannst auch vorhandene Probleme oder Feature-Anfragen überprüfen.',
+    bugreport_desc:'Fehler gefunden? Melde ihn uns. Füge Launcher-Dateien und Spiellogs bei.',
+    bugreport_note:'Lieber GitHub? Du kannst dort auch ein Issue öffnen (erfordert einen GitHub-Account).',
+    bugreport_category:'Kategorie', bugreport_cat_launcher:'Launcher', bugreport_cat_crash:'Spielabsturz',
+    bugreport_cat_mods:'Mods', bugreport_cat_skincape:'Skin / Cape', bugreport_cat_installer:'Installer',
+    bugreport_cat_servers:'Server', bugreport_cat_other:'Sonstiges',
+    bugreport_title:'Titel', bugreport_desc_label:'Beschreibung', bugreport_include_logs:'Launcher- & Spiellogs anhängen (empfohlen)',
+    btn_report_send:'📨 Report senden',
+    br_sending:'Report wird gesendet...', br_sent:'Report gesendet. Danke!', br_no_webhook:'Kein Webhook konfiguriert. Lege ihn unter Einstellungen → Freunde & Bug-Reports fest.',
+    br_failed:'Senden fehlgeschlagen (HTTP {code}). Überprüfe die Webhook-URL in den Einstellungen.',
+    sec_social:'Freunde & Bug-Reports',
+    lbl_presence_server:'Presence-Server-URL (Freunde Online-Status)',
+    desc_presence_server:'Leer lassen zum Deaktivieren. Einen einsatzbereiten Server gibt es in server/presence-server.js.',
+    lbl_bugreport_webhook:'Bug-Report-Webhook-URL (Discord oder kompatibel)',
+    desc_bugreport_webhook:'Bug-Reports werden hierhin gesendet — ganz ohne GitHub-Account.',
+    ph_friend_add:'Freundschaftsanfrage per Minecraft-Benutzername senden',
+    add_friend:'+ Anfrage senden',
+    friends_empty:'Noch keine Freunde. Sende oben eine Anfrage per Benutzername.',
+    fr_adding:'Spieler wird gesucht...', fr_added:'{name} als Freund hinzugefügt.', fr_not_found:'Spieler "{name}" nicht gefunden.',
+    fr_exists:'{name} ist bereits in deiner Freundesliste.', fr_removed:'{name} entfernt.',
+    fr_sending:'Freundschaftsanfrage wird gesendet...', fr_send_failed:'Anfrage konnte nicht gesendet werden. Ist der Presence-Server erreichbar?',
+    fr_req_login:'Melde dich zuerst mit einem MC-Konto an.', fr_req_self:'Du kannst dir keine Anfrage an dich selbst senden.',
+    fr_req_noserver:'Kein Presence-Server konfiguriert. Setze die URL unter Einstellungen → Freunde & Bug-Reports.',
+    fr_req_sent:'Freundschaftsanfrage an {name} gesendet.', fr_req_exists:'Eine Anfrage mit {name} existiert bereits.',
+    fr_req_incoming:'Eingehende Freundschaftsanfragen', fr_req_wants:'möchte dein Freund sein',
+    fr_req_accept:'Annehmen', fr_req_decline:'Ablehnen',
+    fr_req_added:'{name} ist jetzt dein Freund.', fr_req_declined:'Anfrage von {name} abgelehnt.',
+    fr_req_accepted_you:'{name} hat deine Freundschaftsanfrage angenommen.',
+    fr_status_online:'Online', fr_status_ingame:'Im Spiel', fr_status_offline:'Offline',
+    fr_last_seen:'zuletzt gesehen {time}', fr_playing_on:'Spielt auf {server}', fr_copy_uuid:'UUID kopieren',
+    fr_copied:'UUID in die Zwischenablage kopiert.',
     loading_popular_mods:'Beliebte Mods werden geladen...',
     modal_share:'Profil teilen', modal_share_desc:'Kopiere diesen Code und sende ihn jemandem. Er kann ihn in seinem Crux Launcher importieren.',
     modal_import:'Profil importieren', modal_import_desc:'Füge einen Share-Code von einem anderen Crux Launcher Benutzer ein.',
@@ -1851,9 +2034,9 @@ const LANGS={
   },
   fr:{
     tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes',
-    tab_settings:'Paramètres', tab_logs:'Journaux', tab_instances:'Instances', tab_account:'Compte MC', tab_recent:'Récents', tab_servers:'Serveurs', tab_bugreport:'Signaler un bug',
+    tab_settings:'Paramètres', tab_logs:'Journaux', tab_instances:'Instances', tab_account:'Compte MC', tab_recent:'Récents', tab_servers:'Serveurs', tab_bugreport:'Signaler un bug', tab_friends:'Amis',
     h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
-    h_logs:'Journaux', h_instances:'Instances', h_account:'Compte MC', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug',
+    h_logs:'Journaux', h_instances:'Instances', h_account:'Compte MC', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis',
     lbl_profile:'Profil :', lbl_version:'Version :', lbl_change_skin:'Changer de skin :', lbl_actions:'Actions :', lbl_ram:'RAM :', lbl_instance:'Instance :',
     lbl_launcher_ram:'RAM du Lanceur :', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de rendu :', lbl_added:'Ajouté :',
     lbl_email:'E-mail :', lbl_password:'Mot de passe :',
@@ -1912,8 +2095,36 @@ const LANGS={
     launch_via_launcher:'Lancer via le lanceur Minecraft original',
     after_launch_logs:'Ouvrir les journaux après le lancement',
     after_launch_close:'Fermer le lanceur pendant le jeu',
-    bugreport_desc:'Un bug ? Signalez-le sur GitHub pour que nous puissions le corriger.',
-    bugreport_note:'Vous pouvez aussi vérifier les problèmes existants ou les demandes de fonctionnalités.',
+    bugreport_desc:'Un bug ? Signalez-le. Joignez les fichiers du launcher et les journaux du jeu.',
+    bugreport_note:'Vous préférez GitHub ? Vous pouvez aussi y ouvrir une issue (nécessite un compte GitHub).',
+    bugreport_category:'Catégorie', bugreport_cat_launcher:'Launcher', bugreport_cat_crash:'Crash du jeu',
+    bugreport_cat_mods:'Mods', bugreport_cat_skincape:'Skin / Cape', bugreport_cat_installer:'Installer',
+    bugreport_cat_servers:'Serveurs', bugreport_cat_other:'Autre',
+    bugreport_title:'Titre', bugreport_desc_label:'Description', bugreport_include_logs:'Joindre les journaux du launcher et du jeu (recommandé)',
+    btn_report_send:'📨 Envoyer le rapport',
+    br_sending:'Envoi du rapport...', br_sent:'Rapport envoyé. Merci !', br_no_webhook:'Aucun webhook configuré. Définissez-le dans Paramètres → Amis & Bug Reports.',
+    br_failed:'Échec de l\'envoi (HTTP {code}). Vérifiez l\'URL du webhook dans les Paramètres.',
+    sec_social:'Amis & Bug Reports',
+    lbl_presence_server:'URL du serveur de présence (statut en ligne des amis)',
+    desc_presence_server:'Laisser vide pour désactiver. Un serveur prêt à déployer se trouve dans server/presence-server.js.',
+    lbl_bugreport_webhook:'URL du webhook de bug report (Discord ou compatible)',
+    desc_bugreport_webhook:'Les rapports de bug sont envoyés ici directement — aucun compte GitHub requis.',
+    ph_friend_add:'Envoyer une demande d\'ami par nom d\'utilisateur Minecraft',
+    add_friend:'+ Envoyer la demande',
+    friends_empty:'Aucun ami pour l\'instant. Envoyez une demande d\'ami avec le nom d\'utilisateur ci-dessus.',
+    fr_adding:'Recherche du joueur...', fr_added:'{name} ajouté comme ami.', fr_not_found:'Joueur "{name}" introuvable.',
+    fr_exists:'{name} est déjà dans votre liste d\'amis.', fr_removed:'{name} supprimé.',
+    fr_sending:'Envoi de la demande d\'ami...', fr_send_failed:'Impossible d\'envoyer la demande. Le serveur de présence est-il joignable ?',
+    fr_req_login:'Connectez-vous d\'abord à un compte MC.', fr_req_self:'Vous ne pouvez pas envoyer une demande à vous-même.',
+    fr_req_noserver:'Aucun serveur de présence configuré. Définissez l\'URL dans Paramètres → Amis & Bug Reports.',
+    fr_req_sent:'Demande d\'ami envoyée à {name}.', fr_req_exists:'Une demande avec {name} existe déjà.',
+    fr_req_incoming:'Demandes d\'ami entrantes', fr_req_wants:'veut être votre ami',
+    fr_req_accept:'Accepter', fr_req_decline:'Refuser',
+    fr_req_added:'{name} est maintenant votre ami.', fr_req_declined:'Demande de {name} refusée.',
+    fr_req_accepted_you:'{name} a accepté votre demande d\'ami.',
+    fr_status_online:'En ligne', fr_status_ingame:'En jeu', fr_status_offline:'Hors ligne',
+    fr_last_seen:'vu {time}', fr_playing_on:'Joue sur {server}', fr_copy_uuid:'Copier l\'UUID',
+    fr_copied:'UUID copié dans le presse-papiers.',
     loading_popular_mods:'Chargement des mods populaires...',
     modal_share:'Partager le Profil', modal_share_desc:'Copiez ce code et envoyez-le à quelqu\'un. Il peut l\'importer dans son Crux Launcher.',
     modal_import:'Importer le Profil', modal_import_desc:'Collez un code de partage d\'un autre utilisateur Crux Launcher.',
@@ -1944,9 +2155,9 @@ const LANGS={
   },
   es:{
     tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas',
-    tab_settings:'Ajustes', tab_logs:'Registros', tab_instances:'Instancias', tab_account:'Cuenta MC', tab_recent:'Recientes', tab_servers:'Servidores', tab_bugreport:'Reportar bug',
+    tab_settings:'Ajustes', tab_logs:'Registros', tab_instances:'Instancias', tab_account:'Cuenta MC', tab_recent:'Recientes', tab_servers:'Servidores', tab_bugreport:'Reportar bug', tab_friends:'Amigos',
     h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
-    h_logs:'Registros', h_instances:'Instancias', h_account:'Cuenta MC', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug',
+    h_logs:'Registros', h_instances:'Instancias', h_account:'Cuenta MC', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos',
     lbl_profile:'Perfil:', lbl_version:'Versión:', lbl_change_skin:'Cambiar Skin:', lbl_actions:'Acciones:', lbl_ram:'RAM:', lbl_instance:'Instancia:',
     lbl_launcher_ram:'RAM del Launcher:', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de Renderizado:', lbl_added:'Añadido:',
     lbl_email:'Correo:', lbl_password:'Contraseña:',
@@ -2000,8 +2211,36 @@ const LANGS={
     launch_via_launcher:'Iniciar a través del Minecraft Launcher original',
     after_launch_logs:'Abrir registros después de iniciar',
     after_launch_close:'Cerrar launcher mientras juegas',
-    bugreport_desc:'¿Encontraste un bug? Repórtalo en GitHub para que podamos corregirlo.',
-    bugreport_note:'También puedes verificar problemas existentes o solicitudes de funciones.',
+    bugreport_desc:'¿Encontraste un bug? Repórtalo. Adjunta los archivos del launcher y los registros del juego.',
+    bugreport_note:'¿Prefieres GitHub? También puedes abrir una issue allí (requiere una cuenta de GitHub).',
+    bugreport_category:'Categoría', bugreport_cat_launcher:'Launcher', bugreport_cat_crash:'Crash del juego',
+    bugreport_cat_mods:'Mods', bugreport_cat_skincape:'Skin / Cape', bugreport_cat_installer:'Instalador',
+    bugreport_cat_servers:'Servidores', bugreport_cat_other:'Otro',
+    bugreport_title:'Título', bugreport_desc_label:'Descripción', bugreport_include_logs:'Adjuntar registros del launcher y del juego (recomendado)',
+    btn_report_send:'📨 Enviar informe',
+    br_sending:'Enviando informe...', br_sent:'Informe enviado. ¡Gracias!', br_no_webhook:'No hay webhook configurado. Defínelo en Ajustes → Amigos y Bug Reports.',
+    br_failed:'Error al enviar (HTTP {code}). Comprueba la URL del webhook en Ajustes.',
+    sec_social:'Amigos y Bug Reports',
+    lbl_presence_server:'URL del servidor de presencia (estado en línea de amigos)',
+    desc_presence_server:'Déjalo vacío para desactivar. Hay un servidor listo para desplegar en server/presence-server.js.',
+    lbl_bugreport_webhook:'URL del webhook de bug report (Discord o compatible)',
+    desc_bugreport_webhook:'Los informes de bug se envían aquí directamente, sin cuenta de GitHub.',
+    ph_friend_add:'Añadir amigo por nombre de usuario de Minecraft',
+    add_friend:'+ Añadir',
+    friends_empty:'Aún no hay amigos. Envía una solicitud de amistad con el nombre de usuario de arriba.',
+    fr_adding:'Buscando jugador...', fr_added:'{name} añadido como amigo.', fr_not_found:'Jugador "{name}" no encontrado.',
+    fr_exists:'{name} ya está en tu lista de amigos.', fr_removed:'{name} eliminado.',
+    fr_sending:'Enviando solicitud de amistad...', fr_send_failed:'No se pudo enviar la solicitud. ¿El servidor de presencia está disponible?',
+    fr_req_login:'Inicia sesión con una cuenta de MC primero.', fr_req_self:'No puedes enviarte una solicitud a ti mismo.',
+    fr_req_noserver:'No hay servidor de presencia configurado. Define la URL en Ajustes → Amigos y Bug Reports.',
+    fr_req_sent:'Solicitud de amistad enviada a {name}.', fr_req_exists:'Ya existe una solicitud con {name}.',
+    fr_req_incoming:'Solicitudes de amistad entrantes', fr_req_wants:'quiere ser tu amigo',
+    fr_req_accept:'Aceptar', fr_req_decline:'Rechazar',
+    fr_req_added:'{name} ahora es tu amigo.', fr_req_declined:'Solicitud de {name} rechazada.',
+    fr_req_accepted_you:'{name} aceptó tu solicitud de amistad.',
+    fr_status_online:'En línea', fr_status_ingame:'En juego', fr_status_offline:'Desconectado',
+    fr_last_seen:'visto {time}', fr_playing_on:'Jugando en {server}', fr_copy_uuid:'Copiar UUID',
+    fr_copied:'UUID copiado al portapapeles.',
     loading_popular_mods:'Cargando mods populares...',
     modal_share:'Compartir Perfil', modal_share_desc:'Copia este código y envíalo a alguien. Puede importarlo en su Crux Launcher.',
     modal_import:'Importar Perfil', modal_import_desc:'Pega un código de otro usuario de Crux Launcher.',
@@ -2043,10 +2282,10 @@ function applyLanguage(lang){
     // Preserve child elements (like canvas inside tb-btn)
     if(el.children.length>0){
       const children=[...el.children];
-      el.textContent=val;
+      el.innerHTML=val;
       children.forEach(c=>el.prepend(c));
     } else {
-      el.textContent=val;
+      el.innerHTML=val;
     }
   });
   // Update placeholder attributes
@@ -2063,6 +2302,8 @@ function applyLanguage(lang){
   });
   // Re-apply active button styling after text change
   applyAccent(currentAccentIdx);
+  // Re-render dynamic content (friends list statuses/labels)
+  if(typeof renderFriendList==='function') renderFriendList();
 }
 
 function saveSettings(){ ipcRenderer.send('save-settings',settings); }
@@ -2292,6 +2533,24 @@ ipcRenderer.on('mc-launched',(_,instanceId)=>{
   if(_stoppedInstances.has(instanceId)) return;
   if(settings.openLogsAfterLaunch) showPage('logs-page');
 });
+
+// ══ RECENT HISTORY HELPERS ══
+function recentEntryKey(r){
+  if(r.type==='server') return 'server|'+(r.serverAddress||r.serverName||'')+'|'+(r.serverPort||25565);
+  return (r.type==='instance'?'instance':'world')+'|'+(r.profileId||r.profileName||'');
+}
+// Add to recent history without duplicates; keeps max 6 entries per category
+// (when the 7th of a category is added, the oldest one of that category is removed).
+function addRecentEntry(entry){
+  const key=recentEntryKey(entry);
+  recentHistory=recentHistory.filter(r=>recentEntryKey(r)!==key);
+  recentHistory.unshift(entry);
+  const typeCount={};
+  recentHistory=recentHistory.filter(r=>{ typeCount[r.type]=(typeCount[r.type]||0)+1; return typeCount[r.type]<=6; });
+  if(recentHistory.length>18) recentHistory=recentHistory.slice(0,18);
+  settings.recentHistory=recentHistory; saveSettings();
+}
+
 ipcRenderer.on('instance-started',(_,inst)=>{
   instances[inst.id]={...inst, logs:[], status:'running'};
   currentInstanceId=inst.id;
@@ -2317,9 +2576,8 @@ ipcRenderer.on('instance-started',(_,inst)=>{
   } else {
     entry.type='world';
   }
-  recentHistory.unshift(entry);
-  if(recentHistory.length>15) recentHistory=recentHistory.slice(0,15);
-  settings.recentHistory=recentHistory; saveSettings();
+  addRecentEntry(entry);
+  reportPresence();
 });
 ipcRenderer.on('instance-log',(_,{instanceId,line})=>{
   if(instanceId === '_mesa'){ appendLogLine('[MESA] ' + line); return; }
@@ -2342,7 +2600,7 @@ ipcRenderer.on('instance-log',(_,{instanceId,line})=>{
       const inst=instances[instanceId];
       const srvName=match.host;
       // Add to recent history as server entry
-      recentHistory.unshift({
+      addRecentEntry({
         type:'server',
         serverName:srvName,
         serverAddress:match.host,
@@ -2354,8 +2612,6 @@ ipcRenderer.on('instance-log',(_,{instanceId,line})=>{
         instanceId:instanceId,
         time:Date.now()
       });
-      if(recentHistory.length>15) recentHistory=recentHistory.slice(0,15);
-      settings.recentHistory=recentHistory; saveSettings();
     }
   }
 });
@@ -2368,6 +2624,7 @@ ipcRenderer.on('instance-closed',(_,{instanceId,code})=>{
   renderInstanceList();
   refreshLogSelect();
   if(settings.closeLauncherWhilePlaying) ipcRenderer.send('show-launcher');
+  reportPresence();
 });
 ipcRenderer.on('instance-crashed',(_,{instanceId})=>{
   if(instances[instanceId])instances[instanceId].status='crashed';
@@ -2590,7 +2847,7 @@ function renderRecentList(){
     { type:'instance', title:'Instances', icon:'📦', emptyMsg:'No instances launched yet.' },
     { type:'world', title:'Worlds', icon:'🌍', emptyMsg:'No worlds played yet.' },
   ];
-  const MAX_PER_CAT=5;
+  const MAX_PER_CAT=6;
 
   for(const cat of categories){
     const items=recentHistory.filter(r=>r.type===cat.type).slice(0,MAX_PER_CAT);
@@ -2700,6 +2957,21 @@ async function refreshAccountToken(acc){
     }
     return null;
   } catch { return null; }
+}
+async function getEquippedCapeUrl(){
+  try{
+    let acc=getSelectedAccount();
+    if(!acc||!acc.accessToken)return null;
+    acc=await refreshAccountToken(acc);
+    if(!acc)return null;
+    const res=await fetch('https://api.minecraftservices.com/minecraft/profile',{headers:{'Authorization':`Bearer ${acc.accessToken}`}});
+    if(!res.ok)return null;
+    const profile=await res.json();
+    const capes=profile?.capes||[];
+    const active=capes.find(c=>(c.state==='ACTIVE'||c.active)&&(c.url||c.texture));
+    if(!active)return null;
+    return active.url||active.texture;
+  }catch{return null;}
 }
 async function loadMCCapes(){
   const container=document.getElementById('capes-container'); container.innerHTML='';
@@ -3276,10 +3548,10 @@ function drawDefaultAvatar(){}
 function drawSkin3D(){}
 
 function renderCape3D(targetCanvas,capeUrl){
-  if(!window.THREE){setTimeout(()=>renderCape3D(targetCanvas,capeUrl),300);return;}
   const W=200,H=280;
   const capeSrc=String(capeUrl||'').replace(/^http:\/\//,'https://');
   const ctx2=targetCanvas.getContext('2d');
+  let loadedImg=null;
   function drawFlatCape(img){
     try{
       ctx2.clearRect(0,0,W,H);
@@ -3287,8 +3559,9 @@ function renderCape3D(targetCanvas,capeUrl){
       const dw=W*0.6,dh=H*0.55,dx=W/2-dw/2,dy=H/2-dh/2;
       if(img){
         const official=img.width===64&&img.height===32;
+        const sx=official?1:0,sy=official?1:0;
         const sw=official?10:11,sh=official?16:17;
-        ctx2.drawImage(img,0,0,sw,sh,dx,dy,dw,dh);
+        ctx2.drawImage(img,sx,sy,sw,sh,dx,dy,dw,dh);
         return;
       }
       ctx2.fillStyle='#3a3a3a';
@@ -3300,54 +3573,66 @@ function renderCape3D(targetCanvas,capeUrl){
       ctx2.strokeStyle='#555';ctx2.lineWidth=2;ctx2.stroke();
     }catch(e){}
   }
-  const scene=new THREE.Scene();
-  const camera=new THREE.PerspectiveCamera(30,W/H,0.1,100);
-  camera.position.set(0,0,9);camera.lookAt(0,0,0);
-  let renderer;
-  try{
-    renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
-  }catch(e){ drawFlatCape(null); return; }
-  renderer.setSize(W,H);renderer.setClearColor(0x000000,0);renderer.setPixelRatio(1);
-  scene.add(new THREE.AmbientLight(0xffffff,0.8));
-  const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(3,5,4);scene.add(dl);
-  const dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-3,-1,-2);scene.add(dl2);
-  const grp=new THREE.Group();scene.add(grp);
-  function makeDrapeBack(){
-    const segsW=8,segsH=12,CW=2.0,CH=4.0;
-    const v2=[],u2=[],ix=[];
-    for(let j=0;j<=segsH;j++){const fv=j/segsH;for(let i=0;i<=segsW;i++){const ft=i/segsW;v2.push((ft-0.5)*CW,CH*0.5-fv*CH,-0.2+Math.sin(fv*Math.PI)*0.2+Math.sin(ft*Math.PI)*0.08*fv);u2.push(1-ft,fv);}}
-    for(let j=0;j<segsH;j++)for(let i=0;i<segsW;i++){const a=j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;ix.push(a,b,c,b,d,c);}
-    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));g.setIndex(ix);g.computeVertexNormals();return g;
-  }
-  function paintCape(fullTex){
-    const img=fullTex.image;
-    function cropCape(sx,sy,sw,sh){
-      const c=document.createElement('canvas');c.width=sw;c.height=sh;
-      const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=false;
-      ctx.drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
-      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
-    }
-    const official=img.width===64&&img.height===32;
-    const backTex=official?cropCape(0,0,10,16):cropCape(0,0,11,17);
-    const back=new THREE.Mesh(makeDrapeBack(),new THREE.MeshLambertMaterial({map:backTex,side:THREE.FrontSide}));
-    grp.add(back);
-    grp.position.set(0,0,0);
-    renderer.render(scene,camera);
-    ctx2.clearRect(0,0,W,H);
-    ctx2.drawImage(renderer.domElement,0,0);
-  }
-  function doLoad(url){
+  function isBlank(){
     try{
-      new THREE.TextureLoader().load(url,(tex)=>{
-        try{ paintCape(tex); }catch(e){ drawFlatCape(tex.image); }
-        renderer.dispose();
-      },undefined,()=>{ drawFlatCape(null); renderer.dispose(); });
-    }catch(e){ drawFlatCape(null); }
+      for(const fx of [0.5,0.35,0.65,0.5]){
+        const d=ctx2.getImageData(Math.floor(W*fx),Math.floor(H*0.55),1,1).data;
+        if(d[3]>0)return false;
+      }
+      return true;
+    }catch(e){ return true; }
+  }
+  function try3D(){
+    if(!window.THREE){ drawFlatCape(loadedImg); return; }
+    let renderer;
+    try{
+      renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+    }catch(e){ drawFlatCape(loadedImg); return; }
+    renderer.setSize(W,H);renderer.setClearColor(0x000000,0);renderer.setPixelRatio(1);
+    try{
+      const scene=new THREE.Scene();
+      const camera=new THREE.PerspectiveCamera(30,W/H,0.1,100);
+      camera.position.set(0,0,9);camera.lookAt(0,0,0);
+      scene.add(new THREE.AmbientLight(0xffffff,0.8));
+      const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(3,5,4);scene.add(dl);
+      const dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-3,-1,-2);scene.add(dl2);
+      function makeDrapeBack(){
+        const segsW=8,segsH=12,CW=2.0,CH=4.0;
+        const v2=[],u2=[],ix=[];
+        for(let j=0;j<=segsH;j++){const fv=j/segsH;for(let i=0;i<=segsW;i++){const ft=i/segsW;v2.push((ft-0.5)*CW,CH*0.5-fv*CH,-0.2+Math.sin(fv*Math.PI)*0.2+Math.sin(ft*Math.PI)*0.08*fv);u2.push(1-ft,fv);}}
+        for(let j=0;j<segsH;j++)for(let i=0;i<segsW;i++){const a=j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;ix.push(a,b,c,b,d,c);}
+        const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));g.setIndex(ix);g.computeVertexNormals();return g;
+      }
+      function cropCape(sx,sy,sw,sh){
+        const c=document.createElement('canvas');c.width=sw;c.height=sh;
+        const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=false;
+        ctx.drawImage(loadedImg,sx,sy,sw,sh,0,0,sw,sh);
+        const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;return t;
+      }
+      const official=loadedImg.width===64&&loadedImg.height===32;
+      const backTex=official?cropCape(1,1,10,16):cropCape(0,0,11,17);
+      const back=new THREE.Mesh(makeDrapeBack(),new THREE.MeshLambertMaterial({map:backTex,side:THREE.DoubleSide}));
+      const grp=new THREE.Group();scene.add(grp);grp.add(back);grp.position.set(0,0,0);
+      renderer.render(scene,camera);
+      ctx2.imageSmoothingEnabled=false;
+      ctx2.clearRect(0,0,W,H);
+      ctx2.drawImage(renderer.domElement,0,0);
+      if(isBlank()) drawFlatCape(loadedImg);
+    }catch(e){
+      drawFlatCape(loadedImg);
+    }
+    try{ renderer.dispose(); }catch(e){}
   }
   ipcRenderer.invoke('fetch-image-dataurl',capeSrc).then(dataUrl=>{
-    doLoad(dataUrl);
+    const img=new Image();
+    img.onload=()=>{ loadedImg=img; try3D(); };
+    img.onerror=()=>{ drawFlatCape(null); };
+    img.src=dataUrl;
   }).catch(()=>{
-    doLoad(capeSrc);
+    const img=new Image();
+    img.onload=()=>{ loadedImg=img; try3D(); };
+    img.onerror=()=>{ drawFlatCape(null); };
+    img.src=capeSrc;
   });
 }
 
@@ -3361,11 +3646,12 @@ function initCape3D(wrap, capeUrl){
   const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
   renderer.setSize(W,H);
   renderer.setClearColor(0x000000,0);
-  renderer.setPixelRatio(window.devicePixelRatio||1);
+  renderer.setPixelRatio(1);
   wrap.innerHTML='';
   wrap.appendChild(renderer.domElement);
   renderer.domElement.style.width='100%';
   renderer.domElement.style.height='100%';
+  renderer.domElement.style.imageRendering='pixelated';
   scene.add(new THREE.AmbientLight(0xffffff,0.8));
   const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(3,5,4);scene.add(dl);
   const dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-3,-1,-2);scene.add(dl2);
@@ -3380,7 +3666,7 @@ function initCape3D(wrap, capeUrl){
       const c=document.createElement('canvas');c.width=sw;c.height=sh;
       const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=false;
       ctx.drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
-      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
+      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;return t;
     }
     function makeDrape(){
       const segsW=8,segsH=12,CW=2.0,CH=4.0;
@@ -3397,10 +3683,10 @@ function initCape3D(wrap, capeUrl){
       const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));g.setIndex(ix);g.computeVertexNormals();return g;
     }
     const official=img.width===64&&img.height===32;
-    const frontTex=official?cropCape(11,0,10,16):cropCape(11,0,11,17);
+    const frontTex=official?cropCape(12,1,10,16):cropCape(11,0,11,17);
     capeFront.geometry.dispose();capeFront.geometry=makeDrape();
     capeFront.material=new THREE.MeshLambertMaterial({map:frontTex,side:THREE.DoubleSide});
-    const backTex=official?cropCape(0,0,10,16):cropCape(0,0,11,17);
+    const backTex=official?cropCape(1,1,10,16):cropCape(0,0,11,17);
     const capeBack=new THREE.Mesh(makeDrapeBack(),new THREE.MeshLambertMaterial({map:backTex,side:THREE.DoubleSide}));
     capeGroup.add(capeBack);
   },undefined,()=>{});
@@ -4149,16 +4435,12 @@ function addSkinToList(dataUrl, name, silent, model) {
   if (existing) { if (model && existing.model !== model) { existing.model = model; saveSkinList(); } if(!silent) setSkinUploadStatus('Skin already in list', '#f5a623'); return; }
   // If it's an HTTP URL, download and convert to data URL for persistent storage
   if (dataUrl.startsWith('http')) {
-    fetch(dataUrl).then(r=>r.blob()).then(blob=>{
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const base64 = ev.target.result;
-        if (skinList.some(s => s.dataUrl === base64)) return;
-        skinList.push({ name: name || 'Skin ' + (skinList.length+1), dataUrl: base64, model: model || null, addedAt: Date.now() });
-        saveSkinList();
-        if(!silent) setSkinUploadStatus('✓ Added to skin list!');
-      };
-      reader.readAsDataURL(blob);
+    ipcRenderer.invoke('fetch-image-dataurl', dataUrl).then(base64 => {
+      if (!base64) return;
+      if (skinList.some(s => s.dataUrl === base64)) return;
+      skinList.push({ name: name || 'Skin ' + (skinList.length+1), dataUrl: base64, model: model || null, addedAt: Date.now() });
+      saveSkinList();
+      if(!silent) setSkinUploadStatus('✓ Added to skin list!');
     }).catch(()=>{});
     return;
   }
@@ -4889,22 +5171,68 @@ function drawSteveSkin(c){
   canvas.style.width = displaySize+'px';
   canvas.style.height = (displaySize*CANVAS_H/CANVAS_W)+'px';
 
+  function buildCapeGuides(){
+    const g=document.getElementById('cape-ed-guides');
+    if(!g)return;
+    g.innerHTML='';
+    const W=CANVAS_W,H=CANVAS_H;
+    const pct=v=>(v*100)+'%';
+    function box(x,y,w,h,color){
+      const d=document.createElement('div');
+      d.style.cssText=`position:absolute;left:${pct(x/W)};top:${pct(y/H)};width:${pct(w/W)};height:${pct(h/H)};border:1px solid ${color};box-sizing:border-box`;
+      g.appendChild(d);
+      return d;
+    }
+    function tag(txt,x,y,color){
+      const l=document.createElement('div');
+      l.textContent=txt;
+      l.style.cssText=`position:absolute;left:${pct(x/W)};top:${pct(y/H)};transform:translate(-50%,-50%);font-size:9px;letter-spacing:.4px;color:${color||'#fff'};opacity:.6;user-select:none;pointer-events:none;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.9);white-space:nowrap`;
+      g.appendChild(l);
+      return l;
+    }
+    // Standard 64x32 cape template: thin UV outlines for all six faces (overlay only — never saved)
+    box(0,0,ART_W,ART_H,'rgba(255,255,255,.30)');    // whole design region
+    box(0,0,ART_W,1,'rgba(120,255,160,.55)');        // TOP + BOTTOM share row 0
+    box(0,1,1,16,'rgba(255,180,80,.55)');            // LEFT side strip
+    box(1,1,10,16,'rgba(150,180,255,.5)');           // BACK
+    box(11,1,1,16,'rgba(255,110,190,.55)');          // RIGHT side strip
+    box(12,1,10,16,'rgba(120,255,180,.5)');          // FRONT
+    tag('TOP/BOTTOM', ART_W/2, 0.4, '#7fe8a8');
+    tag('LEFT', 0.5, 1.6, '#ffb04e');
+    tag('BACK', 6, 1.6, '#9fb6ff');
+    tag('RIGHT', 11.5, 1.6, '#ff86c8');
+    tag('FRONT', 16.5, 1.6, '#8fffb0');
+  }
+  buildCapeGuides();
+
   ctx.fillStyle='#FFFFFF';
   ctx.fillRect(0,0,ART_W,ART_H);
 
-  // Load saved cape
+  // Load saved cape, or the equipped Minecraft cape as the starting base
   (async()=>{
     try{
       const saved=await ipcRenderer.invoke('load-custom-cape');
       if(saved){
         const img=new Image();
-      img.onload=()=>{ctx.clearRect(0,0,CANVAS_W,CANVAS_H);if(img.width===ART_W&&img.height===ART_H){ctx.drawImage(img,0,0);}else{ctx.drawImage(img,0,0,CANVAS_W,CANVAS_H);}if(window._capeEdRebuild)window._capeEdRebuild();};
+        img.onload=()=>{ctx.clearRect(0,0,CANVAS_W,CANVAS_H);if(img.width===ART_W&&img.height===ART_H){ctx.drawImage(img,0,0);}else{ctx.drawImage(img,0,0,CANVAS_W,CANVAS_H);}if(window._capeEdRebuild)window._capeEdRebuild();};
         img.src=saved;
         document.getElementById('cape-custom-status').textContent='Custom cape active';
         document.getElementById('cape-custom-status').style.color='#1bd96a';
         document.getElementById('cape-custom-toggle').style.display='';
         const st=await ipcRenderer.invoke('get-custom-cape-state');
         updateToggleBtn(st?.disabled);
+        return;
+      }
+      const capeUrl=await getEquippedCapeUrl();
+      if(capeUrl){
+        try{
+          const dataUrl=await ipcRenderer.invoke('fetch-image-dataurl',String(capeUrl).replace(/^http:\/\//,'https://'));
+          if(dataUrl){
+            const img=new Image();
+            img.onload=()=>{ctx.clearRect(0,0,CANVAS_W,CANVAS_H);ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,ART_W,ART_H);ctx.drawImage(img,0,0,CANVAS_W,CANVAS_H);if(window._capeEdRebuild)window._capeEdRebuild();};
+            img.src=dataUrl;
+          }
+        }catch{}
       }
     }catch{}
   })();
@@ -5082,42 +5410,42 @@ function drawSteveSkin(c){
   let capeEd3dRotY=30, capeEd3dRotX=10, capeEd3dIsElytra=false;
   let capeEdFrontTex=null, capeEdBackTex=null, capeEdTopTex=null, capeEdBottomTex=null, capeEdLeftTex=null, capeEdRightTex=null;
   function refreshCape3DTextures(){
-    if(capeEdFrontTex){const c=document.createElement('canvas');c.width=11;c.height=ART_H;c.getContext('2d').drawImage(canvas,11,0,11,ART_H,0,0,11,ART_H);capeEdFrontTex.image=c;capeEdFrontTex.needsUpdate=true;}
-    if(capeEdBackTex){const c=document.createElement('canvas');c.width=11;c.height=ART_H;c.getContext('2d').drawImage(canvas,0,0,11,ART_H,0,0,11,ART_H);capeEdBackTex.image=c;capeEdBackTex.needsUpdate=true;}
+    if(capeEdFrontTex){const c=document.createElement('canvas');c.width=10;c.height=16;c.getContext('2d').drawImage(canvas,12,1,10,16,0,0,10,16);capeEdFrontTex.image=c;capeEdFrontTex.needsUpdate=true;}
+    if(capeEdBackTex){const c=document.createElement('canvas');c.width=10;c.height=16;c.getContext('2d').drawImage(canvas,1,1,10,16,0,0,10,16);capeEdBackTex.image=c;capeEdBackTex.needsUpdate=true;}
     if(capeEdTopTex){const c=document.createElement('canvas');c.width=ART_W;c.height=1;c.getContext('2d').drawImage(canvas,0,0,ART_W,1,0,0,ART_W,1);capeEdTopTex.image=c;capeEdTopTex.needsUpdate=true;}
-    if(capeEdBottomTex){const c=document.createElement('canvas');c.width=ART_W;c.height=1;c.getContext('2d').drawImage(canvas,0,ART_H-1,ART_W,1,0,0,ART_W,1);capeEdBottomTex.image=c;capeEdBottomTex.needsUpdate=true;}
-    if(capeEdLeftTex){const c=document.createElement('canvas');c.width=1;c.height=ART_H;c.getContext('2d').drawImage(canvas,0,0,1,ART_H,0,0,1,ART_H);capeEdLeftTex.image=c;capeEdLeftTex.needsUpdate=true;}
-    if(capeEdRightTex){const c=document.createElement('canvas');c.width=1;c.height=ART_H;c.getContext('2d').drawImage(canvas,ART_W-1,0,1,ART_H,0,0,1,ART_H);capeEdRightTex.image=c;capeEdRightTex.needsUpdate=true;}
+    if(capeEdBottomTex){const c=document.createElement('canvas');c.width=ART_W;c.height=1;c.getContext('2d').drawImage(canvas,0,0,ART_W,1,0,0,ART_W,1);capeEdBottomTex.image=c;capeEdBottomTex.needsUpdate=true;}
+    if(capeEdLeftTex){const c=document.createElement('canvas');c.width=1;c.height=16;c.getContext('2d').drawImage(canvas,0,1,1,16,0,0,1,16);capeEdLeftTex.image=c;capeEdLeftTex.needsUpdate=true;}
+    if(capeEdRightTex){const c=document.createElement('canvas');c.width=1;c.height=16;c.getContext('2d').drawImage(canvas,11,1,1,16,0,0,1,16);capeEdRightTex.image=c;capeEdRightTex.needsUpdate=true;}
   }
-  function makeElytraGeo(){
-    const segsW=8,segsH=8;
-    const W=2.2,H=3.4;
-    const verts=[],uvs=[],idx=[];
-    for(let side=-1;side<=1;side+=2){
-      for(let j=0;j<=segsH;j++){
-        const v=j/segsH;
-        for(let i=0;i<=segsW;i++){
-          const t=i/segsW;
-          const x=side*0.8+side*t*W*0.5;
-          const y=H*0.5-v*H;
-          const z=Math.sin(t*Math.PI)*0.3*v;
-          verts.push(x,y,z);
-          uvs.push(t,v);
-        }
-      }
-      const off=(side===-1?0:1)*(segsW+1)*(segsH+1);
-      for(let j=0;j<segsH;j++){
-        for(let i=0;i<segsW;i++){
-          const a=off+j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;
-          idx.push(a,c,b,b,c,d);
-        }
-      }
+  function makeElytraWing(side){
+    const H=4.0,W=H*10/16,D=0.36;
+    const hW=W/2,hH=H/2,hD=D/2;
+    const bend=0.12;
+    function p(x,y,z){
+      const t=(y+hH)/H;
+      return [x*side,y,z-bend*t*t];
     }
-    const geo=new THREE.BufferGeometry();
-    geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
-    geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
-    geo.setIndex(idx);geo.computeVertexNormals();
-    return geo;
+    const verts=[],uvs=[],idx=[],groups=[];
+    function quad(a,b,c,d,u1,v1,u2,v2,mat){
+      const o=verts.length/3;
+      verts.push(...p(a[0],a[1],a[2]),...p(b[0],b[1],b[2]),...p(c[0],c[1],c[2]),...p(d[0],d[1],d[2]));
+      uvs.push(u1,v1,u2,v1,u2,v2,u1,v2);
+      idx.push(o,o+1,o+2,o,o+2,o+3);
+      groups.push({start:idx.length-6,count:6,mat});
+    }
+    quad([-hW,hH,hD],[hW,hH,hD],[hW,-hH,hD],[-hW,-hH,hD],0,1,1,0,0);
+    quad([-hW,hH,-hD],[-hW,-hH,-hD],[hW,-hH,-hD],[hW,hH,-hD],0,1,1,0,0);
+    quad([-hW,hH,hD],[hW,hH,hD],[hW,hH,-hD],[-hW,hH,-hD],0,0,1,1,1);
+    quad([-hW,-hH,hD],[hW,-hH,hD],[hW,-hH,-hD],[-hW,-hH,-hD],0,1,1,0,2);
+    quad([-hW,hH,hD],[-hW,hH,-hD],[-hW,-hH,-hD],[-hW,-hH,hD],0,1,1,0,3);
+    quad([hW,hH,hD],[hW,-hH,hD],[hW,-hH,-hD],[hW,hH,-hD],0,1,1,0,4);
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+    g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+    g.setIndex(idx);
+    groups.forEach(gr=>g.addGroup(gr.start,gr.count,gr.mat));
+    g.computeVertexNormals();
+    return g;
   }
   function initCapeEditor3D(){
     if(!window.THREE)return;
@@ -5129,9 +5457,10 @@ function drawSteveSkin(c){
     capeEd3dCamera.position.set(0,0,6);capeEd3dCamera.lookAt(0,0,0);
     capeEd3dRenderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
     capeEd3dRenderer.setSize(W2,H2);capeEd3dRenderer.setClearColor(0x000000,0);
-    capeEd3dRenderer.setPixelRatio(window.devicePixelRatio||1);
+    capeEd3dRenderer.setPixelRatio(1);
     wrap.innerHTML='';wrap.appendChild(capeEd3dRenderer.domElement);
     capeEd3dRenderer.domElement.style.width='100%';capeEd3dRenderer.domElement.style.height='100%';
+    capeEd3dRenderer.domElement.style.imageRendering='pixelated';
     capeEd3dScene.add(new THREE.AmbientLight(0xffffff,0.8));
     const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(3,5,4);capeEd3dScene.add(dl);
     const dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-3,-1,-2);capeEd3dScene.add(dl2);
@@ -5139,60 +5468,79 @@ function drawSteveSkin(c){
     capeEd3dGroup.scale.set(0.8,0.8,0.8);
 
     function cropEditorHalf(side){
-      const c=document.createElement('canvas');c.width=11;c.height=ART_H;
-      c.getContext('2d').drawImage(canvas,side*11,0,11,ART_H,0,0,11,ART_H);
-      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
+      const c=document.createElement('canvas');c.width=10;c.height=16;
+      c.getContext('2d').drawImage(canvas,side===0?1:12,1,10,16,0,0,10,16);
+      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;return t;
     }
     function cropEditorEdge(col){
-      const c=document.createElement('canvas');c.width=1;c.height=ART_H;
-      c.getContext('2d').drawImage(canvas,col,0,1,ART_H,0,0,1,ART_H);
-      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
+      const c=document.createElement('canvas');c.width=1;c.height=16;
+      c.getContext('2d').drawImage(canvas,col,1,1,16,0,0,1,16);
+      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;return t;
     }
     function cropEditorRow(row){
       const c=document.createElement('canvas');c.width=ART_W;c.height=1;
       c.getContext('2d').drawImage(canvas,0,row,ART_W,1,0,0,ART_W,1);
-      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;return t;
+      const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;return t;
     }
 
     const ED_W=2.2, ED_H=3.4, ED_DEPTH=0.2;
     const ED_HALF=ED_W/2, ED_DEPH=ED_DEPTH/2;
 
     function rebuildCapeMesh(){
-      while(capeEd3dGroup.children.length){const c=capeEd3dGroup.children[0];capeEd3dGroup.remove(c);if(c.geometry)c.geometry.dispose();if(c.material){if(c.material.map)c.material.map.dispose();c.material.dispose();}}
+      while(capeEd3dGroup.children.length){const c=capeEd3dGroup.children[0];capeEd3dGroup.remove(c);c.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m&&m.map)m.map.dispose();if(m)m.dispose();});}});}
       capeEdFrontTex=cropEditorHalf(1);capeEdBackTex=cropEditorHalf(0);
       if(capeEd3dIsElytra){
-        const geo=makeElytraGeo();
-        const leftTex=capeEdBackTex.clone();
-        const rightTex=capeEdFrontTex.clone();
-        const left=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({map:leftTex,side:THREE.DoubleSide}));
-        left.userData={uvHalf:'left'};
-        const right=new THREE.Mesh(geo.clone(),new THREE.MeshLambertMaterial({map:rightTex,side:THREE.DoubleSide}));
-        right.userData={uvHalf:'right'};
-        capeEd3dGroup.add(left,right);
+        capeEdTopTex=cropEditorRow(0);
+        capeEdBottomTex=cropEditorRow(0);
+        capeEdLeftTex=cropEditorEdge(0);
+        capeEdRightTex=cropEditorEdge(11);
+        const mats=[
+          new THREE.MeshLambertMaterial({map:capeEdFrontTex,side:THREE.DoubleSide}),
+          new THREE.MeshLambertMaterial({map:capeEdTopTex,side:THREE.DoubleSide}),
+          new THREE.MeshLambertMaterial({map:capeEdBottomTex,side:THREE.DoubleSide}),
+          new THREE.MeshLambertMaterial({map:capeEdLeftTex,side:THREE.DoubleSide}),
+          new THREE.MeshLambertMaterial({map:capeEdRightTex,side:THREE.DoubleSide})
+        ];
+        const leftPivot=new THREE.Group();
+        leftPivot.position.set(-1.0,0.15,-0.1);
+        leftPivot.rotation.x=0.26;
+        leftPivot.rotation.z=-0.26;
+        const left=new THREE.Mesh(makeElytraWing(1),mats);
+        left.userData={face:'front'};
+        leftPivot.add(left);
+        capeEd3dGroup.add(leftPivot);
+        const rightPivot=new THREE.Group();
+        rightPivot.position.set(1.0,0.15,-0.1);
+        rightPivot.rotation.x=0.26;
+        rightPivot.rotation.z=0.26;
+        const right=new THREE.Mesh(makeElytraWing(-1),mats);
+        right.userData={face:'front'};
+        rightPivot.add(right);
+        capeEd3dGroup.add(rightPivot);
       }else{
         const front=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_H),new THREE.MeshLambertMaterial({map:capeEdFrontTex,side:THREE.DoubleSide}));
-        front.position.z=ED_DEPH;front.userData={uvHalf:'front'};
+        front.position.z=ED_DEPH;front.userData={face:'front'};
         capeEd3dGroup.add(front);
         const back=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_H),new THREE.MeshLambertMaterial({map:capeEdBackTex,side:THREE.DoubleSide}));
-        back.position.z=-ED_DEPH;back.userData={uvHalf:'back'};
+        back.position.z=-ED_DEPH;back.userData={face:'back'};
         capeEd3dGroup.add(back);
         capeEdLeftTex=cropEditorEdge(0);
         const leftSide=new THREE.Mesh(new THREE.PlaneGeometry(ED_DEPTH,ED_H),new THREE.MeshLambertMaterial({map:capeEdLeftTex,side:THREE.DoubleSide}));
-        leftSide.rotation.y=Math.PI/2;leftSide.position.x=-ED_HALF;leftSide.userData={uvHalf:'back'};
+        leftSide.rotation.y=Math.PI/2;leftSide.position.x=-ED_HALF;leftSide.userData={face:'leftSide'};
         capeEd3dGroup.add(leftSide);
-        capeEdRightTex=cropEditorEdge(ART_W-1);
+        capeEdRightTex=cropEditorEdge(11);
         const rightSide=new THREE.Mesh(new THREE.PlaneGeometry(ED_DEPTH,ED_H),new THREE.MeshLambertMaterial({map:capeEdRightTex,side:THREE.DoubleSide}));
-        rightSide.rotation.y=-Math.PI/2;rightSide.position.x=ED_HALF;rightSide.userData={uvHalf:'front'};
+        rightSide.rotation.y=-Math.PI/2;rightSide.position.x=ED_HALF;rightSide.userData={face:'rightSide'};
         capeEd3dGroup.add(rightSide);
         // Top face — paints row 0 of the texture
         capeEdTopTex=cropEditorRow(0);
         const top=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_DEPTH),new THREE.MeshLambertMaterial({map:capeEdTopTex,side:THREE.DoubleSide}));
         top.rotation.x=-Math.PI/2;top.position.y=ED_H/2;top.userData={uvRow:0};
         capeEd3dGroup.add(top);
-        // Bottom face — paints the last row of the texture
-        capeEdBottomTex=cropEditorRow(ART_H-1);
+        // Bottom face — also row 0 (matches the official cape layout)
+        capeEdBottomTex=cropEditorRow(0);
         const bottom=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_DEPTH),new THREE.MeshLambertMaterial({map:capeEdBottomTex,side:THREE.DoubleSide}));
-        bottom.rotation.x=Math.PI/2;bottom.position.y=-ED_H/2;bottom.userData={uvRow:ART_H-1};
+        bottom.rotation.x=Math.PI/2;bottom.position.y=-ED_H/2;bottom.userData={uvRow:0};
         capeEd3dGroup.add(bottom);
       }
       capeEd3dGroup.position.set(0,0,0);
@@ -5243,19 +5591,32 @@ function drawSteveSkin(c){
     const hits=capeEd3dRaycaster.intersectObjects(capeEd3dGroup.children,true);
     if(hits.length>0&&hits[0].uv){
       const uv=hits[0].uv;
-      const half=hits[0].object.userData?.uvHalf;
+      const face=hits[0].object.userData?.face;
       const row=hits[0].object.userData?.uvRow;
-      const halfW=11;
+      const matIdx=hits[0].face?hits[0].face.materialIndex:undefined;
       let px,py;
-      if(row!==undefined){
+      if(capeEd3dIsElytra&&matIdx!==undefined){
+        if(matIdx===1||matIdx===2){px=Math.floor(uv.x*ART_W);py=0;}
+        else if(matIdx===3){px=0;py=Math.floor((1-uv.y)*16)+1;}
+        else if(matIdx===4){px=11;py=Math.floor((1-uv.y)*16)+1;}
+        else{px=12+Math.floor(uv.x*10);py=Math.floor((1-uv.y)*16)+1;}
+      }else if(row!==undefined){
         px=Math.floor(uv.x*ART_W);
         py=row;
-      }else if(half==='front'||half==='right'){
-        px=halfW+Math.floor(uv.x*halfW);
-        py=Math.floor((1-uv.y)*ART_H);
+      }else if(face==='front'){
+        px=12+Math.floor(uv.x*10);
+        py=Math.floor((1-uv.y)*16)+1;
+      }else if(face==='back'){
+        px=1+Math.floor(uv.x*10);
+        py=Math.floor((1-uv.y)*16)+1;
+      }else if(face==='rightSide'){
+        px=11;
+        py=Math.floor((1-uv.y)*16)+1;
+      }else if(face==='leftSide'){
+        px=0;
+        py=Math.floor((1-uv.y)*16)+1;
       }else{
-        px=Math.floor(uv.x*halfW);
-        py=Math.floor((1-uv.y)*ART_H);
+        return;
       }
       px=Math.max(0,Math.min(ART_W-1,px));
       py=Math.max(0,Math.min(ART_H-1,py));
@@ -5426,11 +5787,12 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
   let selectedServerId = null;
   const MAX_SERVERS = 5;
 
-  function renderServerList(){
+  async function renderServerList(){
     const el = document.getElementById('server-list');
     const countEl = document.getElementById('server-count-label');
     countEl.textContent = `${servers.length} / ${MAX_SERVERS} servers`;
     document.getElementById('server-create-btn').disabled = servers.length >= MAX_SERVERS;
+    await getPlayitTunnels();
     if(!servers.length){
       el.innerHTML = '<div class="mod-list-empty">No servers created yet. Click "+ New Server" to start.</div>';
       return;
@@ -5446,6 +5808,7 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
       item.dataset.id = s.id;
       const typeIcons = { vanilla:'🟫', paper:'📄', spigot:'🪵', purpur:'🟣', fabric:'🧵', quilt:'🪡', forge:'⬛', neoforge:'🔶', modpack:'📦' };
       const localAddr = `${s.address || 'localhost'}:${s.port || 25565}`;
+      const playitAddr = s.playitAddress || playitAddrForServer(s);
       let lanAddr = '';
       try {
         const nets = require('os').networkInterfaces();
@@ -5462,12 +5825,14 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
         <div class="server-info">
           <div class="server-name">${escHtml(s.name)}</div>
           <div style="display:flex;align-items:center;gap:.5em;margin-top:.15em;flex-wrap:wrap">
+            ${playitAddr ? `<code class="server-addr" data-addr="${escHtml(playitAddr)}" style="font-size:.72em;color:#7c6cf0;background:#7c6cf012;padding:.15em .5em;border-radius:.3em;cursor:pointer;font-family:monospace;border:1px solid #7c6cf055;user-select:all" title="Click to copy - playit.gg public address">☁ ${escHtml(playitAddr)}</code>` : ''}
             <code class="server-addr" style="font-size:.72em;color:var(--acc);background:#1bd96a12;padding:.15em .5em;border-radius:.3em;cursor:pointer;font-family:monospace;border:1px solid #1bd96a33;user-select:all" title="Click to copy - Local address">${escHtml(localAddr)}</code>
             ${lanAddr ? `<code class="server-addr" style="font-size:.72em;color:#f5a623;background:#f5a62312;padding:.15em .5em;border-radius:.3em;cursor:pointer;font-family:monospace;border:1px solid #f5a62333;user-select:all" title="Click to copy - LAN address for friends on same network">${escHtml(lanAddr)}</code>` : ''}
             <span style="font-size:.68em;color:#555">MC ${s.mcVersion || '?'} · ${(s.type || 'vanilla').charAt(0).toUpperCase() + (s.type || 'vanilla').slice(1)}${s.type==='modpack' && s.modpackLoader ? ' (' + s.modpackLoader + ')' : ''} · ${s.gamemode || 'survival'} · ${s.maxPlayers || 20}p</span>
           </div>
         </div>
         <div class="server-actions">
+          <button class="btn btn-sm server-playit-btn" style="width:auto;padding:.25em .6em;font-size:.72em;color:#7c6cf0;border-color:#7c6cf055" title="playit.gg - create a free public tunnel and show its address next to localhost">playit.gg</button>
           <button class="btn btn-sm server-start-btn" style="width:auto;padding:.25em .6em;font-size:.75em">▶ Start</button>
           <button class="btn btn-sm server-edit-btn" style="width:auto;padding:.25em .6em;font-size:.75em">✎</button>
           <button class="btn btn-sm server-delete-btn" style="width:auto;padding:.25em .6em;font-size:.75em;color:#f44;border-color:#f4444444">✕</button>
@@ -5493,11 +5858,15 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
       const id = btn.closest('[data-id]').dataset.id;
       btn.addEventListener('click', () => deleteServer(id));
     });
+    el.querySelectorAll('.server-playit-btn').forEach(btn => {
+      const id = btn.closest('[data-id]').dataset.id;
+      btn.addEventListener('click', () => playitCreateTunnel(id, btn));
+    });
     // Copy address on click
     el.querySelectorAll('.server-addr').forEach(addrEl => {
       addrEl.addEventListener('click', (e) => {
         e.stopPropagation();
-        const text = addrEl.textContent;
+        const text = addrEl.dataset.addr || addrEl.textContent;
         navigator.clipboard.writeText(text).then(() => {
           const orig = addrEl.textContent;
           addrEl.textContent = 'Copied!';
@@ -5514,6 +5883,297 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
         const startBtn = el.querySelector(`[data-id="${s.id}"] .server-start-btn`);
         if(startBtn) startBtn.textContent = st.status === 'running' ? '■ Stop' : '▶ Start';
       });
+    }
+  }
+
+  // ── playit.gg (free public address for servers) ──
+  let playitModalServerId = null;
+  let playitClaimTimer = null;
+  let playitRefreshTimer = null;
+  let playitAddrCache = { ts: 0, tunnels: [] };
+
+  async function getPlayitTunnels(){
+    const now = Date.now();
+    if(now - playitAddrCache.ts < 10000 && playitAddrCache.tunnels) return playitAddrCache.tunnels;
+    try {
+      const st = await ipcRenderer.invoke('playit-status');
+      playitAddrCache = { ts: now, tunnels: st.tunnels || [] };
+    } catch { playitAddrCache = { ts: now, tunnels: [] }; }
+    return playitAddrCache.tunnels;
+  }
+
+  function playitAddrForServer(s){
+    const list = playitAddrCache.tunnels || [];
+    const port = s.port || 25565;
+    const match = list.find(t => t.targetPort && Number(t.targetPort) === Number(port));
+    if(match) return match.address;
+    if(list.length === 1) return list[0].address;
+    return null;
+  }
+
+  ipcRenderer.on('playit-download-progress', (e, p) => {
+    const bar = document.getElementById('playit-dl-fill');
+    const lbl = document.getElementById('playit-dl-label');
+    if(bar) bar.style.width = (p || 0) + '%';
+    if(lbl) lbl.textContent = 'Downloading playit agent… ' + (p || 0) + '%';
+  });
+
+  function playitRender(html){ document.getElementById('playit-modal-body').innerHTML = html; }
+  function playitErrorBox(msg){
+    return `<div style="padding:.7em .9em;background:#2a0a0a;border:1px solid #f4444444;border-radius:var(--r);font-size:.8em;color:#f88;margin-bottom:.8em">${escHtml(msg)}</div>`;
+  }
+  function playitAddrChip(addr){
+    return `<code style="display:inline-flex;align-items:center;gap:.4em;font-family:monospace;font-size:.82em;color:var(--acc);background:#1bd96a12;border:1px solid #1bd96a33;padding:.25em .6em;border-radius:.35em;user-select:all">${escHtml(addr)}</code>`;
+  }
+  function playitOpenExt(url){
+    try { shell.openExternal(url); } catch {}
+  }
+
+  function playitModalOpen(serverId){
+    const s = servers.find(x => x.id === serverId);
+    if(!s) return;
+    playitModalServerId = serverId;
+    document.getElementById('playit-server-name').textContent = s.name || '';
+    document.getElementById('playit-modal').style.display = 'flex';
+    playitRender('<div class="modal-loading">Loading playit.gg…</div>');
+    playitLoadStatus();
+  }
+  function playitModalClose(){
+    document.getElementById('playit-modal').style.display = 'none';
+    clearInterval(playitClaimTimer); playitClaimTimer = null;
+    clearInterval(playitRefreshTimer); playitRefreshTimer = null;
+  }
+  document.getElementById('playit-modal-close').addEventListener('click', playitModalClose);
+  document.getElementById('playit-modal').addEventListener('click', e => { if(e.target === document.getElementById('playit-modal')) playitModalClose(); });
+
+  async function playitLoadStatus(){
+    const st = await ipcRenderer.invoke('playit-status');
+    if(!st.claimed && !st.secretExists){
+      return playitRenderClaim();
+    }
+    if(!st.claimed){
+      playitRender(playitErrorBox('playit.gg link lost (invalid secret). Re-link your agent:')
+        + `<button id="playit-reclaim-btn" class="btn btn-sm" style="width:auto;padding:.35em .9em;font-size:.8em">Claim playit.gg</button>`);
+      document.getElementById('playit-reclaim-btn').addEventListener('click', () => playitRenderClaim());
+      return;
+    }
+    const start = await ipcRenderer.invoke('playit-start');
+    if(!start.ok){
+      playitRender(playitErrorBox('Failed to start the playit agent: ' + (start.error || 'unknown error')));
+      return;
+    }
+    await playitRenderStatus();
+    clearInterval(playitRefreshTimer);
+    playitRefreshTimer = setInterval(() => {
+      if(document.getElementById('playit-modal').style.display !== 'flex'){
+        clearInterval(playitRefreshTimer); playitRefreshTimer = null; return;
+      }
+      playitRenderStatus(true);
+    }, 5000);
+  }
+
+  async function playitRenderStatus(silent){
+    const st = await ipcRenderer.invoke('playit-status');
+    const server = servers.find(x => x.id === playitModalServerId);
+    const port = (server && server.port) || 25565;
+    let html = '';
+    html += `<div style="display:flex;align-items:center;gap:.5em;margin-bottom:.6em">
+      <span style="font-size:.8em;color:#888">Status:</span>
+      <span style="font-size:.8em;color:${st.running ? '#1bd96a' : '#f5a623'}">${st.running ? '● Agent running' : '○ Agent not running'}</span>
+      ${st.error ? `<span style="font-size:.7em;color:#f88">(${escHtml(st.error)})</span>` : ''}
+    </div>`;
+    if(!st.running){
+      html += `<div style="margin-bottom:.8em"><button id="playit-retry-btn" class="btn btn-sm" style="width:auto;padding:.3em .8em;font-size:.78em">Start agent</button></div>`;
+    }
+    html += `<div style="font-size:.8em;color:#aaa;margin-bottom:.8em">Friends can join <b>${escHtml(server ? server.name : '')}</b> (port ${port}) using one of these public addresses:</div>`;
+    if(st.addresses && st.addresses.length){
+      html += `<div style="display:flex;flex-direction:column;gap:.4em;margin-bottom:.8em">`;
+      for(const a of st.addresses){
+        html += `<div style="display:flex;align-items:center;gap:.5em">${playitAddrChip(a)} <button class="btn btn-sm playit-copy-btn" data-addr="${escHtml(a)}" style="width:auto;padding:.2em .6em;font-size:.72em">Copy</button></div>`;
+      }
+      html += `</div>`;
+    } else {
+      html += `<div style="padding:.7em .9em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);font-size:.78em;color:#888;margin-bottom:.8em">
+        No tunnel configured yet. Add a <b>Minecraft Java</b> tunnel on playit.gg to get a free <b>*.playit.gg</b> address for this server.
+        <div style="margin-top:.5em"><a href="#" id="playit-open-agent" style="color:#7c6cf0;font-size:.85em">${escHtml(st.accountUrl || 'Open playit.gg dashboard')}</a></div>
+      </div>`;
+    }
+    html += `<div style="display:flex;gap:.5em;flex-wrap:wrap;margin-top:.4em;align-items:center">
+      <button id="playit-stop-btn" class="btn btn-sm" style="width:auto;padding:.3em .8em;font-size:.78em;color:#f44;border-color:#f4444444">■ Stop agent</button>
+      ${st.accountUrl ? `<a href="#" id="playit-open-agent2" style="font-size:.78em;color:#7c6cf0">Open playit.gg dashboard</a>` : ''}
+    </div>`;
+    html += `<div style="margin-top:.9em;font-size:.72em;color:#555">The agent keeps the tunnel alive while the launcher is open. The Minecraft server itself must be running for friends to connect.</div>`;
+    playitRender(html);
+    document.querySelectorAll('.playit-copy-btn').forEach(b => b.addEventListener('click', () => {
+      try { require('electron').clipboard.writeText(b.dataset.addr); } catch {}
+      b.textContent = 'Copied!';
+      setTimeout(() => b.textContent = 'Copy', 1200);
+    }));
+    const open1 = document.getElementById('playit-open-agent');
+    if(open1) open1.addEventListener('click', e => { e.preventDefault(); playitOpenExt(st.accountUrl); });
+    const open2 = document.getElementById('playit-open-agent2');
+    if(open2) open2.addEventListener('click', e => { e.preventDefault(); playitOpenExt(st.accountUrl); });
+    const retry = document.getElementById('playit-retry-btn');
+    if(retry) retry.addEventListener('click', async () => {
+      await ipcRenderer.invoke('playit-start');
+      playitRenderStatus(true);
+    });
+    const stop = document.getElementById('playit-stop-btn');
+    if(stop) stop.addEventListener('click', async () => {
+      await ipcRenderer.invoke('playit-stop');
+      playitModalClose();
+      document.getElementById('playit-server-name').textContent = '';
+    });
+  }
+
+  async function playitRenderClaim(){
+    playitRender(`
+      <div style="font-size:.85em;color:#aaa;margin-bottom:.8em">This server has no playit.gg link yet. Downloading the free playit agent (first time only)…</div>
+      <div class="lp-bg" style="height:.7em"><div class="lp-fill" id="playit-dl-fill" style="width:0%"></div></div>
+      <div id="playit-dl-label" style="font-size:.72em;color:#888;margin-top:.35em">Starting download…</div>
+    `);
+    const dl = await ipcRenderer.invoke('playit-download');
+    if(!dl.ok){
+      playitRender(playitErrorBox('Failed to download the playit agent: ' + (dl.error || 'unknown error')));
+      return;
+    }
+    const claim = await ipcRenderer.invoke('playit-claim-begin');
+    playitRender(`
+      <div style="font-size:.85em;color:#aaa;margin-bottom:.8em">Agent downloaded. Now link it to your playit.gg account so you get a free public address for your server.</div>
+      <div style="padding:.7em .9em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);margin-bottom:.7em">
+        <div style="font-size:.72em;color:#888;margin-bottom:.35em">Step 1 — Open the claim link</div>
+        <a href="#" id="playit-claim-link" style="color:#7c6cf0;font-size:.82em;word-break:break-all">${escHtml(claim.url)}</a>
+        <div style="margin-top:.5em"><button id="playit-claim-open" class="btn btn-sm btn-primary" style="width:auto;padding:.3em .8em;font-size:.78em">Open claim page</button></div>
+      </div>
+      <div style="padding:.7em .9em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r)">
+        <div style="font-size:.72em;color:#888;margin-bottom:.35em">Step 2 — Approve the program on the page</div>
+        <div id="playit-claim-state" style="font-size:.8em;color:#f5a623">Waiting for you to approve…</div>
+      </div>
+    `);
+    document.getElementById('playit-claim-open').addEventListener('click', () => playitOpenExt(claim.url));
+    document.getElementById('playit-claim-link').addEventListener('click', e => { e.preventDefault(); playitOpenExt(claim.url); });
+    clearInterval(playitClaimTimer);
+    playitClaimTimer = setInterval(async () => {
+      const res = await ipcRenderer.invoke('playit-claim-poll', claim.code);
+      const el = document.getElementById('playit-claim-state');
+      if(res.state === 'accepted'){
+        clearInterval(playitClaimTimer); playitClaimTimer = null;
+        if(el){ el.textContent = '✓ Approved! Starting agent…'; el.style.color = '#1bd96a'; }
+        await ipcRenderer.invoke('playit-start');
+        const srv = servers.find(x => x.id === playitModalServerId);
+        if(srv){
+          const t = await ipcRenderer.invoke('playit-create-tunnel', { port: srv.port || 25565, name: srv.name || 'Crux Server' });
+          if(t.ok && t.address){
+            playitAddrCache = { ts: 0, tunnels: [] };
+            srv.playitAddress = t.address;
+            ipcRenderer.send('save-servers', servers);
+            renderServerList();
+          } else if(t.error === 'auth' || t.error === 'needs-setup'){
+            const setupUrl = 'https://playit.gg/account/agents/' + (t.agentId || '');
+            playitRender(playitErrorBox('✓ Agent linked! One last step: create a <b>Minecraft Java</b> tunnel on playit.gg (one click). Opening it now…')
+              + `<div style="margin-bottom:.8em"><button id="playit-open-setup" class="btn btn-sm btn-primary" style="width:auto;padding:.3em .8em;font-size:.78em">Open playit.gg agent page</button></div>
+                 <div style="font-size:.78em;color:#888">Your <b>*.playit.gg</b> address appears here and on the server card automatically once created.</div>`);
+            document.getElementById('playit-open-setup').addEventListener('click', () => playitOpenExt(setupUrl));
+            playitOpenExt(setupUrl);
+            return;
+          }
+        }
+        await playitLoadStatus();
+      } else if(res.state === 'waiting'){
+        // still waiting
+      } else if(res.state === 'rejected'){
+        clearInterval(playitClaimTimer); playitClaimTimer = null;
+        if(el){ el.textContent = '✗ The program was rejected.'; el.style.color = '#f88'; }
+      } else {
+        clearInterval(playitClaimTimer); playitClaimTimer = null;
+        if(el){ el.textContent = '✗ ' + (res.message || 'Error'); el.style.color = '#f88'; }
+      }
+    }, 2000);
+  }
+
+  function playitOpenSetup(agentId){
+    playitOpenExt('https://playit.gg/account/agents/' + (agentId || ''));
+  }
+
+  async function playitAutoStart(serverId){
+    const st = await ipcRenderer.invoke('playit-status');
+    if(!st.claimed){
+      playitModalOpen(serverId);
+      return;
+    }
+    const server = servers.find(x => x.id === serverId);
+    if(!server) return;
+    if(!st.running){
+      await ipcRenderer.invoke('playit-start');
+    }
+    const existing = playitAddrForServer(server);
+    if(existing){
+      server.playitAddress = existing;
+      ipcRenderer.send('save-servers', servers);
+      renderServerList();
+      return;
+    }
+    const res = await ipcRenderer.invoke('playit-create-tunnel', { port: server.port || 25565, name: server.name || 'Crux Server' });
+    if(res.ok && res.address){
+      playitAddrCache = { ts: 0, tunnels: [] };
+      server.playitAddress = res.address;
+      ipcRenderer.send('save-servers', servers);
+      renderServerList();
+    } else if(res.error === 'auth' || res.error === 'needs-setup'){
+      playitOpenSetup(res.agentId);
+      showServerConsole(serverId);
+      serverConsoleLine(serverId, '[PLAYIT] Agent connected. Create a "Minecraft Java" tunnel on the playit.gg page we opened - your *.playit.gg address appears here automatically.');
+    } else if(res.error && res.error !== 'not-claimed'){
+      showServerConsole(serverId);
+    }
+  }
+
+  function serverConsoleLine(id, text){
+    const con = document.getElementById('server-console');
+    if(con){ con.innerHTML += escHtml(text) + '\n'; con.scrollTop = con.scrollHeight; }
+  }
+
+  async function playitCreateTunnel(id, btn){
+    const st = await ipcRenderer.invoke('playit-status');
+    if(!st.claimed){ playitModalOpen(id); return; }
+    const server = servers.find(x => x.id === id);
+    if(!server) return;
+    const oldTxt = btn.textContent;
+    btn.textContent = 'Setting up…';
+    btn.disabled = true;
+    if(!st.running){
+      const start = await ipcRenderer.invoke('playit-start');
+      if(!start.ok){ btn.disabled = false; btn.textContent = oldTxt; playitModalOpen(id); return; }
+    }
+    const res = await ipcRenderer.invoke('playit-create-tunnel', { port: server.port || 25565, name: server.name || 'Crux Server' });
+    btn.disabled = false;
+    if(res.ok && res.address){
+      playitAddrCache = { ts: 0, tunnels: [] };
+      server.playitAddress = res.address;
+      ipcRenderer.send('save-servers', servers);
+      await renderServerList();
+      const newBtn = document.querySelector(`[data-id="${id}"] .server-playit-btn`);
+      if(newBtn){
+        newBtn.textContent = '✓ set';
+        newBtn.style.color = '#1bd96a';
+        setTimeout(() => { newBtn.textContent = 'playit.gg'; newBtn.style.color = ''; }, 1800);
+      }
+      return;
+    }
+    if(res.error === 'auth' || res.error === 'needs-setup'){
+      const setupUrl = 'https://playit.gg/account/agents/' + (res.agentId || '');
+      playitModalOpen(id);
+      playitRender(playitErrorBox('playit.gg is connected, but the tunnel must be created on the playit.gg website (one click). Opening it now…')
+        + `<div style="margin-bottom:.8em"><button id="playit-open-setup" class="btn btn-sm btn-primary" style="width:auto;padding:.3em .8em;font-size:.78em">Open playit.gg agent page</button></div>
+           <div style="font-size:.78em;color:#888">Create a <b>Minecraft Java</b> tunnel on that page. Your <b>*.playit.gg</b> address appears here and on the server card automatically.</div>`);
+      document.getElementById('playit-open-setup').addEventListener('click', () => playitOpenExt(setupUrl));
+      playitOpenExt(setupUrl);
+      return;
+    }
+    btn.textContent = oldTxt;
+    playitModalOpen(id);
+    if(document.getElementById('playit-modal-body')){
+      document.getElementById('playit-modal-body').innerHTML = playitErrorBox('playit.gg tunnel creation failed: ' + (res.error || res.message || 'unknown error'));
     }
   }
 
@@ -5821,6 +6481,7 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
       if(servers.length >= MAX_SERVERS) return;
       serverObj.id = 'srv_' + Date.now();
       servers.push(serverObj);
+      playitAutoStart(serverObj.id);
     }
     ipcRenderer.send('save-servers', servers);
     closeServerEditor();
@@ -5975,7 +6636,7 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
     // Track server start in recent history
     const srv=servers.find(x=>x.id===id);
     if(srv){
-      recentHistory.unshift({
+      addRecentEntry({
         type:'server',
         serverName:srv.name,
         serverAddress:srv.address||'localhost',
@@ -5986,8 +6647,6 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
         version:srv.mcVersion||'',
         time:Date.now()
       });
-      if(recentHistory.length>15) recentHistory=recentHistory.slice(0,15);
-      settings.recentHistory=recentHistory; saveSettings();
     }
   });
   ipcRenderer.on('server-stopped', (_, { id }) => {
@@ -6002,6 +6661,24 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
     }
     renderServerList();
   });
+
+  setInterval(async () => {
+    if(document.getElementById('playit-modal').style.display === 'flex') return;
+    const prev = JSON.stringify(playitAddrCache.tunnels || []);
+    playitAddrCache = { ts: 0, tunnels: [] };
+    await getPlayitTunnels();
+    const cur = JSON.stringify(playitAddrCache.tunnels || []);
+    if(prev !== cur && servers.length) renderServerList();
+  }, 15000);
+
+  (async () => {
+    try {
+      const st = await ipcRenderer.invoke('playit-status');
+      if(st.claimed && !st.running){
+        await ipcRenderer.invoke('playit-start');
+      }
+    } catch {}
+  })();
 
   renderServerList();
 })();
@@ -6105,6 +6782,310 @@ document.getElementById('update-install-btn').addEventListener('click', async ()
     document.getElementById('update-error-text').textContent = 'Update failed: ' + e.message;
     document.getElementById('update-error-text').style.display = 'block';
     installBtn.style.display = 'inline-block';
+  }
+});
+
+// ════════════════════════════════════════
+// FRIENDS & PRESENCE
+// ════════════════════════════════════════
+let friends = [];
+let friendStatuses = {};
+let friendRequests = [];
+
+function hasPresenceServer(){
+  return !!(settings && settings.presenceServer && String(settings.presenceServer).trim());
+}
+
+function fmtPlaceholder(str, map){
+  return String(str).replace(/\{(\w+)\}/g, (_,k)=> map[k]!==undefined ? map[k] : ('{'+k+'}'));
+}
+
+function getMyPresence(){
+  const acc = getSelectedAccount();
+  const running = Object.values(instances).filter(i=>i.status==='running');
+  const first = running[0];
+  let server = null;
+  if(first && first.serverAddress){
+    server = (first.serverName || first.serverAddress);
+    if(first.serverPort && first.serverPort!==25565) server += ':' + first.serverPort;
+  }
+  return {
+    uuid: acc ? acc.uuid : '',
+    username: acc ? acc.name : '',
+    online: !!acc,
+    inGame: !!(acc && running.length > 0),
+    server,
+    instanceName: first ? (first.serverName || first.profileName || first.version || '') : null
+  };
+}
+
+function reportPresence(){
+  ipcRenderer.send('presence-update', getMyPresence());
+}
+
+async function loadFriends(){
+  try{ friends = await ipcRenderer.invoke('load-friends') || []; }catch{ friends = []; }
+  if(!Array.isArray(friends)) friends=[];
+}
+function saveFriends(){ ipcRenderer.send('save-friends', friends); }
+
+async function refreshFriendStatuses(){
+  if(!friends.length){ friendStatuses={}; renderFriendList(); return; }
+  const uuids = friends.map(f=>f.uuid);
+  try{
+    const res = await ipcRenderer.invoke('presence-fetch', uuids);
+    friendStatuses = (res && res.friends) || {};
+  }catch{ friendStatuses = {}; }
+  renderFriendList();
+}
+
+function timeAgo(ts){
+  if(!ts) return '';
+  const s = Math.floor((Date.now()-ts)/1000);
+  if(s<60) return s+'s';
+  if(s<3600) return Math.floor(s/60)+'m';
+  if(s<86400) return Math.floor(s/3600)+'h';
+  return Math.floor(s/86400)+'d';
+}
+
+function renderFriendList(){
+  const el=document.getElementById('friend-list');
+  const empty=document.getElementById('friend-empty');
+  if(!el) return;
+  el.innerHTML='';
+  if(!friends.length){
+    if(empty) empty.style.display='block';
+    return;
+  }
+  if(empty) empty.style.display='none';
+  for(const f of friends){
+    const st = friendStatuses[f.uuid] || { online:false, inGame:false };
+    const item=document.createElement('div');
+    item.className='friend-item';
+    const head=document.createElement('div');
+    head.className='friend-head';
+    const im=new Image();
+    im.crossOrigin='anonymous';
+    im.src='https://crafatar.com/avatars/'+f.uuid+'?size=32&overlay';
+    im.style.cssText='width:100%;height:100%;border-radius:.2em;image-rendering:pixelated';
+    im.onload=()=>{ head.innerHTML=''; head.appendChild(im); };
+    im.onerror=()=>{ head.textContent=(f.name||'?')[0].toUpperCase(); };
+    head.appendChild(im);
+    item.appendChild(head);
+    const info=document.createElement('div');
+    info.className='friend-info';
+    const name=document.createElement('div');
+    name.className='friend-name';
+    name.textContent=f.name;
+    info.appendChild(name);
+    const meta=document.createElement('div');
+    meta.className='friend-meta';
+    if(st.online){
+      if(st.inGame) meta.textContent = st.server ? fmtPlaceholder(t('fr_playing_on'),{server:st.server}) : t('fr_status_ingame');
+      else meta.textContent = t('fr_status_online');
+    } else {
+      meta.textContent = st.lastSeen ? fmtPlaceholder(t('fr_last_seen'),{time:timeAgo(st.lastSeen)}) : t('fr_status_offline');
+    }
+    info.appendChild(meta);
+    item.appendChild(info);
+    const dot=document.createElement('div');
+    dot.className='friend-status '+(st.online ? (st.inGame?'ingame':'online') : 'offline');
+    item.appendChild(dot);
+    const actions=document.createElement('div');
+    actions.className='friend-actions';
+    const copyBtn=document.createElement('button');
+    copyBtn.className='btn';
+    copyBtn.textContent=t('fr_copy_uuid');
+    copyBtn.addEventListener('click',()=>{
+      try{ require('electron').clipboard.writeText(f.uuid); }catch{}
+      const msg=document.getElementById('friend-status-msg');
+      if(msg){ msg.textContent=t('fr_copied'); setTimeout(()=>{msg.textContent='';},2500); }
+    });
+    actions.appendChild(copyBtn);
+    const delBtn=document.createElement('button');
+    delBtn.className='btn';
+    delBtn.style.cssText='border-color:#f4444444;color:#f44';
+    delBtn.textContent='✕';
+    delBtn.title=t('btn_delete');
+    delBtn.addEventListener('click',()=>{
+      friends=friends.filter(x=>x.uuid!==f.uuid);
+      saveFriends();
+      renderFriendList();
+      const msg=document.getElementById('friend-status-msg');
+      if(msg){ msg.textContent=fmtPlaceholder(t('fr_removed'),{name:f.name}); setTimeout(()=>{msg.textContent='';},2500); }
+    });
+    actions.appendChild(delBtn);
+    item.appendChild(actions);
+    el.appendChild(item);
+  }
+}
+
+function flashMsg(text){
+  const msg=document.getElementById('friend-status-msg');
+  if(!msg) return;
+  msg.textContent=text;
+  clearTimeout(msg._t);
+  msg._t=setTimeout(()=>{ msg.textContent=''; },3000);
+}
+
+function getMyUuid(){
+  const acc=getSelectedAccount();
+  return acc ? String(acc.uuid||'').replace(/-/g,'').toLowerCase() : '';
+}
+
+async function sendFriendRequest(){
+  const input=document.getElementById('friend-name-input');
+  const name=(input.value||'').trim();
+  if(!name) return;
+  input.value='';
+  const myUuid=getMyUuid();
+  const myName=(getSelectedAccount()&&getSelectedAccount().name)||'';
+  if(!myUuid){ flashMsg(t('fr_req_login')); return; }
+  flashMsg(t('fr_sending'));
+  try{
+    const res=await fetch('https://api.mojang.com/users/profiles/minecraft/'+encodeURIComponent(name));
+    if(!res.ok) throw new Error('not found');
+    const data=await res.json();
+    const uuid=data.id;
+    const display=data.name || name;
+    if(uuid===myUuid){ flashMsg(t('fr_req_self')); return; }
+    const r=await ipcRenderer.invoke('presence-requests-send',{ fromUuid:myUuid, fromName:myName, toUuid:uuid, toName:display });
+    if(!r || !r.ok){
+      flashMsg(r && r.error==='no-server' ? t('fr_req_noserver') : t('fr_send_failed'));
+      return;
+    }
+    if(r.status==='exists') flashMsg(fmtPlaceholder(t('fr_req_exists'),{name:display}));
+    else flashMsg(fmtPlaceholder(t('fr_req_sent'),{name:display}));
+  }catch{
+    flashMsg(fmtPlaceholder(t('fr_not_found'),{name}));
+  }
+}
+
+async function respondToRequest(req, accept){
+  const myUuid=getMyUuid();
+  if(!myUuid) return;
+  try{ await ipcRenderer.invoke('presence-requests-respond',{ fromUuid:req.fromUuid, toUuid:myUuid, accept, acceptorName:(getSelectedAccount()&&getSelectedAccount().name)||'' }); }catch{}
+  friendRequests=friendRequests.filter(x=>!(x.fromUuid===req.fromUuid && x.toUuid===req.toUuid));
+  renderFriendRequests();
+  if(accept){
+    if(!friends.some(f=>f.uuid===req.fromUuid)){
+      friends.push({ uuid:req.fromUuid, name:req.fromName||'?', added:Date.now() });
+      saveFriends();
+      refreshFriendStatuses();
+    }
+    flashMsg(fmtPlaceholder(t('fr_req_added'),{name:req.fromName||'?'}));
+  } else {
+    flashMsg(fmtPlaceholder(t('fr_req_declined'),{name:req.fromName||'?'}));
+  }
+}
+
+function renderFriendRequests(){
+  const box=document.getElementById('friend-requests');
+  if(!box) return;
+  box.innerHTML='';
+  if(!friendRequests.length) return;
+  const head=document.createElement('div');
+  head.style.cssText='font-weight:bold;font-size:.85em;color:#aaa;margin-bottom:.4em';
+  head.textContent=t('fr_req_incoming');
+  box.appendChild(head);
+  for(const r of friendRequests){
+    const item=document.createElement('div');
+    item.className='friend-item';
+    const info=document.createElement('div');
+    info.className='friend-info';
+    const name=document.createElement('div');
+    name.className='friend-name';
+    name.textContent=r.fromName||'?';
+    info.appendChild(name);
+    const meta=document.createElement('div');
+    meta.className='friend-meta';
+    meta.textContent=r.message ? t('fr_req_wants')+': '+r.message : t('fr_req_wants');
+    info.appendChild(meta);
+    item.appendChild(info);
+    const actions=document.createElement('div');
+    actions.className='friend-actions';
+    const accBtn=document.createElement('button');
+    accBtn.className='btn';
+    accBtn.textContent=t('fr_req_accept');
+    accBtn.addEventListener('click',()=>respondToRequest(r,true));
+    const decBtn=document.createElement('button');
+    decBtn.className='btn';
+    decBtn.style.cssText='border-color:#f4444444;color:#f44';
+    decBtn.textContent=t('fr_req_decline');
+    decBtn.addEventListener('click',()=>respondToRequest(r,false));
+    actions.appendChild(accBtn);
+    actions.appendChild(decBtn);
+    item.appendChild(actions);
+    box.appendChild(item);
+  }
+}
+
+async function refreshFriendRequests(){
+  const box=document.getElementById('friend-requests');
+  const myUuid=getMyUuid();
+  if(!myUuid){ friendRequests=[]; if(box) box.innerHTML=''; return; }
+  let res={ requests:[], accepted:[] };
+  try{ res=await ipcRenderer.invoke('presence-requests-fetch', myUuid)||{requests:[],accepted:[]}; }catch{ res={requests:[],accepted:[]}; }
+  const accepted=res.accepted||[];
+  for(const a of accepted){
+    if(!friends.some(f=>f.uuid===a.acceptor)){
+      friends.push({ uuid:a.acceptor, name:a.acceptorName||'Friend', added:Date.now() });
+      saveFriends();
+      flashMsg(fmtPlaceholder(t('fr_req_accepted_you'),{name:a.acceptorName||'Friend'}));
+      refreshFriendStatuses();
+    }
+    try{ await ipcRenderer.invoke('presence-requests-consume',{ uuid:myUuid, fromUuid:a.acceptor }); }catch{}
+  }
+  friendRequests=res.requests||[];
+  renderFriendRequests();
+}
+
+(async function initFriends(){
+  await loadFriends();
+  renderFriendList();
+  refreshFriendRequests();
+  const addBtn=document.getElementById('friend-add-btn');
+  if(addBtn) addBtn.addEventListener('click', sendFriendRequest);
+  const input=document.getElementById('friend-name-input');
+  if(input) input.addEventListener('keydown',e=>{ if(e.key==='Enter') sendFriendRequest(); });
+  reportPresence();
+  setInterval(()=>{ refreshFriendStatuses(); }, 15000);
+  setInterval(()=>{ refreshFriendRequests(); }, 15000);
+  setInterval(()=>{ reportPresence(); }, 30000);
+})();
+
+// ════════════════════════════════════════
+// BUG REPORT (no GitHub account required)
+// ════════════════════════════════════════
+document.getElementById('bugreport-send-btn').addEventListener('click', async () => {
+  const titleEl=document.getElementById('bugreport-title');
+  const descEl=document.getElementById('bugreport-desc');
+  const statusEl=document.getElementById('bugreport-status');
+  const title=(titleEl.value||'').trim();
+  const desc=(descEl.value||'').trim();
+  if(!title && !desc){
+    statusEl.textContent=t('bugreport_title')+' / '+t('bugreport_desc_label');
+    statusEl.style.color='#f88';
+    return;
+  }
+  statusEl.style.color='#888';
+  statusEl.textContent=t('br_sending');
+  const btn=document.getElementById('bugreport-send-btn');
+  btn.disabled=true;
+  const category=document.getElementById('bugreport-category').value;
+  const includeLogs=document.getElementById('bugreport-include-logs').checked;
+  const res=await ipcRenderer.invoke('send-bugreport',{ title, category, description:desc, includeLogs });
+  btn.disabled=false;
+  if(res && res.success){
+    statusEl.textContent=t('br_sent');
+    statusEl.style.color='#1bd96a';
+    titleEl.value=''; descEl.value='';
+  } else if(res && res.error==='NO_WEBHOOK'){
+    statusEl.textContent=t('br_no_webhook');
+    statusEl.style.color='#f8a';
+  } else {
+    statusEl.textContent=fmtPlaceholder(t('br_failed'),{code:(res&&res.error)||'?'});
+    statusEl.style.color='#f88';
   }
 });
 

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: crux-presence
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /v1/health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 10000

@@ -10,6 +10,19 @@
   ClearErrors
   WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
 
+  ; Pin to taskbar: shortcuts placed in the "User Pinned\TaskBar" folder are
+  ; shown as pinned taskbar icons. The AppUserModelID must match the one the
+  ; app sets at runtime (see app.setAppUserModelId in main.js).
+  CreateDirectory "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar"
+  CreateShortCut "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\${APP_FILENAME}.lnk" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+  ClearErrors
+  WinShell::SetLnkAUMI "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\${APP_FILENAME}.lnk" "${APP_ID}"
+
+  System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
+!macroend
+
+!macro customUnInstall
+  Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\${APP_FILENAME}.lnk"
   System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
 !macroend
 
@@ -18,6 +31,7 @@
 
   Var chkDesktop
   Var chkStartMenu
+  Var chkTaskbar
   Var chkRunApp
 
   Function finishPageShow
@@ -36,6 +50,10 @@
     Pop $chkStartMenu
     ${NSD_Check} $chkStartMenu
 
+    ${NSD_CreateCheckbox} 10u 90u 200u 12u "Pin to taskbar"
+    Pop $chkTaskbar
+    ${NSD_Check} $chkTaskbar
+
     ${NSD_CreateCheckbox} 10u 110u 200u 12u "Run Crux Client"
     Pop $chkRunApp
     ${NSD_Check} $chkRunApp
@@ -52,6 +70,11 @@
     ${NSD_GetState} $chkStartMenu $0
     ${If} $0 == ${BST_UNCHECKED}
       Delete "$newStartMenuLink"
+    ${EndIf}
+
+    ${NSD_GetState} $chkTaskbar $0
+    ${If} $0 == ${BST_UNCHECKED}
+      Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\${APP_FILENAME}.lnk"
     ${EndIf}
 
     System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
