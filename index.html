@@ -12,7 +12,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;height:100%;overflow:hidden;}
 body{font-family:Arial,sans-serif;background:#0a0a0a;color:#fff;font-size:2vw;}
-:root{--tb:8vh;--acc:#0088ff;--acc2:#005bb5;--r:.5em;}
+:root{--tb:5.4vh;--acc:#0088ff;--acc2:#005bb5;--r:.5em;--border:#2a2a2a;--text-muted:#888;}
 
 
 /* ── Launcher ── */
@@ -21,7 +21,7 @@ body{font-family:Arial,sans-serif;background:#0a0a0a;color:#fff;font-size:2vw;}
 .toolbar{flex-shrink:0;display:flex;align-items:center;gap:.3em;padding:0 .8em;background:rgba(6,6,6,.98);border-bottom:1px solid #1e1e1e;flex-wrap:nowrap;min-height:var(--tb);}
 .toolbar::-webkit-scrollbar{height:3px;}
 .toolbar::-webkit-scrollbar-thumb{background:#333;border-radius:999px;}
-.tb-btn{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:.25em;padding:.3em .5em;border:1px solid #2a2a2a;border-radius:var(--r);background:#111;color:#888;cursor:pointer;font-size:clamp(.55em,.9vw,.85em);transition:all .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tb-btn{flex:1;min-width:0;height:calc(var(--tb) * .95);display:flex;align-items:center;justify-content:center;gap:.3em;padding:.3em .6em;border:1px solid #2a2a2a;border-radius:var(--r);background:#111;color:#888;cursor:pointer;font-size:clamp(.7em,1.15vw,1.05em);font-weight:600;transition:all .2s;white-space:normal;overflow:hidden;text-align:center;line-height:1.15;overflow-wrap:anywhere;word-break:break-word;}
 .tb-btn:hover{background:#1a1a1a;color:#ccc;}
 .tb-btn.active{background:var(--acc);border-color:var(--acc);color:#fff;}
 .tb-btn .tb-head{width:1.2em;height:1.2em;border-radius:.15em;image-rendering:pixelated;display:none;}
@@ -191,6 +191,13 @@ body.light .quick-ram .ram-unit-btn{background:#eee;border-color:#ccc;color:#555
 body.light .launch-right{background:#e8e8e8;border-left-color:#ddd;}
 body.light .launch-left{background:#f0f0f0;}
 
+/* ── Launch stats ── */
+.launch-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(10.5em,1fr));gap:.6em;margin-top:auto;padding-top:1vh;}
+.stat-card{background:#111;border:1px solid #2a2a2a;border-radius:var(--r);padding:.7em .8em;display:flex;flex-direction:column;gap:.2em;min-width:0;}
+.stat-label{font-size:.68em;color:#888;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stat-value{font-size:1.05em;font-weight:bold;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+body.light .stat-card{background:#fff;border-color:#ddd;}
+
 /* 3D skin canvas */
 .skin3d-wrap{width:50%;max-width:14vw;aspect-ratio:.7;background:#0a0a0a;border-radius:var(--r);overflow:hidden;position:relative;cursor:grab;margin:0 auto;}
 body.light .skin3d-wrap{background:#e0e0e0;}
@@ -306,7 +313,8 @@ body.light .profile-item{border-bottom-color:#eee;color:#111;}
 body.light .profile-meta{color:#888;}
 
 /* Profile modal */
-.profile-modal .modal{width:min(90vw,720px);}
+.profile-modal .modal{width:min(95vw,1600px);max-height:92vh;}
+.profile-modal .modal-body{display:flex;flex-direction:column;}
 .pack-section{margin-bottom:1em;}
 .pack-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5em;}
 .pack-section h3{font-size:.8em;text-transform:uppercase;letter-spacing:.05em;color:#555;}
@@ -362,6 +370,15 @@ body.light .log-line.err{color:#cc0000;}
 body.light .log-line.warn{color:#cc7700;}
 body.light .log-line.info{color:#0066aa;}
 
+/* ── Instances (shown at top of Logs tab) ── */
+.log-instances{display:flex;gap:.4em;overflow-x:auto;padding:.2em .1em .5em;flex-shrink:0;}
+.log-instances .instance-item{flex:0 0 14em;border:1px solid #1a1a1a;border-radius:var(--r);background:#0d0d0d;padding:.45em .6em;}
+.log-instances .instance-item:hover{background:#141414;}
+.log-instances .instance-item.sel{border-color:var(--acc);background:#0d1a2e;border-left:1px solid var(--acc);}
+.log-instances .mod-list-empty{flex:1;text-align:center;padding:1em;color:#444;font-size:.8em;}
+.log-instances::-webkit-scrollbar{height:3px;}
+.log-instances::-webkit-scrollbar-thumb{background:#333;border-radius:999px;}
+
 /* ── Instances ── */
 .instance-list{width:100%;border:1px solid #1a1a1a;border-radius:var(--r);background:#0d0d0d;overflow:hidden;}
 .instance-item{display:flex;align-items:center;gap:.7em;padding:.6em .9em;border-bottom:1px solid #141414;font-size:.82em;cursor:pointer;}
@@ -389,10 +406,8 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     <button class="tb-btn" data-page="profiles-page" data-i18n="tab_profiles">Profiles</button>
     <button class="tb-btn" data-page="cape-page" data-i18n="tab_cape">Capes</button>
     <button class="tb-btn" data-page="friends-page" data-i18n="tab_friends">Friends</button>
-    <button class="tb-btn" data-page="chat-page" data-i18n="tab_chat">Chat</button>
     <button class="tb-btn" data-page="settings-page" data-i18n="tab_settings">Settings</button>
     <button class="tb-btn" data-page="logs-page" data-i18n="tab_logs">Logs<span id="running-badge" style="display:none;margin-left:.3em;background:#1bd96a;color:#000;border-radius:999px;font-size:.7em;padding:.05em .45em;font-weight:bold"></span></button>
-    <button class="tb-btn" data-page="instances-page" data-i18n="tab_instances">Instances</button>
     <button class="tb-btn" data-page="servers-page" data-i18n="tab_servers">Servers</button>
     <button class="tb-btn" data-page="bugreport-page" data-i18n="tab_bugreport">Bug Report</button>
     <button class="tb-btn" id="toolbar-theme" title="Toggle theme">
@@ -401,7 +416,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     </button>
     <button class="tb-btn" data-page="account-page" id="tb-account-btn" data-i18n="tab_account">
       <canvas class="tb-head" id="tb-account-head" width="24" height="24"></canvas>
-      MC-Account
+      Acount
     </button>
   </div>
 
@@ -440,6 +455,14 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
           <div class="lp-wrap" id="lp-wrap">
             <div class="lp-bg"><div class="lp-fill" id="lp-fill"></div></div>
             <div class="lp-label" id="lp-label"></div>
+          </div>
+          <div class="launch-stats" id="launch-stats">
+            <div class="stat-card"><div class="stat-label" data-i18n="stat_played">Playtime</div><div class="stat-value" id="stat-played">—</div></div>
+            <div class="stat-card"><div class="stat-label" data-i18n="stat_launcher_open">Launcher open</div><div class="stat-value" id="stat-launcher-open">—</div></div>
+            <div class="stat-card"><div class="stat-label" data-i18n="stat_launches">Launches</div><div class="stat-value" id="stat-launches">—</div></div>
+            <div class="stat-card"><div class="stat-label" data-i18n="stat_avg_session">Avg session</div><div class="stat-value" id="stat-avg-session">—</div></div>
+            <div class="stat-card"><div class="stat-label" data-i18n="stat_last_played">Last played</div><div class="stat-value" id="stat-last-played">—</div></div>
+            <div class="stat-card"><div class="stat-label" data-i18n="stat_first_launch">First launch</div><div class="stat-value" id="stat-first-launch">—</div></div>
           </div>
         </div>
         <div class="launch-right">
@@ -693,6 +716,9 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
           <button class="btn btn-sm" id="autoscroll-btn" style="border-color:#7ec8e344;color:#7ec8e3" title="Auto-scroll to bottom">📌 Auto-scroll</button>
         </div>
       </div>
+      <div class="log-instances" id="logs-instance-list">
+        <div class="mod-list-empty" data-i18n="no_instances">No instances launched yet.</div>
+      </div>
       <div class="log-select-row">
         <label data-i18n="lbl_instance">Instance:</label>
         <select id="log-instance-select" style="width:auto;min-width:16em;padding:.3em .6em;font-size:.78em"></select>
@@ -702,14 +728,6 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <div class="lp-label" id="lp-label-logs"></div>
       </div>
       <div class="logs-container" id="logs-container"></div>
-    </div>
-
-    <!-- ══ INSTANCES ══ -->
-    <div id="instances-page" class="page" style="display:none">
-      <h1 data-i18n="h_instances">Instances</h1>
-      <div class="instance-list" id="instance-list">
-        <div class="mod-list-empty" data-i18n="no_instances">No instances launched yet.</div>
-      </div>
     </div>
 
     <!-- ══ SERVERS ══ -->
@@ -1065,7 +1083,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 
     <!-- ══ ACCOUNT ══ -->
     <div id="account-page" class="page" style="display:none">
-      <h1 data-i18n="h_account">MC Account</h1>
+      <h1 data-i18n="h_account">Acount</h1>
       <div class="account-panel">
         <div class="account-list" id="account-list">
           <div class="mod-list-empty" data-i18n="no_accounts">No accounts added yet.</div>
@@ -1077,7 +1095,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       </div>
     </div>
 
-    <!-- ══ FRIENDS ══ -->
+    <!-- ══ FRIENDS & CHAT ══ -->
     <div id="friends-page" class="page" style="display:none">
       <h1 data-i18n="h_friends">Friends</h1>
       <div class="friend-add-row">
@@ -1088,21 +1106,20 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div id="friend-requests" style="max-width:520px;margin-bottom:1.2em"></div>
       <div id="friend-list" class="friend-list" style="max-width:520px"></div>
       <div id="friend-empty" class="mod-list-empty" style="padding:2em;text-align:center;max-width:520px" data-i18n="friends_empty">No friends yet. Send a friend request by username above.</div>
-    </div>
 
-    <!-- ══ CHAT ══ -->
-    <div id="chat-page" class="page" style="display:none">
-      <h1 data-i18n="tab_chat">Chat</h1>
-      <div id="chat-no-server" class="mod-list-empty" style="padding:2em;text-align:center;max-width:520px;display:none" data-i18n="chat_no_server">No chat server configured. Set the URL in Settings → Friends &amp; Bug Reports.</div>
-      <div id="chat-wrap" style="display:flex;gap:1em;align-items:stretch;max-width:900px;height:60vh">
-        <div id="chat-friends" style="flex:0 0 220px;overflow-y:auto;border:1px solid #2a2a2a;border-radius:var(--r);padding:.5em;display:flex;flex-direction:column;gap:.4em"></div>
-        <div id="chat-thread-wrap" style="flex:1;display:flex;flex-direction:column;border:1px solid #2a2a2a;border-radius:var(--r);min-width:0">
-          <div id="chat-thread-header" style="padding:.6em .9em;border-bottom:1px solid #2a2a2a;font-weight:bold;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-          <div id="chat-thread" style="flex:1;overflow-y:auto;padding:.8em;display:flex;flex-direction:column;gap:.4em;background:#0d0d0d"></div>
-          <div id="chat-empty" style="flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:.9em" data-i18n="chat_select">Select a friend to start chatting.</div>
-          <div id="chat-input-wrap" style="display:flex;gap:.5em;padding:.6em;border-top:1px solid #2a2a2a">
-            <input type="text" id="chat-input" data-i18n-ph="ph_chat" placeholder="Type a message..." style="flex:1;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
-            <button class="btn" id="chat-send-btn" data-i18n="chat_send">Send</button>
+      <div style="margin-top:2em;border-top:1px solid #1e1e1e;padding-top:1.2em">
+        <h1 style="margin:0 0 .6em" data-i18n="tab_chat">Chat</h1>
+        <div id="chat-no-server" class="mod-list-empty" style="padding:2em;text-align:center;max-width:520px;display:none" data-i18n="chat_no_server">No chat server configured. Set the URL in Settings → Friends &amp; Bug Reports.</div>
+        <div id="chat-wrap" style="display:flex;gap:1em;align-items:stretch;max-width:900px;height:55vh">
+          <div id="chat-friends" style="flex:0 0 220px;overflow-y:auto;border:1px solid #2a2a2a;border-radius:var(--r);padding:.5em;display:flex;flex-direction:column;gap:.4em"></div>
+          <div id="chat-thread-wrap" style="flex:1;display:flex;flex-direction:column;border:1px solid #2a2a2a;border-radius:var(--r);min-width:0">
+            <div id="chat-thread-header" style="padding:.6em .9em;border-bottom:1px solid #2a2a2a;font-weight:bold;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+            <div id="chat-thread" style="flex:1;overflow-y:auto;padding:.8em;display:flex;flex-direction:column;gap:.4em;background:#0d0d0d"></div>
+            <div id="chat-empty" style="flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:.9em" data-i18n="chat_select">Select a friend to start chatting.</div>
+            <div id="chat-input-wrap" style="display:flex;gap:.5em;padding:.6em;border-top:1px solid #2a2a2a">
+              <input type="text" id="chat-input" data-i18n-ph="ph_chat" placeholder="Type a message..." style="flex:1;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
+              <button class="btn" id="chat-send-btn" data-i18n="chat_send">Send</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1226,6 +1243,14 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <input type="text" class="pack-input" id="profile-name-input" placeholder="My Profile">
       </div>
       <div class="form-row" style="max-width:100%">
+        <label data-i18n="lbl_group">Settings Group (keybinds &amp; settings):</label>
+        <div style="display:flex;gap:.4em;align-items:center;width:100%">
+          <input type="text" class="pack-input" id="profile-group-input" placeholder="default">
+          <button class="btn btn-sm" id="profile-import-settings-btn" style="width:auto;flex-shrink:0;border-color:#1bd96a44;color:#1bd96a" data-i18n="btn_import_settings">Import MC Settings…</button>
+        </div>
+        <div class="status-text" data-i18n="desc_group">Profiles in the same group share the same Minecraft settings (keybinds, video settings, …).</div>
+      </div>
+      <div class="form-row" style="max-width:100%">
         <label>Minecraft Version:</label>
         <select id="profile-version-select" style="padding:.5em .85em;border:1px solid #2a2a2a;border-radius:var(--r);background:#111;color:#fff;font-size:.85em;width:100%"></select>
       </div>
@@ -1246,54 +1271,64 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
           <option value="vulkan">Vulkan</option>
         </select>
       </div>
-      <!-- Mods section: always visible at top -->
-      <div class="pack-section" id="profile-mods-section">
-        <div class="pack-section-header">
-          <h3>Mods</h3>
-          <div style="display:flex;gap:.35em">
-            <button class="btn btn-sm btn-modrinth" id="profile-btn-modrinth">+ Modrinth</button>
-            <button class="btn btn-sm btn-curseforge" id="profile-btn-curseforge">+ CurseForge</button>
-          </div>
-        </div>
-        <div class="pack-list" id="profile-mods-list"></div>
+      <!-- Section switcher: jump directly to Mods/Datapacks/Resource Packs without scrolling -->
+      <div class="form-row" style="max-width:100%">
+        <label data-i18n="profile_section">Section:</label>
+        <select id="profile-section-select" style="padding:.5em .85em;border:1px solid #2a2a2a;border-radius:var(--r);background:#111;color:#fff;font-size:.85em;width:100%">
+          <option value="mods" data-i18n="profile_mods">Mods</option>
+          <option value="datapacks" data-i18n="profile_datapacks">Datapacks</option>
+          <option value="resourcePacks" data-i18n="profile_resourcepacks">Resource Packs</option>
+          <option value="shaderPacks" data-i18n="profile_shaderpacks">Shader Packs</option>
+        </select>
       </div>
-      <div class="pack-section">
-        <div class="pack-section-header">
-          <h3>Datapacks</h3>
-          <div style="display:flex;gap:.35em">
-            <button class="btn btn-sm btn-modrinth" id="profile-btn-dp-modrinth">+ Modrinth</button>
+      <!-- Mods section -->
+      <div class="profile-section" data-section="mods">
+        <div class="pack-section" id="profile-mods-section">
+          <div class="pack-section-header">
+            <h3 data-i18n="profile_mods">Mods</h3>
+            <div style="display:flex;gap:.35em">
+              <button class="btn btn-sm btn-modrinth" id="profile-btn-modrinth">+ Modrinth</button>
+              <button class="btn btn-sm btn-curseforge" id="profile-btn-curseforge">+ CurseForge</button>
+            </div>
           </div>
-        </div>
-        <div class="pack-list" id="profile-datapacks"></div>
-        <div class="pack-add-row">
-          <input type="text" class="pack-input" id="dp-input" placeholder="Datapack name">
-          <button class="btn btn-sm pack-add-btn" onclick="addPackTag('dp-input','profile-datapacks','datapacks')">+ Add</button>
-        </div>
-      </div>
-      <div class="pack-section">
-        <div class="pack-section-header">
-          <h3>Resource Packs</h3>
-          <div style="display:flex;gap:.35em">
-            <button class="btn btn-sm btn-modrinth" id="profile-btn-rp-modrinth">+ Modrinth</button>
-          </div>
-        </div>
-        <div class="pack-list" id="profile-resourcepacks"></div>
-        <div class="pack-add-row">
-          <input type="text" class="pack-input" id="rp-input" placeholder="Resource pack name">
-          <button class="btn btn-sm pack-add-btn" onclick="addPackTag('rp-input','profile-resourcepacks','resourcePacks')">+ Add</button>
+          <div class="pack-list" id="profile-mods-list"></div>
         </div>
       </div>
-      <div class="pack-section">
-        <div class="pack-section-header">
-          <h3>Shader Packs</h3>
-          <div style="display:flex;gap:.35em">
-            <button class="btn btn-sm btn-modrinth" id="profile-btn-sp-modrinth">+ Modrinth</button>
+      <div class="profile-section" data-section="datapacks" style="display:none">
+        <div class="pack-section">
+          <div class="pack-section-header">
+            <h3 data-i18n="profile_datapacks">Datapacks</h3>
+            <div style="display:flex;gap:.35em">
+              <button class="btn btn-sm btn-modrinth" id="profile-btn-dp-modrinth">+ Modrinth</button>
+            </div>
           </div>
+          <div class="pack-list" id="profile-datapacks"></div>
         </div>
-        <div class="pack-list" id="profile-shaderpacks"></div>
-        <div class="pack-add-row">
-          <input type="text" class="pack-input" id="sp-input" placeholder="Shader pack name">
-          <button class="btn btn-sm pack-add-btn" onclick="addPackTag('sp-input','profile-shaderpacks','shaderPacks')">+ Add</button>
+      </div>
+      <div class="profile-section" data-section="resourcePacks" style="display:none">
+        <div class="pack-section">
+          <div class="pack-section-header">
+            <h3 data-i18n="profile_resourcepacks">Resource Packs</h3>
+            <div style="display:flex;gap:.35em">
+              <button class="btn btn-sm btn-modrinth" id="profile-btn-rp-modrinth">+ Modrinth</button>
+            </div>
+          </div>
+          <div class="pack-list" id="profile-resourcepacks"></div>
+        </div>
+      </div>
+      <div class="profile-section" data-section="shaderPacks" style="display:none">
+        <div class="pack-section">
+          <div class="pack-section-header">
+            <h3 data-i18n="profile_shaderpacks">Shader Packs</h3>
+            <div style="display:flex;gap:.35em">
+              <button class="btn btn-sm btn-modrinth" id="profile-btn-sp-modrinth">+ Modrinth</button>
+            </div>
+          </div>
+          <div class="pack-list" id="profile-shaderpacks"></div>
+          <div class="pack-add-row">
+            <input type="text" class="pack-input" id="sp-input" placeholder="Shader pack name">
+            <button class="btn btn-sm pack-add-btn" onclick="addPackTag('sp-input','profile-shaderpacks','shaderPacks')">+ Add</button>
+          </div>
         </div>
       </div>
       <div style="border-top:1px solid #1e1e1e;padding-top:.7em;margin-top:.4em">
@@ -1307,10 +1342,25 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         </label>
       </div>
       <div style="display:flex;gap:.5em;margin-top:.8em">
-        <button class="btn btn-primary btn-sm" id="save-profile-btn" style="width:auto" data-i18n="btn_save">Save</button>
+        <button class="btn btn-primary btn-sm" id="save-profile-btn" style="width:auto" data-i18n="btn_done">Done</button>
         <button class="btn btn-sm" id="share-profile-btn" style="width:auto;border-color:#1bd96a44;color:#1bd96a" data-i18n="btn_share">Share</button>
         <button class="btn btn-sm" id="delete-profile-btn" style="width:auto;border-color:#f4444444;color:#f44" data-i18n="btn_delete">Delete</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Import MC Settings modal ── -->
+<div id="import-settings-modal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h2 data-i18n="modal_import_settings">Import Minecraft Settings</h2>
+      <button class="btn modal-close" onclick="document.getElementById('import-settings-modal').style.display='none'">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#888;font-size:.82em;margin-bottom:.6em" data-i18n="modal_import_settings_desc">Import keybinds and settings from another launcher (Feather, vanilla, …). They are saved into this profile's settings group and apply to every profile in that group.</p>
+      <div id="import-settings-list" style="max-height:380px;overflow-y:auto"></div>
+      <div id="import-settings-status" style="font-size:.8em;color:#888;margin-top:.6em;min-height:1.2em"></div>
     </div>
   </div>
 </div>
@@ -1397,13 +1447,16 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div class="sep"></div>
       <button class="tool-btn" id="cape-ed-elytra" title="Toggle Cape/Elytra">🪽 Cape</button>
       <div class="sep"></div>
+      <button class="tool-btn active" id="cape-ed-template-toggle" title="Toggle Cape Template">🔲 Template</button>
+      <div class="sep"></div>
       <span style="font-size:.72em;color:#888" id="cape-ed-coords">-</span>
     </div>
     <div class="skin-editor-dual">
       <div class="skin-editor-canvas-wrap">
         <div id="cape-ed-stage" style="position:relative;display:inline-block;line-height:0">
           <canvas class="skin-editor-canvas" id="cape-ed-canvas" width="64" height="32"></canvas>
-          <div id="cape-ed-guides" style="position:absolute;inset:0;pointer-events:none;overflow:hidden"></div>
+          <canvas id="cape-ed-template" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated"></canvas>
+          <div id="cape-ed-labels" style="position:absolute;inset:0;pointer-events:none;overflow:hidden"></div>
         </div>
       </div>
       <div class="skin-editor-3d-wrap" id="cape-ed-3d-wrap"></div>
@@ -1519,6 +1572,10 @@ async function bootLauncher(){
     // Always bind toolbar first so UI is immediately interactive
     bindToolbar();
 
+    // Show the launcher instantly — data loads in the background below
+    document.getElementById('launcher-screen').style.display='flex';
+    showPage('launch-page');
+
     const results = await Promise.allSettled([
       ipcRenderer.invoke('load-settings').then(r=>r||{}),
       ipcRenderer.invoke('load-accounts').then(r=>r||[]),
@@ -1602,9 +1659,9 @@ async function bootLauncher(){
     // Set version label
     try { document.getElementById('current-version-label').textContent = require('./package.json').version; } catch {}
 
-    // Show launcher immediately
+    // Show the launcher immediately
     document.getElementById('launcher-screen').style.display='flex';
-    showPage(accounts.length ? 'launch-page' : 'account-page');
+    if(!accounts.length) showPage('account-page');
 
     document.getElementById('status').textContent='Loading versions...';
     loadVersions();
@@ -1662,13 +1719,51 @@ function showPage(id){
     } else { b.style.background=''; b.style.borderColor=''; b.style.color=''; }
   });
   if(id==='mods-page') syncModFilterToProfile();
-  if(id==='logs-page'){ refreshLogSelect(); updateStopButtons(); }
-  if(id==='instances-page') renderInstanceList();
+  if(id==='logs-page'){ renderInstanceList(); refreshLogSelect(); updateStopButtons(); }
   if(id==='recent-page') renderRecentList();
   if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
-  if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); }
-  if(id==='chat-page'){ refreshChat(); }
-  if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); }
+  if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); refreshChat(); }
+  if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); renderLaunchStats(); }
+}
+
+let _statsTimer = null;
+function renderLaunchStats(){
+  if(_statsTimer===null){ _statsTimer=setInterval(()=>{ if(document.getElementById('launch-page').classList.contains('active')) renderLaunchStats(); },5000); }
+  ipcRenderer.invoke('load-stats').then(s=>{
+    s = s||{};
+    const set=(id,val)=>document.getElementById(id).textContent=val;
+    set('stat-played', fmtDuration(s.playMs));
+    set('stat-launcher-open', fmtDuration(s.launcherOpenMs));
+    set('stat-launches', String(s.launches||0));
+    const avg = s.launches>0 ? Math.round((s.playMs||0)/s.launches) : 0;
+    set('stat-avg-session', avg>0 ? fmtDuration(avg) : '—');
+    set('stat-last-played', fmtRelative(s.lastPlayed));
+    set('stat-first-launch', fmtDate(s.firstLaunch));
+  }).catch(()=>{});
+}
+function fmtDuration(ms){
+  if(!ms || ms<0) return '—';
+  const totalMin = Math.floor(ms/60000);
+  const h = Math.floor(totalMin/60);
+  const m = totalMin % 60;
+  if(h>0) return h+'h '+(m>0?m+'m':'');
+  if(m>0) return m+'m';
+  return Math.max(1,Math.floor(ms/1000))+'s';
+}
+function fmtRelative(ts){
+  if(!ts) return '—';
+  const min = Math.floor((Date.now()-ts)/60000);
+  if(min<1) return t('stat_now');
+  if(min<60) return min+'m';
+  const h = Math.floor(min/60);
+  if(h<24) return h+'h';
+  const d = Math.floor(h/24);
+  if(d<30) return d+'d';
+  return fmtDate(ts);
+}
+function fmtDate(ts){
+  if(!ts) return '—';
+  return new Date(ts).toLocaleDateString();
 }
 
 function bindToolbar(){
@@ -1819,9 +1914,9 @@ function renderCapePreview(url){
 const LANGS={
   en:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes',
-    tab_settings:'Settings', tab_logs:'Logs', tab_instances:'Instances', tab_account:'MC-Account', tab_recent:'Recent', tab_servers:'Servers', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
+    tab_settings:'Settings', tab_logs:'Logs', tab_account:'Acount', tab_recent:'Recent', tab_servers:'Servers', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
-    h_logs:'Logs', h_instances:'Instances', h_account:'MC Account', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends',
+    h_logs:'Logs', h_account:'Acount', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends',
     lbl_profile:'Profile:', lbl_version:'Version:', lbl_change_skin:'Change Skin:', lbl_actions:'Actions:', lbl_ram:'RAM:', lbl_instance:'Instance:',
     lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod Loader', lbl_render_api:'Rendering API:', lbl_added:'Added:',
     lbl_email:'Email:', lbl_password:'Password:',
@@ -1844,8 +1939,11 @@ const LANGS={
     no_custom_capes:'No custom capes saved yet.', no_servers:'No servers created yet. Click "+ New Server" to start.', skin_list_empty:'No skins saved yet.',
     add_ms:'+ Microsoft', add_mojang:'+ Mojang', add_offline:'+ Offline',
     ver_latest:'— Latest Release —', ver_latest_snap:'— Latest Snapshot —', ver_releases:'Releases', ver_snapshots:'Snapshots', ver_other:'Other',
-    profile_name:'Name:', profile_version:'Minecraft Version:', profile_mods:'Mods', profile_datapacks:'Datapacks',
+    profile_name:'Name:', profile_version:'Minecraft Version:', profile_section:'Section:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Resource Packs', profile_shaderpacks:'Shader Packs',
+    lbl_group:'Settings Group (keybinds & settings):', desc_group:'Profiles in the same group share the same Minecraft settings (keybinds, video settings, ...).',
+    btn_import_settings:'Import MC Settings…', btn_done:'Done', btn_import:'Import',
+    modal_import_settings:'Import Minecraft Settings', modal_import_settings_desc:'Import keybinds and settings from another launcher (Feather, vanilla, ...). They are saved into this profile\'s settings group and apply to every profile in that group.',
     clear_logs:'Clear',
     sec_mc_capes:'Minecraft Capes', desc_mc_capes:'Load your capes from your Minecraft account. Select a cape to switch.',
     sec_custom_cape:'Custom Cape', desc_custom_cape:'Design your own cape. It will be loaded as a resource pack every time you launch.',
@@ -1942,12 +2040,14 @@ const LANGS={
     sv_type_modpack:'Modpack server + Loader',
     update_wait_text:'Please wait a few minutes for the download and restart button to appear.',
     update_install:'Update & Restart', update_github:'Download from GitHub', update_bugreport:'🐛 Bug Report',
+    stat_played:'Playtime', stat_launcher_open:'Launcher open', stat_launches:'Launches', stat_avg_session:'Avg session',
+    stat_last_played:'Last played', stat_first_launch:'First launch', stat_now:'now',
   },
   de:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes',
-    tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_instances:'Instanzen', tab_account:'MC-Konto', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
+    tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_account:'Acount', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
-    h_logs:'Protokolle', h_instances:'Instanzen', h_account:'MC-Konto', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde',
+    h_logs:'Protokolle', h_account:'Acount', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde',
     lbl_profile:'Profil:', lbl_version:'Version:', lbl_change_skin:'Skin wechseln:', lbl_actions:'Aktionen:', lbl_ram:'RAM:', lbl_instance:'Instanz:',
     lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod-Loader', lbl_render_api:'Rendering-API:', lbl_added:'Hinzugefügt:',
     lbl_email:'E-Mail:', lbl_password:'Passwort:',
@@ -1970,8 +2070,11 @@ const LANGS={
     no_custom_capes:'Noch keine Custom Capes gespeichert.', no_servers:'Noch keine Server erstellt. Klicke auf "+ Neuer Server" zum Starten.', skin_list_empty:'Noch keine Skins gespeichert.',
     add_ms:'+ Microsoft', add_mojang:'+ Mojang', add_offline:'+ Offline',
     ver_latest:'— Neueste Version —', ver_latest_snap:'— Neuester Snapshot —', ver_releases:'Vollversionen', ver_snapshots:'Snapshots', ver_other:'Sonstige',
-    profile_name:'Name:', profile_version:'Minecraft-Version:', profile_mods:'Mods', profile_datapacks:'Datenpakete',
+    profile_name:'Name:', profile_version:'Minecraft-Version:', profile_section:'Bereich:', profile_mods:'Mods', profile_datapacks:'Datenpakete',
     profile_resourcepacks:'Ressourcenpakete', profile_shaderpacks:'Shaderpakete',
+    lbl_group:'Einstellungs-Gruppe (Keybinds & Einstellungen):', desc_group:'Profile mit derselben Gruppe teilen sich dieselben Minecraft-Einstellungen (Keybinds, Video-Einstellungen, ...).',
+    btn_import_settings:'MC-Einstellungen importieren…', btn_done:'Fertig', btn_import:'Importieren',
+    modal_import_settings:'Minecraft-Einstellungen importieren', modal_import_settings_desc:'Importiere Keybinds und Einstellungen von einem anderen Launcher (Feather, Vanilla, ...). Sie werden in die Einstellungs-Gruppe dieses Profils gespeichert und gelten für alle Profile dieser Gruppe.',
     clear_logs:'Leeren',
     sec_mc_capes:'Minecraft Capes', desc_mc_capes:'Lade deine Capes von deinem Minecraft-Konto. Wähle ein Cape zum Wechseln.',
     sec_custom_cape:'Custom Cape', desc_custom_cape:'Gestalte dein eigenes Cape. Es wird als Ressourcenpaket bei jedem Start geladen.',
@@ -2068,12 +2171,14 @@ const LANGS={
     sv_type_modpack:'Modpack-Server + Loader',
     update_wait_text:'Bitte warte ein paar Minuten, bis der Download- und Neustart-Button erscheint.',
     update_install:'Aktualisieren & Neustart', update_github:'Von GitHub herunterladen', update_bugreport:'🐛 Fehler melden',
+    stat_played:'Spielzeit', stat_launcher_open:'Launcher offen', stat_launches:'Starts', stat_avg_session:'Ø Sitzung',
+    stat_last_played:'Zuletzt gespielt', stat_first_launch:'Erster Start', stat_now:'jetzt',
   },
   fr:{
     tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes',
-    tab_settings:'Paramètres', tab_logs:'Journaux', tab_instances:'Instances', tab_account:'Compte MC', tab_recent:'Récents', tab_servers:'Serveurs', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
+    tab_settings:'Paramètres', tab_logs:'Journaux', tab_account:'Acount', tab_recent:'Récents', tab_servers:'Serveurs', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
     h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
-    h_logs:'Journaux', h_instances:'Instances', h_account:'Compte MC', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis',
+    h_logs:'Journaux', h_account:'Acount', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis',
     lbl_profile:'Profil :', lbl_version:'Version :', lbl_change_skin:'Changer de skin :', lbl_actions:'Actions :', lbl_ram:'RAM :', lbl_instance:'Instance :',
     lbl_launcher_ram:'RAM du Lanceur :', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de rendu :', lbl_added:'Ajouté :',
     lbl_email:'E-mail :', lbl_password:'Mot de passe :',
@@ -2096,8 +2201,11 @@ const LANGS={
     no_custom_capes:'Aucune cape custom sauvegardée.', no_servers:'Aucun serveur créé. Cliquez sur "+ Nouveau Serveur" pour commencer.', skin_list_empty:'Aucun skin sauvegardé.',
     add_ms:'+ Microsoft', add_mojang:'+ Mojang', add_offline:'+ Hors ligne',
     ver_latest:'— Dernière version —', ver_latest_snap:'— Dernier instantané —', ver_releases:'Versions', ver_snapshots:'Instantanés', ver_other:'Autres',
-    profile_name:'Nom :', profile_version:'Version Minecraft :', profile_mods:'Mods', profile_datapacks:'Datapacks',
+    profile_name:'Nom :', profile_version:'Version Minecraft :', profile_section:'Section :', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Packs de ressources', profile_shaderpacks:'Packs de shaders',
+    lbl_group:'Groupe de réglages (touches & paramètres) :', desc_group:'Les profils du même groupe partagent les mêmes réglages Minecraft (touches, vidéo, ...).',
+    btn_import_settings:'Importer les réglages MC…', btn_done:'Terminé', btn_import:'Importer',
+    modal_import_settings:'Importer les réglages Minecraft', modal_import_settings_desc:'Importez les touches et réglages d\'un autre launcher (Feather, vanilla, ...). Ils sont enregistrés dans le groupe de réglages de ce profil et s\'appliquent à tous les profils du groupe.',
     clear_logs:'Effacer',
     sec_mc_capes:'Capes Minecraft', desc_mc_capes:'Chargez vos capes depuis votre compte Minecraft. Sélectionnez une cape pour la changer.',
     sec_custom_cape:'Cape Custom', desc_custom_cape:'Créez votre propre cape. Elle sera chargée comme pack de ressources à chaque lancement.',
@@ -2192,12 +2300,14 @@ const LANGS={
     sv_type_modpack:'Serveur Modpack + Loader',
     update_wait_text:'Veuillez patienter quelques minutes pour que le bouton de téléchargement et de redémarrage apparaisse.',
     update_install:'Mettre à jour & Redémarrer', update_github:'Télécharger depuis GitHub', update_bugreport:'🐛 Signaler un bug',
+    stat_played:'Temps de jeu', stat_launcher_open:'Launcher ouvert', stat_launches:'Lancements', stat_avg_session:'Sess. moy.',
+    stat_last_played:'Dernière session', stat_first_launch:'Premier lancement', stat_now:'maintenant',
   },
   es:{
     tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas',
-    tab_settings:'Ajustes', tab_logs:'Registros', tab_instances:'Instancias', tab_account:'Cuenta MC', tab_recent:'Recientes', tab_servers:'Servidores', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
+    tab_settings:'Ajustes', tab_logs:'Registros', tab_account:'Acount', tab_recent:'Recientes', tab_servers:'Servidores', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
     h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
-    h_logs:'Registros', h_instances:'Instancias', h_account:'Cuenta MC', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos',
+    h_logs:'Registros', h_account:'Acount', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos',
     lbl_profile:'Perfil:', lbl_version:'Versión:', lbl_change_skin:'Cambiar Skin:', lbl_actions:'Acciones:', lbl_ram:'RAM:', lbl_instance:'Instancia:',
     lbl_launcher_ram:'RAM del Launcher:', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de Renderizado:', lbl_added:'Añadido:',
     lbl_email:'Correo:', lbl_password:'Contraseña:',
@@ -2220,8 +2330,11 @@ const LANGS={
     no_custom_capes:'No hay capas personalizadas guardadas.', no_servers:'No hay servidores creados. Haz clic en "+ Nuevo Servidor" para empezar.', skin_list_empty:'No hay skins guardados.',
     add_ms:'+ Microsoft', add_mojang:'+ Mojang', add_offline:'+ Sin conexión',
     ver_latest:'— Última versión —', ver_latest_snap:'— Último instantáneo —', ver_releases:'Versiones', ver_snapshots:'Instantáneas', ver_other:'Otras',
-    profile_name:'Nombre:', profile_version:'Versión de Minecraft:', profile_mods:'Mods', profile_datapacks:'Datapacks',
+    profile_name:'Nombre:', profile_version:'Versión de Minecraft:', profile_section:'Sección:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Paquetes de recursos', profile_shaderpacks:'Paquetes de shaders',
+    lbl_group:'Grupo de ajustes (teclas y ajustes):', desc_group:'Los perfiles del mismo grupo comparten los mismos ajustes de Minecraft (teclas, vídeo, ...).',
+    btn_import_settings:'Importar ajustes de MC…', btn_done:'Listo', btn_import:'Importar',
+    modal_import_settings:'Importar ajustes de Minecraft', modal_import_settings_desc:'Importa teclas y ajustes de otro launcher (Feather, vanilla, ...). Se guardan en el grupo de ajustes de este perfil y se aplican a todos los perfiles de ese grupo.',
     clear_logs:'Limpiar',
     sec_mc_capes:'Capas de Minecraft', desc_mc_capes:'Carga tus capas desde tu cuenta de Minecraft. Selecciona una capa para cambiar.',
     sec_custom_cape:'Capa personalizada', desc_custom_cape:'Diseña tu propia capa. Se cargará como paquete de recursos cada vez que inicies.',
@@ -2309,6 +2422,8 @@ const LANGS={
     sv_type_fabric:'Servidor Mod Loader', sv_type_quilt:'Fork Fabric Mod Loader',
     sv_type_forge:'Mod Loader clásico', sv_type_neoforge:'Fork Forge para MC moderno',
     sv_type_modpack:'Servidor Modpack + Loader',
+    stat_played:'Tiempo de juego', stat_launcher_open:'Launcher abierto', stat_launches:'Lanzamientos', stat_avg_session:'Sesión med.',
+    stat_last_played:'Última sesión', stat_first_launch:'Primer inicio', stat_now:'ahora',
   },
 };
 
@@ -2668,6 +2783,7 @@ ipcRenderer.on('instance-closed',(_,{instanceId,code})=>{
   refreshLogSelect();
   if(settings.closeLauncherWhilePlaying) ipcRenderer.send('show-launcher');
   reportPresence();
+  renderLaunchStats();
 });
 ipcRenderer.on('instance-crashed',(_,{instanceId})=>{
   if(instances[instanceId])instances[instanceId].status='crashed';
@@ -2708,7 +2824,7 @@ function updateRunningBadge(){
 }
 
 function renderInstanceList(){
-  const el=document.getElementById('instance-list'); el.innerHTML='';
+  const el=document.getElementById('logs-instance-list'); el.innerHTML='';
   const list=Object.values(instances);
   if(!list.length){el.innerHTML='<div class="mod-list-empty">No instances launched yet.</div>';return;}
   list.forEach(inst=>{
@@ -2716,7 +2832,8 @@ function renderInstanceList(){
     item.className='instance-item'+(inst.id===selectedInstanceId?' sel':'');
     const badge=inst.status==='running'?'<span class="instance-badge badge-running">Running</span>':inst.status==='crashed'?'<span class="instance-badge badge-crashed">Crashed</span>':'<span class="instance-badge badge-closed">Closed</span>';
     const t=new Date(inst.startTime).toLocaleTimeString();
-    item.innerHTML=`<div style="flex:1"><div style="font-weight:bold;font-size:.85em">${inst.version}</div><div style="color:#555;font-size:.72em">${t}</div></div>${badge}`;
+    const pn=inst.profileName?`<span style="color:#777">${inst.profileName}</span>`:'';
+    item.innerHTML=`<div style="flex:1;min-width:0"><div style="font-weight:bold;font-size:.85em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">#${Object.values(instances).indexOf(inst)+1} ${inst.version} ${pn}</div><div style="color:#555;font-size:.72em">${t}</div></div>${badge}`;
     item.addEventListener('click',()=>{ selectedInstanceId=inst.id; renderInstanceList(); refreshLogSelect(); document.getElementById('log-instance-select').value=inst.id; renderLogsForInstance(inst.id); });
     el.appendChild(item);
   });
@@ -2790,7 +2907,7 @@ function renderProfileList(){
   profiles.forEach(p=>{
     const item=document.createElement('div');
     item.className='profile-item'+(p.id===settings.selectedProfile?' sel':'');
-    item.innerHTML=`<span class="profile-name">${p.name}${p.isModpack?'<span style="font-size:.7em;margin-left:.4em;padding:.1em .35em;border-radius:999px;background:#1bd96a22;color:#1bd96a;border:1px solid #1bd96a44">modpack</span>':''}</span><span class="profile-meta">${p.mcVersion||'Latest'} · ${p.modLoader||'fabric'} · ${(p.mods||[]).length} mods</span><button class="btn profile-share-btn" title="Share Profile">Share</button><button class="btn profile-edit-btn">Edit</button>`;
+    item.innerHTML=`<span class="profile-name">${p.name}${p.isModpack?'<span style="font-size:.7em;margin-left:.4em;padding:.1em .35em;border-radius:999px;background:#1bd96a22;color:#1bd96a;border:1px solid #1bd96a44">modpack</span>':''}</span><span class="profile-meta">${p.mcVersion||'Latest'} · ${p.modLoader||'fabric'} · ${(p.mods||[]).length} mods · <span style="color:${p.group&&p.group!=='default'?'#1bd96a':'#666'}">group:${p.group||'default'}</span></span><button class="btn profile-share-btn" title="Share Profile">Share</button><button class="btn profile-edit-btn">Edit</button>`;
     item.addEventListener('click',e=>{ if(e.target.classList.contains('profile-edit-btn')||e.target.classList.contains('profile-share-btn'))return; settings.selectedProfile=p.id; saveSettings(); renderProfileList(); updateLaunchProfileSelect(); syncModFilterToProfile(); });
     item.querySelector('.profile-edit-btn').addEventListener('click',()=>openProfileModal(p.id));
     item.querySelector('.profile-share-btn').addEventListener('click',()=>{shareProfile(p.id);});
@@ -2813,7 +2930,7 @@ function updateVersionDisplay(){
 
 document.getElementById('new-profile-btn').addEventListener('click',()=>{
   const latestRelease=mcVersionList.find(v=>v.type==='release')?.id||'';
-  const np={id:'p_'+Date.now(),name:'New Profile',mcVersion:latestRelease,modLoader:'fabric',mods:[],datapacks:[],resourcePacks:[],shaderPacks:[]};
+  const np={id:'p_'+Date.now(),name:'New Profile',group:'default',mcVersion:latestRelease,modLoader:'fabric',mods:[],datapacks:[],resourcePacks:[],shaderPacks:[]};
   profiles.push(np); ipcRenderer.send('save-profiles',profiles); renderProfileList(); updateLaunchProfileSelect(); openProfileModal(np.id);
 });
 
@@ -3159,6 +3276,7 @@ function openProfileModal(profileId){
   const p=profiles.find(x=>x.id===profileId); if(!p)return;
   editingPackData={ mods:[...(p.mods||[])], datapacks:[...(p.datapacks||[])], resourcePacks:[...(p.resourcePacks||[])], shaderPacks:[...(p.shaderPacks||[])] };
   document.getElementById('profile-name-input').value=p.name;
+  document.getElementById('profile-group-input').value=p.group||'default';
 
   // Set modLoader
   const ml=p.modLoader||'fabric';
@@ -3204,17 +3322,31 @@ function openProfileModal(profileId){
   renderPackTags('profile-datapacks','datapacks');
   renderPackTags('profile-resourcepacks','resourcePacks');
   renderPackTags('profile-shaderpacks','shaderPacks');
+  document.getElementById('profile-section-select').value='mods';
+  setProfileSection('mods');
   document.getElementById('profile-modal').style.display='flex';
 }
 
 document.getElementById('profile-modal-close').addEventListener('click',()=>{ document.getElementById('profile-modal').style.display='none'; profileModMode=false; profilePackMode=null; });
 document.getElementById('profile-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('profile-modal')){ document.getElementById('profile-modal').style.display='none'; profileModMode=false; profilePackMode=null; } });
 
-document.getElementById('save-profile-btn').addEventListener('click',()=>{
+function setProfileSection(section){
+  document.querySelectorAll('.profile-section').forEach(s=>{ s.style.display = s.dataset.section===section ? '' : 'none'; });
+  if(section==='mods') renderProfilePackList('profile-mods-list','mods',true);
+  else if(section==='datapacks') renderPackTags('profile-datapacks','datapacks');
+  else if(section==='resourcePacks') renderPackTags('profile-resourcepacks','resourcePacks');
+  else if(section==='shaderPacks') renderPackTags('profile-shaderpacks','shaderPacks');
+}
+document.getElementById('profile-section-select').addEventListener('change',e=>setProfileSection(e.target.value));
+
+// Profiles auto-save on every change — no Save button needed.
+function saveProfileEdits(){
   const idx=profiles.findIndex(p=>p.id===editingProfileId); if(idx<0)return;
+  const curP=profiles[idx];
   profiles[idx].name=document.getElementById('profile-name-input').value||'Profile';
+  profiles[idx].group=(document.getElementById('profile-group-input').value||'default').trim()||'default';
   const newMcVersion=document.getElementById('profile-version-select').value;
-  const oldMcVersion=profiles[idx].mcVersion;
+  const oldMcVersion=curP.mcVersion;
   profiles[idx].mcVersion=newMcVersion;
   profiles[idx].modLoader=document.querySelector('input[name="modLoader"]:checked')?.value||'fabric';
   profiles[idx].useClientMods = document.getElementById('profile-use-client-mods').checked;
@@ -3231,7 +3363,54 @@ document.getElementById('save-profile-btn').addEventListener('click',()=>{
   profiles[idx].mods=editingPackData.mods; profiles[idx].datapacks=editingPackData.datapacks;
   profiles[idx].resourcePacks=editingPackData.resourcePacks; profiles[idx].shaderPacks=editingPackData.shaderPacks;
   ipcRenderer.send('save-profiles',profiles); renderProfileList(); updateLaunchProfileSelect();
+}
+
+// Every change in the profile editor saves immediately
+document.getElementById('profile-name-input').addEventListener('input',saveProfileEdits);
+document.getElementById('profile-group-input').addEventListener('input',saveProfileEdits);
+document.getElementById('profile-version-select').addEventListener('change',saveProfileEdits);
+document.getElementById('profile-render-api').addEventListener('change',saveProfileEdits);
+document.getElementById('profile-use-client-mods').addEventListener('change',saveProfileEdits);
+document.getElementById('profile-use-client-rps').addEventListener('change',saveProfileEdits);
+document.querySelectorAll('input[name="modLoader"]').forEach(r=>r.addEventListener('change',saveProfileEdits));
+
+document.getElementById('save-profile-btn').addEventListener('click',()=>{
+  saveProfileEdits();
   document.getElementById('profile-modal').style.display='none';
+});
+
+// ── Import MC settings from other launchers ──────────────────────────────────
+document.getElementById('profile-import-settings-btn').addEventListener('click', async ()=>{
+  const listEl=document.getElementById('import-settings-list');
+  const statusEl=document.getElementById('import-settings-status');
+  const group=(document.getElementById('profile-group-input').value||'default').trim()||'default';
+  statusEl.textContent='Scanning for options.txt files...'; statusEl.style.color='#888';
+  listEl.innerHTML='';
+  document.getElementById('import-settings-modal').style.display='flex';
+  let sources;
+  try{ sources=await ipcRenderer.invoke('scan-mc-settings'); }
+  catch(e){ statusEl.textContent='Scan failed: '+e.message; statusEl.style.color='#f44'; return; }
+  if(!sources||!sources.length){ listEl.innerHTML='<div class="mod-list-empty">No options.txt files found in other launchers.</div>'; statusEl.textContent=''; return; }
+  statusEl.textContent='';
+  for(const src of sources){
+    const row=document.createElement('div');
+    row.style.cssText='padding:.55rem .2rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:.6rem';
+    row.innerHTML=`<div style="flex:1;min-width:0"><div style="font-size:.85em;font-weight:600;word-break:break-word">${escHtml(src.label)}</div><div style="font-size:.7em;color:var(--text-muted);word-break:break-all">${escHtml(src.path)}</div></div><button class="btn btn-sm" style="width:auto;flex-shrink:0">${t('btn_import')}</button>`;
+    row.querySelector('button').addEventListener('click', async ()=>{
+      const btn=row.querySelector('button');
+      btn.disabled=true; btn.textContent='Importing...';
+      try{
+        const res=await ipcRenderer.invoke('import-mc-settings',{ group, sourcePath: src.path });
+        statusEl.style.color='#1bd96a';
+        statusEl.textContent=`✓ Imported settings into group "${res.group}". They apply to every profile in this group.`;
+      }catch(err){
+        btn.disabled=false; btn.textContent='Import';
+        statusEl.style.color='#f44';
+        statusEl.textContent='Import failed: '+err.message;
+      }
+    });
+    listEl.appendChild(row);
+  }
 });
 document.getElementById('delete-profile-btn').addEventListener('click',()=>{
   if(profiles.length<=1)return;
@@ -3326,20 +3505,59 @@ document.getElementById('profile-btn-sp-modrinth').addEventListener('click',()=>
 
 function renderProfilePackList(containerId, key, isMods=false){
   const el=document.getElementById(containerId); el.innerHTML='';
-  (editingPackData[key]||[]).forEach((item,i)=>{
-    const tag=document.createElement('span'); tag.className='pack-tag';
-    if(isMods&&item.iconUrl) tag.innerHTML=`<img src="${item.iconUrl}" style="width:1.1em;height:1.1em;border-radius:.15em;vertical-align:middle"> `;
-    const name=isMods?(item.name||item):item;
-    const ver=isMods&&item.mcVersion?` <span style="color:#555;font-weight:normal;font-size:.78em">MC ${item.mcVersion}</span>`:'';
-    tag.innerHTML+=`${name}${ver} <span class="rt" data-i="${i}">✕</span>`;
-    tag.querySelector('.rt').addEventListener('click',()=>{ editingPackData[key].splice(i,1); renderProfilePackList(containerId,key,isMods); });
-    el.appendChild(tag);
-  });
+  const items=editingPackData[key]||[];
+  if(!items.length){
+    el.innerHTML='<div class="mod-list-empty">'+(isMods?'No mods added yet.':'None added yet.')+'</div>';
+    return;
+  }
+  if(isMods){
+    // Render mods exactly like the Client Options tab (icon + name + version + buttons)
+    items.forEach((mod,i)=>{
+      const item=document.createElement('div'); item.className='mod-item';
+      const op=mod.disabled?'opacity:0.45':'';
+      const versionDisplay=mod.mcVersion==='all'?'All versions':`MC ${mod.mcVersion||'?'}`;
+      const modVer=mod.version&&mod.version!=='latest'?` · ${mod.version}`:'';
+      const lbc={forge:['#f16422','#f1642255'],neoforge:['#ff8800','#ff880055'],quilt:['#cc5599','#cc559955']};
+      const cc=lbc[mod.loader]||['#1bd96a','#1bd96a44'];
+      const loaderBadge=mod.loader?`<span style="font-size:.7em;padding:.1em .35em;border-radius:999px;border:1px solid ${cc[1]};color:${cc[0]};margin-left:.3em">${mod.loader==='any'?'Any':mod.loader}</span>`:'';
+      item.innerHTML=`
+        ${mod.iconUrl?`<img class="mod-icon" src="${mod.iconUrl}" style="${op}">`:'<div class="mod-icon" style="'+op+'"></div>'}
+        <div class="mod-info" style="${op}">
+          <div class="mod-name">${mod.name||mod}${loaderBadge}${mod.disabled?'<span style="color:#555;font-weight:normal;font-size:.76em"> (disabled)</span>':''}</div>
+          <div class="mod-meta">${versionDisplay}${modVer} · ${mod.source||'Modrinth'}</div>
+        </div>
+        <div class="mod-btns">
+          <button class="btn mod-btn mod-toggle" data-i="${i}">${mod.disabled?'Enable':'Disable'}</button>
+          <button class="btn mod-btn mod-remove" data-i="${i}">Remove</button>
+        </div>`;
+      el.appendChild(item);
+    });
+    el.querySelectorAll('.mod-toggle').forEach(btn=>btn.addEventListener('click',()=>{
+      const idx=parseInt(btn.dataset.i,10);
+      editingPackData[key][idx].disabled=!editingPackData[key][idx].disabled;
+      renderProfilePackList(containerId,key,true);
+      saveProfileEdits();
+    }));
+    el.querySelectorAll('.mod-remove').forEach(btn=>btn.addEventListener('click',()=>{
+      editingPackData[key].splice(parseInt(btn.dataset.i,10),1);
+      renderProfilePackList(containerId,key,true);
+      saveProfileEdits();
+    }));
+  } else {
+    // Datapacks / Resource Packs / Shader Packs: chips like the Client Options RP list
+    items.forEach((item,i)=>{
+      const tag=document.createElement('span'); tag.className='pack-tag';
+      const name=typeof item==='object'?(item.name||item):item;
+      tag.innerHTML=`${name} <span class="rt" data-i="${i}">✕</span>`;
+      tag.querySelector('.rt').addEventListener('click',()=>{ editingPackData[key].splice(i,1); renderProfilePackList(containerId,key,false); saveProfileEdits(); });
+      el.appendChild(tag);
+    });
+  }
 }
 function renderPackTags(containerId,key){ renderProfilePackList(containerId,key,false); }
 window.addPackTag=(inputId,containerId,key)=>{
   const input=document.getElementById(inputId),val=input.value.trim(); if(!val)return;
-  editingPackData[key].push(val); input.value=''; renderPackTags(containerId,key);
+  editingPackData[key].push(val); input.value=''; renderPackTags(containerId,key); saveProfileEdits();
 };
 
 // ════════════════════════════════════════
@@ -3906,8 +4124,9 @@ async function appendModResults(results){
           const edProfile=profiles.find(p=>p.id===editingProfileId);
           editingPackData.mods.push({name:mod.name,version:mod.latestVersion,mcVersion:profileMC||'latest',source:currentSource==='modrinth'?'Modrinth':'CurseForge',iconUrl:mod.iconUrl,modrinthId:mod.id,downloadAllVersions:false,disabled:false,loader:edProfile?.modLoader||'fabric'});
           renderProfilePackList('profile-mods-list','mods',true);
+          saveProfileEdits();
         }else if(key!=='mods'&&!editingPackData[key].includes(mod.name)){
-          editingPackData[key].push(mod.name);renderPackTags('profile-'+key.toLowerCase(),key);
+          editingPackData[key].push(mod.name);renderPackTags('profile-'+key.toLowerCase(),key);saveProfileEdits();
         }
         btn.textContent='Added ✓';btn.style.opacity='.55';return;
       }
@@ -4117,7 +4336,7 @@ async function showModpackVersionPicker(projectId, projectName) {
       const date = v.date_published ? new Date(v.date_published).toLocaleDateString() : '';
       const div = document.createElement('div');
       div.style.cssText = 'padding:.6rem .8rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:.5rem';
-      div.innerHTML = `<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.95rem;word-break:break-word">${escHtml(v.version_number || v.name)}</div><div style="font-size:.78rem;color:var(--text-muted);word-break:break-word">${escHtml(mcVersions)} · ${escHtml(loaders)}</div></div><div style="font-size:.75rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0">${date}</div><button class="btn" style="padding:.3rem .8rem;font-size:.8rem;white-space:nowrap;min-width:70px;flex-shrink:0">Install</button>`;
+      div.innerHTML = `<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.95rem;word-break:break-word">${escHtml(v.version_number || v.name)}</div><div style="font-size:.78rem;color:var(--text-muted);word-break:break-word">${escHtml(mcVersions)} · ${escHtml(loaders)}</div></div><div style="font-size:.75rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0">${date}</div><button class="btn" style="padding:.3rem .8rem;font-size:.8rem;white-space:nowrap;width:auto;min-width:0;flex-shrink:0">Install</button>`;
       const btn = div.querySelector('button');
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -5210,43 +5429,111 @@ function drawSteveSkin(c){
   const ART_W=22, ART_H=17;
   let currentTool='pencil', isDrawing=false;
 
-  const displaySize = Math.min(440, window.innerWidth*0.6);
-  canvas.style.width = displaySize+'px';
-  canvas.style.height = (displaySize*CANVAS_H/CANVAS_W)+'px';
+  function setCapeCanvasSize(){
+    const panel=document.getElementById('cape-editor-overlay').querySelector('.skin-editor-panel');
+    const avail=((panel&&panel.clientWidth?panel.clientWidth:900)-360);
+    const size=Math.max(320,Math.min(760,avail));
+    canvas.style.width=size+'px';
+    canvas.style.height=(size*CANVAS_H/CANVAS_W)+'px';
+  }
+  setCapeCanvasSize();
 
-  function buildCapeGuides(){
-    const g=document.getElementById('cape-ed-guides');
+  // Cape template overlay — loaded from cape_template.png (512x256), drawn over
+  // the grid, toggleable via the toolbar button, purely visual, never saved.
+  // Baked-in text is overpainted with the region color; labels are drawn as a
+  // separate crisp overlay on top (not part of the template, not in the 3D).
+  const templateCanvas=document.getElementById('cape-ed-template');
+  const templateCtx=templateCanvas.getContext('2d');
+  templateCanvas.width=CANVAS_W;templateCanvas.height=CANVAS_H;
+  const TR=(r,g,b,a)=>`rgba(${r},${g},${b},${a})`;
+  function drawCapeTemplateFallback(){
+    templateCtx.clearRect(0,0,CANVAS_W,CANVAS_H);
+    templateCtx.fillStyle=TR(120,255,160,.32);templateCtx.fillRect(1,0,10,1);      // TOP strip (row 0, left half)
+    templateCtx.fillStyle=TR(120,255,160,.32);templateCtx.fillRect(12,0,10,1);     // BOTTOM strip (row 0, right half)
+    templateCtx.fillStyle=TR(255,180,80,.32);templateCtx.fillRect(0,1,1,16);       // LEFT side strip
+    templateCtx.fillStyle=TR(150,180,255,.32);templateCtx.fillRect(1,1,10,16);     // BACK
+    templateCtx.fillStyle=TR(255,110,190,.32);templateCtx.fillRect(11,1,1,16);     // RIGHT side strip
+    templateCtx.fillStyle=TR(120,255,180,.32);templateCtx.fillRect(12,1,10,16);    // FRONT
+    templateCtx.strokeStyle='rgba(0,0,0,.35)';templateCtx.lineWidth=.5;
+    templateCtx.strokeRect(.25,.25,ART_W-.5,ART_H-.5);
+  }
+  function makeCleanTemplate(){
+    const src=document.createElement('canvas');src.width=512;src.height=256;
+    const sg=src.getContext('2d');
+    sg.drawImage(tplImg,0,0);
+    const sd=sg.getImageData(0,0,512,256).data;
+    const out=document.createElement('canvas');out.width=CANVAS_W;out.height=CANVAS_H;
+    const og=out.getContext('2d');
+    const img=og.createImageData(CANVAS_W,CANVAS_H);
+    for(let y=0;y<CANVAS_H;y++){
+      for(let x=0;x<CANVAS_W;x++){
+        if(x>=ART_W||y>=ART_H){const o=(y*CANVAS_W+x)*4;img.data[o]=0;img.data[o+1]=0;img.data[o+2]=0;img.data[o+3]=0;continue;}
+        const hist=new Map();
+        for(let dy=0;dy<8;dy++)for(let dx=0;dx<8;dx++){
+          const i=((y*8+dy)*512+(x*8+dx))*4;
+          if(sd[i+3]<80)continue;
+          const q=(sd[i]>>5)+','+(sd[i+1]>>5)+','+(sd[i+2]>>5);
+          if(!hist.has(q))hist.set(q,[0,0,0,0]);
+          const v=hist.get(q);v[0]++;v[1]+=sd[i];v[2]+=sd[i+1];v[3]+=sd[i+2];
+        }
+        let best=null,bestN=0;
+        hist.forEach((v)=>{if(v[0]>bestN){best=v;bestN=v[0];}});
+        const o=(y*CANVAS_W+x)*4;
+        if(best){img.data[o]=best[1]/best[0];img.data[o+1]=best[2]/best[0];img.data[o+2]=best[3]/best[0];img.data[o+3]=255;}
+        else{img.data[o]=0;img.data[o+1]=0;img.data[o+2]=0;img.data[o+3]=0;}
+      }
+    }
+    og.putImageData(img,0,0);
+    return out;
+  }
+  function buildCapeLabels(){
+    const g=document.getElementById('cape-ed-labels');
     if(!g)return;
     g.innerHTML='';
-    const W=CANVAS_W,H=CANVAS_H;
     const pct=v=>(v*100)+'%';
-    function box(x,y,w,h,color){
-      const d=document.createElement('div');
-      d.style.cssText=`position:absolute;left:${pct(x/W)};top:${pct(y/H)};width:${pct(w/W)};height:${pct(h/H)};border:1px solid ${color};box-sizing:border-box`;
-      g.appendChild(d);
-      return d;
-    }
     function tag(txt,x,y,color){
       const l=document.createElement('div');
       l.textContent=txt;
-      l.style.cssText=`position:absolute;left:${pct(x/W)};top:${pct(y/H)};transform:translate(-50%,-50%);font-size:9px;letter-spacing:.4px;color:${color||'#fff'};opacity:.6;user-select:none;pointer-events:none;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.9);white-space:nowrap`;
+      l.style.cssText=`position:absolute;left:${pct(x/CANVAS_W)};top:${pct(y/CANVAS_H)};transform:translate(-50%,-50%);font-size:10px;letter-spacing:.4px;color:${color};opacity:.9;user-select:none;pointer-events:none;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.9);white-space:nowrap`;
       g.appendChild(l);
-      return l;
     }
-    // Standard 64x32 cape template: thin UV outlines for all six faces (overlay only — never saved)
-    box(0,0,ART_W,ART_H,'rgba(255,255,255,.30)');    // whole design region
-    box(0,0,ART_W,1,'rgba(120,255,160,.55)');        // TOP + BOTTOM share row 0
-    box(0,1,1,16,'rgba(255,180,80,.55)');            // LEFT side strip
-    box(1,1,10,16,'rgba(150,180,255,.5)');           // BACK
-    box(11,1,1,16,'rgba(255,110,190,.55)');          // RIGHT side strip
-    box(12,1,10,16,'rgba(120,255,180,.5)');          // FRONT
-    tag('TOP/BOTTOM', ART_W/2, 0.4, '#7fe8a8');
-    tag('LEFT', 0.5, 1.6, '#ffb04e');
-    tag('BACK', 6, 1.6, '#9fb6ff');
-    tag('RIGHT', 11.5, 1.6, '#ff86c8');
-    tag('FRONT', 16.5, 1.6, '#8fffb0');
+    tag('TOP', 5.5, 0.4, '#7fe8a8');
+    tag('LEFT', 0.5, 8, '#ffb04e');
+    tag('BACK', 6, 8, '#9fb6ff');
+    tag('RIGHT', 11.5, 8, '#ff86c8');
+    tag('FRONT', 16.5, 8, '#8fffb0');
+    tag('BOTTOM', 16.5, 0.4, '#7fe8a8');
   }
-  buildCapeGuides();
+  let tplImg=null, tplClean=null;
+  function drawCapeTemplate(){
+    if(tplClean){
+      templateCtx.clearRect(0,0,CANVAS_W,CANVAS_H);
+      templateCtx.globalAlpha=0.55;
+      templateCtx.drawImage(tplClean,0,0);
+      templateCtx.globalAlpha=1;
+    }else if(tplImg&&tplImg.complete&&tplImg.naturalWidth>0){
+      templateCtx.clearRect(0,0,CANVAS_W,CANVAS_H);
+      templateCtx.globalAlpha=0.55;
+      templateCtx.drawImage(tplImg,0,0,CANVAS_W,CANVAS_H);
+      templateCtx.globalAlpha=1;
+    }else{
+      drawCapeTemplateFallback();
+    }
+  }
+  drawCapeTemplate();
+  buildCapeLabels();
+  tplImg=new Image();
+  tplImg.onload=()=>{tplClean=makeCleanTemplate();drawCapeTemplate();if(window._capeEdRebuild)window._capeEdRebuild();};
+  tplImg.src='./cape_template.png';
+  let capeEdShowTemplate=true;
+  const templateBtn=document.getElementById('cape-ed-template-toggle');
+  templateBtn.addEventListener('click',()=>{
+    capeEdShowTemplate=!capeEdShowTemplate;
+    templateCanvas.style.display=capeEdShowTemplate?'':'none';
+    document.getElementById('cape-ed-labels').style.display=capeEdShowTemplate?'':'none';
+    templateBtn.classList.toggle('active',capeEdShowTemplate);
+    if(window._capeEdRebuild)window._capeEdRebuild();
+  });
 
   ctx.fillStyle='#FFFFFF';
   ctx.fillRect(0,0,ART_W,ART_H);
@@ -5397,7 +5684,7 @@ function drawSteveSkin(c){
     if(window._capeEdRebuild)window._capeEdRebuild();
   });
 
-  document.getElementById('cape-editor-btn').addEventListener('click',()=>{overlay.classList.add('open');setTimeout(initCapeEditor3D,100);});
+  document.getElementById('cape-editor-btn').addEventListener('click',()=>{overlay.classList.add('open');setTimeout(()=>{setCapeCanvasSize();initCapeEditor3D();},100);});
   document.getElementById('cape-ed-close').addEventListener('click',()=>overlay.classList.remove('open'));
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.classList.remove('open');});
 
@@ -5452,13 +5739,17 @@ function drawSteveSkin(c){
   let capeEd3dRenderer=null, capeEd3dScene=null, capeEd3dCamera=null, capeEd3dGroup=null, capeEd3dRaycaster=null;
   let capeEd3dRotY=30, capeEd3dRotX=10, capeEd3dIsElytra=false;
   let capeEdFrontTex=null, capeEdBackTex=null, capeEdTopTex=null, capeEdBottomTex=null, capeEdLeftTex=null, capeEdRightTex=null;
+  function drawTemplateOn(g,sx,sy,sw,sh,dx,dy,dw,dh){
+    if(!capeEdShowTemplate||!templateCanvas)return;
+    g.drawImage(templateCanvas,sx,sy,sw,sh,dx,dy,dw,dh);
+  }
   function refreshCape3DTextures(){
-    if(capeEdFrontTex){const c=document.createElement('canvas');c.width=10;c.height=16;c.getContext('2d').drawImage(canvas,12,1,10,16,0,0,10,16);capeEdFrontTex.image=c;capeEdFrontTex.needsUpdate=true;}
-    if(capeEdBackTex){const c=document.createElement('canvas');c.width=10;c.height=16;c.getContext('2d').drawImage(canvas,1,1,10,16,0,0,10,16);capeEdBackTex.image=c;capeEdBackTex.needsUpdate=true;}
-    if(capeEdTopTex){const c=document.createElement('canvas');c.width=ART_W;c.height=1;c.getContext('2d').drawImage(canvas,0,0,ART_W,1,0,0,ART_W,1);capeEdTopTex.image=c;capeEdTopTex.needsUpdate=true;}
-    if(capeEdBottomTex){const c=document.createElement('canvas');c.width=ART_W;c.height=1;c.getContext('2d').drawImage(canvas,0,0,ART_W,1,0,0,ART_W,1);capeEdBottomTex.image=c;capeEdBottomTex.needsUpdate=true;}
-    if(capeEdLeftTex){const c=document.createElement('canvas');c.width=1;c.height=16;c.getContext('2d').drawImage(canvas,0,1,1,16,0,0,1,16);capeEdLeftTex.image=c;capeEdLeftTex.needsUpdate=true;}
-    if(capeEdRightTex){const c=document.createElement('canvas');c.width=1;c.height=16;c.getContext('2d').drawImage(canvas,11,1,1,16,0,0,1,16);capeEdRightTex.image=c;capeEdRightTex.needsUpdate=true;}
+    if(capeEdFrontTex){const c=document.createElement('canvas');c.width=10;c.height=16;const g=c.getContext('2d');g.drawImage(canvas,12,1,10,16,0,0,10,16);drawTemplateOn(g,12,1,10,16,0,0,10,16);capeEdFrontTex.image=c;capeEdFrontTex.needsUpdate=true;}
+    if(capeEdBackTex){const c=document.createElement('canvas');c.width=10;c.height=16;const g=c.getContext('2d');g.drawImage(canvas,1,1,10,16,0,0,10,16);drawTemplateOn(g,1,1,10,16,0,0,10,16);capeEdBackTex.image=c;capeEdBackTex.needsUpdate=true;}
+    if(capeEdTopTex){const c=document.createElement('canvas');c.width=10;c.height=1;const g=c.getContext('2d');g.drawImage(canvas,1,0,10,1,0,0,10,1);drawTemplateOn(g,1,0,10,1,0,0,10,1);capeEdTopTex.image=c;capeEdTopTex.needsUpdate=true;}
+    if(capeEdBottomTex){const c=document.createElement('canvas');c.width=10;c.height=1;const g=c.getContext('2d');g.drawImage(canvas,12,0,10,1,0,0,10,1);drawTemplateOn(g,12,0,10,1,0,0,10,1);capeEdBottomTex.image=c;capeEdBottomTex.needsUpdate=true;}
+    if(capeEdLeftTex){const c=document.createElement('canvas');c.width=1;c.height=16;const g=c.getContext('2d');g.drawImage(canvas,0,1,1,16,0,0,1,16);drawTemplateOn(g,0,1,1,16,0,0,1,16);capeEdLeftTex.image=c;capeEdLeftTex.needsUpdate=true;}
+    if(capeEdRightTex){const c=document.createElement('canvas');c.width=1;c.height=16;const g=c.getContext('2d');g.drawImage(canvas,11,1,1,16,0,0,1,16);drawTemplateOn(g,11,1,1,16,0,0,1,16);capeEdRightTex.image=c;capeEdRightTex.needsUpdate=true;}
   }
   function makeElytraWing(side){
     const H=4.0,W=H*10/16,D=0.36;
@@ -5512,17 +5803,24 @@ function drawSteveSkin(c){
 
     function cropEditorHalf(side){
       const c=document.createElement('canvas');c.width=10;c.height=16;
-      c.getContext('2d').drawImage(canvas,side===0?1:12,1,10,16,0,0,10,16);
+      const g=c.getContext('2d');
+      g.drawImage(canvas,side===0?1:12,1,10,16,0,0,10,16);
+      drawTemplateOn(g,side===0?1:12,1,10,16,0,0,10,16);
       const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;return t;
     }
     function cropEditorEdge(col){
       const c=document.createElement('canvas');c.width=1;c.height=16;
-      c.getContext('2d').drawImage(canvas,col,1,1,16,0,0,1,16);
+      const g=c.getContext('2d');
+      g.drawImage(canvas,col,1,1,16,0,0,1,16);
+      drawTemplateOn(g,col,1,1,16,0,0,1,16);
       const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;return t;
     }
-    function cropEditorRow(row){
-      const c=document.createElement('canvas');c.width=ART_W;c.height=1;
-      c.getContext('2d').drawImage(canvas,0,row,ART_W,1,0,0,ART_W,1);
+    function cropEditorRow(row, x0, w){
+      x0=x0||0; w=w||ART_W;
+      const c=document.createElement('canvas');c.width=w;c.height=1;
+      const g=c.getContext('2d');
+      g.drawImage(canvas,x0,row,w,1,0,0,w,1);
+      drawTemplateOn(g,x0,row,w,1,0,0,w,1);
       const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;return t;
     }
 
@@ -5533,8 +5831,8 @@ function drawSteveSkin(c){
       while(capeEd3dGroup.children.length){const c=capeEd3dGroup.children[0];capeEd3dGroup.remove(c);c.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m&&m.map)m.map.dispose();if(m)m.dispose();});}});}
       capeEdFrontTex=cropEditorHalf(1);capeEdBackTex=cropEditorHalf(0);
       if(capeEd3dIsElytra){
-        capeEdTopTex=cropEditorRow(0);
-        capeEdBottomTex=cropEditorRow(0);
+        capeEdTopTex=cropEditorRow(0,1,10);
+        capeEdBottomTex=cropEditorRow(0,12,10);
         capeEdLeftTex=cropEditorEdge(0);
         capeEdRightTex=cropEditorEdge(11);
         const mats=[
@@ -5575,15 +5873,15 @@ function drawSteveSkin(c){
         const rightSide=new THREE.Mesh(new THREE.PlaneGeometry(ED_DEPTH,ED_H),new THREE.MeshLambertMaterial({map:capeEdRightTex,side:THREE.DoubleSide}));
         rightSide.rotation.y=-Math.PI/2;rightSide.position.x=ED_HALF;rightSide.userData={face:'rightSide'};
         capeEd3dGroup.add(rightSide);
-        // Top face — paints row 0 of the texture
-        capeEdTopTex=cropEditorRow(0);
+        // Top face — paints the TOP strip (row 0, x=1-10)
+        capeEdTopTex=cropEditorRow(0,1,10);
         const top=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_DEPTH),new THREE.MeshLambertMaterial({map:capeEdTopTex,side:THREE.DoubleSide}));
-        top.rotation.x=-Math.PI/2;top.position.y=ED_H/2;top.userData={uvRow:0};
+        top.rotation.x=-Math.PI/2;top.position.y=ED_H/2;top.userData={uvRow:0,uvX0:1};
         capeEd3dGroup.add(top);
-        // Bottom face — also row 0 (matches the official cape layout)
-        capeEdBottomTex=cropEditorRow(0);
+        // Bottom face — paints the BOTTOM strip (row 0, x=12-21)
+        capeEdBottomTex=cropEditorRow(0,12,10);
         const bottom=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_DEPTH),new THREE.MeshLambertMaterial({map:capeEdBottomTex,side:THREE.DoubleSide}));
-        bottom.rotation.x=Math.PI/2;bottom.position.y=-ED_H/2;bottom.userData={uvRow:0};
+        bottom.rotation.x=Math.PI/2;bottom.position.y=-ED_H/2;bottom.userData={uvRow:0,uvX0:12};
         capeEd3dGroup.add(bottom);
       }
       capeEd3dGroup.position.set(0,0,0);
@@ -5639,12 +5937,13 @@ function drawSteveSkin(c){
       const matIdx=hits[0].face?hits[0].face.materialIndex:undefined;
       let px,py;
       if(capeEd3dIsElytra&&matIdx!==undefined){
-        if(matIdx===1||matIdx===2){px=Math.floor(uv.x*ART_W);py=0;}
+        if(matIdx===1){px=1+Math.floor(uv.x*10);py=0;}
+        else if(matIdx===2){px=12+Math.floor(uv.x*10);py=0;}
         else if(matIdx===3){px=0;py=Math.floor((1-uv.y)*16)+1;}
         else if(matIdx===4){px=11;py=Math.floor((1-uv.y)*16)+1;}
         else{px=12+Math.floor(uv.x*10);py=Math.floor((1-uv.y)*16)+1;}
       }else if(row!==undefined){
-        px=Math.floor(uv.x*ART_W);
+        px=(hits[0].object.userData?.uvX0||0)+Math.floor(uv.x*10);
         py=row;
       }else if(face==='front'){
         px=12+Math.floor(uv.x*10);
@@ -7289,7 +7588,7 @@ async function chatLoop(){
   chatLooping=true;
   try{
     while(chatActive){
-      const pg=document.getElementById('chat-page');
+      const pg=document.getElementById('friends-page');
       if(!pg || pg.style.display==='none' || pg.offsetParent===null) break;
       const my=getMyUuid();
       const to=chatActive;

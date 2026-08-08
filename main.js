@@ -66,6 +66,8 @@ const P = {
   java: path.join(base,'javaInstallations'),
   mc:   path.join(base,'minecraft'),
   servers: path.join(base,'servers'),
+  groups: path.join(base,'groups'),
+  stats: path.join(base,'stats.json'),
 };
 app.setPath('userData', base);
 app.setPath('cache', path.join(base,'Cache'));
@@ -245,6 +247,35 @@ const saveSettings = async (data) => {
   } catch {}
 };
 
+// ── Stats (playtime, launcher uptime, launches) ──────────────────────────────
+// Stored in stats.json. Playtime is accumulated per launch, launcher-open time
+// is ticked every 30s and flushed on quit so it survives crashes.
+let stats = { playMs:0, launches:0, launcherOpenMs:0, firstLaunch:null, lastPlayed:null, byVersion:{}, byProfile:{} };
+let _lastLauncherTick = Date.now();
+(async () => {
+  try {
+    stats = await load(P.stats, stats);
+    if (!stats.firstLaunch) stats.firstLaunch = Date.now();
+    if (typeof stats.byVersion !== 'object' || !stats.byVersion) stats.byVersion = {};
+    if (typeof stats.byProfile !== 'object' || !stats.byProfile) stats.byProfile = {};
+    _lastLauncherTick = Date.now();
+    await save(P.stats, stats);
+  } catch {}
+})();
+setInterval(() => {
+  const now = Date.now();
+  stats.launcherOpenMs += now - _lastLauncherTick;
+  _lastLauncherTick = now;
+  save(P.stats, stats);
+}, 30000);
+app.on('before-quit', () => {
+  const now = Date.now();
+  stats.launcherOpenMs += now - _lastLauncherTick;
+  _lastLauncherTick = now;
+  save(P.stats, stats);
+});
+ipcMain.handle('load-stats', async () => stats);
+
 // Auto-configure the default servers on first run so installed clients
 // have the Friends and Chat tabs ready without manual setup.
 async function ensureDefaultServers() {
@@ -286,6 +317,88 @@ ipcMain.on('save-mods', async (e, data) => {
     const dir = path.join(P.clientMods, ver); await fs.promises.mkdir(dir, { recursive:true }).catch(()=>{});
     for (const m of mods) { const safe = m.name.replace(/[^a-zA-Z0-9_\-. ]/g,'_'); await save(path.join(dir,`${safe}.json`), m); }
   }
+});
+
+// ── Profile Settings Groups ──────────────────────────────────────────────────
+// Profiles that share the same group name share the same Minecraft settings
+// (options.txt: keybinds, video settings, ...). Each group keeps its own
+// options.txt under groups/<group>/, like NoRisk Client does.
+function groupDirName(group){
+  return sanitizeFileName(String(group || 'default').trim()) || 'default';
+}
+function groupOptionsPath(group){
+  return path.join(P.groups, groupDirName(group), 'options.txt');
+}
+async function applyGroupSettings(group){
+  try{
+    await fs.promises.mkdir(P.groups, { recursive: true });
+    const gFile = groupOptionsPath(group);
+    const mcOptions = path.join(P.mc, 'options.txt');
+    if (fs.existsSync(gFile)) {
+      await fs.promises.mkdir(path.dirname(mcOptions), { recursive: true });
+      await fs.promises.copyFile(gFile, mcOptions);
+      logDebug(`[GROUP] Applied settings of group "${group}" to Minecraft`);
+    } else if (fs.existsSync(mcOptions)) {
+      await fs.promises.mkdir(path.dirname(gFile), { recursive: true });
+      await fs.promises.copyFile(mcOptions, gFile);
+      logDebug(`[GROUP] Seeded group "${group}" from current settings`);
+    }
+  } catch(e){ logDebug('[GROUP] apply failed: ' + e.message); }
+}
+async function syncGroupSettings(group){
+  try{
+    const mcOptions = path.join(P.mc, 'options.txt');
+    if (!fs.existsSync(mcOptions)) return;
+    const gFile = groupOptionsPath(group);
+    await fs.promises.mkdir(path.dirname(gFile), { recursive: true });
+    await fs.promises.copyFile(mcOptions, gFile);
+    logDebug(`[GROUP] Saved settings of group "${group}"`);
+  } catch(e){ logDebug('[GROUP] sync failed: ' + e.message); }
+}
+
+// Scan installed launchers for options.txt so the user can import keybinds/settings
+ipcMain.handle('scan-mc-settings', async () => {
+  const appData = process.env.APPDATA || '';
+  const results = [];
+  const seen = new Set();
+  const skip = new Set(['Crux Client','Microsoft','Google','Edge','Spotify','npm','.vscode','Code','Docker','Slack','Discord','Teams','Zoom','Telegram','Adobe','Apple','Amazon','BraveSoftware','Citrix','VMware','Oracle','dotnet','NuGet','Android','Bing','Gnome','KDE','Mozilla','Opera','Vivaldi']);
+  let visited = 0;
+  const walk = (dir, depth) => {
+    if (depth > 6 || visited > 4000) return;
+    let entries;
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const en of entries) {
+      if (en.isFile() && en.name === 'options.txt') {
+        const full = path.join(dir, en.name);
+        if (seen.has(full)) continue;
+        seen.add(full);
+        results.push({ path: full, label: path.relative(appData, full) });
+        continue;
+      }
+      if (!en.isDirectory()) continue;
+      if (skip.has(en.name)) continue;
+      if (depth >= 6) continue;
+      visited++;
+      walk(path.join(dir, en.name), depth + 1);
+    }
+  };
+  walk(appData, 0);
+  results.sort((a, b) => a.path.length - b.path.length);
+  return results;
+});
+
+// Copy a launcher's options.txt into a profile group (and the active .minecraft)
+ipcMain.handle('import-mc-settings', async (e, { group, sourcePath }) => {
+  if (!sourcePath || !fs.existsSync(sourcePath)) throw new Error('Source file not found');
+  const g = String(group || 'default').trim() || 'default';
+  const gFile = groupOptionsPath(g);
+  await fs.promises.mkdir(path.dirname(gFile), { recursive: true });
+  await fs.promises.copyFile(sourcePath, gFile);
+  const mcOptions = path.join(P.mc, 'options.txt');
+  await fs.promises.mkdir(path.dirname(mcOptions), { recursive: true });
+  await fs.promises.copyFile(sourcePath, mcOptions);
+  logDebug(`[GROUP] Imported settings from ${sourcePath} into group "${g}"`);
+  return { group: g, copiedTo: gFile };
 });
 
 // ── Skin List ──────────────────────────────────────────────────────────────────
@@ -1717,6 +1830,19 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       }
     }
 
+    // ── Profile settings group ────────────────────────────────────────────────
+    // Profiles with the same group name share the same Minecraft settings
+    // (options.txt: keybinds, video settings, ...). Apply the group's settings
+    // BEFORE resource pack deployment touches options.txt.
+    let settingsGroup = 'default';
+    try {
+      const profs = await load(P.profiles, []);
+      const prof = profs.find(p => p.id === data.profileId);
+      if (prof && prof.group) settingsGroup = String(prof.group).trim() || 'default';
+    } catch {}
+    await applyGroupSettings(settingsGroup);
+    send('instance-log', { instanceId, line: `[GROUP] Settings group: "${settingsGroup}"` });
+
     // ── Deploy mrpack mods (modpack overrides) ────────────────────────────────
     if (mrpackMods && mrpackMods.length) {
       send('launch-progress', { instanceId, percent:22, message:`Deploying ${mrpackMods.length} modpack mods...` });
@@ -1971,18 +2097,19 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       await fs.promises.mkdir(rpDir, { recursive: true });
       for (const rp of mrpackRPs) {
         try {
+          const packName = rp.name || rp.fileName || `rp-${Date.now()}`;
+          let deployedName = null;
           if (rp.diskPath && fs.existsSync(rp.diskPath)) {
             const dest = path.join(rpDir, rp.fileName || `rp-${Date.now()}.zip`);
             if (!fs.existsSync(dest)) await fs.promises.copyFile(rp.diskPath, dest);
-            await patchResourcePackFormat(dest, version);
-            mrpackDeployedNames.push(rp.fileName || path.basename(dest));
+            deployedName = await deployResourcePack({ rpDir, version, packName, tempDest: dest });
           } else if (rp.data && rp.data.length) {
             const buf = Buffer.from(rp.data);
             const dest = path.join(rpDir, rp.fileName || `rp-${Date.now()}.zip`);
             if (!fs.existsSync(dest)) await fs.promises.writeFile(dest, buf);
-            await patchResourcePackFormat(dest, version);
-            mrpackDeployedNames.push(rp.fileName || path.basename(dest));
+            deployedName = await deployResourcePack({ rpDir, version, packName, tempDest: dest });
           }
+          if (deployedName) mrpackDeployedNames.push(deployedName);
         } catch {}
       }
       if (mrpackDeployedNames.length) {
@@ -2000,7 +2127,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
 
       for (const rp of rpList) {
         try {
-          let downloadUrl = null, fname = null;
+          let downloadUrl = null, fname = null, packName = null;
           if (typeof rp === 'object' && rp.modrinthId) {
             const vd = await fetchJson(`https://api.modrinth.com/v2/project/${rp.modrinthId}/version`).catch(() => null);
             if (vd && vd.length) {
@@ -2011,9 +2138,11 @@ ipcMain.on('launch-minecraft', async (event, data) => {
               send('instance-log', { instanceId, line:`[RP] Failed to fetch download for ${rp.name || rp.modrinthId}` });
               continue;
             }
+            packName = rp.name || fname;
           } else if (typeof rp === 'string' && (rp.startsWith('http://') || rp.startsWith('https://'))) {
             downloadUrl = rp;
             fname = path.basename(rp.split('?')[0]) || `rp-${Date.now()}.zip`;
+            packName = fname;
           } else {
             const name = typeof rp === 'object' ? rp.name : rp;
             const candidates = fs.readdirSync(rpDir).filter(f =>
@@ -2024,12 +2153,11 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             continue;
           }
           const dest = path.join(rpDir, fname);
-          if (!fs.existsSync(dest)) {
-            send('launch-progress', { instanceId, percent:47, message:`Downloading RP: ${fname}` });
-            await downloadFile(downloadUrl, dest);
-          }
-          await patchResourcePackFormat(dest, version);
-          deployedRpNames.push(fname);
+          const finalName = await deployResourcePack({
+            rpDir, version, packName, tempDest: dest, downloadUrl,
+            onDownload: () => send('launch-progress', { instanceId, percent:47, message:`Downloading RP: ${fname}` })
+          });
+          if (finalName) deployedRpNames.push(finalName);
         } catch(e) { send('instance-log', { instanceId, line:`[RP] Failed: ${e.message}` }); }
       }
 
@@ -2568,6 +2696,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             instances[instanceId].logs.push(s);
             send('instance-log', { instanceId, line: s });
             if (s.toLowerCase().includes('setting user')) {
+              instances[instanceId].gameStartedAt = Date.now();
               send('launch-progress', { instanceId, percent:100, message:'Minecraft running!' });
               send('mc-launched', instanceId);
             }
@@ -2688,6 +2817,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           instances[instanceId].logs.push(s);
           send('instance-log', { instanceId, line: s });
           if (s.toLowerCase().includes('setting user')) {
+            instances[instanceId].gameStartedAt = Date.now();
             send('launch-progress', { instanceId, percent:100, message:'Minecraft running!' });
             send('mc-launched', instanceId);
           }
@@ -2733,6 +2863,23 @@ ipcMain.on('launch-minecraft', async (event, data) => {
 
     const mclcResult = await mclcLaunchOnce();
     clearTimeout(safetyTimer);
+
+    // Record playtime stats for this session
+    try {
+      const startedAt = instances[instanceId].gameStartedAt || instances[instanceId].startTime || Date.now();
+      const durMs = Date.now() - startedAt;
+      if (durMs > 0) {
+        stats.playMs += durMs;
+        stats.launches += 1;
+        stats.lastPlayed = Date.now();
+        if (data.version) stats.byVersion[data.version] = (stats.byVersion[data.version] || 0) + durMs;
+        if (data.profileId) stats.byProfile[data.profileId] = (stats.byProfile[data.profileId] || 0) + durMs;
+        await save(P.stats, stats);
+      }
+    } catch {}
+
+    // Save the group's settings back after the game wrote options.txt on exit
+    await syncGroupSettings(settingsGroup);
 
     send('instance-log', { instanceId, line:`--- Process exited (code ${mclcResult.code}) ---` });
     send('launch-progress', { instanceId, percent:0, message:'', done:true });
@@ -3914,6 +4061,77 @@ async function patchResourcePackFormat(filePath, version) {
     fs.writeFileSync(filePath, out);
     return true;
   } catch (e) { return false; }
+}
+
+// Reverse map: pack_format → the MC version a resource pack was originally made for.
+function versionFromPackFormat(pf) {
+  const map = {
+    75: '1.21.9', 72: '1.21.8', 68: '1.21.7', 63: '1.21.6', 61: '1.21.5',
+    55: '1.21.4', 46: '1.21.2', 34: '1.21', 32: '1.20.5', 22: '1.20.3',
+    18: '1.20.2', 15: '1.20', 13: '1.19.4', 12: '1.19.3', 9: '1.19',
+    8: '1.18', 7: '1.17', 6: '1.16.2', 5: '1.15', 4: '1.13', 3: '1.11',
+    2: '1.9', 1: '1.6.1'
+  };
+  return map[pf] || null;
+}
+
+function sanitizeFileName(name) {
+  return String(name || 'pack')
+    .replace(/\.zip$/i, '')
+    .replace(/[^a-zA-Z0-9._ -]/g, '_')
+    .replace(/\s+/g, '_')
+    .replace(/_{2,}/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80) || 'pack';
+}
+
+// Read the pack_format of a resource pack BEFORE it gets patched, so we know
+// the original MC version it was designed for.
+async function getOriginalPackVersion(filePath) {
+  try {
+    const JSZip = getJszip();
+    const buf = fs.readFileSync(filePath);
+    const zip = await JSZip.loadAsync(buf);
+    const meta = zip.file('pack.mcmeta');
+    if (!meta) return null;
+    const json = JSON.parse(await meta.async('string'));
+    const pf = json && json.pack && json.pack.pack_format;
+    return versionFromPackFormat(pf);
+  } catch { return null; }
+}
+
+// Deploy a resource pack into the shared resourcepacks folder. Always patches
+// pack.mcmeta to the launched MC version (so it auto-loads) and names the file
+// "<pack name>-<original MC version>.zip" so the original target version stays visible.
+async function deployResourcePack({ rpDir, version, packName, tempDest, downloadUrl, onDownload }) {
+  const safeName = sanitizeFileName(packName);
+  // Reuse an already-deployed file for this pack name (from a previous launch)
+  try {
+    const files = fs.readdirSync(rpDir).filter(f =>
+      f.toLowerCase().startsWith(safeName.toLowerCase() + '-') && f.toLowerCase().endsWith('.zip')
+    );
+    if (files.length) {
+      const reuse = path.join(rpDir, files[0]);
+      await patchResourcePackFormat(reuse, version);
+      return files[0];
+    }
+  } catch {}
+  // Download to a temp file if we don't already have one on disk
+  if (tempDest && downloadUrl && !fs.existsSync(tempDest)) {
+    if (onDownload) onDownload();
+    await downloadFile(downloadUrl, tempDest);
+  }
+  if (!tempDest || !fs.existsSync(tempDest)) return null;
+  const origVersion = await getOriginalPackVersion(tempDest);
+  await patchResourcePackFormat(tempDest, version);
+  const finalName = origVersion ? `${safeName}-${origVersion}.zip` : `${safeName}.zip`;
+  const finalPath = path.join(rpDir, finalName);
+  if (finalPath !== tempDest) {
+    try { fs.renameSync(tempDest, finalPath); } catch {
+      try { fs.copyFileSync(tempDest, finalPath); fs.unlinkSync(tempDest); } catch {}
+    }
+  }
+  return finalName;
 }
 
 // ── Mesa3D helpers ──────────────────────────────────────────────────────────────

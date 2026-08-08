@@ -1,6 +1,6 @@
 {
     "name": "files",
-    "version": "1.1.61",
+    "version": "1.1.62",
     "description": "",
     "main": "main.js",
     "scripts": {
@@ -41,6 +41,7 @@
             "package.json",
             "node_modules/**/*",
             "Crux-Client.png",
+            "cape_template.png",
             "icons/**/*",
             "!node_modules/jszip/dist/*.map"
         ],
