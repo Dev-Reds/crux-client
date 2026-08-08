@@ -501,6 +501,12 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         </div>
 
       </div>
+      <div style="display:flex;gap:.6em;align-items:center;margin-bottom:.6em;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:.5em;cursor:pointer;font-size:.82em;color:#ccc;user-select:none">
+          <input type="checkbox" id="use-crux-mod-toggle" style="width:1.1em;height:1.1em;cursor:pointer">
+          <span>Use Crux Client Features</span>
+        </label>
+      </div>
       <div style="display:flex;gap:.4em;margin-bottom:.6em">
         <button class="btn btn-sm mod-filter-btn active" data-filter="all" id="filter-all" data-i18n="filter_all">All</button>
         <button class="btn btn-sm mod-filter-btn" data-filter="fabric" id="filter-fabric" style="border-color:#1bd96a55;color:#1bd96a">Fabric</button>
@@ -1618,6 +1624,7 @@ async function bootLauncher(){
       document.getElementById('open-logs-toggle').checked = !!settings.openLogsAfterLaunch;
       document.getElementById('close-launcher-toggle').checked = !!settings.closeLauncherWhilePlaying;
       document.getElementById('use-original-launcher-toggle').checked = !!settings.useOriginalLauncher;
+      document.getElementById('use-crux-mod-toggle').checked = !!settings.useCruxClientMod;
     } catch {}
     renderModList();
     fetchMissingModIcons();
@@ -2596,6 +2603,7 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
     clientResourcePacks: clientResourcePacks,
     useClientMods: profile?.useClientMods !== false,
     useClientRPs:  profile?.useClientRPs  !== false,
+    useCruxClientMod: !!settings.useCruxClientMod,
     profileMods: profile?.mods||[],
     mrpackMods: profile?.mrpackMods||[],
     mrpackRPs: profile?.mrpackRPs||[],
@@ -6024,6 +6032,10 @@ document.getElementById('close-launcher-toggle').addEventListener('change', e =>
 });
 document.getElementById('use-original-launcher-toggle').addEventListener('change', e => {
   settings.useOriginalLauncher = e.target.checked;
+  saveSettings();
+});
+document.getElementById('use-crux-mod-toggle').addEventListener('change', e => {
+  settings.useCruxClientMod = e.target.checked;
   saveSettings();
 });
 

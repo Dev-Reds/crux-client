@@ -963,6 +963,43 @@ async function findInstalledJavas(cb) {
   return found;
 }
 
+// ── Crux Client Mod (download from GitHub for the launched version) ──────────
+const CRUX_MOD_REPO = 'Dev-Reds/crux-client-mod';
+
+async function ensureCruxClientMod(mcVersion, send, instanceId) {
+  const cacheDir = path.join(P.clientMods, 'cruxclient', mcVersion);
+  const cacheJar = path.join(cacheDir, `Crux-Client-Mod-${mcVersion}.jar`);
+  await fs.promises.mkdir(cacheDir, { recursive: true });
+  if (fs.existsSync(cacheJar)) return cacheJar;
+
+  send('instance-log', { instanceId, line:`[CRUX-MOD] Looking for Crux Client Mod for MC ${mcVersion} on GitHub...` });
+  let release;
+  try {
+    release = await fetchJsonHttps(`https://api.github.com/repos/${CRUX_MOD_REPO}/releases/latest`);
+  } catch (e) {
+    send('instance-log', { instanceId, line:`[CRUX-MOD] GitHub check failed (${e.message}) — starting without Crux Client Mod.` });
+    return null;
+  }
+
+  const asset = (release && release.assets || []).find(a => a.name === `Crux-Client-Mod-${mcVersion}.jar`);
+  if (!asset) {
+    send('instance-log', { instanceId, line:`[CRUX-MOD] No asset "Crux-Client-Mod-${mcVersion}.jar" in the newest release of ${CRUX_MOD_REPO}.` });
+    send('instance-log', { instanceId, line:`[CRUX-MOD] Please name the mod jar "Crux-Client-Mod-${mcVersion}.jar" and upload it to the newest release.` });
+    send('instance-log', { instanceId, line:'[CRUX-MOD] Starting WITHOUT the Crux Client Mod.' });
+    return null;
+  }
+
+  send('instance-log', { instanceId, line:`[CRUX-MOD] Downloading Crux Client Mod ${mcVersion}...` });
+  try {
+    await downloadFile(asset.browser_download_url, cacheJar);
+    send('instance-log', { instanceId, line:`[CRUX-MOD] Downloaded & cached: ${cacheJar}` });
+    return cacheJar;
+  } catch (e) {
+    send('instance-log', { instanceId, line:`[CRUX-MOD] Download failed (${e.message}) — starting without Crux Client Mod.` });
+    return null;
+  }
+}
+
 async function getJavaVersion(p) {
   try {
     const o = await new Promise((r,rj)=>{
@@ -1237,7 +1274,7 @@ ipcMain.on('stop-minecraft', (e, instanceId) => {
 // ── Launch ─────────────────────────────────────────────────────────────────────
 ipcMain.on('launch-minecraft', async (event, data) => {
   lastLaunchData = data;
-  const { version, javaPath, ram, ramUnit, profileMods, clientMods, clientResourcePacks, useClientMods, useClientRPs, accessToken, uuid, playerName: rawPlayerName, modLoader, useOriginalLauncher, profileId, profileName, mrpackMods, mrpackRPs, renderApi } = data;
+  const { version, javaPath, ram, ramUnit, profileMods, clientMods, clientResourcePacks, useClientMods, useClientRPs, accessToken, uuid, playerName: rawPlayerName, modLoader, useOriginalLauncher, profileId, profileName, mrpackMods, mrpackRPs, renderApi, useCruxClientMod } = data;
 
   // Valid Minecraft username (no spaces / invalid chars)
   const playerName = (rawPlayerName || 'Player').replace(/[^a-zA-Z0-9_.-]/g, '_').slice(0, 16);
@@ -1259,14 +1296,15 @@ ipcMain.on('launch-minecraft', async (event, data) => {
   const send = (ch,...a) => { try { if (ch === 'launch-progress' && a[0] && a[0].instanceId && stoppedInstances.has(a[0].instanceId)) return; mainWindow.webContents.send(ch,...a); } catch {} };
 
   // Safety timeout: if nothing happens for 5 min, reset UI
-  const safetyTimer = setTimeout(() => {
+  const fireSafetyTimeout = () => {
     try {
       if (instances[instanceId] && !instances[instanceId].crashed && !stoppedInstances.has(instanceId)) {
         send('launch-status', 'Something took too long — please try again.');
         send('launch-progress', { instanceId, percent:0, message:'', done:true });
       }
     } catch {}
-  }, 5 * 60 * 1000);
+  };
+  let safetyTimer = setTimeout(fireSafetyTimeout, 5 * 60 * 1000);
 
   try {
     // ── Find Java ──────────────────────────────────────────────────────────────
@@ -2026,6 +2064,18 @@ ipcMain.on('launch-minecraft', async (event, data) => {
               if (!fs.existsSync(dest)) await fs.promises.writeFile(dest, buf);
             }
           } catch(e) { send('instance-log', { instanceId, line:`[MODPACK] Re-deploy failed ${mod.name}: ${e.message}` }); }
+        }
+      }
+
+      // ── Deploy Crux Client mod (downloaded from GitHub for the launched version) ─
+      if (useCruxClientMod && (modLoader === 'fabric' || modLoader === 'quilt')) {
+        clearTimeout(safetyTimer);
+        const cruxJar = await ensureCruxClientMod(version, send, instanceId);
+        safetyTimer = setTimeout(fireSafetyTimeout, 5 * 60 * 1000);
+        if (cruxJar) {
+          const dest = path.join(modsDir, `Crux-Client-Mod-${version}.jar`);
+          if (!fs.existsSync(dest)) await fs.promises.copyFile(cruxJar, dest);
+          send('instance-log', { instanceId, line:`[CRUX-MOD] Deployed Crux Client (MC ${version}) to mods folder.` });
         }
       }
 
