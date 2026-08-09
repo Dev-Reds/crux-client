@@ -89,7 +89,7 @@ function createWindow() {
     autoHideMenuBar:true,
     icon: path.join(__dirname, 'icons', 'icon.ico'),
     show: false,
-    webPreferences:{ nodeIntegration:true, contextIsolation:false }
+    webPreferences:{ nodeIntegration:true, contextIsolation:false, devTools:false }
   });
   mainWindow.setMenu(null);
   mainWindow.loadFile('index.html');
@@ -102,13 +102,22 @@ function createWindow() {
   mainWindow.webContents.on('did-finish-load', () => {
     console.log('[Crux] did-finish-load');
     logDebug('did-finish-load');
-    mainWindow.webContents.on('before-input-event', (e, input) => {
-      if (input.key === 'F12') { mainWindow.webContents.toggleDevTools(); }
-    });
   });
   mainWindow.webContents.on('did-fail-load', (e, code, desc) => {
     console.error('[Crux] did-fail-load:', code, desc);
     logDebug('did-fail-load: ' + code + ' ' + desc);
+  });
+  // Close button behavior: while Minecraft or a local server is running, just
+  // hide the window instead of quitting. Only a real quit (before-quit) or an
+  // idle launcher closes the app.
+  mainWindow.on('close', (e) => {
+    if (isQuitting) return;
+    const mcRunning = Object.keys(instances || {}).length > 0;
+    const serversRunning = Object.values(serverProcesses || {}).some(s => s.status === 'running');
+    if (mcRunning || serversRunning) {
+      e.preventDefault();
+      mainWindow.hide();
+    }
   });
 }
 app.whenReady().then(async () => {
@@ -239,7 +248,8 @@ const saveSettings = async (data) => {
       'selectedProfile','selectedAccount','recentHistory',
       'openLogsAfterLaunch','closeLauncherWhilePlaying','useOriginalLauncher',
       'clientResourcePacks','autoUseResourcePacks',
-      'presenceServer','bugreportWebhook','chatServer'
+      'presenceServer','bugreportWebhook','chatServer',
+      'useCruxClientMod','tabBarPosition','cornerRadius'
     ];
     const clean = {};
     for (const k of Object.keys(existing)) { if (KNOWN_KEYS.includes(k)) clean[k] = existing[k]; }
@@ -307,6 +317,67 @@ ipcMain.handle('load-launched-versions', async () => load(P.launched, []));
 ipcMain.on('save-settings',          async (e,d) => saveSettings(d));
 ipcMain.on('save-accounts',          async (e,d) => save(P.accounts, d));
 ipcMain.on('save-profiles',          async (e,d) => save(P.profiles, d));
+// ── Import profiles from NoRisk Client v3 ─────────────────────────────────────
+ipcMain.handle('import-norisk-profiles', async () => {
+  const candidates = [
+    process.env.APPDATA ? path.join(process.env.APPDATA, 'norisk', 'NoRiskClientV3', 'profiles.json') : '',
+    path.join(os.homedir(), 'AppData', 'Roaming', 'norisk', 'NoRiskClientV3', 'profiles.json'),
+  ].filter(Boolean);
+  const file = candidates.find(p => fs.existsSync(p));
+  if (!file) return { ok:false, error:'NoRisk Client v3 profiles.json was not found under %APPDATA%\\norisk\\NoRiskClientV3' };
+  let raw;
+  try { raw = await fs.promises.readFile(file, 'utf8'); }
+  catch(e) { return { ok:false, error:'Could not read ' + file + ': ' + e.message }; }
+  let list;
+  try { list = JSON.parse(raw); }
+  catch(e) { return { ok:false, error:'profiles.json is not valid JSON: ' + e.message }; }
+  if (!Array.isArray(list)) return { ok:false, error:'profiles.json does not contain a profile list.' };
+
+  const VALID_LOADERS = ['vanilla','fabric','forge','quilt','neoforge'];
+  const NRC_REPOS = new Set(['noriskproduction','norisksnapshots','norisk']);
+  const seenNames = new Set();
+  const out = [];
+  let skippedMods = 0;
+
+  for (const np of list) {
+    if (!np || typeof np !== 'object' || !np.name) continue;
+    let loader = String(np.loader || 'fabric').toLowerCase();
+    if (!VALID_LOADERS.includes(loader)) loader = 'fabric';
+    const mods = [];
+    for (const m of np.mods || []) {
+      if (!m || m.enabled === false) continue;
+      const src = m.source || {};
+      const repo = String(src.repository || '').toLowerCase();
+      if (NRC_REPOS.has(repo)) { skippedMods++; continue; }
+      if (/noriskclient/i.test(String(m.display_name || m.name || ''))) { skippedMods++; continue; }
+      let conv = null;
+      if (src.type === 'modrinth' && typeof src.artifact === 'string') {
+        const parts = src.artifact.split(':');
+        if (parts[0] === 'maven.modrinth' && parts[1]) {
+          conv = { name: m.display_name || m.name || parts[1], modrinthId: parts[1] };
+        }
+      }
+      if (conv) mods.push(conv); else skippedMods++;
+    }
+    let name = String(np.name).slice(0, 60);
+    if (seenNames.has(name)) name = name + ' (NRC)';
+    seenNames.add(name);
+    out.push({
+      id: 'nrc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
+      name,
+      group: (typeof np.group === 'string' && np.group) ? np.group : 'NoRisk',
+      mcVersion: String(np.game_version || ''),
+      modLoader: loader,
+      mods,
+      datapacks: [],
+      resourcePacks: [],
+      shaderPacks: [],
+      isNrcImported: true
+    });
+  }
+
+  return { ok:true, file, profiles: out, skippedMods };
+});
 ipcMain.on('save-launched-versions', async (e,d) => save(P.launched, d));
 ipcMain.on('show-launcher', () => { if(mainWindow) mainWindow.show(); });
 ipcMain.on('save-mods', async (e, data) => {
@@ -1274,7 +1345,7 @@ ipcMain.on('stop-minecraft', (e, instanceId) => {
 // ── Launch ─────────────────────────────────────────────────────────────────────
 ipcMain.on('launch-minecraft', async (event, data) => {
   lastLaunchData = data;
-  const { version, javaPath, ram, ramUnit, profileMods, clientMods, clientResourcePacks, useClientMods, useClientRPs, accessToken, uuid, playerName: rawPlayerName, modLoader, useOriginalLauncher, profileId, profileName, mrpackMods, mrpackRPs, renderApi, useCruxClientMod } = data;
+  const { version, javaPath, ram, ramUnit, profileMods, clientMods, clientResourcePacks, profileResourcePacks, useClientMods, useClientRPs, accessToken, uuid, playerName: rawPlayerName, modLoader, useOriginalLauncher, profileId, profileName, mrpackMods, mrpackRPs, renderApi, useCruxClientMod } = data;
 
   // Valid Minecraft username (no spaces / invalid chars)
   const playerName = (rawPlayerName || 'Player').replace(/[^a-zA-Z0-9_.-]/g, '_').slice(0, 16);
@@ -1928,13 +1999,14 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       let toDeploy = [];
       for (const mod of normalMods) {
         if (mod.disabled) continue;
-        if (mod.loader && mod.loader !== modLoader) continue;
+        if (mod.loader && mod.loader !== 'any' && mod.loader !== modLoader) continue;
         const vm = mod.downloadAllVersions || mod.mcVersion === version || mod.mcVersion === 'all' || mod.mcVersion === 'latest';
         if (!vm) continue;
         toDeploy.push(mod);
       }
       for (const mod of profileModsRaw) {
         if (mod.disabled) continue;
+        if (mod.loader && mod.loader !== 'any' && mod.loader !== modLoader) continue;
         if (!toDeploy.some(m => m.modrinthId && m.modrinthId === mod.modrinthId)) {
           mod._isProfileMod = true;
           toDeploy.push(mod);
@@ -1955,7 +2027,13 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         }
       }
 
-      send('launch-progress', { instanceId, percent:23, message:'Checking for mod updates...' });
+      // ── Offline mode: no network → keep cached mods, skip update checks ──
+      const offline = !(await isNetworkAvailable());
+      if (offline) {
+        send('instance-log', { instanceId, line:'[OFFLINE] Keine Verbindung — überspringe Mod-Update-Prüfung, nutze gecachte Mods' });
+      }
+
+      send('launch-progress', { instanceId, percent:23, message: offline ? 'Mods offline (gecacht)' : 'Checking for mod updates...' });
 
       // ── Pre-scan: check which mods have a version for this MC version ──────────
       const unavailableMods = new Set();
@@ -1966,32 +2044,24 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       const existingFiles = fs.existsSync(modsDir) ? fs.readdirSync(modsDir) : [];
 
       for (const mod of toDeploy) {
+        if (offline) break;
         if (mod._isProfileMod) continue;
         if (!mod.modrinthId) continue;
         try {
           const gv = encodeURIComponent(`["${version}"]`);
           const ld = encodeURIComponent(`["${modLoader}"]`);
           let versions = await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version?game_versions=${gv}&loaders=${ld}`);
-          if (!versions || !versions.length) versions = await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version?game_versions=${gv}`);
           if (!versions || !versions.length) {
-            send('instance-log', { instanceId, line:`[MODS] ${mod.name} — not available for MC ${version}, trying latest version anyway...` });
-            versions = await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version`).catch(() => null);
-            if (!versions || !versions.length) {
-              unavailableMods.add(mod.modrinthId);
-              send('instance-log', { instanceId, line:`[MODS] ${mod.name} — no version found at all, disabled` });
-              continue;
-            }
+            send('instance-log', { instanceId, line:`[MODS] ${mod.name} — no ${modLoader} version for MC ${version}, scanning older ${modLoader} versions...` });
+            const allV = await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version`).catch(() => null);
+            versions = (allV || []).filter(v => (v.game_versions || []).includes(version) && (v.loaders || []).includes(modLoader));
           }
-          const latestVer = versions[0];
-          // Guard against the "latest version anyway" fallback: never deploy a
-          // mod whose newest release does not support this MC version. Deploying
-          // an incompatible jar (e.g. LazyDFU 0.1.3 on 1.21.x) crashes Minecraft
-          // at startup with a Mixin error.
-          if (latestVer && Array.isArray(latestVer.game_versions) && latestVer.game_versions.length && !latestVer.game_versions.includes(version)) {
+          if (!versions || !versions.length) {
             unavailableMods.add(mod.modrinthId);
-            send('instance-log', { instanceId, line:`[MODS] ${mod.name} — newest version ${latestVer.version_number || latestVer.id} does not support MC ${version} (${latestVer.game_versions[latestVer.game_versions.length-1]}), disabled` });
+            send('instance-log', { instanceId, line:`[MODS] ${mod.name} — no ${modLoader} version supports MC ${version}, disabled` });
             continue;
           }
+          const latestVer = versions[0];
           const deps = latestVer.dependencies || [];
           modDepInfo.set(mod.modrinthId, deps);
           versionCache.set(mod.modrinthId, latestVer);
@@ -2046,9 +2116,14 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       toDeploy = toDeploy.filter(mod => !unavailableMods.has(mod.modrinthId));
 
       // ── Clean mods folder: remove ALL old JARs to ensure per-profile isolation ─────
-      const existingJars = fs.readdirSync(modsDir).filter(f => f.endsWith('.jar'));
-      for (const jar of existingJars) {
-        try { fs.unlinkSync(path.join(modsDir, jar)); } catch {}
+      // (Skipped in offline mode so cached mods survive without an internet connection.)
+      if (offline) {
+        send('instance-log', { instanceId, line:'[OFFLINE] Mods-Ordner wird nicht bereinigt — vorhandene JARs bleiben erhalten' });
+      } else {
+        const existingJars = fs.readdirSync(modsDir).filter(f => f.endsWith('.jar'));
+        for (const jar of existingJars) {
+          try { fs.unlinkSync(path.join(modsDir, jar)); } catch {}
+        }
       }
 
       // Re-deploy mrpack mods (they were wiped by the cleanup above)
@@ -2100,7 +2175,17 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       let deployed = 0;
       const totalDeploy = toDeploy.length;
       for (const mod of toDeploy) {
-        if (!mod.modrinthId) continue;
+        // Local mod from disk (no Modrinth id) — copy the jar directly
+        if (!mod.modrinthId) {
+          try {
+            if (mod.diskPath && fs.existsSync(mod.diskPath)) {
+              const dest = path.join(modsDir, mod.fileName || (String(mod.name||'mod').replace(/[^a-zA-Z0-9._-]/g,'_') + '.jar'));
+              if (!fs.existsSync(dest)) await fs.promises.copyFile(mod.diskPath, dest);
+              deployed++;
+            }
+          } catch(e) { send('instance-log', { instanceId, line:`[MODS] Failed to copy local mod ${mod.name}: ${e.message}` }); }
+          continue;
+        }
         try {
           const hasJar = existingFiles.some(f => f.startsWith(mod.modrinthId + '-') && f.endsWith('.jar'));
           if (hasJar) { deployed++; continue; }
@@ -2110,10 +2195,12 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           if (!versionData) {
             const allVersions = await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version`).catch(() => null);
             if (!allVersions || !allVersions.length) continue;
-            // Pick the newest version that actually supports this MC version
-            versionData = allVersions.find(v => (v.game_versions || []).includes(version));
+            // Pick the newest version that supports this MC version AND the profile's mod loader.
+            // Deploying a wrong-loader jar (e.g. a NeoForge build into a Fabric profile) makes
+            // Fabric Loader crash at startup on an unparseable fabric.mod.json.
+            versionData = allVersions.find(v => (v.game_versions || []).includes(version) && (v.loaders || []).includes(modLoader));
             if (!versionData) {
-              send('instance-log', { instanceId, line:`[MODS] ${mod.name} — no version supports MC ${version}, disabled` });
+              send('instance-log', { instanceId, line:`[MODS] ${mod.name} — no ${modLoader} version supports MC ${version}, disabled` });
               continue;
             }
           }
@@ -2168,7 +2255,11 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     }
 
     // ── Deploy resource packs (all loaders, including vanilla) ─────────────
-    const rpList = (data.useClientRPs !== false) ? (data.clientResourcePacks || []) : [];
+    const profileRPs = (profileResourcePacks || []).filter(rp => {
+      const v = (rp && typeof rp === 'object') ? (rp.mcVersion || 'all') : 'all';
+      return v === 'all' || v === version;
+    });
+    const rpList = [...((data.useClientRPs !== false) ? (data.clientResourcePacks || []) : []), ...profileRPs];
     if (rpList.length || mrpackDeployedNames.length) {
       const rpDir = path.join(P.mc, 'resourcepacks');
       await fs.promises.mkdir(rpDir, { recursive: true });
@@ -2178,10 +2269,13 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       for (const rp of rpList) {
         try {
           let downloadUrl = null, fname = null, packName = null;
+          const rpStr = (rp && typeof rp === 'object') ? (rp.name || '') : rp;
           if (typeof rp === 'object' && rp.modrinthId) {
             const vd = await fetchJson(`https://api.modrinth.com/v2/project/${rp.modrinthId}/version`).catch(() => null);
             if (vd && vd.length) {
-              const file = vd[0].files?.find(f => f.primary) || vd[0].files?.[0];
+              let chosen = vd[0];
+              if (version) chosen = vd.find(v => v.game_versions && v.game_versions.includes(version)) || vd[0];
+              const file = chosen.files?.find(f => f.primary) || chosen.files?.[0];
               if (file) { downloadUrl = file.url; fname = file.filename; }
             }
             if (!downloadUrl) {
@@ -2189,9 +2283,22 @@ ipcMain.on('launch-minecraft', async (event, data) => {
               continue;
             }
             packName = rp.name || fname;
-          } else if (typeof rp === 'string' && (rp.startsWith('http://') || rp.startsWith('https://'))) {
-            downloadUrl = rp;
-            fname = path.basename(rp.split('?')[0]) || `rp-${Date.now()}.zip`;
+          } else if (typeof rpStr === 'string' && rpStr.startsWith('file://')) {
+            const srcPath = rpStr.slice('file://'.length);
+            const srcName = path.basename(srcPath);
+            try {
+              if (fs.existsSync(srcPath)) {
+                await fs.promises.copyFile(srcPath, path.join(rpDir, srcName));
+                deployedRpNames.push(srcName);
+                send('instance-log', { instanceId, line:`[RP] Copied local pack: ${srcName}` });
+              } else {
+                send('instance-log', { instanceId, line:`[RP] Local pack not found: ${srcPath}` });
+              }
+            } catch(e){ send('instance-log', { instanceId, line:`[RP] Failed to copy local pack: ${e.message}` }); }
+            continue;
+          } else if (typeof rpStr === 'string' && (rpStr.startsWith('http://') || rpStr.startsWith('https://'))) {
+            downloadUrl = rpStr;
+            fname = path.basename(rpStr.split('?')[0]) || `rp-${Date.now()}.zip`;
             packName = fname;
           } else {
             const name = typeof rp === 'object' ? rp.name : rp;
@@ -3679,6 +3786,7 @@ function fetchJsonNoCors(url) {
   });
 }
 ipcMain.handle('fetch-json-no-cors', async (e, url) => { logDebug('fetchJsonNoCors: ' + url); return fetchJsonNoCors(url); });
+ipcMain.handle('check-online', () => isNetworkAvailable());
 ipcMain.handle('fetch-image-dataurl', async (e, url) => {
   logDebug('fetchImageDataUrl: ' + url);
   const tmpFile = path.join(base, 'Cache', `img_${Date.now()}_${Math.random().toString(36).slice(2,8)}`);
@@ -4013,6 +4121,24 @@ function fetchJson(url) {
     req.setTimeout(15000, () => { req.destroy(); rj(new Error('Timeout: '+url.slice(0,80))); });
   });
 }
+// ── Offline detection ──────────────────────────────────────────────────────────
+let _netOnline = null;
+let _netCheckAt = 0;
+function isNetworkAvailable() {
+  return new Promise((resolve) => {
+    const now = Date.now();
+    if (_netOnline !== null && now - _netCheckAt < 15000) return resolve(_netOnline);
+    const req = https.get('https://api.modrinth.com/v2/tag/loader', { timeout: 5000 }, res => {
+      _netOnline = res.statusCode >= 200 && res.statusCode < 500;
+      _netCheckAt = Date.now();
+      res.resume();
+      resolve(_netOnline);
+    });
+    req.on('error', () => { _netOnline = false; _netCheckAt = Date.now(); resolve(false); });
+    req.setTimeout(5000, () => { req.destroy(); _netOnline = false; _netCheckAt = Date.now(); resolve(false); });
+  });
+}
+
 function fetchText(url) {
   return new Promise((r,rj) => {
     const lib = url.startsWith('https') ? https : http;

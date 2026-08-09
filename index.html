@@ -11,22 +11,41 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;height:100%;overflow:hidden;}
-body{font-family:Arial,sans-serif;background:#0a0a0a;color:#fff;font-size:2vw;}
+body{font-family:Arial,sans-serif;background:#0a0a0a;color:#fff;font-size:2vw;scrollbar-width:thin;scrollbar-color:#2f2f2f transparent;}
 :root{--tb:5.4vh;--acc:#0088ff;--acc2:#005bb5;--r:.5em;--border:#2a2a2a;--text-muted:#888;}
+*{scrollbar-width:thin;scrollbar-color:#2f2f2f transparent;}
+*::-webkit-scrollbar{width:10px;height:10px;}
+*::-webkit-scrollbar-track{background:transparent;}
+*::-webkit-scrollbar-thumb{background:#2f2f2f;border-radius:999px;border:2px solid transparent;background-clip:content-box;}
+*::-webkit-scrollbar-thumb:hover{background:#4a4a4a;border:2px solid transparent;background-clip:content-box;}
+*::-webkit-scrollbar-corner{background:transparent;}
+body.light, body.light *{scrollbar-color:#c8c8c8 transparent;}
+body.light *::-webkit-scrollbar-thumb{background:#c8c8c8;border:2px solid transparent;background-clip:content-box;}
+body.light *::-webkit-scrollbar-thumb:hover{background:#aaa;border:2px solid transparent;background-clip:content-box;}
 
 
 /* ── Launcher ── */
 .hidden{display:none;}
 #launcher-screen{width:100%;height:100vh;flex-direction:column;overflow:hidden;}
-.toolbar{flex-shrink:0;display:flex;align-items:center;gap:.3em;padding:0 .8em;background:rgba(6,6,6,.98);border-bottom:1px solid #1e1e1e;flex-wrap:nowrap;min-height:var(--tb);}
+.toolbar{flex-shrink:0;display:flex;align-items:center;gap:.3em;padding:5px .8em;background:rgba(6,6,6,.98);border-bottom:1px solid #1e1e1e;flex-wrap:nowrap;min-height:var(--tb);}
 .toolbar::-webkit-scrollbar{height:3px;}
 .toolbar::-webkit-scrollbar-thumb{background:#333;border-radius:999px;}
-.tb-btn{flex:1;min-width:0;height:calc(var(--tb) * .95);display:flex;align-items:center;justify-content:center;gap:.3em;padding:.3em .6em;border:1px solid #2a2a2a;border-radius:var(--r);background:#111;color:#888;cursor:pointer;font-size:clamp(.7em,1.15vw,1.05em);font-weight:600;transition:all .2s;white-space:normal;overflow:hidden;text-align:center;line-height:1.15;overflow-wrap:anywhere;word-break:break-word;}
+.tb-btn{flex:1;min-width:0;height:calc(var(--tb) * .95);display:flex;align-items:center;justify-content:center;gap:.3em;padding:.3em .6em;border:1px solid #2a2a2a;border-radius:var(--r);background:#111;color:#888;cursor:pointer;font-size:clamp(.55em,.9vw,.8em);font-weight:600;transition:all .2s;white-space:normal;overflow:hidden;text-align:center;line-height:1.15;overflow-wrap:anywhere;word-break:break-word;}
+#settings-fab{position:fixed;right:16px;bottom:16px;width:46px;height:46px;flex:none;border-radius:50%;padding:0;font-size:1em;z-index:60;box-shadow:0 4px 14px rgba(0,0,0,.5);}
+body.light #settings-fab{box-shadow:0 4px 14px rgba(0,0,0,.15);}
+.launch-recent{border-top:1px solid #1a1a1a;}
+body.light .launch-recent{border-top-color:#ddd;}
 .tb-btn:hover{background:#1a1a1a;color:#ccc;}
 .tb-btn.active{background:var(--acc);border-color:var(--acc);color:#fff;}
 .tb-btn .tb-head{width:1.2em;height:1.2em;border-radius:.15em;image-rendering:pixelated;display:none;}
 #toolbar-theme{padding:.35em .6em;}
 #toolbar-theme svg{vertical-align:middle;}
+/* ── Tab bar position (top/bottom) ── */
+body.tabs-bottom .toolbar{order:99;border-bottom:none;border-top:1px solid #1e1e1e;}
+body.tabs-bottom #settings-fab{bottom:calc(var(--tb) + 30px);}
+body.tabs-bottom #stop-bar{order:2;}
+body.tabs-bottom #offline-banner{order:3;}
+body.tabs-bottom .pages{order:1;}
 
 /* ── Pages ── */
 .pages{flex:1;overflow:hidden;position:relative;}
@@ -91,6 +110,8 @@ body.light .pack-tag .rt:hover{color:#f44;}
 body.light .mod-result-desc{color:#888;}
 body.light .mod-icon{background:#ddd;}
 body.light .settings-section h2{color:#888;border-bottom-color:#ddd;}
+body.light .settings-nav button{color:#666;}
+body.light .settings-nav button:hover{background:#eee;color:#111;}
 body.light .color-btn.sel{border-color:#111;}
 body.light #auto-rp-toggle{background:#ccc!important;border-color:#bbb!important;}
 body.light #auto-rp-knob{background:#666!important;}
@@ -161,9 +182,10 @@ body.light .friend-add-row input{background:#fff;color:#111;border-color:#ccc;}
 body.light .friend-add-row input::placeholder{color:#777;}
 body.light .friend-item .friend-head{background:#eee;}
 body.light .mod-toggle{border-color:#ccc;color:#888;}
+body.light .mod-switch .slider{background:#ddd;}
+body.light .mod-switch .slider::before{background:#888;}
+body.light .mod-switch input:checked + .slider::before{background:#fff;}
 body.light .mod-remove{border-color:#ccc;color:#888;}
-body.light #client-rp-input{background:#fff!important;color:#111!important;border-color:#ccc!important;}
-body.light #client-rp-input::placeholder{color:#777!important;}
 body.light #profile-version-select{background:#fff!important;color:#111!important;border-color:#ccc!important;}
 body.light #cape-preview{background:#ddd!important;border-color:#ccc!important;}
 body.light .modal-overlay{background:rgba(200,200,200,.82)!important;}
@@ -244,6 +266,9 @@ body.light .btn-curseforge{background:#fff5f0;color:#a83500;border-color:#f16422
 .mod-list-empty{padding:2em;text-align:center;color:#444;font-size:.82em;}
 .mod-item{display:flex;align-items:center;gap:.7em;padding:.6em .9em;border-bottom:1px solid #141414;font-size:.82em;}
 .mod-item:last-child{border-bottom:none;}
+.mod-list.drop-active, #client-rp-list.drop-active, .pack-list.drop-active{outline:2px dashed var(--acc);outline-offset:2px;background:color-mix(in srgb,var(--acc) 8%,transparent);}
+#client-rp-list{transition:outline-color .15s,background .15s;}
+.pack-list{transition:outline-color .15s,background .15s;}
 .mod-icon{width:2.2em;height:2.2em;border-radius:.25em;background:#222;object-fit:cover;flex-shrink:0;}
 .mod-info{flex:1;min-width:0;}
 .mod-name{font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -252,6 +277,12 @@ body.light .btn-curseforge{background:#fff5f0;color:#a83500;border-color:#f16422
 .mod-btn{width:auto;padding:.22em .65em;font-size:.7em;border-radius:.35em;background:transparent;}
 .mod-toggle{border-color:#333;color:#777;}
 .mod-toggle:hover{border-color:var(--acc);color:var(--acc);}
+.mod-switch{position:relative;display:inline-flex;align-items:center;width:2.4em;height:1.3em;flex-shrink:0;vertical-align:middle;cursor:pointer;align-self:center;}
+.mod-switch input{opacity:0;width:0;height:0;position:absolute;}
+.mod-switch .slider{position:absolute;cursor:pointer;inset:0;background:#333;border-radius:999px;transition:background .2s;}
+.mod-switch .slider::before{content:"";position:absolute;height:1em;width:1em;left:.15em;top:.15em;background:#999;border-radius:50%;transition:transform .2s;}
+.mod-switch input:checked + .slider{background:var(--acc);}
+.mod-switch input:checked + .slider::before{transform:translateX(1.1em);background:#fff;}
 .mod-remove{border-color:#333;color:#666;}
 .mod-remove:hover{border-color:#f44;color:#f44;}
 .mod-dlall{border-color:#222;color:#555;}
@@ -266,11 +297,15 @@ body.light .mod-meta{color:#888;}
 .profile-modal{z-index:1500;}
 .login-modal{z-index:2100;}
 .modal{background:#111;border:1px solid #2a2a2a;border-radius:.8em;width:min(88vw,660px);max-height:82vh;display:flex;flex-direction:column;overflow:hidden;}
+#mod-modal .modal{width:min(95vw,1400px);}
+#mod-modal .modal-body{min-height:60vh;}
+#mod-modal .mod-results{min-height:52vh;}
+#mod-modal .modal-tab-row{flex-wrap:wrap;}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:.9em 1.2em;border-bottom:1px solid #1e1e1e;}
 .modal-header h2{font-size:.95em;}
 .modal-close{width:auto;padding:.2em .55em;background:transparent;border:1px solid #333;color:#777;border-radius:.35em;font-size:.85em;cursor:pointer;}
 .modal-close:hover{color:#fff;border-color:#666;}
-.modal-body{padding:.9em 1.2em;overflow-y:auto;flex:1;}
+.modal-body{padding:.9em 1.2em;overflow-y:auto;overflow-x:hidden;flex:1;}
 .modal-tab-row{display:flex;gap:.4em;margin-bottom:.8em;border-bottom:1px solid #1e1e1e;padding-bottom:.6em;}
 .modal-tab{width:auto;padding:.3em .8em;font-size:.78em;border-radius:.35em;background:transparent;border:1px solid #2a2a2a;color:#666;}
 .modal-tab.active{background:var(--acc);border-color:var(--acc);color:#fff;}
@@ -279,7 +314,7 @@ body.light .mod-meta{color:#888;}
 .mod-search-input:focus{border-color:var(--acc);}
 body.light .mod-search-input{background:#fff;color:#111;border-color:#ccc;}
 .mod-search-btn{width:auto;padding:.5em .9em;font-size:.82em;}
-.mod-results{display:flex;flex-direction:column;}
+.mod-results{display:flex;flex-direction:column;overflow-x:hidden;min-width:0;}
 .mod-result-item{display:flex;align-items:center;gap:.7em;padding:.6em .3em;border-bottom:1px solid #161616;}
 .mod-result-item:last-child{border-bottom:none;}
 .mod-result-item:hover{background:#161616;border-radius:.35em;}
@@ -320,6 +355,8 @@ body.light .profile-meta{color:#888;}
 .pack-section h3{font-size:.8em;text-transform:uppercase;letter-spacing:.05em;color:#555;}
 .pack-list{display:flex;flex-wrap:wrap;gap:.35em;margin-bottom:.4em;min-height:1.5em;}
 .pack-tag{padding:.22em .55em;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:999px;font-size:.72em;color:#aaa;display:flex;align-items:center;gap:.35em;}
+.pack-ver-select{background:#111;color:#aaa;border:1px solid #333;border-radius:999px;font-size:.82em;padding:.05em .3em;outline:none;max-width:7.5em;cursor:pointer;}
+.pack-ver-select:focus{border-color:var(--acc);}
 .pack-tag .rt{color:#555;cursor:pointer;line-height:1;}
 .pack-tag .rt:hover{color:#f44;}
 .pack-add-row{display:flex;gap:.4em;}
@@ -327,6 +364,19 @@ body.light .profile-meta{color:#888;}
 .pack-input:focus{border-color:var(--acc);}
 body.light .pack-input{background:#fff;color:#111;border-color:#ccc;}
 .pack-add-btn{width:auto;padding:.38em .75em;font-size:.78em;}
+/* Profile split view (Mods left / packs right) */
+.profile-split{display:flex;align-items:stretch;gap:.6em;min-height:14em;border:1px solid #1a1a1a;border-radius:var(--r);background:#0d0d0d;padding:.5em;}
+.profile-split-pane{min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:.4em;}
+.profile-split-left{flex:0 0 48%;}
+.profile-split-right{flex:1 1 auto;}
+.profile-split-divider{flex:0 0 8px;cursor:col-resize;display:flex;align-items:center;justify-content:center;touch-action:none;}
+.profile-split-divider:hover div{background:var(--acc);}
+.profile-split-divider div{width:3px;height:100%;background:#333;border-radius:999px;transition:background .2s;}
+.profile-split-right .pack-section{margin-bottom:.8em;padding-bottom:.6em;border-bottom:1px solid #161616;}
+.profile-split-right .pack-section:last-child{border-bottom:none;margin-bottom:0;}
+body.light .profile-split{background:#fafafa;border-color:#ddd;}
+body.light .profile-split-divider div{background:#ccc;}
+body.light .profile-split-right .pack-section{border-bottom-color:#eee;}
 
 /* ── Account page ── */
 .account-panel{max-width:30em;}
@@ -350,6 +400,13 @@ body.light .account-type{color:#888;}
 /* ── Settings ── */
 .settings-section{margin-bottom:1.8em;max-width:34em;}
 .settings-section h2{font-size:.8em;text-transform:uppercase;letter-spacing:.06em;color:#444;margin-bottom:.7em;border-bottom:1px solid #1a1a1a;padding-bottom:.35em;}
+.settings-layout{display:flex;align-items:flex-start;gap:1.5em;}
+.settings-nav{position:sticky;top:0;width:12em;flex-shrink:0;display:flex;flex-direction:column;gap:2px;align-self:flex-start;}
+.settings-nav button{display:block;width:100%;text-align:left;padding:.5em .8em;border-radius:var(--r);border:none;background:none;color:#999;cursor:pointer;font-size:.82em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.settings-nav button:hover{background:#1a1a1a;color:#fff;}
+.settings-nav button.active{background:var(--acc);color:#fff;font-weight:600;}
+.settings-body{flex:1;min-width:0;scroll-margin-top:1em;}
+.settings-section{scroll-margin-top:1em;}
 .color-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.45em;max-width:18em;}
 .color-btn{aspect-ratio:1;border-radius:.45em;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s;}
 .color-btn:hover{transform:scale(1.1);}
@@ -394,6 +451,14 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 
 /* ── Mojang login modal ── */
 .login-modal .modal{max-width:380px;}
+
+/* ── Features page ── */
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.8em;max-width:72em;}
+.feature-card{background:#131313;border:1px solid #222;border-radius:.8em;padding:1em 1.1em;}
+.feature-card h3{margin:0 0 .35em;font-size:.9em;color:var(--acc);}
+.feature-card p{margin:0;font-size:.76em;color:#777;line-height:1.5;}
+body.light .feature-card{background:#fff;border-color:#ddd;}
+body.light .feature-card p{color:#666;}
 </style>
 </head>
 <body>
@@ -406,10 +471,9 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     <button class="tb-btn" data-page="profiles-page" data-i18n="tab_profiles">Profiles</button>
     <button class="tb-btn" data-page="cape-page" data-i18n="tab_cape">Capes</button>
     <button class="tb-btn" data-page="friends-page" data-i18n="tab_friends">Friends</button>
-    <button class="tb-btn" data-page="settings-page" data-i18n="tab_settings">Settings</button>
     <button class="tb-btn" data-page="logs-page" data-i18n="tab_logs">Logs<span id="running-badge" style="display:none;margin-left:.3em;background:#1bd96a;color:#000;border-radius:999px;font-size:.7em;padding:.05em .45em;font-weight:bold"></span></button>
     <button class="tb-btn" data-page="servers-page" data-i18n="tab_servers">Servers</button>
-    <button class="tb-btn" data-page="bugreport-page" data-i18n="tab_bugreport">Bug Report</button>
+    <button class="tb-btn" data-page="features-page" data-i18n="tab_features">Features</button>
     <button class="tb-btn" id="toolbar-theme" title="Toggle theme">
       <svg id="icon-moon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       <svg id="icon-sun" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -420,11 +484,18 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     </button>
   </div>
 
+  <button class="tb-btn" id="settings-fab" data-page="settings-page" data-i18n-title="tab_settings" title="Settings">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+  </button>
+
   <div id="stop-bar" style="display:flex;gap:.5em;padding:.35em .8em;background:#0d0d0d;border-bottom:1px solid #1a1a1a;align-items:center;min-height:2em">
     <span style="font-size:.78em;color:#555;margin-right:.4em" data-i18n="lbl_actions">Actions:</span>
     <select id="stop-instance-select" style="display:none;background:#1a1a1a;color:#ccc;border:1px solid #333;border-radius:4px;padding:.25em .4em;font-size:.78em;max-width:220px"></select>
     <button class="btn" id="stop-btn" style="width:auto;padding:.35em .7em;font-size:.78em;border-color:#f4444444;color:#f44;display:none;white-space:nowrap" title="Stop selected instance" data-i18n="btn_stop">■ Stop</button>
     <button class="btn" id="stop-all-btn" style="width:auto;padding:.35em .7em;font-size:.78em;border-color:#f4444444;color:#f44;display:none;white-space:nowrap" title="Stop all running instances" data-i18n="btn_stop_all">■ Stop All</button>
+  </div>
+  <div id="offline-banner" style="display:none;padding:.35em .8em;background:#553300;color:#ffcc66;font-size:.76em;align-items:center;gap:.5em">
+    <span>⚠ Offline — Mods werden aus dem Cache geladen, Downloads &amp; Updates sind pausiert.</span>
   </div>
   <div class="pages">
 
@@ -487,8 +558,20 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
               <button class="btn btn-sm btn-primary" id="skin-list-btn" style="flex:1;font-size:.8em" data-i18n="btn_skin_list">📋 Skin List</button>
             </div>
           </div>
+          </div>
         </div>
       </div>
+
+    <!-- ══ RECENT ══ -->
+    <div id="recent-page" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8em;flex-wrap:wrap;gap:.4em">
+        <h1 style="margin:0" data-i18n="h_recent">Recent Played</h1>
+        <div style="display:flex;align-items:center;gap:.4em">
+          <button class="btn btn-sm" id="recent-clear-btn" style="color:#f44;width:auto" data-i18n="btn_clear_history">Clear History</button>
+          <span style="font-size:.8em;color:#555" id="recent-count"></span>
+        </div>
+      </div>
+      <div id="recent-sections"></div>
     </div>
 
     <!-- ══ CLIENT-MODS ══ -->
@@ -507,7 +590,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
           <span>Use Crux Client Features</span>
         </label>
       </div>
-      <div style="display:flex;gap:.4em;margin-bottom:.6em">
+      <div style="display:flex;gap:.4em;margin-bottom:.6em;flex-wrap:wrap">
         <button class="btn btn-sm mod-filter-btn active" data-filter="all" id="filter-all" data-i18n="filter_all">All</button>
         <button class="btn btn-sm mod-filter-btn" data-filter="fabric" id="filter-fabric" style="border-color:#1bd96a55;color:#1bd96a">Fabric</button>
         <button class="btn btn-sm mod-filter-btn" data-filter="quilt" id="filter-quilt" style="border-color:#cc559955;color:#cc5599">Quilt</button>
@@ -535,10 +618,6 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
           </div>
         </div>
         <p style="color:#555;font-size:.75em;margin-bottom:.7em" data-i18n="desc_rp_auto">When enabled, adds <strong style="color:#ccc">Open Loader</strong> to your client mods — it automatically loads all resource packs listed below without touching in-game settings.</p>
-        <div style="display:flex;gap:.4em;margin-bottom:.5em;flex-wrap:wrap">
-          <input type="text" id="client-rp-input" placeholder="Resource pack name or URL..." style="flex:1;min-width:10em;padding:.38em .6em;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.78em;outline:none">
-          <button class="btn btn-sm btn-primary" id="client-rp-add-btn" style="width:auto" data-i18n="btn_add_rp">+ Add</button>
-        </div>
         <div id="client-rp-list" style="display:flex;flex-wrap:wrap;gap:.35em;min-height:1.5em"></div>
       </div>
     </div>
@@ -553,6 +632,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
           <button class="btn btn-sm btn-modrinth" id="import-modpack-modrinth-btn" data-i18n="btn_import_modpack_modrinth">📦 Modrinth</button>
           <button class="btn btn-sm btn-curseforge" id="import-modpack-curseforge-btn" data-i18n="btn_import_modpack_curseforge">📦 CurseForge</button>
           <button class="btn btn-sm" id="import-share-btn" style="border-color:#1bd96a44;color:#1bd96a" data-i18n="btn_import_share">📋 Import Share Code</button>
+          <button class="btn btn-sm" id="import-norisk-btn" style="border-color:#e63c8a44;color:#e63c8a" data-i18n="btn_import_norisk">⬇ NoRisk Client</button>
           <button class="btn btn-sm btn-primary" id="new-profile-btn" data-i18n="new_profile">+ New Profile</button>
         </div>
       </div>
@@ -561,16 +641,6 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <div class="lp-label" id="modpack-progress-label"></div>
       </div>
       <div class="profile-list" id="profile-list"></div>
-    </div>
-
-    <!-- ══ RECENT PLAYED ══ -->
-    <div id="recent-page" class="page" style="display:none">
-      <h1 data-i18n="h_recent">Recent Played</h1>
-      <div style="display:flex;gap:.4em;margin-bottom:.8em;align-items:center">
-        <button class="btn btn-sm" id="recent-clear-btn" style="color:#f44;width:auto" data-i18n="btn_clear_history">Clear History</button>
-        <span style="font-size:.8em;color:#555" id="recent-count"></span>
-      </div>
-      <div id="recent-sections"></div>
     </div>
 
     <!-- ══ CAPE & COSMETICS ══ -->
@@ -609,6 +679,9 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
     <!-- ══ SETTINGS ══ -->
     <div id="settings-page" class="page">
       <h1 data-i18n="h_settings">Settings</h1>
+      <div class="settings-layout">
+        <nav class="settings-nav" id="settings-nav"></nav>
+        <div class="settings-body">
       <select id="javaSelect" style="display:none"><option></option></select>
       <div class="settings-section">
         <h2 data-i18n="sec_ram">RAM for Minecraft</h2>
@@ -654,12 +727,44 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <div class="color-grid" id="color-grid"></div>
       </div>
       <div class="settings-section">
+        <h2 data-i18n="sec_theme">Theme</h2>
+        <div class="form-row" style="max-width:20em">
+          <label data-i18n="lbl_theme">Appearance</label>
+          <select id="theme-select">
+            <option value="dark" data-i18n="theme_dark">Dark</option>
+            <option value="light" data-i18n="theme_light">Light</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h2 data-i18n="sec_corner_radius">Corner Radius</h2>
+        <div class="form-row" style="max-width:20em">
+          <label data-i18n="lbl_corner_radius">Roundness</label>
+          <select id="corner-radius-select">
+            <option value="0.25em" data-i18n="corner_small">Small</option>
+            <option value="0.5em" data-i18n="corner_medium">Medium</option>
+            <option value="1em" data-i18n="corner_large">Large</option>
+            <option value="1.5em" data-i18n="corner_round">Round</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-section">
         <h2 data-i18n="sec_launch_mode">Launch Mode</h2>
         <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc">
           <input type="checkbox" id="use-original-launcher-toggle" style="width:1.1em;height:1.1em;cursor:pointer">
           <span data-i18n="launch_via_launcher">Launch via original Minecraft Launcher</span>
         </label>
         <p style="color:#555;font-size:.76em;margin-top:.3em" data-i18n="desc_launch_mode_detail">Opens the official Minecraft Launcher (Java Edition) instead of launching directly.</p>
+      </div>
+      <div class="settings-section">
+        <h2 data-i18n="sec_tab_bar">Tab Bar</h2>
+        <div class="form-row" style="max-width:20em">
+          <label data-i18n="lbl_tab_bar_pos">Position</label>
+          <select id="tab-bar-position-select">
+            <option value="top" data-i18n="tab_bar_top">Top</option>
+            <option value="bottom" data-i18n="tab_bar_bottom">Bottom</option>
+          </select>
+        </div>
       </div>
       <div class="settings-section">
         <h2 data-i18n="sec_after_launch">After Launch</h2>
@@ -693,6 +798,41 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       </div>
 
       <div class="settings-section">
+        <h2 data-i18n="h_bugreport">Bug Report</h2>
+        <p style="color:#aaa;margin-bottom:1.2em;line-height:1.6;font-size:.85em" data-i18n="bugreport_desc">Found a bug? Report it. Attach launcher files and game logs.</p>
+        <div class="form-row">
+          <label data-i18n="bugreport_category">Category</label>
+          <select id="bugreport-category">
+            <option value="Launcher" data-i18n="bugreport_cat_launcher">Launcher</option>
+            <option value="Game Crash" data-i18n="bugreport_cat_crash">Game Crash</option>
+            <option value="Mods" data-i18n="bugreport_cat_mods">Mods</option>
+            <option value="Skin / Cape" data-i18n="bugreport_cat_skincape">Skin / Cape</option>
+            <option value="Installer" data-i18n="bugreport_cat_installer">Installer</option>
+            <option value="Servers" data-i18n="bugreport_cat_servers">Servers</option>
+            <option value="Other" data-i18n="bugreport_cat_other">Other</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label data-i18n="bugreport_title">Title</label>
+          <input type="text" id="bugreport-title" data-i18n-ph="ph_bugreport_title" placeholder="Short summary of the problem" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
+        </div>
+        <div class="form-row">
+          <label data-i18n="bugreport_desc_label">Description</label>
+          <textarea id="bugreport-desc" rows="5" placeholder="What happened? What did you expect?" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;font-family:inherit;resize:vertical;outline:none"></textarea>
+        </div>
+        <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc;margin-bottom:1em">
+          <input type="checkbox" id="bugreport-include-logs" style="width:1.1em;height:1.1em;cursor:pointer" checked>
+          <span data-i18n="bugreport_include_logs">Attach launcher &amp; game logs (recommended)</span>
+        </label>
+        <button class="btn btn-primary" id="bugreport-send-btn" style="font-size:1em;padding:.6em 1.5em" data-i18n="btn_report_send">📨 Send Report</button>
+        <p class="status-text" id="bugreport-status" style="min-height:1.2em"></p>
+        <div style="margin-top:1.5em;border-top:1px solid #2a2a2a;padding-top:1em;text-align:center">
+          <p style="color:#666;font-size:.82em;margin-bottom:.6em" data-i18n="bugreport_note">Prefer GitHub? You can also open an issue there (requires a GitHub account).</p>
+          <button class="btn" id="bugreport-github-btn" style="font-size:.9em" data-i18n="btn_report_github">🐛 Report on GitHub</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
         <h2 data-i18n="sec_reset">Reset</h2>
         <button class="btn" id="reset-all-btn" style="border-color:#f4444444;color:#f44" data-i18n="btn_reset">Reset Launcher</button>
         <p style="color:#555;font-size:.76em;margin-top:.3em" data-i18n="desc_reset">Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.</p>
@@ -709,6 +849,27 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         <h2 style="color:#f88" data-i18n="sec_uninstall">Uninstall</h2>
         <button class="btn" id="uninstall-btn" style="border-color:#f4444444;color:#f44" data-i18n="btn_uninstall">Uninstall Crux Client</button>
         <p style="color:#555;font-size:.76em;margin-top:.3em" data-i18n="desc_uninstall">Removes the launcher and all its data from your system.</p>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ FEATURES ══ -->
+    <div id="features-page" class="page" style="display:none">
+      <h1 style="margin:0 0 .5em" data-i18n="tab_features">Features</h1>
+      <div class="feature-grid">
+        <div class="feature-card"><h3>🚀 Launch Anything</h3><p>Play any Minecraft version with Fabric, Forge, Quilt or NeoForge — one-click launch from the launcher.</p></div>
+        <div class="feature-card"><h3>📴 Works Offline</h3><p>Install mods from your local .jar files and launch with cached mods even when you have no internet connection.</p></div>
+        <div class="feature-card"><h3>📦 Drag & Drop Mods</h3><p>Just drop .jar files into the mod list or a profile — mods are installed and deployed automatically.</p></div>
+        <div class="feature-card"><h3>🎨 Client Options</h3><p>Install client mods once and use them across every version, or auto-install them for all launched versions.</p></div>
+        <div class="feature-card"><h3>📁 Profiles</h3><p>Create profiles with their own mod loader, Minecraft version, mods, datapacks and resource packs — including per-version packs.</p></div>
+        <div class="feature-card"><h3>🖼️ Resource Packs</h3><p>Add resource packs from Modrinth/CurseForge, your disk, or drag & drop — always applied to the right version.</p></div>
+        <div class="feature-card"><h3>🧑‍🤝‍🧑 Friends & Chat</h3><p>Add friends, see who's online, chat with them and share profiles via share codes.</p></div>
+        <div class="feature-card"><h3>🎭 Skins & Capes</h3><p>Upload skins, edit pixels, preview your skin in 3D, and use custom capes.</p></div>
+        <div class="feature-card"><h3>🌐 Servers</h3><p>Manage your servers and expose them to friends with free playit.gg tunnels.</p></div>
+        <div class="feature-card"><h3>🎨 Themes</h3><p>Switch between dark and light theme, pick your accent color and adjust the corner radius.</p></div>
+        <div class="feature-card"><h3>🔄 Built-in Updates</h3><p>Check for updates and download the new version right inside the launcher with a live progress screen.</p></div>
+        <div class="feature-card"><h3>🛠️ Crash Reports</h3><p>Report bugs straight to GitHub from the settings, optionally attaching the latest logs.</p></div>
       </div>
     </div>
 
@@ -1131,44 +1292,6 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       </div>
     </div>
 
-    <!-- ══ BUG REPORT ══ -->
-    <div id="bugreport-page" class="page" style="display:none">
-      <h1 data-i18n="h_bugreport">Bug Report</h1>
-      <div style="max-width:560px">
-        <p style="color:#aaa;margin-bottom:1.5em;line-height:1.6" data-i18n="bugreport_desc">Found a bug? Report it. Attach launcher files and game logs.</p>
-        <div class="form-row">
-          <label data-i18n="bugreport_category">Category</label>
-          <select id="bugreport-category">
-            <option value="Launcher" data-i18n="bugreport_cat_launcher">Launcher</option>
-            <option value="Game Crash" data-i18n="bugreport_cat_crash">Game Crash</option>
-            <option value="Mods" data-i18n="bugreport_cat_mods">Mods</option>
-            <option value="Skin / Cape" data-i18n="bugreport_cat_skincape">Skin / Cape</option>
-            <option value="Installer" data-i18n="bugreport_cat_installer">Installer</option>
-            <option value="Servers" data-i18n="bugreport_cat_servers">Servers</option>
-            <option value="Other" data-i18n="bugreport_cat_other">Other</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <label data-i18n="bugreport_title">Title</label>
-          <input type="text" id="bugreport-title" data-i18n-ph="ph_bugreport_title" placeholder="Short summary of the problem" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
-        </div>
-        <div class="form-row">
-          <label data-i18n="bugreport_desc_label">Description</label>
-          <textarea id="bugreport-desc" rows="5" placeholder="What happened? What did you expect?" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;font-family:inherit;resize:vertical;outline:none"></textarea>
-        </div>
-        <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc;margin-bottom:1em">
-          <input type="checkbox" id="bugreport-include-logs" style="width:1.1em;height:1.1em;cursor:pointer" checked>
-          <span data-i18n="bugreport_include_logs">Attach launcher &amp; game logs (recommended)</span>
-        </label>
-        <button class="btn btn-primary" id="bugreport-send-btn" style="font-size:1em;padding:.6em 1.5em" data-i18n="btn_report_send">📨 Send Report</button>
-        <p class="status-text" id="bugreport-status" style="min-height:1.2em"></p>
-        <div style="margin-top:1.5em;border-top:1px solid #2a2a2a;padding-top:1em;text-align:center">
-          <p style="color:#666;font-size:.82em;margin-bottom:.6em" data-i18n="bugreport_note">Prefer GitHub? You can also open an issue there (requires a GitHub account).</p>
-          <button class="btn" id="bugreport-github-btn" style="font-size:.9em" data-i18n="btn_report_github">🐛 Report on GitHub</button>
-        </div>
-      </div>
-    </div>
-
   </div>
 </div>
 
@@ -1197,6 +1320,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <div class="modal-search-row">
         <input type="text" class="mod-search-input" id="mod-search-input" placeholder="Search...">
         <button class="btn mod-search-btn" id="mod-search-btn" data-i18n="btn_search">Search</button>
+        <button class="btn mod-search-btn" id="mod-offline-btn" title="Install a mod from a local .jar file (works offline)">📁 From file</button>
       </div>
       <div id="mod-results" class="mod-results">
         <div class="modal-loading" data-i18n="loading_popular_mods">Loading popular mods...</div>
@@ -1232,6 +1356,22 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
       <textarea id="share-code-input" placeholder="Paste share code here..." style="width:100%;height:120px;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-family:monospace;font-size:.75em;padding:.5em;resize:none"></textarea>
       <div id="import-share-status" style="font-size:.8em;color:#888;margin-top:.4em;min-height:1.2em"></div>
       <button class="btn btn-sm btn-primary" id="import-share-confirm-btn" style="width:auto;margin-top:.5em" data-i18n="btn_import_profile">Import Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Import NoRisk Client profiles modal ── -->
+<div id="import-norisk-modal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h2 data-i18n="modal_import_norisk">Import NoRisk Client Profiles</h2>
+      <button class="btn modal-close" onclick="document.getElementById('import-norisk-modal').style.display='none'">✕</button>
+    </div>
+    <div style="padding:1rem">
+      <p style="color:#888;font-size:.82em;margin-bottom:.6em" data-i18n="modal_import_norisk_desc">Profiles found in NoRisk Client v3 (NoRiskClientV3). Select the ones to import.</p>
+      <div id="import-norisk-list" style="max-height:40vh;overflow-y:auto"></div>
+      <div id="import-norisk-status" style="font-size:.8em;color:#888;margin-top:.4em;min-height:1.2em"></div>
+      <button class="btn btn-sm btn-primary" id="import-norisk-confirm-btn" style="width:auto;margin-top:.5em" data-i18n="btn_import">Import</button>
     </div>
   </div>
 </div>
@@ -1287,7 +1427,7 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
           <option value="shaderPacks" data-i18n="profile_shaderpacks">Shader Packs</option>
         </select>
       </div>
-      <!-- Mods section -->
+      <!-- Mods section (split view: Mods left, packs right) -->
       <div class="profile-section" data-section="mods">
         <div class="pack-section" id="profile-mods-section">
           <div class="pack-section-header">
@@ -1297,43 +1437,48 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
               <button class="btn btn-sm btn-curseforge" id="profile-btn-curseforge">+ CurseForge</button>
             </div>
           </div>
-          <div class="pack-list" id="profile-mods-list"></div>
-        </div>
-      </div>
-      <div class="profile-section" data-section="datapacks" style="display:none">
-        <div class="pack-section">
-          <div class="pack-section-header">
-            <h3 data-i18n="profile_datapacks">Datapacks</h3>
-            <div style="display:flex;gap:.35em">
-              <button class="btn btn-sm btn-modrinth" id="profile-btn-dp-modrinth">+ Modrinth</button>
+          <div class="profile-split" id="profile-split">
+            <div class="profile-split-pane profile-split-left" id="profile-split-left">
+              <div class="pack-list" id="profile-mods-list"></div>
+              <div class="pack-add-row">
+                <input type="text" class="pack-input" id="profile-mod-input" placeholder="Mod name or .jar path">
+                <button class="btn btn-sm pack-add-btn" onclick="addProfileMod()">+ Add</button>
+              </div>
             </div>
-          </div>
-          <div class="pack-list" id="profile-datapacks"></div>
-        </div>
-      </div>
-      <div class="profile-section" data-section="resourcePacks" style="display:none">
-        <div class="pack-section">
-          <div class="pack-section-header">
-            <h3 data-i18n="profile_resourcepacks">Resource Packs</h3>
-            <div style="display:flex;gap:.35em">
-              <button class="btn btn-sm btn-modrinth" id="profile-btn-rp-modrinth">+ Modrinth</button>
+            <div class="profile-split-divider" id="profile-split-divider" title="Drag to resize"><div></div></div>
+            <div class="profile-split-pane profile-split-right" id="profile-split-right">
+              <div class="pack-section" data-sub="datapacks">
+                <div class="pack-section-header">
+                  <h3 data-i18n="profile_datapacks">Datapacks</h3>
+                  <div style="display:flex;gap:.35em">
+                    <button class="btn btn-sm btn-modrinth" id="profile-btn-dp-modrinth">+ Modrinth</button>
+                  </div>
+                </div>
+                <div class="pack-list" id="profile-datapacks"></div>
+              </div>
+              <div class="pack-section" data-sub="resourcePacks">
+                <div class="pack-section-header">
+                  <h3 data-i18n="profile_resourcepacks">Resource Packs</h3>
+                  <div style="display:flex;gap:.35em">
+                    <button class="btn btn-sm btn-modrinth" id="profile-btn-rp-modrinth">+ Modrinth</button>
+                  </div>
+                </div>
+                <div class="pack-list" id="profile-resourcepacks"></div>
+              </div>
+              <div class="pack-section" data-sub="shaderPacks">
+                <div class="pack-section-header">
+                  <h3 data-i18n="profile_shaderpacks">Shader Packs</h3>
+                  <div style="display:flex;gap:.35em">
+                    <button class="btn btn-sm btn-modrinth" id="profile-btn-sp-modrinth">+ Modrinth</button>
+                  </div>
+                </div>
+                <div class="pack-list" id="profile-shaderpacks"></div>
+                <div class="pack-add-row">
+                  <input type="text" class="pack-input" id="sp-input" placeholder="Shader pack name">
+                  <button class="btn btn-sm pack-add-btn" onclick="addPackTag('sp-input','profile-shaderpacks','shaderPacks')">+ Add</button>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="pack-list" id="profile-resourcepacks"></div>
-        </div>
-      </div>
-      <div class="profile-section" data-section="shaderPacks" style="display:none">
-        <div class="pack-section">
-          <div class="pack-section-header">
-            <h3 data-i18n="profile_shaderpacks">Shader Packs</h3>
-            <div style="display:flex;gap:.35em">
-              <button class="btn btn-sm btn-modrinth" id="profile-btn-sp-modrinth">+ Modrinth</button>
-            </div>
-          </div>
-          <div class="pack-list" id="profile-shaderpacks"></div>
-          <div class="pack-add-row">
-            <input type="text" class="pack-input" id="sp-input" placeholder="Shader pack name">
-            <button class="btn btn-sm pack-add-btn" onclick="addPackTag('sp-input','profile-shaderpacks','shaderPacks')">+ Add</button>
           </div>
         </div>
       </div>
@@ -1348,7 +1493,6 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
         </label>
       </div>
       <div style="display:flex;gap:.5em;margin-top:.8em">
-        <button class="btn btn-primary btn-sm" id="save-profile-btn" style="width:auto" data-i18n="btn_done">Done</button>
         <button class="btn btn-sm" id="share-profile-btn" style="width:auto;border-color:#1bd96a44;color:#1bd96a" data-i18n="btn_share">Share</button>
         <button class="btn btn-sm" id="delete-profile-btn" style="width:auto;border-color:#f4444444;color:#f44" data-i18n="btn_delete">Delete</button>
       </div>
@@ -1503,6 +1647,10 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
   <div id="update-content" style="max-width:500px;width:100%">
     <h1 style="margin-bottom:.3em" id="update-title">Update Available</h1>
     <p style="color:#aaa;margin-bottom:.5em" id="update-version-text"></p>
+    <div id="update-pct-wrap" style="display:none;margin:1em 0">
+      <div id="update-pct-big" style="font-size:3.5em;font-weight:800;line-height:1;color:var(--acc,#0088ff)">0%</div>
+      <p id="update-pct-sub" style="color:#888;font-size:.8em;margin-top:.3em"></p>
+    </div>
     <div id="update-notes-box" style="background:#1a1a1a;border:1px solid #333;border-radius:.5em;padding:1em;text-align:left;max-height:30vh;overflow-y:auto;margin-bottom:1.5em;font-size:.85em;color:#ccc;white-space:pre-wrap;display:none"></div>
     <div id="update-progress-wrap" style="display:none;margin-bottom:1.5em">
       <div style="background:#222;border-radius:.5em;height:8px;overflow:hidden;margin-bottom:.5em">
@@ -1536,9 +1684,38 @@ let currentSource='modrinth', profileModMode=false, profilePackMode=null;
 let editingProfileId=null, editingPackData={};
 let currentAccentIdx=5;
 let searchDebounce=null, modSearchOffset=0, modSearchQuery='', isLoadingMods=false;
+let modSearchSeq=0;
 let instances={}, selectedInstanceId=null, autoScrollLogs=true;
 let pendingLaunchServer=null;
 const PAGE_SIZE=15;
+
+// ── Online / offline indicator ─────────────────────────────────────────────
+let appOnline=true;
+function updateOfflineUI(){
+  const banner=document.getElementById('offline-banner');
+  if(!banner) return;
+  banner.style.display=(!appOnline||!navigator.onLine)?'flex':'none';
+}
+function checkConnectivity(){
+  ipcRenderer.invoke('check-online')
+    .then(online=>{ appOnline = online !== false; })
+    .catch(()=>{ appOnline=false; })
+    .finally(updateOfflineUI);
+}
+// ── Foreground-only background checks ─────────────────────────────────────
+function appInForeground(){ return document.visibilityState === 'visible'; }
+window.addEventListener('online',()=>{appOnline=true;updateOfflineUI();});
+window.addEventListener('offline',()=>{appOnline=false;updateOfflineUI();});
+setInterval(()=>{ if(appInForeground()) checkConnectivity(); },30000);
+checkConnectivity();
+// Re-run key checks when the window becomes visible again
+window.addEventListener('visibilitychange',()=>{
+  if(!appInForeground()) return;
+  checkConnectivity();
+  updateSkinDisplay();
+  if(document.getElementById('launch-page').classList.contains('active')) renderLaunchStats();
+  refreshFriendStatuses(); renderChatFriends(); refreshFriendRequests();
+});
 
 // ════════════════════════════════════════
 // ACCENTS
@@ -1595,6 +1772,7 @@ async function bootLauncher(){
     installedMods = results[3].status==='fulfilled' ? results[3].value : [];
     launchedVersions = results[4].status==='fulfilled' ? results[4].value : [];
     recentHistory = settings.recentHistory || [];
+    renderRecentList();
 
     if (settings.ram === undefined || settings.ram === null) {
       try {
@@ -1614,6 +1792,8 @@ async function bootLauncher(){
 
     if(settings.theme==='light') applyTheme(true);
     if(typeof settings.accentIdx==='number'){currentAccentIdx=settings.accentIdx;}
+    applyLanguage(settings.lang || 'en');
+    applyCornerRadius();
 
     buildColorGrid();
     applyAccent(currentAccentIdx);
@@ -1626,6 +1806,7 @@ async function bootLauncher(){
       document.getElementById('use-original-launcher-toggle').checked = !!settings.useOriginalLauncher;
       document.getElementById('use-crux-mod-toggle').checked = !!settings.useCruxClientMod;
     } catch {}
+    applyTabBarPosition();
     renderModList();
     fetchMissingModIcons();
     renderAccountList();
@@ -1658,7 +1839,7 @@ async function bootLauncher(){
     if(skinModelChanged) ipcRenderer.send('save-accounts',accounts);
     updateSkinDisplay();
     init3DSkin();
-    setInterval(()=>{ updateSkinDisplay(); },10000);
+    setInterval(()=>{ if(appInForeground()) updateSkinDisplay(); },10000);
     loadClientRPSettings();
     if(typeof reportPresence==='function') reportPresence();
     if(typeof refreshFriendStatuses==='function') refreshFriendStatuses();
@@ -1727,7 +1908,7 @@ function showPage(id){
   });
   if(id==='mods-page') syncModFilterToProfile();
   if(id==='logs-page'){ renderInstanceList(); refreshLogSelect(); updateStopButtons(); }
-  if(id==='recent-page') renderRecentList();
+  if(id==='recent-page'||id==='launch-page') renderRecentList();
   if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
   if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); refreshChat(); }
   if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); renderLaunchStats(); }
@@ -1735,7 +1916,7 @@ function showPage(id){
 
 let _statsTimer = null;
 function renderLaunchStats(){
-  if(_statsTimer===null){ _statsTimer=setInterval(()=>{ if(document.getElementById('launch-page').classList.contains('active')) renderLaunchStats(); },5000); }
+  if(_statsTimer===null){ _statsTimer=setInterval(()=>{ if(appInForeground() && document.getElementById('launch-page').classList.contains('active')) renderLaunchStats(); },5000); }
   ipcRenderer.invoke('load-stats').then(s=>{
     s = s||{};
     const set=(id,val)=>document.getElementById(id).textContent=val;
@@ -1921,7 +2102,7 @@ function renderCapePreview(url){
 const LANGS={
   en:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes',
-    tab_settings:'Settings', tab_logs:'Logs', tab_account:'Acount', tab_recent:'Recent', tab_servers:'Servers', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
+    tab_settings:'Settings', tab_logs:'Logs', tab_account:'Acount', tab_recent:'Recent', tab_servers:'Servers', tab_features:'Features', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
     h_logs:'Logs', h_account:'Acount', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends',
     lbl_profile:'Profile:', lbl_version:'Version:', lbl_change_skin:'Change Skin:', lbl_actions:'Actions:', lbl_ram:'RAM:', lbl_instance:'Instance:',
@@ -1960,6 +2141,9 @@ const LANGS={
     sec_launch_mode:'Launch Mode', desc_launch_mode:'Launch via original Minecraft Launcher',
     desc_launch_mode_detail:'Opens the official Minecraft Launcher (Java Edition) instead of launching directly.',
     sec_after_launch:'After Launch', desc_open_logs:'Open logs after launch', desc_close_launcher:'Close launcher while playing',
+    sec_tab_bar:'Tab Bar', lbl_tab_bar_pos:'Position', tab_bar_top:'Top', tab_bar_bottom:'Bottom',
+    sec_theme:'Theme', lbl_theme:'Appearance', theme_dark:'Dark', theme_light:'Light',
+    sec_corner_radius:'Corner Radius', lbl_corner_radius:'Roundness', corner_small:'Small', corner_medium:'Medium', corner_large:'Large', corner_round:'Round',
     sec_reset:'Reset', desc_reset:'Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.',
     btn_reset:'Reset Launcher', sec_updates:'Updates', btn_check_update:'Check for Updates',
     desc_current_version:'Current version:',
@@ -1967,7 +2151,7 @@ const LANGS={
     btn_use_client_mods:'Use Client Mods (from Client Options tab)',
     btn_use_client_rps:'Use Client Resource Packs (from Client Options tab)',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
-    btn_import_share:'📋 Import Share Code', btn_share:'Share',
+    btn_import_share:'📋 Import Share Code', btn_import_norisk:'⬇ NoRisk Client', btn_share:'Share',
     btn_stop_server:'■ Stop Server', btn_op_player:'OP Player', btn_whitelist:'Whitelist', btn_backup_world:'Backup World',
     btn_new_server:'+ New Server', server_count:'servers',
     btn_microsoft:'Microsoft', btn_mojang_login:'Mojang', mojang_note:'Note: Mojang accounts migrated to Microsoft should use the Microsoft option.',
@@ -2023,6 +2207,8 @@ const LANGS={
     loading_popular_mods:'Loading popular mods...',
     modal_share:'Share Profile', modal_share_desc:'Copy this code and send it to someone. They can import it in their Crux Launcher.',
     modal_import:'Import Profile', modal_import_desc:'Paste a share code from another Crux Launcher user.',
+    modal_import_norisk:'Import NoRisk Client Profiles', modal_import_norisk_desc:'Profiles found in NoRisk Client v3 (NoRiskClientV3). Select the ones to import.',
+    nrc_scanning:'Reading NoRisk Client profiles...', nrc_none:'No profiles found.', nrc_imported:'✓ {n} profile(s) imported.',
     modal_edit_profile:'Edit Profile', modal_mojang_login:'Mojang Login',
     ws_step1:'① Type', ws_step2:'② Version', ws_step3:'③ Mods', ws_step4:'④ Settings',
     sv_choose_type:'Choose Server Type', sv_choose_version:'Choose MC Version',
@@ -2052,7 +2238,7 @@ const LANGS={
   },
   de:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes',
-    tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_account:'Acount', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
+    tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_account:'Acount', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_features:'Features', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
     h_logs:'Protokolle', h_account:'Acount', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde',
     lbl_profile:'Profil:', lbl_version:'Version:', lbl_change_skin:'Skin wechseln:', lbl_actions:'Aktionen:', lbl_ram:'RAM:', lbl_instance:'Instanz:',
@@ -2091,6 +2277,9 @@ const LANGS={
     sec_launch_mode:'Startmodus', desc_launch_mode:'Über den offiziellen Minecraft Launcher starten',
     desc_launch_mode_detail:'Öffnet den offiziellen Minecraft Launcher (Java Edition) anstatt direkt zu starten.',
     sec_after_launch:'Nach dem Start', desc_open_logs:'Protokolle nach dem Start öffnen', desc_close_launcher:'Launcher beim Spielen schließen',
+    sec_tab_bar:'Tab-Leiste', lbl_tab_bar_pos:'Position', tab_bar_top:'Oben', tab_bar_bottom:'Unten',
+    sec_theme:'Design', lbl_theme:'Darstellung', theme_dark:'Dunkel', theme_light:'Hell',
+    sec_corner_radius:'Eckenradius', lbl_corner_radius:'Abrundung', corner_small:'Klein', corner_medium:'Mittel', corner_large:'Groß', corner_round:'Rund',
     sec_reset:'Zurücksetzen', desc_reset:'Löscht alle Konten, Profile, Einstellungen und Mods. Der Launcher startet wie beim ersten Mal.',
     btn_reset:'Launcher zurücksetzen', sec_updates:'Updates', btn_check_update:'Nach Updates suchen',
     desc_current_version:'Aktuelle Version:',
@@ -2098,7 +2287,7 @@ const LANGS={
     btn_use_client_mods:'Client Mods verwenden (aus Client Options Tab)',
     btn_use_client_rps:'Client Ressourcenpakete verwenden (aus Client Options Tab)',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
-    btn_import_share:'📋 Import-Code', btn_share:'Teilen',
+    btn_import_share:'📋 Import-Code', btn_import_norisk:'⬇ NoRisk Client', btn_share:'Teilen',
     btn_stop_server:'■ Server stoppen', btn_op_player:'OP Spieler', btn_whitelist:'Whitelist', btn_backup_world:'Welt sichern',
     btn_new_server:'+ Neuer Server', server_count:'Server',
     btn_microsoft:'Microsoft', btn_mojang_login:'Mojang', mojang_note:'Hinweis: Mojang-Konten, die zu Microsoft migriert sind, sollten die Microsoft-Option verwenden.',
@@ -2154,6 +2343,8 @@ const LANGS={
     loading_popular_mods:'Beliebte Mods werden geladen...',
     modal_share:'Profil teilen', modal_share_desc:'Kopiere diesen Code und sende ihn jemandem. Er kann ihn in seinem Crux Launcher importieren.',
     modal_import:'Profil importieren', modal_import_desc:'Füge einen Share-Code von einem anderen Crux Launcher Benutzer ein.',
+    modal_import_norisk:'NoRisk Client-Profile importieren', modal_import_norisk_desc:'Profile in NoRisk Client v3 (NoRiskClientV3) gefunden. Wähle aus, welche importiert werden sollen.',
+    nrc_scanning:'Lese NoRisk Client-Profile...', nrc_none:'Keine Profile gefunden.', nrc_imported:'✓ {n} Profil(e) importiert.',
     modal_edit_profile:'Profil bearbeiten', modal_mojang_login:'Mojang Anmeldung',
     ws_step1:'① Typ', ws_step2:'② Version', ws_step3:'③ Mods', ws_step4:'④ Einstellungen',
     sv_choose_type:'Servertyp wählen', sv_choose_version:'MC-Version wählen',
@@ -2183,7 +2374,7 @@ const LANGS={
   },
   fr:{
     tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes',
-    tab_settings:'Paramètres', tab_logs:'Journaux', tab_account:'Acount', tab_recent:'Récents', tab_servers:'Serveurs', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
+    tab_settings:'Paramètres', tab_logs:'Journaux', tab_account:'Acount', tab_recent:'Récents', tab_servers:'Serveurs', tab_features:'Fonctionnalités', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
     h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
     h_logs:'Journaux', h_account:'Acount', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis',
     lbl_profile:'Profil :', lbl_version:'Version :', lbl_change_skin:'Changer de skin :', lbl_actions:'Actions :', lbl_ram:'RAM :', lbl_instance:'Instance :',
@@ -2222,6 +2413,9 @@ const LANGS={
     sec_launch_mode:'Mode de lancement', desc_launch_mode:'Lancer via le lanceur Minecraft original',
     desc_launch_mode_detail:'Ouvre le lanceur Minecraft officiel (Java Edition) au lieu de lancer directement.',
     sec_after_launch:'Après le lancement', desc_open_logs:'Ouvrir les journaux après le lancement', desc_close_launcher:'Fermer le lanceur pendant le jeu',
+    sec_tab_bar:'Barre d\'onglets', lbl_tab_bar_pos:'Position', tab_bar_top:'Haut', tab_bar_bottom:'Bas',
+    sec_theme:'Thème', lbl_theme:'Apparence', theme_dark:'Sombre', theme_light:'Clair',
+    sec_corner_radius:'Rayon des coins', lbl_corner_radius:'Arrondi', corner_small:'Petit', corner_medium:'Moyen', corner_large:'Grand', corner_round:'Rond',
     sec_reset:'Réinitialiser', desc_reset:'Supprime tous les comptes, profils, paramètres et mods. Le lanceur redémarrera comme au premier lancement.',
     btn_reset:'Réinitialiser le Lanceur', sec_updates:'Mises à jour', btn_check_update:'Vérifier les mises à jour',
     desc_current_version:'Version actuelle :',
@@ -2229,7 +2423,7 @@ const LANGS={
     btn_use_client_mods:'Utiliser les Mods Client (onglet Options Client)',
     btn_use_client_rps:'Utiliser les Packs de Ressources Client (onglet Options Client)',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
-    btn_import_share:'📋 Importer un code', btn_share:'Partager',
+    btn_import_share:'📋 Importer un code', btn_import_norisk:'⬇ NoRisk Client', btn_share:'Partager',
     btn_stop_server:'■ Arrêter le Serveur', btn_op_player:'OP Joueur', btn_whitelist:'Whitelist', btn_backup_world:'Sauvegarder le monde',
     btn_new_server:'+ Nouveau Serveur', server_count:'serveurs',
     btn_microsoft:'Microsoft', btn_mojang_login:'Mojang', mojang_note:'Note : Les comptes Mojang migrés vers Microsoft devraient utiliser l\'option Microsoft.',
@@ -2283,6 +2477,8 @@ const LANGS={
     loading_popular_mods:'Chargement des mods populaires...',
     modal_share:'Partager le Profil', modal_share_desc:'Copiez ce code et envoyez-le à quelqu\'un. Il peut l\'importer dans son Crux Launcher.',
     modal_import:'Importer le Profil', modal_import_desc:'Collez un code de partage d\'un autre utilisateur Crux Launcher.',
+    modal_import_norisk:'Importer les profils NoRisk Client', modal_import_norisk_desc:'Profils trouvés dans NoRisk Client v3 (NoRiskClientV3). Sélectionnez ceux à importer.',
+    nrc_scanning:'Lecture des profils NoRisk Client...', nrc_none:'Aucun profil trouvé.', nrc_imported:'✓ {n} profil(s) importé(s).',
     modal_edit_profile:'Modifier le Profil', modal_mojang_login:'Connexion Mojang',
     ws_step1:'① Type', ws_step2:'② Version', ws_step3:'③ Mods', ws_step4:'④ Paramètres',
     sv_choose_type:'Choisir le type de serveur', sv_choose_version:'Choisir la version MC',
@@ -2312,7 +2508,7 @@ const LANGS={
   },
   es:{
     tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas',
-    tab_settings:'Ajustes', tab_logs:'Registros', tab_account:'Acount', tab_recent:'Recientes', tab_servers:'Servidores', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
+    tab_settings:'Ajustes', tab_logs:'Registros', tab_account:'Acount', tab_recent:'Recientes', tab_servers:'Servidores', tab_features:'Funciones', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
     h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
     h_logs:'Registros', h_account:'Acount', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos',
     lbl_profile:'Perfil:', lbl_version:'Versión:', lbl_change_skin:'Cambiar Skin:', lbl_actions:'Acciones:', lbl_ram:'RAM:', lbl_instance:'Instancia:',
@@ -2351,12 +2547,15 @@ const LANGS={
     sec_launch_mode:'Modo de lanzamiento', desc_launch_mode:'Iniciar a través del Minecraft Launcher original',
     desc_launch_mode_detail:'Abre el Minecraft Launcher oficial (Java Edition) en lugar de iniciar directamente.',
     sec_after_launch:'Después de iniciar', desc_open_logs:'Abrir registros después de iniciar', desc_close_launcher:'Cerrar launcher mientras juegas',
+    sec_tab_bar:'Barra de pestañas', lbl_tab_bar_pos:'Posición', tab_bar_top:'Arriba', tab_bar_bottom:'Abajo',
+    sec_theme:'Tema', lbl_theme:'Apariencia', theme_dark:'Oscuro', theme_light:'Claro',
+    sec_corner_radius:'Radio de esquinas', lbl_corner_radius:'Redondeo', corner_small:'Pequeño', corner_medium:'Medio', corner_large:'Grande', corner_round:'Redondo',
     sec_reset:'Restablecer', desc_reset:'Elimina todas las cuentas, perfiles, ajustes y mods. El launcher se reiniciará como si se abriera por primera vez.',
     btn_reset:'Restablecer Launcher', sec_updates:'Actualizaciones', btn_check_update:'Buscar actualizaciones',
     desc_current_version:'Versión actual:',
     sec_uninstall:'Desinstalar', btn_uninstall:'Desinstalar Crux Client', desc_uninstall:'Elimina el launcher y todos sus datos del sistema.',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
-    btn_import_share:'📋 Importar código', btn_share:'Compartir',
+    btn_import_share:'📋 Importar código', btn_import_norisk:'⬇ NoRisk Client', btn_share:'Compartir',
     btn_stop_server:'■ Detener Servidor', btn_op_player:'OP Jugador', btn_whitelist:'Whitelist', btn_backup_world:'Copiar mundo',
     btn_new_server:'+ Nuevo Servidor', server_count:'servidores',
     btn_microsoft:'Microsoft', btn_mojang_login:'Mojang',
@@ -2407,6 +2606,8 @@ const LANGS={
     loading_popular_mods:'Cargando mods populares...',
     modal_share:'Compartir Perfil', modal_share_desc:'Copia este código y envíalo a alguien. Puede importarlo en su Crux Launcher.',
     modal_import:'Importar Perfil', modal_import_desc:'Pega un código de otro usuario de Crux Launcher.',
+    modal_import_norisk:'Importar perfiles de NoRisk Client', modal_import_norisk_desc:'Perfiles encontrados en NoRisk Client v3 (NoRiskClientV3). Selecciona cuáles importar.',
+    nrc_scanning:'Leyendo perfiles de NoRisk Client...', nrc_none:'No se encontraron perfiles.', nrc_imported:'✓ {n} perfil(es) importado(s).',
     modal_edit_profile:'Editar Perfil', modal_mojang_login:'Inicio de sesión Mojang',
     ws_step1:'① Tipo', ws_step2:'② Versión', ws_step3:'③ Mods', ws_step4:'④ Ajustes',
     sv_choose_type:'Elegir tipo de servidor', sv_choose_version:'Elegir versión MC',
@@ -2442,8 +2643,15 @@ function applyLanguage(lang){
   // Update all elements with data-i18n attribute
   document.querySelectorAll('[data-i18n]').forEach(el=>{
     const key=el.dataset.i18n;
-    const val=t(key);
+    let val=t(key);
     if(!val)return;
+    // Tab buttons: show at most 2 words (the full name stays in the title tooltip)
+    if(el.classList.contains('tb-btn') && el.id!=='settings-fab'){
+      const full=t(key);
+      const words=full.trim().split(/\s+/).filter(Boolean);
+      val=words.length>2?words.slice(0,2).join(' ')+'…':full;
+      el.title=full;
+    }
     // Preserve child elements (like canvas inside tb-btn)
     if(el.children.length>0){
       const children=[...el.children];
@@ -2469,7 +2677,56 @@ function applyLanguage(lang){
   applyAccent(currentAccentIdx);
   // Re-render dynamic content (friends list statuses/labels)
   if(typeof renderFriendList==='function') renderFriendList();
+  // Rebuild settings side-nav labels after translation
+  buildSettingsNav();
 }
+
+// ── Settings left-side tab navigation ────────────────────────────────────
+// Builds the tab list from the settings sections; clicking scrolls the
+// matching section into view on the right. Scroll-spy keeps the active tab.
+function buildSettingsNav(){
+  const nav=document.getElementById('settings-nav');
+  const body=document.querySelector('#settings-page .settings-body');
+  if(!nav||!body) return;
+  const navBtns=[...nav.children];
+  const activeIdx=navBtns.findIndex(b=>b.classList.contains('active'));
+  nav.innerHTML='';
+  body.querySelectorAll('.settings-section').forEach(sec=>{
+    const h2=sec.querySelector('h2');
+    if(!h2) return;
+    const btn=document.createElement('button');
+    btn.type='button';
+    const label=h2.textContent.trim();
+    btn.textContent=label;
+    btn.title=label;
+    btn.addEventListener('click',()=>{
+      sec.scrollIntoView({behavior:'smooth',block:'start'});
+      [...nav.children].forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+    nav.appendChild(btn);
+  });
+  const list=[...nav.children];
+  if(list[activeIdx]&&activeIdx>=0) list[activeIdx].classList.add('active');
+  else if(list[0]) list[0].classList.add('active');
+}
+(function settingsScrollSpy(){
+  const page=document.getElementById('settings-page');
+  if(!page) return;
+  page.addEventListener('scroll',()=>{
+    const nav=document.getElementById('settings-nav');
+    const body=document.querySelector('#settings-page .settings-body');
+    if(!nav||!body) return;
+    const btns=[...nav.children];
+    if(btns.length===0) return;
+    const offset=page.getBoundingClientRect().top + 12;
+    let idx=0;
+    body.querySelectorAll('.settings-section').forEach((s,i)=>{
+      if(s.getBoundingClientRect().top - offset <= 0) idx=i;
+    });
+    btns.forEach((b,i)=>b.classList.toggle('active',i===idx));
+  });
+})();
 
 function saveSettings(){ ipcRenderer.send('save-settings',settings); }
 
@@ -2601,6 +2858,7 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
     profileName: profile?.name||'',
     clientMods: installedMods,
     clientResourcePacks: clientResourcePacks,
+    profileResourcePacks: profile?.resourcePacks||[],
     useClientMods: profile?.useClientMods !== false,
     useClientRPs:  profile?.useClientRPs  !== false,
     useCruxClientMod: !!settings.useCruxClientMod,
@@ -2915,9 +3173,8 @@ function renderProfileList(){
   profiles.forEach(p=>{
     const item=document.createElement('div');
     item.className='profile-item'+(p.id===settings.selectedProfile?' sel':'');
-    item.innerHTML=`<span class="profile-name">${p.name}${p.isModpack?'<span style="font-size:.7em;margin-left:.4em;padding:.1em .35em;border-radius:999px;background:#1bd96a22;color:#1bd96a;border:1px solid #1bd96a44">modpack</span>':''}</span><span class="profile-meta">${p.mcVersion||'Latest'} · ${p.modLoader||'fabric'} · ${(p.mods||[]).length} mods · <span style="color:${p.group&&p.group!=='default'?'#1bd96a':'#666'}">group:${p.group||'default'}</span></span><button class="btn profile-share-btn" title="Share Profile">Share</button><button class="btn profile-edit-btn">Edit</button>`;
-    item.addEventListener('click',e=>{ if(e.target.classList.contains('profile-edit-btn')||e.target.classList.contains('profile-share-btn'))return; settings.selectedProfile=p.id; saveSettings(); renderProfileList(); updateLaunchProfileSelect(); syncModFilterToProfile(); });
-    item.querySelector('.profile-edit-btn').addEventListener('click',()=>openProfileModal(p.id));
+    item.innerHTML=`<span class="profile-name">${p.name}${p.isModpack?'<span style="font-size:.7em;margin-left:.4em;padding:.1em .35em;border-radius:999px;background:#1bd96a22;color:#1bd96a;border:1px solid #1bd96a44">modpack</span>':''}${p.isNrcImported?'<span style="font-size:.7em;margin-left:.4em;padding:.1em .35em;border-radius:999px;background:#e63c8a22;color:#e63c8a;border:1px solid #e63c8a44">NRC</span>':''}</span><span class="profile-meta">${p.mcVersion||'Latest'} · ${p.modLoader||'fabric'} · ${(p.mods||[]).length} mods · <span style="color:${p.group&&p.group!=='default'?'#1bd96a':'#666'}">group:${p.group||'default'}</span></span><button class="btn profile-share-btn" title="Share Profile">Share</button>`;
+    item.addEventListener('click',e=>{ if(e.target.classList.contains('profile-share-btn'))return; settings.selectedProfile=p.id; saveSettings(); openProfileModal(p.id); renderProfileList(); updateLaunchProfileSelect(); syncModFilterToProfile(); });
     item.querySelector('.profile-share-btn').addEventListener('click',()=>{shareProfile(p.id);});
     el.appendChild(item);
   });
@@ -3335,11 +3592,21 @@ function openProfileModal(profileId){
   document.getElementById('profile-modal').style.display='flex';
 }
 
-document.getElementById('profile-modal-close').addEventListener('click',()=>{ document.getElementById('profile-modal').style.display='none'; profileModMode=false; profilePackMode=null; });
-document.getElementById('profile-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('profile-modal')){ document.getElementById('profile-modal').style.display='none'; profileModMode=false; profilePackMode=null; } });
+document.getElementById('profile-modal-close').addEventListener('click',()=>{ saveProfileEdits(); document.getElementById('profile-modal').style.display='none'; profileModMode=false; profilePackMode=null; });
+document.getElementById('profile-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('profile-modal')){ saveProfileEdits(); document.getElementById('profile-modal').style.display='none'; profileModMode=false; profilePackMode=null; } });
 
 function setProfileSection(section){
+  const split=document.getElementById('profile-split');
+  const left=document.getElementById('profile-split-left');
+  const divider=document.getElementById('profile-split-divider');
   document.querySelectorAll('.profile-section').forEach(s=>{ s.style.display = s.dataset.section===section ? '' : 'none'; });
+  if(split&&left&&divider){
+    if(section==='mods'){ left.style.display=''; divider.style.display=''; }
+    else { left.style.display='none'; divider.style.display='none'; }
+  }
+  document.querySelectorAll('#profile-split-right .pack-section').forEach(p=>{
+    p.style.display = (section==='mods' || p.dataset.sub===section) ? '' : 'none';
+  });
   if(section==='mods') renderProfilePackList('profile-mods-list','mods',true);
   else if(section==='datapacks') renderPackTags('profile-datapacks','datapacks');
   else if(section==='resourcePacks') renderPackTags('profile-resourcepacks','resourcePacks');
@@ -3381,11 +3648,6 @@ document.getElementById('profile-render-api').addEventListener('change',saveProf
 document.getElementById('profile-use-client-mods').addEventListener('change',saveProfileEdits);
 document.getElementById('profile-use-client-rps').addEventListener('change',saveProfileEdits);
 document.querySelectorAll('input[name="modLoader"]').forEach(r=>r.addEventListener('change',saveProfileEdits));
-
-document.getElementById('save-profile-btn').addEventListener('click',()=>{
-  saveProfileEdits();
-  document.getElementById('profile-modal').style.display='none';
-});
 
 // ── Import MC settings from other launchers ──────────────────────────────────
 document.getElementById('profile-import-settings-btn').addEventListener('click', async ()=>{
@@ -3504,6 +3766,49 @@ document.getElementById('import-share-confirm-btn').addEventListener('click',asy
   }
 });
 
+// ── Import NoRisk Client profiles ──
+let nrcImportData=null;
+document.getElementById('import-norisk-btn').addEventListener('click', async ()=>{
+  const statusEl=document.getElementById('import-norisk-status');
+  const listEl=document.getElementById('import-norisk-list');
+  statusEl.textContent=t('nrc_scanning'); statusEl.style.color='#888';
+  listEl.innerHTML='';
+  document.getElementById('import-norisk-modal').style.display='flex';
+  let res;
+  try{ res=await ipcRenderer.invoke('import-norisk-profiles'); }
+  catch(e){ statusEl.textContent='Import failed: '+e.message; statusEl.style.color='#f44'; return; }
+  if(!res.ok){ listEl.innerHTML=''; statusEl.textContent=res.error; statusEl.style.color='#f44'; return; }
+  statusEl.textContent='';
+  if(!res.profiles.length){ listEl.innerHTML='<div class="mod-list-empty">'+escHtml(t('nrc_none'))+'</div>'; return; }
+  nrcImportData=res;
+  res.profiles.forEach((p,idx)=>{
+    const row=document.createElement('label');
+    row.style.cssText='display:flex;align-items:center;gap:.6em;padding:.45em 0;border-bottom:1px solid var(--border);cursor:pointer';
+    row.innerHTML=`<input type="checkbox" class="nrc-import-check" checked style="width:1.1em;height:1.1em;flex-shrink:0"><div style="flex:1;min-width:0"><div style="font-size:.85em;font-weight:600;word-break:break-word">${escHtml(p.name)}</div><div style="font-size:.7em;color:var(--text-muted)">${escHtml(p.mcVersion||'Latest')} · ${escHtml(p.modLoader||'fabric')} · ${p.mods.length} mods</div></div>`;
+    row.dataset.idx=idx;
+    listEl.appendChild(row);
+  });
+});
+document.getElementById('import-norisk-confirm-btn').addEventListener('click',()=>{
+  const statusEl=document.getElementById('import-norisk-status');
+  if(!nrcImportData){ statusEl.textContent='Nothing to import.'; statusEl.style.color='#f44'; return; }
+  const checks=[...document.querySelectorAll('.nrc-import-check')];
+  const selIdx=checks.filter(c=>c.checked).map(c=>parseInt(c.dataset.idx,10));
+  let added=0;
+  for(const idx of selIdx){
+    const np=nrcImportData.profiles[idx];
+    if(!np) continue;
+    const exists=profiles.some(p=>p.name===np.name&&p.mcVersion===np.mcVersion&&p.modLoader===np.modLoader);
+    if(exists) continue;
+    profiles.push(np); added++;
+  }
+  ipcRenderer.send('save-profiles',profiles);
+  renderProfileList();updateLaunchProfileSelect();
+  statusEl.textContent=t('nrc_imported').replace('{n}',added);
+  statusEl.style.color='#1bd96a';
+  if(added) setTimeout(()=>{document.getElementById('import-norisk-modal').style.display='none';},1500);
+});
+
 // Profile pack buttons
 document.getElementById('profile-btn-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='mods'; openModModal('modrinth'); });
 document.getElementById('profile-btn-curseforge').addEventListener('click',()=>{ profileModMode=true; profilePackMode='mods'; openModModal('curseforge'); });
@@ -3519,8 +3824,9 @@ function renderProfilePackList(containerId, key, isMods=false){
     return;
   }
   if(isMods){
-    // Render mods exactly like the Client Options tab (icon + name + version + buttons)
-    items.forEach((mod,i)=>{
+    // Render mods like the Client Options tab (icon + name + version + buttons)
+    // plus a per-mod version dropdown (Modrinth versions).
+    appendItemsChunked(el, items, (mod,i)=>{
       const item=document.createElement('div'); item.className='mod-item';
       const op=mod.disabled?'opacity:0.45':'';
       const versionDisplay=mod.mcVersion==='all'?'All versions':`MC ${mod.mcVersion||'?'}`;
@@ -3535,28 +3841,64 @@ function renderProfilePackList(containerId, key, isMods=false){
           <div class="mod-meta">${versionDisplay}${modVer} · ${mod.source||'Modrinth'}</div>
         </div>
         <div class="mod-btns">
-          <button class="btn mod-btn mod-toggle" data-i="${i}">${mod.disabled?'Enable':'Disable'}</button>
+          <select class="btn mod-ver-select" data-i="${i}" style="width:auto;max-width:11em;padding:.22em .4em;font-size:.68em;color:#aaa" title="Mod version"><option value="">${mod.version&&mod.version!=='latest'?mod.version:'Version…'}</option></select>
+          <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-i="${i}" ${mod.disabled?'':'checked'}><span class="slider"></span></label>
           <button class="btn mod-btn mod-remove" data-i="${i}">Remove</button>
         </div>`;
-      el.appendChild(item);
+      return item;
+    }).then(()=>{
+      el.querySelectorAll('.mod-ver-select').forEach(sel=>{
+        const idx=parseInt(sel.dataset.i,10);
+        const mod=items[idx];
+        if(mod && mod.modrinthId) loadProfileModVersions(sel, mod);
+      });
+      el.querySelectorAll('.mod-toggle').forEach(btn=>btn.addEventListener('change',()=>{
+        const idx=parseInt(btn.dataset.i,10);
+        editingPackData[key][idx].disabled=!btn.checked;
+        renderProfilePackList(containerId,key,true);
+        saveProfileEdits();
+      }));
+      el.querySelectorAll('.mod-remove').forEach(btn=>btn.addEventListener('click',()=>{
+        editingPackData[key].splice(parseInt(btn.dataset.i,10),1);
+        renderProfilePackList(containerId,key,true);
+        saveProfileEdits();
+      }));
+      el.querySelectorAll('.mod-ver-select').forEach(sel=>sel.addEventListener('change',()=>{
+        const idx=parseInt(sel.dataset.i,10);
+        editingPackData[key][idx].version=sel.value||'latest';
+        renderProfilePackList(containerId,key,true);
+        saveProfileEdits();
+      }));
     });
-    el.querySelectorAll('.mod-toggle').forEach(btn=>btn.addEventListener('click',()=>{
-      const idx=parseInt(btn.dataset.i,10);
-      editingPackData[key][idx].disabled=!editingPackData[key][idx].disabled;
-      renderProfilePackList(containerId,key,true);
-      saveProfileEdits();
-    }));
-    el.querySelectorAll('.mod-remove').forEach(btn=>btn.addEventListener('click',()=>{
-      editingPackData[key].splice(parseInt(btn.dataset.i,10),1);
-      renderProfilePackList(containerId,key,true);
-      saveProfileEdits();
-    }));
   } else {
     // Datapacks / Resource Packs / Shader Packs: chips like the Client Options RP list
+    const profileMC = (editingProfileId ? profiles.find(p=>p.id===editingProfileId)?.mcVersion : null) || 'all';
     items.forEach((item,i)=>{
+      const isObj = typeof item==='object' && item!==null;
+      const raw = isObj ? (item.name||'') : item;
+      let name = isObj ? (item.name||item) : item;
+      if(typeof raw==='string' && raw.startsWith('file://')) name = raw.slice(7).split(/[\\/]/).pop()||name;
       const tag=document.createElement('span'); tag.className='pack-tag';
-      const name=typeof item==='object'?(item.name||item):item;
-      tag.innerHTML=`${name} <span class="rt" data-i="${i}">✕</span>`;
+      let verSel='';
+      if(key==='resourcePacks'){
+        verSel=`<select class="pack-ver-select" data-i="${i}" title="Minecraft version"><option value="all">All</option><option value="${(profileMC||'').replace(/"/g,'&quot;')}">${profileMC||'All'}</option></select>`;
+      }
+      tag.innerHTML=`${name} ${verSel} <span class="rt" data-i="${i}">✕</span>`;
+      const vs=tag.querySelector('.pack-ver-select');
+      if(vs) vs.value = isObj ? (item.mcVersion||'all') : 'all';
+      if(vs) vs.addEventListener('change',()=>{
+        const idx=parseInt(vs.dataset.i,10);
+        const cur=editingPackData[key][idx];
+        const curIsObj=typeof cur==='object';
+        const nm=curIsObj?cur.name:cur;
+        if(vs.value==='all'){
+          editingPackData[key][idx] = (curIsObj && cur.modrinthId) ? {name:nm,modrinthId:cur.modrinthId} : nm;
+        } else {
+          editingPackData[key][idx] = Object.assign({name:nm,mcVersion:vs.value}, curIsObj&&cur.modrinthId?{modrinthId:cur.modrinthId}:{});
+        }
+        renderProfilePackList(containerId,key,false);
+        saveProfileEdits();
+      });
       tag.querySelector('.rt').addEventListener('click',()=>{ editingPackData[key].splice(i,1); renderProfilePackList(containerId,key,false); saveProfileEdits(); });
       el.appendChild(tag);
     });
@@ -3565,8 +3907,112 @@ function renderProfilePackList(containerId, key, isMods=false){
 function renderPackTags(containerId,key){ renderProfilePackList(containerId,key,false); }
 window.addPackTag=(inputId,containerId,key)=>{
   const input=document.getElementById(inputId),val=input.value.trim(); if(!val)return;
-  editingPackData[key].push(val); input.value=''; renderPackTags(containerId,key); saveProfileEdits();
+  if(key==='resourcePacks'){
+    const edProfile=profiles.find(p=>p.id===editingProfileId);
+    editingPackData[key].push({name:val,mcVersion:edProfile?.mcVersion||'all'});
+  } else {
+    editingPackData[key].push(val);
+  }
+  input.value=''; renderPackTags(containerId,key); saveProfileEdits();
 };
+window.addProfileMod=()=>{
+  const input=document.getElementById('profile-mod-input'),val=input.value.trim(); if(!val)return;
+  const edProfile=profiles.find(p=>p.id===editingProfileId);
+  editingPackData.mods.push({name:val,version:'latest',mcVersion:edProfile?.mcVersion||'latest',source:'Local',iconUrl:'',modrinthId:null,curseforgeId:null,downloadAllVersions:false,disabled:false,loader:edProfile?.modLoader||'fabric'});
+  input.value=''; renderProfilePackList('profile-mods-list','mods',true); saveProfileEdits();
+};
+document.getElementById('profile-mod-input')?.addEventListener('keydown',e=>{ if(e.key==='Enter') addProfileMod(); });
+
+// ── Drag & drop into the profile editor (mods / datapacks / resource / shader) ──
+function wireProfileDropZones(){
+  const zones=[
+    { id:'profile-mods-list',      key:'mods' },
+    { id:'profile-datapacks',      key:'datapacks' },
+    { id:'profile-resourcepacks',  key:'resourcePacks' },
+    { id:'profile-shaderpacks',    key:'shaderPacks' }
+  ];
+  zones.forEach(({id,key})=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('drop-active'); });
+    el.addEventListener('dragleave',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.remove('drop-active'); });
+    el.addEventListener('drop',e=>{
+      e.preventDefault(); e.stopPropagation(); el.classList.remove('drop-active');
+      const files=[...(e.dataTransfer?.files||[])];
+      if(!files.length) return;
+      if(key==='mods'){
+        const edProfile=profiles.find(p=>p.id===editingProfileId);
+        files.filter(f=>/\.jar$/i.test(f.name)).forEach(f=>{
+          const base=f.path.split(/[\\/]/).pop()||f.path;
+          editingPackData.mods.push({
+            name:base.replace(/\.jar$/i,'').replace(/_/g,' '),
+            fileName:base.replace(/\s+/g,'_'),
+            version:'latest', mcVersion:edProfile?.mcVersion||'latest',
+            source:'Local', iconUrl:'', modrinthId:null, curseforgeId:null,
+            downloadAllVersions:false, disabled:false,
+            loader:edProfile?.modLoader||'fabric', diskPath:f.path
+          });
+        });
+        renderProfilePackList('profile-mods-list','mods',true);
+      } else {
+        files.filter(f=>/\.(zip|mcpack)$/i.test(f.name)).forEach(f=>{
+          if(!Array.isArray(editingPackData[key])) editingPackData[key]=[];
+          const v='file://'+f.path;
+          if(key==='resourcePacks'){
+            if(!editingPackData[key].some(e=>(typeof e==='object'?e.name:e)===v)) editingPackData[key].push({name:v,mcVersion:edProfile?.mcVersion||'all'});
+          } else if(!editingPackData[key].includes(v)){
+            editingPackData[key].push(v);
+          }
+        });
+        renderProfilePackList(id,key,false);
+      }
+      saveProfileEdits();
+    });
+  });
+}
+wireProfileDropZones();
+
+// ── Draggable split divider in the profile editor ──
+(function(){
+  const divider=document.getElementById('profile-split-divider');
+  if(!divider) return;
+  const left=document.getElementById('profile-split-left');
+  let dragging=false;
+  function move(e){
+    if(!dragging||!left) return;
+    const clientX=e.touches?e.touches[0].clientX:e.clientX;
+    const parent=divider.parentElement;
+    const rect=parent.getBoundingClientRect();
+    let w=((clientX-rect.left)/rect.width)*100;
+    w=Math.max(22,Math.min(78,w));
+    left.style.width=w+'%';
+  }
+  divider.addEventListener('mousedown',e=>{ dragging=true; e.preventDefault(); });
+  divider.addEventListener('touchstart',e=>{ dragging=true; e.preventDefault(); },{passive:false});
+  document.addEventListener('mousemove',move);
+  document.addEventListener('touchmove',move,{passive:false});
+  document.addEventListener('mouseup',()=>dragging=false);
+  document.addEventListener('touchend',()=>dragging=false);
+})();
+
+// ── Load Modrinth versions into a mod version dropdown ──
+async function loadProfileModVersions(sel, mod){
+  if(!sel) return;
+  try{
+    const vd=await ipcRenderer.invoke('fetch-json-no-cors', `https://api.modrinth.com/v2/project/${mod.modrinthId}/version`);
+    const versions=Array.isArray(vd)?vd:[];
+    sel.innerHTML='<option value="">Version…</option>';
+    for(const v of versions){
+      if(v.version_number===undefined) continue;
+      const o=document.createElement('option');
+      o.value=v.version_number;
+      o.textContent=v.version_number+(v.game_versions&&v.game_versions.length?` (${v.game_versions[v.game_versions.length-1]})`:'');
+      sel.appendChild(o);
+    }
+    if(mod.version && mod.version!=='latest' && versions.some(v=>v.version_number===mod.version)) sel.value=mod.version;
+    else if(mod.version && mod.version!=='latest') sel.value='';
+  }catch{ sel.innerHTML='<option value="">Version…</option>'; }
+}
 
 // ════════════════════════════════════════
 // ACCOUNTS
@@ -4007,9 +4453,13 @@ function openModModal(source){
   currentSource=source;
   document.getElementById('tab-modrinth').classList.toggle('active',source==='modrinth');
   document.getElementById('tab-curseforge').classList.toggle('active',source==='curseforge');
-  const title = profilePackMode==='modpack' ? '📦 Search Modpacks'
-    : profileModMode ? (profilePackMode||'mods')+' search'
-    : 'Search '+(source==='modrinth'?'Modrinth':'CurseForge');
+  const srcName = source==='modrinth'?'Modrinth':'CurseForge';
+  const what = profilePackMode==='modpack'?'Modpacks'
+    : profilePackMode==='datapacks'?'Datapacks'
+    : profilePackMode==='resourcePacks'||profilePackMode==='clientRP'?'Resource Packs'
+    : profilePackMode==='shaderPacks'?'Shader Packs'
+    : 'Mods';
+  const title = what==='Mods' && !profileModMode ? 'Search '+srcName : srcName+' '+what+' +';
   document.getElementById('modal-title').textContent=title;
   document.getElementById('mod-search-input').value='';
   document.getElementById('mod-modal').style.display='flex';
@@ -4044,25 +4494,31 @@ document.querySelector('.modal-body').addEventListener('scroll',function(){
 });
 
 async function loadPopularMods(){
+  const seq=++modSearchSeq;
   modSearchQuery=''; modSearchOffset=0; isLoadingMods=false;
   document.getElementById('mod-results').innerHTML='<div class="modal-loading">Loading popular mods...</div>';
   const results=await fetchModrinthPage('',0);
+  if(seq!==modSearchSeq) return; // superseded by a newer search
   document.getElementById('mod-results').innerHTML='';
-  await appendModResults(results); modSearchOffset=results.length;
+  await appendModResults(results,seq); modSearchOffset=results.length;
 }
 async function searchMods(q){
+  const seq=++modSearchSeq;
   modSearchQuery=q; modSearchOffset=0; isLoadingMods=false;
   document.getElementById('mod-results').innerHTML='<div class="modal-loading">Searching...</div>';
   const results=await fetchModrinthPage(q,0);
+  if(seq!==modSearchSeq) return;
   if(!results.length){document.getElementById('mod-results').innerHTML='<div class="modal-loading">No results found.</div>';return;}
-  document.getElementById('mod-results').innerHTML=''; await appendModResults(results); modSearchOffset=results.length;
+  document.getElementById('mod-results').innerHTML=''; await appendModResults(results,seq); modSearchOffset=results.length;
 }
 async function loadMoreMods(){
   if(isLoadingMods)return; isLoadingMods=true;
+  const seq=modSearchSeq;
   const s=document.createElement('div'); s.className='modal-loading'; s.textContent='Loading more...';
   document.getElementById('mod-results').appendChild(s);
   const r=await fetchModrinthPage(modSearchQuery,modSearchOffset);
-  s.remove(); if(r.length){await appendModResults(r); modSearchOffset+=r.length;}
+  s.remove(); if(seq!==modSearchSeq){isLoadingMods=false;return;}
+  if(r.length){await appendModResults(r,seq); modSearchOffset+=r.length;}
   isLoadingMods=false;
 }
 async function fetchModrinthPage(q,offset){
@@ -4089,7 +4545,8 @@ async function fetchModrinthPage(q,offset){
     return(d.hits||[]).map(h=>({id:h.project_id,name:h.title,description:h.description,iconUrl:h.icon_url||'',latestVersion:h.latest_version||'latest',downloads:h.downloads}));
   }catch{return[];}
 }
-async function appendModResults(results){
+async function appendModResults(results,seq){
+  if(seq!==undefined && seq!==modSearchSeq) return; // ignore stale results
   const el=document.getElementById('mod-results');
   const curProfile=profiles.find(p=>p.id===settings.selectedProfile)||profiles[0];
   const curLoader = modFilter !== 'all' && modFilter !== 'disabled' ? modFilter : (curProfile?.modLoader||'fabric');
@@ -4133,8 +4590,8 @@ async function appendModResults(results){
           editingPackData.mods.push({name:mod.name,version:mod.latestVersion,mcVersion:profileMC||'latest',source:currentSource==='modrinth'?'Modrinth':'CurseForge',iconUrl:mod.iconUrl,modrinthId:mod.id,downloadAllVersions:false,disabled:false,loader:edProfile?.modLoader||'fabric'});
           renderProfilePackList('profile-mods-list','mods',true);
           saveProfileEdits();
-        }else if(key!=='mods'&&!editingPackData[key].includes(mod.name)){
-          editingPackData[key].push(mod.name);renderPackTags('profile-'+key.toLowerCase(),key);saveProfileEdits();
+        }else if(key!=='mods'&&!editingPackData[key].some(e=>(typeof e==='object'?e.name:e)===mod.name)){
+          editingPackData[key].push(key==='resourcePacks'?{name:mod.name,modrinthId:mod.id,mcVersion:profileMC||'all'}:mod.name);renderPackTags('profile-'+key.toLowerCase(),key);saveProfileEdits();
         }
         btn.textContent='Added ✓';btn.style.opacity='.55';return;
       }
@@ -4424,7 +4881,8 @@ function renderClientRPList(){
   clientResourcePacks.forEach((rp, i) => {
     const tag = document.createElement('span');
     tag.className = 'pack-tag';
-    const label = typeof rp === 'object' ? rp.name : rp;
+    let label = typeof rp === 'object' ? rp.name : rp;
+    if (typeof rp === 'string' && rp.startsWith('file://')) label = rp.slice(7).split(/[\\/]/).pop() || label;
     tag.innerHTML = `${label} <span class="rt" style="cursor:pointer;color:#555;margin-left:.3em" data-i="${i}">✕</span>`;
     tag.querySelector('.rt').addEventListener('click', () => {
       clientResourcePacks.splice(i, 1);
@@ -4466,21 +4924,100 @@ document.getElementById('auto-rp-toggle').addEventListener('click', () => {
   applyOpenLoaderMod();
 });
 
-// Wire up add button
-document.getElementById('client-rp-add-btn').addEventListener('click', () => {
-  const input = document.getElementById('client-rp-input');
-  const val = input.value.trim();
-  if(!val) return;
-  if(!clientResourcePacks.includes(val)) {
-    clientResourcePacks.push(val);
+// ── Drag & drop: add local mod / resource pack jars by dropping them ──────
+function addLocalModFromFile(path){
+  if(!path) return;
+  const name = path.split(/[\\/]/).pop() || path;
+  const fileName = name.replace(/\s+/g,'_');
+  installedMods.push({
+    name: name.replace(/\.jar$/i,'').replace(/_/g,' '),
+    fileName,
+    version:'latest',
+    mcVersion:'all',
+    source:'Local',
+    iconUrl:'',
+    modrinthId:null,
+    downloadAllVersions:false,
+    disabled:false,
+    loader:'any',
+    diskPath:path,
+    autoInstalled:false
+  });
+  saveMods();
+  renderModList();
+}
+function handleDropFiles(e, type){
+  e.preventDefault();
+  e.stopPropagation();
+  const pat = type==='mod' ? /\.jar$/i : /\.(zip|mcpack)$/i;
+  const files=[...(e.dataTransfer?.files||[])].filter(f=>pat.test(f.name));
+  if(!files.length) return;
+  if(type==='mod'){
+    files.forEach(f=>addLocalModFromFile(f.path));
+  } else if(type==='rp'){
+    files.forEach(f=>{
+      const val='file://'+f.path;
+      if(!clientResourcePacks.includes(val)){ clientResourcePacks.push(val); }
+    });
     settings.clientResourcePacks = clientResourcePacks;
     saveSettings();
     renderClientRPList();
   }
-  input.value = '';
-});
-document.getElementById('client-rp-input').addEventListener('keydown', e => {
-  if(e.key === 'Enter') document.getElementById('client-rp-add-btn').click();
+}
+function wireDropZone(id, type){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('dragover', e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('drop-active'); });
+  el.addEventListener('dragleave', e=>{ e.preventDefault(); e.stopPropagation(); el.classList.remove('drop-active'); });
+  el.addEventListener('drop', e=>{ el.classList.remove('drop-active'); handleDropFiles(e,type); });
+}
+wireDropZone('mod-list','mod');
+wireDropZone('client-rp-list','rp');
+
+// "📁 From file" — add a local mod / pack via a file picker (works offline)
+document.getElementById('mod-offline-btn')?.addEventListener('click', () => {
+  const isPackContext = profileModMode && profilePackMode && profilePackMode!=='mods' && profilePackMode!=='modpack';
+  const isRP = profilePackMode==='clientRP' || isPackContext;
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept=isRP?'.zip,.mcpack':'.jar';
+  input.multiple=true;
+  input.style.display='none';
+  document.body.appendChild(input);
+  input.addEventListener('change',()=>{
+    [...(input.files||[])].forEach(f=>{
+      const base=f.path.split(/[\\/]/).pop()||f.path;
+      if(profileModMode && profilePackMode){
+        if(profilePackMode==='mods'){
+          const edProfile=profiles.find(p=>p.id===editingProfileId);
+          editingPackData.mods.push({name:base.replace(/\.jar$/i,'').replace(/_/g,' '),fileName:base.replace(/\s+/g,'_'),version:'latest',mcVersion:edProfile?.mcVersion||'latest',source:'Local',iconUrl:'',modrinthId:null,curseforgeId:null,downloadAllVersions:false,disabled:false,loader:edProfile?.modLoader||'fabric',diskPath:f.path});
+          renderProfilePackList('profile-mods-list','mods',true);
+          saveProfileEdits();
+        } else if(profilePackMode!=='modpack'){
+          if(!Array.isArray(editingPackData[profilePackMode])) editingPackData[profilePackMode]=[];
+          const v='file://'+f.path;
+          if(profilePackMode==='resourcePacks'){
+            const edProfile=profiles.find(p=>p.id===editingProfileId);
+            const entry={name:v,mcVersion:edProfile?.mcVersion||'all'};
+            if(!editingPackData[profilePackMode].some(e=>(typeof e==='object'?e.name:e)===v)) editingPackData[profilePackMode].push(entry);
+          } else {
+            if(!editingPackData[profilePackMode].includes(v)) editingPackData[profilePackMode].push(v);
+          }
+          renderProfilePackList('profile-'+profilePackMode.toLowerCase(), profilePackMode, false);
+          saveProfileEdits();
+        }
+      } else if(profilePackMode==='clientRP'){
+        const v='file://'+f.path;
+        if(!clientResourcePacks.includes(v)) clientResourcePacks.push(v);
+        settings.clientResourcePacks=clientResourcePacks; saveSettings(); renderClientRPList();
+      } else {
+        addLocalModFromFile(f.path);
+      }
+    });
+    input.remove();
+    closeModModal();
+  });
+  input.click();
 });
 
 const DEFAULT_CLIENT_MODS = [
@@ -4498,6 +5035,7 @@ const DEFAULT_CLIENT_MODS = [
   { name:'Chat Heads',               modrinthId:'Wb5oqrBJ', loader:'fabric' },
   { name:'Shulker Box Tooltip',      modrinthId:'2M01OLQq', loader:'fabric' },
   { name:'Capes',                    modrinthId:'89Wsn8GD', loader:'fabric' },
+  { name:'Resourcify',               modrinthId:'RLzHAoZe', loader:'fabric' },
   { name:'More Chat History',        modrinthId:'8qkXwOnk', loader:'fabric' },
   { name:'Cubes Without Borders',    modrinthId:'ETlFGEpQ', loader:'fabric' },
   { name:'Remove Reloading Screen',  modrinthId:'t89TPBM0', loader:'fabric' },
@@ -4522,6 +5060,7 @@ const DEFAULT_CLIENT_MODS = [
   { name:'Embeddium',                modrinthId:'sk9rgfiA', loader:'forge' },
   { name:'Oculus',                   modrinthId:'GchcoXML', loader:'forge' },
   { name:'Curios API',               modrinthId:'vvuO3ImH', loader:'forge' },
+  { name:'Resourcify',               modrinthId:'RLzHAoZe', loader:'forge' },
   // Optimisation mods (Forge)
   { name:'FerriteCore',              modrinthId:'uXXizFIs', loader:'forge' },
   { name:'ModernFix',                modrinthId:'nmDcB62a', loader:'forge' },
@@ -4538,6 +5077,7 @@ const DEFAULT_CLIENT_MODS = [
   { name:"Reese's Sodium Options",   modrinthId:'Bh37bMuy', loader:'quilt' },
   { name:'3D Skin Layers',           modrinthId:'zV5r3pPn', loader:'quilt' },
   { name:'Zoomify',                  modrinthId:'w7ThoJFB', loader:'quilt' },
+  { name:'Resourcify',               modrinthId:'RLzHAoZe', loader:'quilt' },
   { name:'Simple Voice Chat',        modrinthId:'9eGKb6K1', loader:'quilt' },
   { name:'Chat Heads',               modrinthId:'Wb5oqrBJ', loader:'quilt' },
   { name:'FerriteCore',              modrinthId:'uXXizFIs', loader:'quilt' },
@@ -4558,6 +5098,7 @@ const DEFAULT_CLIENT_MODS = [
   { name:'Clumps',                   modrinthId:'Wnxd13zP', loader:'neoforge' },
   { name:'Better Block Entities',    modrinthId:'ONZm0H7Y', loader:'neoforge' },
   { name:'Curios API',               modrinthId:'vvuO3ImH', loader:'neoforge' },
+  { name:'Resourcify',               modrinthId:'RLzHAoZe', loader:'neoforge' },
 ];
 
 function ensureDefaultMods() {
@@ -4597,9 +5138,20 @@ function syncModFilterToProfile(){
   renderModList();
 }
 
+function yieldToUI(){ return new Promise(r=>setTimeout(r,0)); }
+async function appendItemsChunked(container, items, buildFn, chunkSize){
+  chunkSize = chunkSize || 60;
+  for(let i=0;i<items.length;i++){
+    container.appendChild(buildFn(items[i], i));
+    if((i+1)%chunkSize===0) await yieldToUI();
+  }
+}
+
 function renderModList() {
   const list  = document.getElementById('mod-list');
   const empty = document.getElementById('mod-list-empty');
+  const pageEl = document.getElementById('mods-page');
+  const savedScroll = pageEl ? pageEl.scrollTop : 0;
   list.querySelectorAll('.mod-item').forEach(e=>e.remove());
 
   let filtered = installedMods;
@@ -4628,7 +5180,7 @@ function renderModList() {
     displayMods.push({ mod, realIdx: installedMods.indexOf(mod) });
   });
 
-  displayMods.forEach(({ mod, realIdx }) => {
+  appendItemsChunked(list, displayMods, ({ mod, realIdx }) => {
     const item = document.createElement('div');
     item.className = 'mod-item';
     const op = mod.disabled ? 'opacity:0.45' : '';
@@ -4645,17 +5197,19 @@ function renderModList() {
         <div class="mod-meta">${versionDisplay}${modVer} · ${mod.source || 'Client Mod'}</div>
       </div>
       <div class="mod-btns">
-        <button class="btn mod-btn mod-toggle" data-idx="${realIdx}">${mod.disabled?'Enable':'Disable'}</button>
+        <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-idx="${realIdx}" ${mod.disabled?'':'checked'}><span class="slider"></span></label>
         <button class="btn mod-btn mod-remove" data-idx="${realIdx}">Remove</button>
       </div>`;
-    list.appendChild(item);
+    return item;
+  }).then(() => {
+    list.querySelectorAll('.mod-toggle').forEach(btn => btn.addEventListener('change', () => {
+      installedMods[parseInt(btn.dataset.idx)].disabled = !btn.checked; saveMods(); renderModList();
+    }));
+    list.querySelectorAll('.mod-remove').forEach(btn => btn.addEventListener('click', () => {
+      installedMods.splice(parseInt(btn.dataset.idx), 1); saveMods(); renderModList();
+    }));
+    if(pageEl) pageEl.scrollTop = savedScroll;
   });
-  list.querySelectorAll('.mod-toggle').forEach(btn => btn.addEventListener('click', () => {
-    installedMods[parseInt(btn.dataset.idx)].disabled ^= true; saveMods(); renderModList();
-  }));
-  list.querySelectorAll('.mod-remove').forEach(btn => btn.addEventListener('click', () => {
-    installedMods.splice(parseInt(btn.dataset.idx), 1); saveMods(); renderModList();
-  }));
 }
 
 // ════════════════════════════════════════
@@ -6039,6 +6593,55 @@ document.getElementById('use-crux-mod-toggle').addEventListener('change', e => {
   saveSettings();
 });
 
+// ── Tab bar position (top / bottom) ───────────────────────────────────────
+function applyTabBarPosition(){
+  const pos = settings.tabBarPosition || 'top';
+  document.body.classList.toggle('tabs-bottom', pos === 'bottom');
+  const sel = document.getElementById('tab-bar-position-select');
+  if(sel) sel.value = pos;
+}
+(function(){
+  const sel = document.getElementById('tab-bar-position-select');
+  if(sel){
+    sel.addEventListener('change', () => {
+      settings.tabBarPosition = sel.value;
+      saveSettings();
+      applyTabBarPosition();
+    });
+  }
+})();
+
+// ── Theme selector (settings) ─────────────────────────────────────────────
+(function(){
+  const sel = document.getElementById('theme-select');
+  if(sel){
+    sel.value = settings.theme === 'light' ? 'light' : 'dark';
+    sel.addEventListener('change', () => {
+      settings.theme = sel.value;
+      saveSettings();
+      applyTheme(sel.value === 'light');
+    });
+  }
+})();
+
+// ── Corner radius (settings) ──────────────────────────────────────────────
+function applyCornerRadius(){
+  const v = settings.cornerRadius || '0.5em';
+  document.documentElement.style.setProperty('--r', v);
+  const sel = document.getElementById('corner-radius-select');
+  if(sel) sel.value = v;
+}
+(function(){
+  const sel = document.getElementById('corner-radius-select');
+  if(sel){
+    sel.addEventListener('change', () => {
+      settings.cornerRadius = sel.value;
+      saveSettings();
+      applyCornerRadius();
+    });
+  }
+})();
+
 
 // ════════════════════════════════════════
 // QUICK RAM CONTROL (launch page)
@@ -6322,6 +6925,7 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
       if(document.getElementById('playit-modal').style.display !== 'flex'){
         clearInterval(playitRefreshTimer); playitRefreshTimer = null; return;
       }
+      if(!appInForeground()) return;
       playitRenderStatus(true);
     }, 5000);
   }
@@ -6408,6 +7012,7 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
     document.getElementById('playit-claim-link').addEventListener('click', e => { e.preventDefault(); playitOpenExt(claim.url); });
     clearInterval(playitClaimTimer);
     playitClaimTimer = setInterval(async () => {
+      if(!appInForeground()) return;
       const res = await ipcRenderer.invoke('playit-claim-poll', claim.code);
       const el = document.getElementById('playit-claim-state');
       if(res.state === 'accepted'){
@@ -7018,6 +7623,7 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
 
   setInterval(async () => {
     if(document.getElementById('playit-modal').style.display === 'flex') return;
+    if(!appInForeground()) return;
     const prev = JSON.stringify(playitAddrCache.tunnels || []);
     playitAddrCache = { ts: 0, tunnels: [] };
     await getPlayitTunnels();
@@ -7093,6 +7699,7 @@ function showUpdateOverlay(info) {
     notesBox.style.display = 'none';
   }
   document.getElementById('update-progress-wrap').style.display = 'none';
+  document.getElementById('update-pct-wrap').style.display = 'none';
   document.getElementById('update-error-text').style.display = 'none';
   document.getElementById('update-done-text').style.display = 'none';
   document.getElementById('update-install-btn').style.display = (info.downloadUrl || info.installerUrl) ? 'inline-block' : 'none';
@@ -7103,6 +7710,7 @@ function showUpdateOverlay(info) {
     document.getElementById('update-wait-text').style.display = 'block';
     if (window._updatePollInterval) clearInterval(window._updatePollInterval);
     window._updatePollInterval = setInterval(async () => {
+      if(!appInForeground()) return;
       try {
         const result = await ipcRenderer.invoke('check-for-update');
         if (result.updateAvailable && (result.downloadUrl || result.installerUrl)) {
@@ -7451,9 +8059,9 @@ async function refreshFriendRequests(){
   const input=document.getElementById('friend-name-input');
   if(input) input.addEventListener('keydown',e=>{ if(e.key==='Enter') sendFriendRequest(); });
   reportPresence();
-  setInterval(()=>{ refreshFriendStatuses(); renderChatFriends(); }, 15000);
-  setInterval(()=>{ refreshFriendRequests(); }, 15000);
-  setInterval(()=>{ reportPresence(); }, 30000);
+  setInterval(()=>{ if(!appInForeground()) return; refreshFriendStatuses(); renderChatFriends(); }, 15000);
+  setInterval(()=>{ if(!appInForeground()) return; refreshFriendRequests(); }, 15000);
+  setInterval(()=>{ if(!appInForeground()) return; reportPresence(); }, 30000);
 })();
 
 // ════════════════════════════════════════
@@ -7690,6 +8298,10 @@ function _applyUpdateProgress(downloaded,total){
   const totalMb = total ? (total / 1048576).toFixed(0) : '?';
   document.getElementById('update-progress-bar').style.width = pct + '%';
   document.getElementById('update-progress-text').textContent = `${mb} MB / ${totalMb} MB (${pct}%)`;
+  // Big "% screen" display
+  document.getElementById('update-pct-big').textContent = pct + '%';
+  document.getElementById('update-pct-sub').textContent = `${mb} MB / ${totalMb} MB`;
+  document.getElementById('update-pct-wrap').style.display = 'block';
 }
 ipcRenderer.on('update-download-progress', (_, { downloaded, total }) => {
   _updPending={downloaded,total};
