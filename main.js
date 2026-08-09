@@ -153,12 +153,12 @@ app.whenReady().then(async () => {
         'timeout /t 1 /nobreak >nul',
         'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
         'if %errorlevel%==0 goto waitloop',
-        'start /wait "" "' + pendingUpdatePath + '" /S',
+        'start /wait "" "' + pendingUpdatePath + '"',
         'start "" "' + path.dirname(app.getPath('exe')) + '\\' + launcherExe + '"',
         'del "%~f0"',
       ].join('\r\n');
       await fs.promises.writeFile(batchPath, batchContent, 'utf8');
-      console.log('[UPDATE] Update batch script created. Closing launcher to run installer...');
+      console.log('[UPDATE] Update batch script created. Closing launcher, installer window shows progress...');
       // Create a VBS wrapper to run the batch completely hidden (no console window)
       const vbsPath = path.join(os.tmpdir(), 'crux-update-hidden-' + Date.now() + '.vbs');
       const vbsContent = 'Set s = CreateObject("WScript.Shell")\r\ns.Run "cmd /c """ & WScript.Arguments(0) & """", 0, False\r\n';
@@ -3236,6 +3236,9 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
       });
     } catch {}
 
+    // Tell the renderer the download is done and the installer window will take over
+    send('update-install-start', { message: 'Download finished — installing now' });
+
     // Create a batch script that waits for the launcher to close, then runs the installer
     const launcherExe = path.basename(app.getPath('exe'));
     const batchPath = path.join(os.tmpdir(), 'crux-update-' + Date.now() + '.bat');
@@ -3245,11 +3248,11 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
       'timeout /t 1 /nobreak >nul',
       'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
       'if %errorlevel%==0 goto waitloop',
-      '"' + installerPath + '" /S',
+      '"' + installerPath + '"',
       'del "%~f0"',
     ].join('\r\n');
     await fs.promises.writeFile(batchPath, batchContent, 'utf8');
-    updateLog('Update batch script created. Closing launcher to run installer...');
+    updateLog('Update batch script created. Closing launcher, installer window shows progress...');
 
     // Create a VBS wrapper to run the batch completely hidden (no console window)
     const vbsPath = path.join(os.tmpdir(), 'crux-update-hidden-' + Date.now() + '.vbs');

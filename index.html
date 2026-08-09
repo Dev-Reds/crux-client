@@ -8309,6 +8309,13 @@ ipcRenderer.on('update-download-progress', (_, { downloaded, total }) => {
   if(now-_updLastUpdate>=500){ _updLastUpdate=now; _applyUpdateProgress(downloaded,total); }
   else{ setTimeout(()=>{if(_updPending){_updLastUpdate=Date.now();_applyUpdateProgress(_updPending.downloaded,_updPending.total);_updPending=null;}},500-(now-_updLastUpdate)); }
 });
+ipcRenderer.on('update-install-start', () => {
+  _applyUpdateProgress(1, 1);
+  const txt = document.getElementById('update-progress-text');
+  if (txt) txt.textContent = 'Download abgeschlossen (100%) — Installation läuft. Der Fortschritt ist jetzt im Installationsfenster zu sehen.';
+  const wait = document.getElementById('update-wait-text');
+  if (wait) wait.style.display = 'block';
+});
 
 document.getElementById('check-update-btn').addEventListener('click', () => checkForUpdates(false));
 ipcRenderer.on('update-log', (_, msg) => updateLog('[main] ' + msg));
