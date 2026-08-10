@@ -133,17 +133,14 @@ app.whenReady().then(async () => {
   const updateDoneFlag = path.join(base, 'update-migrated.flag');
   if (fs.existsSync(pendingUpdatePath) && !fs.existsSync(updateDoneFlag)) {
     try {
-      // Save settings before update
-      const settingsPath = path.join(process.env.APPDATA || '', 'Crux Client', 'update-settings.json');
-      try {
-        const oldSettings = JSON.parse(fs.readFileSync(path.join(base, 'settings.json'), 'utf8'));
-        fs.writeFileSync(settingsPath, JSON.stringify(oldSettings, null, 2));
-        console.log('[UPDATE] Settings saved for migration');
-      } catch {
-        console.log('[UPDATE] Could not save settings');
-      }
+      // Save user data (settings, stats, accounts, profiles, ...) before update
+      // so nothing is lost when the installer uninstalls the old version
+      backupUserDataForUpdate();
       // Mark as migrated so we don't loop on next startup
       fs.writeFileSync(updateDoneFlag, 'done');
+      // Open the progress window so it stays visible across uninstall/reinstall
+      writeUpdateProgress('uninstall', 25);
+      startUpdateProgressWindow();
       // Create a batch script that waits for the launcher to close, then runs the installer
       const launcherExe = path.basename(app.getPath('exe'));
       const batchPath = path.join(os.tmpdir(), 'crux-update-' + Date.now() + '.bat');
@@ -153,7 +150,10 @@ app.whenReady().then(async () => {
         'timeout /t 1 /nobreak >nul',
         'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
         'if %errorlevel%==0 goto waitloop',
+        'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set uninstall',
         'start /wait "" "' + pendingUpdatePath + '"',
+        'echo done > "%TEMP%\\crux-update-installed.flag"',
+        'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set launch',
         'start "" "' + path.dirname(app.getPath('exe')) + '\\' + launcherExe + '"',
         'del "%~f0"',
       ].join('\r\n');
@@ -181,22 +181,16 @@ app.whenReady().then(async () => {
       console.error('[UPDATE] Auto-install failed:', e.message);
     }
   }
-  // Restore migrated settings on first launch after update
-  const migratedSettingsPath = path.join(process.env.APPDATA || '', 'Crux Client', 'update-settings.json');
-  if (fs.existsSync(migratedSettingsPath) && fs.existsSync(updateDoneFlag)) {
-    try {
-      const migrated = JSON.parse(fs.readFileSync(migratedSettingsPath, 'utf8'));
-      fs.writeFileSync(path.join(base, 'settings.json'), JSON.stringify(migrated, null, 2));
-      fs.unlinkSync(migratedSettingsPath);
-      fs.unlinkSync(updateDoneFlag);
-      console.log('[UPDATE] Settings restored after update.');
-    } catch {}
-  }
+  // Restore user data backed up before the update (survives uninstall/reinstall)
+  restoreUserDataAfterUpdate();
+  try { stats = await load(P.stats, stats); } catch {}
   // Clean up downloaded installer and flag so we don't loop on next startup
   if (fs.existsSync(updateDoneFlag)) {
     try { fs.unlinkSync(updateDoneFlag); } catch {}
   }
   try { fs.unlinkSync(pendingUpdatePath); console.log('[UPDATE] Installer cleaned up.'); } catch {}
+  // Tell any leftover update-progress window that the client is up and running
+  writeUpdateProgress('done', 100);
 
   createWindow();
   // Auto-scan Java in background after window loads
@@ -317,7 +311,298 @@ ipcMain.handle('load-launched-versions', async () => load(P.launched, []));
 ipcMain.on('save-settings',          async (e,d) => saveSettings(d));
 ipcMain.on('save-accounts',          async (e,d) => save(P.accounts, d));
 ipcMain.on('save-profiles',          async (e,d) => save(P.profiles, d));
-// ── Import profiles from NoRisk Client v3 ─────────────────────────────────────
+
+// ── Profile offline-capability check ──────────────────────────────────────────
+// Tells the UI whether every mod the profile would deploy is already cached,
+// i.e. whether the profile can be launched without an internet connection.
+ipcMain.handle('profile-offline-check', async (event, profile) => {
+  try {
+    if (!profile) return { ok:true, total:0, missing:0 };
+    const modsDir = path.join(P.mc, 'mods');
+    const files = fs.existsSync(modsDir) ? fs.readdirSync(modsDir) : [];
+    const version = profile.mcVersion || '';
+    const modLoader = profile.modLoader || 'fabric';
+
+    const candidates = [];
+    if (profile.useClientMods !== false) {
+      for (const m of (profile.clientMods || [])) {
+        if (m.disabled) continue;
+        if (m.type === 'jar') continue;
+        if (m.loader && m.loader !== 'any' && m.loader !== modLoader) continue;
+        const vm = m.downloadAllVersions || m.mcVersion === version || m.mcVersion === 'all' || m.mcVersion === 'latest';
+        if (!vm) continue;
+        candidates.push(m);
+      }
+    }
+    for (const m of (profile.mods || [])) {
+      if (m.disabled) continue;
+      if (m.loader && m.loader !== 'any' && m.loader !== modLoader) continue;
+      if (!candidates.some(c => c.modrinthId && c.modrinthId === m.modrinthId)) candidates.push(m);
+    }
+    for (const m of (profile.mrpackMods || [])) {
+      if (m.disabled) continue;
+      if (!candidates.some(c => c.modrinthId && c.modrinthId === m.modrinthId)) candidates.push(m);
+    }
+
+    let missing = 0;
+    for (const mod of candidates) {
+      if (!mod.modrinthId) {
+        if (mod.diskPath && fs.existsSync(mod.diskPath)) continue;
+        if (mod.data && mod.data.length) continue;
+        missing++;
+      } else {
+        const has = files.some(f => f.startsWith(mod.modrinthId + '-') && f.endsWith('.jar'));
+        if (!has) missing++;
+      }
+    }
+    return { ok: missing === 0, total: candidates.length, missing };
+  } catch (e) {
+    return { ok:false, total:0, missing:-1, error: e.message };
+  }
+});
+
+// ── Download profile for offline ──────────────────────────────────────────────
+// Pre-downloads everything the profile needs (mods + game files) so the
+// profile can be launched without an internet connection.
+
+function resolveConcreteVersion(mcVersion) {
+  let v = mcVersion || '';
+  if (!v || v === '') v = mcVersionList.find(x => x.type === 'release')?.id || '';
+  else if (v === '__latest_snapshot__') v = mcVersionList.find(x => x.type === 'snapshot')?.id || mcVersionList[0]?.id || '';
+  return v;
+}
+
+// Deploy ALL mods the profile would deploy at launch (client + profile + mrpack + fabric deps)
+async function downloadProfileMods(profile, clientMods, version, modLoader, sendProgress) {
+  const modsDir = path.join(P.mc, 'mods');
+  await fs.promises.mkdir(modsDir, { recursive: true });
+  const existingFiles = fs.existsSync(modsDir) ? fs.readdirSync(modsDir) : [];
+
+  const toDeploy = [];
+  const pushUnique = (mod) => {
+    if (mod.disabled) return;
+    if (mod.loader && mod.loader !== 'any' && mod.loader !== modLoader) return;
+    if (toDeploy.some(m => m.modrinthId && m.modrinthId === mod.modrinthId)) return;
+    toDeploy.push(mod);
+  };
+
+  // mrpack overrides (same order/logic as launch — uses first listed version)
+  for (const mod of (profile.mrpackMods || [])) { mod._mrpack = true; pushUnique(mod); }
+  // client mods matching this version/loader
+  if (profile.useClientMods !== false) {
+    for (const mod of (clientMods || [])) {
+      if (mod.type === 'jar') continue;
+      if (mod.mcVersion === version || mod.mcVersion === 'all' || mod.mcVersion === 'latest' || mod.downloadAllVersions) pushUnique(mod);
+    }
+  }
+  // profile mods
+  for (const mod of (profile.mods || [])) pushUnique(mod);
+  // auto fabric deps
+  if (modLoader === 'fabric' || modLoader === 'quilt') {
+    const fabricDeps = [
+      { name:'Fabric API',             modrinthId:'P7dR8mSH', loader:'fabric' },
+      { name:'Cloth Config',           modrinthId:'9s6osm5g', loader:'fabric' },
+      { name:'Fabric Language Kotlin', modrinthId:'Ha28R6CL', loader:'fabric' },
+      { name:'YetAnotherConfigLib',    modrinthId:'1eAoo2KR', loader:'fabric' },
+      { name:'TCDCommons',             modrinthId:'Eldc1g37', loader:'fabric' },
+    ];
+    for (const dep of fabricDeps) pushUnique(dep);
+  }
+
+  const versionCache = new Map();
+  let done = 0;
+  for (const mod of toDeploy) {
+    try {
+      if (!mod.modrinthId) {
+        if (mod.diskPath && fs.existsSync(mod.diskPath)) {
+          const dest = path.join(modsDir, mod.fileName || (String(mod.name||'mod').replace(/[^a-zA-Z0-9._-]/g,'_') + '.jar'));
+          if (!fs.existsSync(dest)) await fs.promises.copyFile(mod.diskPath, dest);
+        } else if (mod.data && mod.data.length) {
+          const dest = path.join(modsDir, mod.fileName || `mod-${done}.jar`);
+          if (!fs.existsSync(dest)) await fs.promises.writeFile(dest, Buffer.from(mod.data));
+        }
+        done++;
+        continue;
+      }
+
+      const hasJar = existingFiles.some(f => f.startsWith(mod.modrinthId + '-') && f.endsWith('.jar'));
+      if (hasJar) { done++; continue; }
+
+      let versionData = versionCache.get(mod.modrinthId);
+      if (!versionData) {
+        const allVersions = await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version`).catch(() => null);
+        if (!allVersions || !allVersions.length) { done++; continue; }
+        if (mod._mrpack) {
+          // mrpack mods are deployed as the first listed version (same as launch)
+          versionData = allVersions[0];
+        } else {
+          // profile/client mods: match MC version AND loader, otherwise skip (launch disables it)
+          versionData = allVersions.find(v => (v.game_versions || []).includes(version) && (v.loaders || []).includes(modLoader)) || null;
+          if (!versionData) { done++; continue; }
+        }
+        versionCache.set(mod.modrinthId, versionData);
+      }
+      if (!versionData) { done++; continue; }
+
+      const file = versionData.files.find(f => f.primary) || versionData.files[0];
+      if (!file) { done++; continue; }
+      const dest = path.join(modsDir, `${mod.modrinthId}-${file.filename}`);
+      if (!fs.existsSync(dest)) {
+        sendProgress(`Lade Mod herunter: ${mod.name || mod.modrinthId}`);
+        await downloadFile(file.url, dest);
+      }
+      existingFiles.push(`${mod.modrinthId}-${file.filename}`);
+    } catch (e) {
+      console.error('[OFFLINE-DL] Mod failed:', mod.name, e.message);
+    }
+    done++;
+  }
+  return toDeploy.length;
+}
+
+// Pre-download the base Minecraft version (version json, client jar, libraries,
+// natives, assets) via a mclc "dry run" that never spawns the game.
+// If customId is given (e.g. a fabric-loader version), that loader's files are
+// pre-downloaded instead of plain vanilla.
+async function predownloadVanillaGameFiles(version, javaPath, sendProgress, customId) {
+  const { Client } = require('minecraft-launcher-core');
+  const launcher = new Client();
+  // Patch: do NOT spawn the game — download only.
+  launcher.startMinecraft = () => new (require('events').EventEmitter)();
+
+  const versionType = mcVersionList.find(v => v.id === version)?.type || 'release';
+  const versionObj = customId ? { number: version, type: versionType, custom: customId } : { number: version, type: versionType };
+  const opts = {
+    clientPackage: null,
+    authorization: { access_token:'offline-predownload', name:'Player', uuid:'00000000000000000000000000000000', user_properties:'{}', meta:{ type:'mojang' } },
+    root: P.mc,
+    version: versionObj,
+    memory: { max: 1024, min: 512 },
+    javaPath,
+    overrides: { detached: false },
+  };
+  launcher.on('download-status', s => sendProgress(`Spieldatei: ${s.name}`));
+  launcher.on('progress', e => sendProgress(`Spieldateien: ${e.type} ${e.task}/${e.total}`));
+  await launcher.launch(opts);
+
+  const vDir = path.join(P.mc, 'versions', customId || version);
+  return {
+    jsonOk: fs.existsSync(path.join(vDir, `${version}.json`)) || fs.existsSync(path.join(vDir, `${customId}.json`)),
+    jarOk: fs.existsSync(path.join(vDir, `${customId || version}.jar`)),
+    assetsOk: fs.existsSync(path.join(P.mc, 'assets', 'indexes', `${customId || version}.json`)),
+  };
+}
+
+// Install Fabric/Quilt loader for the version if not already present (so the
+// loader + its libraries are cached for offline use).
+async function ensureLoaderForOffline(version, modLoader, javaPath, sendProgress) {
+  const versionsDir = path.join(P.mc, 'versions');
+  let loaderId = null;
+  if (fs.existsSync(versionsDir)) {
+    const dirs = fs.readdirSync(versionsDir);
+    loaderId = dirs.find(d => {
+      const lower = d.toLowerCase();
+      const isLoader = lower.startsWith('fabric-loader-') || lower.startsWith('quilt-loader-');
+      return isLoader && (d.endsWith(`-${version}`) || d.endsWith(version));
+    }) || null;
+  }
+  if (loaderId && fs.existsSync(path.join(versionsDir, loaderId, `${loaderId}.json`))) {
+    return { installed: true, id: loaderId };
+  }
+
+  sendProgress('Installiere Loader…');
+  if (modLoader === 'fabric') {
+    const loaders = await fetchJson(`https://meta.fabricmc.net/v2/versions/loader/${version}`);
+    if (!loaders || !loaders.length) throw new Error('Kein Fabric-Loader für ' + version);
+    const loaderVer = loaders[0].loader.version;
+    let instVer = loaders[0].installer?.version;
+    if (!instVer) { try { const m = await fetchJson('https://meta.fabricmc.net/v2/versions/installer'); instVer = m[0]?.version; } catch {} }
+    if (!instVer) instVer = '0.11.2';
+    const instUrl = `https://maven.fabricmc.net/net/fabricmc/fabric-installer/${instVer}/fabric-installer-${instVer}.jar`;
+    const instPath = path.join(base, `fabric-installer-${instVer}.jar`);
+    if (!fs.existsSync(instPath)) await downloadFile(instUrl, instPath);
+    const javaExe = `"${path.resolve(javaPath)}"`;
+    await new Promise((res, rej) => exec(
+      `${javaExe} -jar "${path.resolve(instPath)}" client -dir "${path.resolve(P.mc)}" -mcversion ${version} -loader ${loaderVer} -noprofile`,
+      { timeout: 120000 }, (e, o, se) => { if (e) rej(new Error(se || e.message || String(e))); else res(o); }
+    ));
+    if (fs.existsSync(versionsDir)) {
+      loaderId = fs.readdirSync(versionsDir).find(d => d.toLowerCase().startsWith('fabric-loader-') && d.includes(version)) || null;
+    }
+    if (!loaderId || !fs.existsSync(path.join(versionsDir, loaderId, `${loaderId}.json`))) throw new Error('Fabric-Installer lief, aber Versionsordner fehlt');
+    return { installed: true, id: loaderId };
+  }
+
+  if (modLoader === 'quilt') {
+    const loaders = await fetchJson(`https://meta.quiltmc.net/v3/versions/loader/${version}`);
+    if (!loaders || !loaders.length) throw new Error('Kein Quilt-Loader für ' + version);
+    const loaderVer = loaders[0].loader.version;
+    const instVer = loaders[0].installer?.version || '0.5.1';
+    const instUrl = `https://maven.quiltmc.org/repository/release/org/quiltmc/quilt-installer/${instVer}/quilt-installer-${instVer}.jar`;
+    const instPath = path.join(base, `quilt-installer-${instVer}.jar`);
+    if (!fs.existsSync(instPath)) await downloadFile(instUrl, instPath);
+    const javaExe = `"${path.resolve(javaPath)}"`;
+    await new Promise((res, rej) => exec(
+      `${javaExe} -jar "${path.resolve(instPath)}" install client -dir "${path.resolve(P.mc)}" -mcversion ${version} -loader ${loaderVer} -noprofile`,
+      { timeout: 120000 }, (e, o, se) => { if (e) rej(new Error(se || e.message || String(e))); else res(o); }
+    ));
+    if (fs.existsSync(versionsDir)) {
+      loaderId = fs.readdirSync(versionsDir).find(d => d.toLowerCase().startsWith('quilt-loader-') && d.includes(version)) || null;
+    }
+    if (!loaderId || !fs.existsSync(path.join(versionsDir, loaderId, `${loaderId}.json`))) throw new Error('Quilt-Installer lief, aber Versionsordner fehlt');
+    return { installed: true, id: loaderId };
+  }
+
+  return { installed: false, id: null };
+}
+
+ipcMain.handle('profile-download-offline', async (event, payload) => {
+  const profile = payload && payload.profile;
+  const clientMods = (payload && payload.clientMods) || [];
+  const sendProgress = (msg) => { try { mainWindow.webContents.send('download-offline-progress', msg); } catch {} };
+  try {
+    if (!profile) return { ok:false, error:'Kein Profil.' };
+    const version = resolveConcreteVersion(profile.mcVersion);
+    if (!version) return { ok:false, error:'Keine Minecraft-Version gefunden.' };
+    const modLoader = profile.modLoader || 'fabric';
+
+    sendProgress('Starte Offline-Download…');
+
+    // 1. All mods
+    sendProgress('Lade Mods herunter…');
+    const modCount = await downloadProfileMods(profile, clientMods, version, modLoader, sendProgress);
+
+    // 2. Game files (vanilla base)
+    let gameOk = { jsonOk:false, jarOk:false, assetsOk:false };
+    let loaderId = null;
+    try {
+      const javas = await findInstalledJavas();
+      const javaPath = javas[0]?.path || null;
+      if (javaPath) {
+        // Fabric/Quilt loader pre-install so the loader is cached too
+        if (modLoader === 'fabric' || modLoader === 'quilt') {
+          const loaderRes = await ensureLoaderForOffline(version, modLoader, javaPath, sendProgress).catch(() => ({ installed:false, id:null }));
+          loaderId = loaderRes.id;
+        }
+        sendProgress('Lade Spieldateien herunter (Version, Libraries, Assets)…');
+        gameOk = await predownloadVanillaGameFiles(version, javaPath, sendProgress, loaderId || undefined);
+      }
+    } catch (e) {
+      console.error('[OFFLINE-DL] Game files:', e.message);
+    }
+
+    return {
+      ok: true,
+      version,
+      modsDownloaded: modCount,
+      gameFiles: gameOk,
+      loaderId,
+    };
+  } catch (e) {
+    return { ok:false, error: e.message };
+  }
+});
+
 ipcMain.handle('import-norisk-profiles', async () => {
   const candidates = [
     process.env.APPDATA ? path.join(process.env.APPDATA, 'norisk', 'NoRiskClientV3', 'profiles.json') : '',
@@ -425,6 +710,95 @@ async function syncGroupSettings(group){
     await fs.promises.copyFile(mcOptions, gFile);
     logDebug(`[GROUP] Saved settings of group "${group}"`);
   } catch(e){ logDebug('[GROUP] sync failed: ' + e.message); }
+}
+
+// ── Per-group game data (saves + servers.dat) ────────────────────────────────
+// Worlds and the multiplayer server list are separated per settings group, so
+// starting a profile from another group never shows the other group's worlds.
+const currentGroupFile = path.join(base, 'current-group.json');
+function getCurrentGroup(){
+  try {
+    const d = JSON.parse(fs.readFileSync(currentGroupFile, 'utf8'));
+    if (d && typeof d.group === 'string' && d.group) return d.group;
+  } catch {}
+  return 'default';
+}
+function setCurrentGroup(group){
+  try { fs.writeFileSync(currentGroupFile, JSON.stringify({ group: group || 'default' })); } catch {}
+}
+function groupSavesPath(group){
+  return path.join(P.groups, groupDirName(group), 'saves');
+}
+function groupServersDatPath(group){
+  return path.join(P.groups, groupDirName(group), 'servers.dat');
+}
+// Move the active game data (P.mc/saves + servers.dat) into a group's storage.
+async function stashGameDataToGroup(group){
+  const gDir = path.join(P.groups, groupDirName(group));
+  const gSaves = groupSavesPath(group);
+  const gServers = groupServersDatPath(group);
+  try {
+    await fs.promises.mkdir(gSaves, { recursive: true });
+    const mcSaves = path.join(P.mc, 'saves');
+    if (fs.existsSync(mcSaves)) {
+      const entries = await fs.promises.readdir(mcSaves);
+      for (const en of entries) {
+        const src = path.join(mcSaves, en);
+        const dst = path.join(gSaves, en);
+        try { await fs.promises.rm(dst, { recursive: true, force: true }); } catch {}
+        try { await fs.promises.rename(src, dst); }
+        catch {
+          try { await fs.promises.cp(src, dst, { recursive: true }); await fs.promises.rm(src, { recursive: true, force: true }); } catch {}
+        }
+      }
+    }
+    const mcServers = path.join(P.mc, 'servers.dat');
+    if (fs.existsSync(mcServers)) {
+      await fs.promises.mkdir(gDir, { recursive: true });
+      try { await fs.promises.rename(mcServers, gServers); }
+      catch { try { await fs.promises.copyFile(mcServers, gServers); await fs.promises.rm(mcServers, { force: true }); } catch {} }
+    }
+    logDebug(`[GROUP] Stashed game data into group "${group}"`);
+  } catch(e){ logDebug('[GROUP] stash failed: ' + e.message); }
+}
+// Move a group's stored saves + servers.dat into the active game directory.
+async function restoreGameDataToMc(group){
+  const gSaves = groupSavesPath(group);
+  const gServers = groupServersDatPath(group);
+  try {
+    const mcSaves = path.join(P.mc, 'saves');
+    if (fs.existsSync(mcSaves)) { try { await fs.promises.rm(mcSaves, { recursive: true, force: true }); } catch {} }
+    if (fs.existsSync(gSaves)) {
+      await fs.promises.mkdir(mcSaves, { recursive: true });
+      const entries = await fs.promises.readdir(gSaves);
+      for (const en of entries) {
+        const src = path.join(gSaves, en);
+        const dst = path.join(mcSaves, en);
+        try { await fs.promises.rename(src, dst); }
+        catch {
+          try { await fs.promises.cp(src, dst, { recursive: true }); await fs.promises.rm(src, { recursive: true, force: true }); } catch {}
+        }
+      }
+    }
+    const mcServers = path.join(P.mc, 'servers.dat');
+    if (fs.existsSync(mcServers)) { try { await fs.promises.rm(mcServers, { force: true }); } catch {} }
+    if (fs.existsSync(gServers)) {
+      try { await fs.promises.rename(gServers, mcServers); }
+      catch { try { await fs.promises.copyFile(gServers, mcServers); await fs.promises.rm(gServers, { force: true }); } catch {} }
+    }
+    logDebug(`[GROUP] Restored game data of group "${group}"`);
+  } catch(e){ logDebug('[GROUP] restore failed: ' + e.message); }
+}
+// Switch the active game data to the given group (no-op when already active).
+async function swapGameDataToGroup(group){
+  const current = getCurrentGroup();
+  try {
+    if (current === group) return;
+    await stashGameDataToGroup(current);
+    await restoreGameDataToMc(group);
+    setCurrentGroup(group);
+    logDebug(`[GROUP] Switched game data ${current} -> ${group}`);
+  } catch(e){ logDebug('[GROUP] swap failed: ' + e.message); }
 }
 
 // Scan installed launchers for options.txt so the user can import keybinds/settings
@@ -1950,6 +2324,8 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       if (prof && prof.group) settingsGroup = String(prof.group).trim() || 'default';
     } catch {}
     await applyGroupSettings(settingsGroup);
+    // Switch worlds + server list (saves, servers.dat) to this group's data
+    await swapGameDataToGroup(settingsGroup);
     send('instance-log', { instanceId, line: `[GROUP] Settings group: "${settingsGroup}"` });
 
     // ── Deploy mrpack mods (modpack overrides) ────────────────────────────────
@@ -2260,6 +2636,27 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       return v === 'all' || v === version;
     });
     const rpList = [...((data.useClientRPs !== false) ? (data.clientResourcePacks || []) : []), ...profileRPs];
+
+    // Reset ALL resource packs first, then the launcher re-enables the needed ones.
+    // This prevents leftover packs from other profiles/groups staying enabled in-game.
+    {
+      const optionsPath = path.join(P.mc, 'options.txt');
+      let options = '';
+      if (fs.existsSync(optionsPath)) options = await fs.promises.readFile(optionsPath, 'utf8');
+      if (options.match(/^resourcePacks:/m)) {
+        options = options.replace(/^resourcePacks:.*$/m, 'resourcePacks:["vanilla"]');
+      } else {
+        options += `\nresourcePacks:["vanilla"]`;
+      }
+      if (options.match(/^incompatibleResourcePacks:/m)) {
+        options = options.replace(/^incompatibleResourcePacks:.*$/m, 'incompatibleResourcePacks:[]');
+      } else {
+        options += `\nincompatibleResourcePacks:[]`;
+      }
+      await fs.promises.writeFile(optionsPath, options);
+      send('instance-log', { instanceId, line: `[RP] Reset resource packs to ["vanilla"]` });
+    }
+
     if (rpList.length || mrpackDeployedNames.length) {
       const rpDir = path.join(P.mc, 'resourcepacks');
       await fs.promises.mkdir(rpDir, { recursive: true });
@@ -2349,9 +2746,8 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       }
 
       send('launch-progress', { instanceId, percent:50, message:`${new Set([...mrpackDeployedNames, ...deployedRpNames]).size} resource pack(s) activated.` });
-    } else {
-      // If no RPs configured, don't clear user's existing options.txt RP settings
     }
+    // When no packs are configured, the reset to ["vanilla"] above stays active.
 
     // ── Deploy custom cape resource pack ──────────────────────────────────────
     try {
@@ -3191,6 +3587,73 @@ ipcMain.handle('check-for-update', async () => {
   }
 });
 
+// ── Update progress window (separate process, survives launcher uninstall) ──
+const UPDATE_PROGRESS_FILE = path.join(os.tmpdir(), 'crux-update-progress.json');
+
+function writeUpdateProgress(phase, percent) {
+  try {
+    fs.writeFileSync(UPDATE_PROGRESS_FILE, JSON.stringify({ phase, percent: Math.round(percent) }), 'utf8');
+  } catch {}
+}
+
+function startUpdateProgressWindow() {
+  try {
+    const winScript = path.join(os.tmpdir(), 'crux-update-window.ps1');
+    fs.writeFileSync(winScript, '\uFEFF' + fs.readFileSync(path.join(__dirname, 'update-window.ps1'), 'utf8'), 'utf8');
+    spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-STA', '-WindowStyle', 'Hidden', '-File', winScript], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+    return true;
+  } catch (e) {
+    updateLog('Failed to start update progress window: ' + (e && e.message));
+    return false;
+  }
+}
+
+// ── User data backup across updates (survives uninstall/reinstall) ──────────
+const UPDATE_BACKUP_FILE = path.join(os.tmpdir(), 'crux-update-backup.json');
+const UPDATE_INSTALLED_FLAG = path.join(os.tmpdir(), 'crux-update-installed.flag');
+
+function backupUserDataForUpdate() {
+  try {
+    const now = Date.now();
+    stats.launcherOpenMs += now - _lastLauncherTick;
+    _lastLauncherTick = now;
+    fs.writeFileSync(P.stats, JSON.stringify(stats, null, 2));
+  } catch {}
+  try {
+    const data = {};
+    for (const key of ['settings', 'accounts', 'profiles', 'mods', 'launched', 'stats']) {
+      try {
+        data[key] = JSON.parse(fs.readFileSync(P[key], 'utf8'));
+      } catch {}
+    }
+    fs.writeFileSync(UPDATE_BACKUP_FILE, JSON.stringify(data, null, 2), 'utf8');
+    console.log('[UPDATE] User data backed up for update migration');
+  } catch (e) {
+    console.log('[UPDATE] Could not back up user data: ' + e.message);
+  }
+}
+
+function restoreUserDataAfterUpdate() {
+  if (!fs.existsSync(UPDATE_BACKUP_FILE)) return;
+  // Only restore if the installer actually ran (flag written by the update batch).
+  // Otherwise the update was interrupted and we must not overwrite current data.
+  if (!fs.existsSync(UPDATE_INSTALLED_FLAG)) return;
+  try {
+    const data = JSON.parse(fs.readFileSync(UPDATE_BACKUP_FILE, 'utf8'));
+    for (const key of Object.keys(data)) {
+      if (!P[key] || data[key] === undefined || data[key] === null) continue;
+      try {
+        fs.writeFileSync(P[key], JSON.stringify(data[key], null, 2));
+      } catch {}
+    }
+    fs.unlinkSync(UPDATE_BACKUP_FILE);
+    fs.unlinkSync(UPDATE_INSTALLED_FLAG);
+    console.log('[UPDATE] User data restored after update');
+  } catch (e) {
+    console.log('[UPDATE] Could not restore user data: ' + e.message);
+  }
+}
+
 ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUrl) => {
   const isAsar = __dirname.endsWith('app.asar') || process.env.APPIMAGE;
   const send = (...a) => { try { mainWindow.webContents.send(...a); } catch {} };
@@ -3202,8 +3665,13 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
     updateLog(`Installer URL: ${exeUrl}`);
     const installerPath = path.join(base, 'Crux-Client-Installer.exe');
 
+    writeUpdateProgress('download', 0);
+    startUpdateProgressWindow();
+
     // Download installer with progress
-    await new Promise((resolve, reject) => {
+    try {
+      await new Promise((resolve, reject) => {
+        let lastDownloadPct = -1;
       const doRequest = (reqUrl) => {
         const lib = reqUrl.startsWith('https') ? https : http;
         const req = lib.get(reqUrl, { headers: { 'User-Agent': 'CruxClient' } }, res => {
@@ -3216,6 +3684,8 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
             ws.write(chunk);
             downloaded += chunk.length;
             send('update-download-progress', { downloaded, total });
+            const pct25 = total ? Math.round((downloaded / total) * 25) : 0;
+            if (pct25 !== lastDownloadPct) { lastDownloadPct = pct25; writeUpdateProgress('download', pct25); }
           });
           res.on('end', () => { ws.end(() => resolve()); });
           res.on('error', reject);
@@ -3223,8 +3693,14 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
         req.setTimeout(300000, () => { req.destroy(); reject(new Error('Download timeout')); });
         req.on('timeout', () => { req.destroy(); reject(new Error('Download timeout')); });
       };
-      doRequest(exeUrl);
-    });
+        doRequest(exeUrl);
+      });
+    } catch (err) {
+      updateLog('Installer download failed: ' + (err && err.message));
+      writeUpdateProgress('cancel', 0);
+      throw err;
+    }
+    writeUpdateProgress('download', 25);
 
     updateLog('Installer downloaded. Removing security block (Zone.Identifier)...');
     try {
@@ -3248,7 +3724,10 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
       'timeout /t 1 /nobreak >nul',
       'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
       'if %errorlevel%==0 goto waitloop',
-      '"' + installerPath + '"',
+      'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set uninstall',
+      'start /wait "" "' + installerPath + '"',
+      'echo done > "%TEMP%\\crux-update-installed.flag"',
+      'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set launch',
       'del "%~f0"',
     ].join('\r\n');
     await fs.promises.writeFile(batchPath, batchContent, 'utf8');
