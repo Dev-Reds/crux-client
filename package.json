@@ -1,6 +1,6 @@
 {
     "name": "files",
-    "version": "1.1.66",
+    "version": "1.1.67",
     "description": "",
     "main": "main.js",
     "scripts": {
@@ -40,6 +40,7 @@
             "index.html",
             "package.json",
             "update-window.ps1",
+            "uninstall-window.ps1",
             "node_modules/**/*",
             "Crux-Client.png",
             "cape_template.png",

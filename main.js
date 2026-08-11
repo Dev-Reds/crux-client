@@ -141,6 +141,7 @@ app.whenReady().then(async () => {
       // Open the progress window so it stays visible across uninstall/reinstall
       writeUpdateProgress('uninstall', 25);
       startUpdateProgressWindow();
+      ensureUninstallWindowScript();
       // Create a batch script that waits for the launcher to close, then runs the installer
       const launcherExe = path.basename(app.getPath('exe'));
       const batchPath = path.join(os.tmpdir(), 'crux-update-' + Date.now() + '.bat');
@@ -150,7 +151,9 @@ app.whenReady().then(async () => {
         'timeout /t 1 /nobreak >nul',
         'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
         'if %errorlevel%==0 goto waitloop',
+        'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set close',
         'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set uninstall',
+        'start "" powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File "%TEMP%\\crux-uninstall-window.ps1"',
         'start /wait "" "' + pendingUpdatePath + '"',
         'echo done > "%TEMP%\\crux-update-installed.flag"',
         'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set launch',
@@ -3608,6 +3611,19 @@ function startUpdateProgressWindow() {
   }
 }
 
+// Standalone window shown while the launcher is being uninstalled/reinstalled,
+// so the user always sees something during the update.
+function ensureUninstallWindowScript() {
+  try {
+    const winScript = path.join(os.tmpdir(), 'crux-uninstall-window.ps1');
+    fs.writeFileSync(winScript, '\uFEFF' + fs.readFileSync(path.join(__dirname, 'uninstall-window.ps1'), 'utf8'), 'utf8');
+    return true;
+  } catch (e) {
+    updateLog('Failed to copy uninstall window script: ' + (e && e.message));
+    return false;
+  }
+}
+
 // ── User data backup across updates (survives uninstall/reinstall) ──────────
 const UPDATE_BACKUP_FILE = path.join(os.tmpdir(), 'crux-update-backup.json');
 const UPDATE_INSTALLED_FLAG = path.join(os.tmpdir(), 'crux-update-installed.flag');
@@ -3715,6 +3731,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
     // Tell the renderer the download is done and the installer window will take over
     send('update-install-start', { message: 'Download finished — installing now' });
 
+    ensureUninstallWindowScript();
     // Create a batch script that waits for the launcher to close, then runs the installer
     const launcherExe = path.basename(app.getPath('exe'));
     const batchPath = path.join(os.tmpdir(), 'crux-update-' + Date.now() + '.bat');
@@ -3724,7 +3741,9 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
       'timeout /t 1 /nobreak >nul',
       'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
       'if %errorlevel%==0 goto waitloop',
+      'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set close',
       'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set uninstall',
+      'start "" powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File "%TEMP%\\crux-uninstall-window.ps1"',
       'start /wait "" "' + installerPath + '"',
       'echo done > "%TEMP%\\crux-update-installed.flag"',
       'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set launch',

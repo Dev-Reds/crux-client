@@ -465,7 +465,6 @@ body.light .feature-card p{color:#666;}
 <div id="launcher-screen" style="display:flex">
   <div class="toolbar">
     <button class="tb-btn active" data-page="launch-page" data-i18n="tab_launch">Launch</button>
-    <button class="tb-btn" data-page="recent-page" data-i18n="tab_recent">Recent</button>
     <button class="tb-btn" data-page="mods-page" data-i18n="tab_mods">Client Options</button>
     <button class="tb-btn" data-page="profiles-page" data-i18n="tab_profiles">Profiles</button>
     <button class="tb-btn" data-page="cape-page" data-i18n="tab_cape">Capes</button>
@@ -523,6 +522,16 @@ body.light .feature-card p{color:#666;}
             <div class="stat-card"><div class="stat-label" data-i18n="stat_last_played">Last played</div><div class="stat-value" id="stat-last-played">—</div></div>
             <div class="stat-card"><div class="stat-label" data-i18n="stat_first_launch">First launch</div><div class="stat-value" id="stat-first-launch">—</div></div>
           </div>
+          <div class="launch-recent" style="margin-top:1.5em;padding-top:1em">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8em;flex-wrap:wrap;gap:.4em">
+              <h2 style="font-size:.95em;margin:0;color:#ccc" data-i18n="h_recent">Recent Played</h2>
+              <div style="display:flex;align-items:center;gap:.4em">
+                <button class="btn btn-sm" id="recent-clear-btn" style="color:#f44;width:auto" data-i18n="btn_clear_history">Clear History</button>
+                <span style="font-size:.8em;color:#555" id="recent-count"></span>
+              </div>
+            </div>
+            <div id="recent-sections"></div>
+          </div>
         </div>
         <div class="launch-right">
           <div class="skin3d-wrap" id="skin3d-wrap">
@@ -549,18 +558,6 @@ body.light .feature-card p{color:#666;}
           </div>
         </div>
       </div>
-
-    <!-- ══ RECENT ══ -->
-    <div id="recent-page" class="page">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8em;flex-wrap:wrap;gap:.4em">
-        <h1 style="margin:0" data-i18n="h_recent">Recent Played</h1>
-        <div style="display:flex;align-items:center;gap:.4em">
-          <button class="btn btn-sm" id="recent-clear-btn" style="color:#f44;width:auto" data-i18n="btn_clear_history">Clear History</button>
-          <span style="font-size:.8em;color:#555" id="recent-count"></span>
-        </div>
-      </div>
-      <div id="recent-sections"></div>
-    </div>
 
     <!-- ══ CLIENT-MODS ══ -->
     <div id="mods-page" class="page">
@@ -1894,7 +1891,7 @@ function showPage(id){
   });
   if(id==='mods-page') syncModFilterToProfile();
   if(id==='logs-page'){ renderInstanceList(); refreshLogSelect(); updateStopButtons(); }
-  if(id==='recent-page'||id==='launch-page') renderRecentList();
+  if(id==='launch-page') renderRecentList();
   if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
   if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); refreshChat(); }
   if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); renderLaunchStats(); }
@@ -4683,6 +4680,7 @@ async function appendModResults(results,seq){
             editingPackData[key].push(mod.name);renderPackTags('profile-'+key.toLowerCase(),key);saveProfileEdits();
           }
         }
+        return;
       }
       if(profilePackMode==='clientRP'){
         if(!clientResourcePacks.some(r=>(typeof r==='object'?r.modrinthId===mod.id:r===mod.name))){

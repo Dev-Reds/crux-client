@@ -78,6 +78,12 @@ $timer.Add_Tick({
     if ($d -ne $null) {
       $np = [string]$d.phase
       if ($np -ne $phase) {
+        if ($np -eq 'close') {
+          $closing = $true
+          $timer.Stop()
+          try { $win.Close() } catch {}
+          return
+        }
         $phase = $np
         $startPct = $cur
         $animStart = [DateTime]::UtcNow
