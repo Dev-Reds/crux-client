@@ -1635,6 +1635,7 @@ body.light .feature-card p{color:#666;}
   <div id="update-content" style="max-width:500px;width:100%">
     <h1 style="margin-bottom:.3em" id="update-title">Update Available</h1>
     <p style="color:#aaa;margin-bottom:.5em" id="update-version-text"></p>
+    <div id="update-notes-box" style="display:none;margin:.5em auto 1.2em;max-height:180px;overflow-y:auto;text-align:left;background:#111;border:1px solid #222;border-radius:var(--r);padding:.8em 1em;font-size:.8em;color:#bbb;line-height:1.5;white-space:pre-wrap"></div>
     <div id="update-progress-wrap" style="display:none;margin-bottom:1.5em">
       <div style="background:#222;border-radius:.5em;height:8px;overflow:hidden;margin-bottom:.5em">
         <div id="update-progress-bar" style="background:var(--acc,#0088ff);height:100%;width:0%;transition:width .3s"></div>
@@ -1647,6 +1648,7 @@ body.light .feature-card p{color:#666;}
       <button class="btn" id="update-github-btn" style="display:none" data-i18n="update_github">Download from GitHub</button>
       <button class="btn" id="update-bugreport-btn" style="border-color:#f44;color:#f44" data-i18n="update_bugreport">🐛 Bug Report</button>
     </div>
+    <button class="btn" id="update-later-btn" style="margin-top:1em;font-size:.85em;border-color:#444;color:#888" data-i18n="update_later">Later</button>
     <p id="update-error-text" style="color:#f44;font-size:.85em;margin-top:1em;display:none"></p>
     <p id="update-done-text" style="color:#5f5;font-size:.85em;margin-top:1em;display:none"></p>
   </div>
@@ -2211,7 +2213,7 @@ const LANGS={
     sv_type_forge:'Classic mod loader', sv_type_neoforge:'Forge fork for modern MC',
     sv_type_modpack:'Modpack server + Loader',
     update_wait_text:'Please wait a few minutes for the download and restart button to appear.',
-    update_install:'Update & Restart', update_github:'Download from GitHub', update_bugreport:'🐛 Bug Report',
+    update_install:'Update & Restart', update_github:'Download from GitHub', update_bugreport:'🐛 Bug Report', update_later:'Later',
     stat_played:'Playtime', stat_launcher_open:'Launcher open', stat_launches:'Launches', stat_avg_session:'Avg session',
     stat_last_played:'Last played', stat_first_launch:'First launch', stat_now:'now',
   },
@@ -2347,7 +2349,7 @@ const LANGS={
     sv_type_forge:'Klassischer Mod-Loader', sv_type_neoforge:'Forge Fork für modernes MC',
     sv_type_modpack:'Modpack-Server + Loader',
     update_wait_text:'Bitte warte ein paar Minuten, bis der Download- und Neustart-Button erscheint.',
-    update_install:'Aktualisieren & Neustart', update_github:'Von GitHub herunterladen', update_bugreport:'🐛 Fehler melden',
+    update_install:'Aktualisieren & Neustart', update_github:'Von GitHub herunterladen', update_bugreport:'🐛 Fehler melden', update_later:'Später',
     stat_played:'Spielzeit', stat_launcher_open:'Launcher offen', stat_launches:'Starts', stat_avg_session:'Ø Sitzung',
     stat_last_played:'Zuletzt gespielt', stat_first_launch:'Erster Start', stat_now:'jetzt',
   },
@@ -2481,7 +2483,7 @@ const LANGS={
     sv_type_forge:'Mod Loader classique', sv_type_neoforge:'Fork Forge pour MC moderne',
     sv_type_modpack:'Serveur Modpack + Loader',
     update_wait_text:'Veuillez patienter quelques minutes pour que le bouton de téléchargement et de redémarrage apparaisse.',
-    update_install:'Mettre à jour & Redémarrer', update_github:'Télécharger depuis GitHub', update_bugreport:'🐛 Signaler un bug',
+    update_install:'Mettre à jour & Redémarrer', update_github:'Télécharger depuis GitHub', update_bugreport:'🐛 Signaler un bug', update_later:'Plus tard',
     stat_played:'Temps de jeu', stat_launcher_open:'Launcher ouvert', stat_launches:'Lancements', stat_avg_session:'Sess. moy.',
     stat_last_played:'Dernière session', stat_first_launch:'Premier lancement', stat_now:'maintenant',
   },
@@ -2610,7 +2612,7 @@ const LANGS={
     sv_type_forge:'Mod Loader clásico', sv_type_neoforge:'Fork Forge para MC moderno',
     sv_type_modpack:'Servidor Modpack + Loader',
     stat_played:'Tiempo de juego', stat_launcher_open:'Launcher abierto', stat_launches:'Lanzamientos', stat_avg_session:'Sesión med.',
-    stat_last_played:'Última sesión', stat_first_launch:'Primer inicio', stat_now:'ahora',
+    stat_last_played:'Última sesión', stat_first_launch:'Primer inicio', stat_now:'ahora', update_later:'Más tarde',
   },
 };
 
@@ -7717,11 +7719,13 @@ function showUpdateOverlay(info) {
   document.getElementById('update-title').textContent = 'Update Available';
   document.getElementById('update-version-text').textContent = `v${info.currentVersion} → v${info.newVersion}`;
   const notesBox = document.getElementById('update-notes-box');
-  if (info.releaseNotes && info.releaseNotes.trim()) {
-    notesBox.textContent = info.releaseNotes;
-    notesBox.style.display = 'block';
-  } else {
-    notesBox.style.display = 'none';
+  if (notesBox) {
+    if (info.releaseNotes && info.releaseNotes.trim()) {
+      notesBox.textContent = info.releaseNotes;
+      notesBox.style.display = 'block';
+    } else {
+      notesBox.style.display = 'none';
+    }
   }
   document.getElementById('update-progress-wrap').style.display = 'none';
   document.getElementById('update-error-text').style.display = 'none';
@@ -8300,6 +8304,13 @@ document.getElementById('update-github-btn').addEventListener('click', () => {
 
 document.getElementById('update-bugreport-btn').addEventListener('click', () => {
   shell.openExternal('https://github.com/Dev-Reds/crux-client/issues');
+});
+
+document.getElementById('update-later-btn').addEventListener('click', () => {
+  pendingUpdate = null;
+  if (window._updatePollInterval) { clearInterval(window._updatePollInterval); window._updatePollInterval = null; }
+  const overlay = document.getElementById('update-overlay');
+  if (overlay) overlay.style.display = 'none';
 });
 
 document.getElementById('bugreport-github-btn').addEventListener('click', () => {
