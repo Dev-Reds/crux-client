@@ -18,10 +18,16 @@
   ClearErrors
   WinShell::SetLnkAUMI "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\${APP_FILENAME}.lnk" "${APP_ID}"
 
+  ; Just creating the .lnk in that folder does NOT pin it on Windows 10/11, so
+  ; we must explicitly invoke the "Pin to taskbar" shell verb as well.
+  Sleep 1000
+  ${StdUtils.InvokeShellVerb} $0 "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar" "${APP_FILENAME}.lnk" ${StdUtils.Const.ShellVerb.PinToTaskbar}
+
   System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
 !macroend
 
 !macro customUnInstall
+  ${StdUtils.InvokeShellVerb} $0 "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar" "${APP_FILENAME}.lnk" ${StdUtils.Const.ShellVerb.UnpinFromTaskbar}
   Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\${APP_FILENAME}.lnk"
   System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
 !macroend
@@ -74,6 +80,7 @@
 
     ${NSD_GetState} $chkTaskbar $0
     ${If} $0 == ${BST_UNCHECKED}
+      ${StdUtils.InvokeShellVerb} $0 "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar" "${APP_FILENAME}.lnk" ${StdUtils.Const.ShellVerb.UnpinFromTaskbar}
       Delete "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\${APP_FILENAME}.lnk"
     ${EndIf}
 

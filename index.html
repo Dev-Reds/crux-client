@@ -12,7 +12,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;height:100%;overflow:hidden;}
 body{font-family:Arial,sans-serif;background:#0a0a0a;color:#fff;font-size:2vw;scrollbar-width:thin;scrollbar-color:#2f2f2f transparent;}
-:root{--tb:5.4vh;--acc:#0088ff;--acc2:#005bb5;--r:.5em;--border:#2a2a2a;--text-muted:#888;}
+:root{--tb:5.4vh;--acc:#0088ff;--acc2:#005bb5;--r:.5em;--border:#2a2a2a;--text-muted:#888;--ls-bg:#0d0d0d;--ls-bg2:#111;--ls-bd:#1a1a1a;--ls-hover:#141414;--ls-sep:#141414;--ls-selbg:color-mix(in srgb,var(--acc) 22%,#0d1a2e);--ls-selbd:var(--acc);--ls-mut:#555;--ls-radius:var(--r);--ls-opt-bg:#181818;--ls-opt-tx:#eee;}
 *{scrollbar-width:thin;scrollbar-color:#2f2f2f transparent;}
 *::-webkit-scrollbar{width:10px;height:10px;}
 *::-webkit-scrollbar-track{background:transparent;}
@@ -71,7 +71,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:1.3em;heig
 .lp-label{font-size:.72em;color:#555;}
 
 /* ── Light ── */
-body.light{background:#f0f0f0;color:#111;}
+body.light{background:#f0f0f0;color:#111;--ls-bg:#fff;--ls-bg2:#fafafa;--ls-bd:#ddd;--ls-hover:#f0f0f0;--ls-sep:#eee;--ls-selbg:#ddeeff;--ls-selbd:var(--acc);--ls-mut:#888;--ls-opt-bg:#fff;--ls-opt-tx:#222;}
 body.light .toolbar{background:rgba(240,240,240,.98);border-bottom-color:#ddd;}
 body.light .tb-btn{background:#fff;color:#555;border-color:#ddd;}
 body.light .tb-btn:hover{background:#eee;}
@@ -202,12 +202,7 @@ body.light h2[style*="color:#ccc"]{color:#333!important;}
 body.light .launch-right{background:#e8e8e8;border-left-color:#ddd;}
 body.light .launch-left{background:#f0f0f0;}
 
-/* ── Launch stats ── */
-.launch-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(10.5em,1fr));gap:.6em;margin-top:auto;padding-top:1vh;}
-.stat-card{background:#111;border:1px solid #2a2a2a;border-radius:var(--r);padding:.7em .8em;display:flex;flex-direction:column;gap:.2em;min-width:0;}
-.stat-label{font-size:.68em;color:#888;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.stat-value{font-size:1.05em;font-weight:bold;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-body.light .stat-card{background:#fff;border-color:#ddd;}
+/* ── Launch recent ── */
 
 /* 3D skin canvas */
 .skin3d-wrap{width:50%;max-width:14vw;aspect-ratio:.7;background:#0a0a0a;border-radius:var(--r);overflow:hidden;position:relative;cursor:grab;margin:0 auto;}
@@ -274,6 +269,8 @@ body.light .btn-curseforge{background:#fff5f0;color:#a83500;border-color:#f16422
 .mod-switch input:checked + .slider::before{transform:translateX(1.1em);background:#fff;}
 .mod-remove{border-color:#333;color:#666;}
 .mod-remove:hover{border-color:#f44;color:#f44;}
+.mod-list-sep{border-top:2px dashed #2a2a2a;margin-top:.35em;padding-top:.55em;}
+.pack-tag-sep{border-left:2px dashed #2a2a2a;margin-left:.35em;padding-left:.55em;}
 .mod-dlall{border-color:#222;color:#555;}
 .mod-dlall.on{border-color:#1bd96a66;color:#1bd96a;}
 .mod-dlall:hover{border-color:#1bd96a;color:#1bd96a;}
@@ -348,6 +345,191 @@ body.light .profile-sec-bar{background:#eee;border-color:#ccc;}
 body.light .profile-sec-btn{background:#fff;border-color:#ccc;color:#666;}
 body.light .profile-sec-btn:hover{background:#eee;color:#111;}
 body.light .profile-sec-btn.active{background:var(--acc);color:#fff;border-color:var(--acc);}
+/* ── Glass (white frosted, shows custom bg) ── */
+body.glass{
+  --gs-wh:rgba(255,255,255,.05);
+  --gs-wh2:rgba(255,255,255,.12);
+  --gs-list:rgba(255,255,255,.32);
+  --gs-bd:rgba(255,255,255,.5);
+  --gs-bd2:rgba(255,255,255,.7);
+  --gs-sd:rgba(0,0,0,.18);
+  --gs-tx:#14171c;
+  --gs-mut:#5a6470;
+  --gs-blur:blur(38px) saturate(160%);
+  --gs-hl:inset 0 1px 0 rgba(255,255,255,.65),0 12px 40px rgba(0,0,0,.10);
+  --ls-bg:var(--gs-list);--ls-bg2:var(--gs-wh);--ls-bd:var(--gs-bd);--ls-hover:var(--gs-wh2);--ls-sep:rgba(255,255,255,.4);--ls-selbg:color-mix(in srgb,var(--acc) 24%,transparent);--ls-selbd:var(--acc);--ls-mut:var(--gs-mut);--ls-opt-bg:#fff;--ls-opt-tx:#222;
+  background:#ffffff;
+  color-scheme:light;
+}
+body.glass::before{content:'';position:fixed;inset:0;z-index:-2;background-image:var(--gs-frame,linear-gradient(135deg,#e0e7ff 0%,#ffe3f0 35%,#e3f7ff 70%,#e6ffe3 100%));background-size:cover;background-position:center;background-attachment:fixed;}
+@keyframes glassDrift{0%{transform:translate(0,0) scale(1);}100%{transform:translate(1.5%,1%) scale(1.02);}}
+body.glass .toolbar{background:var(--gs-wh);border-bottom-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .page{background:transparent;}
+body.glass label{color:var(--gs-mut);}
+body.glass select, body.glass .btn, body.glass input, body.glass textarea{background:var(--gs-wh);color:var(--gs-tx);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+body.glass select option{background:#fff;color:var(--gs-tx);}
+body.glass select:hover, body.glass .btn:hover{background:var(--gs-wh2);border-color:var(--gs-bd2);}
+body.glass input::placeholder{color:var(--gs-mut);}
+body.glass .tb-btn{background:var(--gs-wh);color:var(--gs-mut);border-color:var(--gs-bd);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+body.glass .tb-btn:hover{background:var(--gs-wh2);color:var(--gs-tx);}
+body.glass .tb-btn.active{background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 60%,#fff),var(--acc));color:#fff;border-color:var(--gs-bd2);box-shadow:var(--gs-hl),0 4px 18px color-mix(in srgb,var(--acc) 40%,transparent);}
+body.glass .modal{background:var(--gs-wh);border-color:var(--gs-bd2);border-radius:22px;backdrop-filter:blur(48px) saturate(170%);-webkit-backdrop-filter:blur(48px) saturate(170%);box-shadow:var(--gs-hl),0 24px 70px rgba(0,0,0,.22);}
+body.glass .modal-overlay{background:rgba(10,14,20,.12)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+body.glass .modal-header{border-bottom-color:var(--gs-bd);}
+body.glass .modal-tab-row{border-bottom-color:var(--gs-bd);}
+body.glass .modal-tab{background:var(--gs-wh);border-color:var(--gs-bd);color:var(--gs-mut);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 22%,transparent);color:var(--gs-strong);border-color:color-mix(in srgb,var(--acc) 50%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.5);}
+body.glass .pack-tag{background:var(--gs-wh);border-color:var(--gs-bd);color:var(--gs-tx);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);}
+body.glass .pack-ver-select{background:var(--gs-wh);color:var(--gs-tx);border-color:var(--gs-bd);}
+body.glass .pack-input{background:var(--gs-wh);color:var(--gs-tx);border-color:var(--gs-bd);}
+body.glass .pack-input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,136,255,.2),inset 0 1px 0 rgba(255,255,255,.6);}
+body.glass .profile-split{background:var(--gs-list);border-color:var(--gs-bd);border-radius:18px;backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .profile-split-right .pack-section{border-bottom-color:rgba(255,255,255,.35);}
+body.glass .mod-list{background:var(--gs-list);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .mod-item{border-bottom-color:rgba(255,255,255,.4);}
+body.glass .mod-icon{background:rgba(255,255,255,.1);}
+body.glass .mod-meta{color:var(--gs-mut);}
+body.glass .mod-toggle{border-color:var(--gs-bd2);color:var(--gs-mut);}
+body.glass .mod-remove{border-color:var(--gs-bd2);color:var(--gs-mut);}
+body.glass .mod-switch .slider{background:rgba(20,26,36,.25);}
+body.glass .mod-search-input{background:var(--gs-wh);color:var(--gs-tx);border-color:var(--gs-bd);}
+body.glass .mod-result-item{border-bottom-color:rgba(255,255,255,.2);}
+body.glass .mod-result-item:hover{background:rgba(255,255,255,.1);}
+body.glass .profile-list, body.glass .admin-list{background:var(--gs-list);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .profile-item, body.glass .instance-item, body.glass .account-item{border-bottom-color:rgba(255,255,255,.2);}
+body.glass .profile-item:hover, body.glass .instance-item:hover, body.glass .account-item:hover{background:rgba(255,255,255,.1);}
+body.glass .profile-item.sel, body.glass .instance-item.sel, body.glass .account-item.sel{background:color-mix(in srgb,var(--acc) 24%,transparent);}
+body.glass .profile-sec-bar{background:var(--gs-wh);border-color:var(--gs-bd);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+body.glass .profile-sec-btn{background:var(--gs-wh);border-color:var(--gs-bd);color:var(--gs-mut);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+body.glass .profile-sec-btn:hover{background:var(--gs-wh2);color:var(--gs-tx);}
+body.glass .server-item{background:var(--gs-list);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+body.glass .server-item:hover{background:var(--gs-wh2);}
+body.glass .server-item.sel{background:color-mix(in srgb,var(--acc) 24%,transparent);border-color:var(--acc);}
+body.glass .server-console{background:var(--gs-wh);border-color:var(--gs-bd);color:var(--gs-tx);}
+body.glass .server-type-card{background:var(--gs-list);border-color:var(--gs-bd);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+body.glass .server-type-card:hover{background:var(--gs-wh2);}
+body.glass .server-type-card.sel{background:color-mix(in srgb,var(--acc) 24%,transparent);border-color:var(--acc);}
+body.glass .server-mod-result{border-bottom-color:rgba(255,255,255,.4);}
+body.glass .server-mod-added-tag{background:rgba(255,255,255,.1);border-color:var(--gs-bd);color:var(--gs-tx);}
+body.glass .friend-item{background:var(--gs-list);border-color:var(--gs-bd);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+body.glass .friend-item .friend-head{background:rgba(255,255,255,.1);}
+body.glass .settings-nav button{color:var(--gs-mut);}
+body.glass .settings-nav button:hover{background:rgba(255,255,255,.1);color:var(--gs-tx);}
+body.glass .color-btn{border-color:var(--gs-bd2);}
+body.glass .lp-bg{background:var(--gs-wh);border-color:var(--gs-bd);}
+body.glass .settings-section h2{color:var(--gs-mut);border-bottom-color:var(--gs-bd);}
+body.glass .status-text{color:var(--gs-mut);}
+body.glass h1{color:var(--gs-tx);}
+body.glass h2, body.glass h3, body.glass strong{color:var(--gs-tx);}
+body.glass .modal-close{border-color:var(--gs-bd2);color:var(--gs-mut);}
+body.glass .modal-close:hover{color:var(--gs-tx);border-color:rgba(255,255,255,.9);}
+body.glass .launch-right{background:var(--gs-list);border-left-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .launch-left{background:transparent;}
+body.glass .skin3d-wrap{background:var(--gs-wh);box-shadow:var(--gs-hl);}
+body.glass .skin-name-display, body.glass .skin-version-display{color:var(--gs-tx);}
+body.glass #stop-bar{background:var(--gs-wh)!important;border-bottom-color:var(--gs-bd2)!important;backdrop-filter:var(--gs-blur)!important;-webkit-backdrop-filter:var(--gs-blur)!important;}
+body.glass #stop-bar span{color:var(--gs-mut)!important;}
+body.glass .rp-card, body.glass .bg-card, body.glass .presence-card{background:var(--gs-list);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass input[type=range]{background:rgba(20,26,36,.2);}
+body.glass .mod-list-empty{color:var(--gs-mut);}
+body.glass .profile-meta{color:var(--gs-mut);}
+body.glass .btn-primary{background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 90%,#fff),var(--acc));border-color:var(--acc);box-shadow:var(--gs-hl),0 6px 22px color-mix(in srgb,var(--acc) 35%,transparent);}
+body.glass textarea, body.glass input{color-scheme:light;}
+body.glass #skin-url-input, body.glass #presence-server-input, body.glass #bugreport-webhook-input, body.glass #bugreport-title, body.glass #bugreport-desc{background:var(--gs-wh)!important;color:var(--gs-tx)!important;border-color:var(--gs-bd2)!important;backdrop-filter:var(--gs-blur)!important;-webkit-backdrop-filter:var(--gs-blur)!important;}
+body.glass #auto-rp-toggle{background:rgba(20,26,36,.15)!important;border-color:var(--gs-bd2)!important;}
+body.glass #auto-rp-knob{background:var(--gs-mut)!important;}
+body.glass .skin-change-label, body.glass .mod-result-desc, body.glass .lp-label{color:var(--gs-mut);}
+body.glass .corner-grid, body.glass .corner-preview{background:var(--gs-list);border-color:var(--gs-bd);box-shadow:var(--gs-hl);}
+body.glass #glass-bg-section .btn{background:var(--gs-wh2);}
+
+/* ── Glass: force ALL text to adapt to the background tone ── */
+body.glass, body.glass *, body.glass *::before, body.glass *::after{ color: var(--gs-tx) !important; }
+
+/* re-apply accent & semantic colors that must NOT follow the tone */
+body.glass .tb-btn.active, body.glass .btn-primary, body.glass .mod-install-btn, body.glass .profile-sec-btn.active, body.glass .modal-tab.active{color:#fff !important;}
+body.glass .btn-modrinth{background:color-mix(in srgb,#1bd96a 14%,transparent);border-color:#1bd96a55;color:#1bd96a !important;}
+body.glass .btn-curseforge{background:color-mix(in srgb,#f16422 14%,transparent);border-color:#f1642255;color:#f16422 !important;}
+body.glass .btn-dlall.on{color:#1bd96a !important;border-color:#1bd96a66;}
+body.glass .profile-share-btn{color:#1bd96a !important;}
+body.glass .settings-accent-dot, body.glass .running, body.glass .online, body.glass .status-online{color:#1bd96a !important;}
+body.glass .stopped, body.glass .offline, body.glass .status-offline{color:#888 !important;}
+body.glass .mod-remove, body.glass .danger, body.glass .delete, body.glass .error-text{color:#f44 !important;}
+body.glass .success-text{color:#5f5 !important;}
+body.glass .rt:hover{color:#f44 !important;}
+body.glass .mod-toggle:hover, body.glass .profile-edit-btn:hover{color:var(--acc) !important;border-color:var(--acc) !important;}
+body.glass .settings-nav button.active{background:var(--acc) !important;color:#fff !important;}
+body.glass .skin-editor-toolbar .tool-btn.active{background:var(--acc) !important;color:#fff !important;border-color:var(--acc) !important;}
+body.glass .mod-switch input:checked + .slider{background:var(--acc) !important;}
+body.glass .color-btn.sel{border-color:#fff !important;}
+
+/* glass mode also adds .light to body → body.light rules would pin fixed colors.
+   Re-assert the tone over them with higher/equal specificity. */
+body.glass #profile-version-display, body.glass #profile-version-select{color:var(--gs-tx) !important;}
+body.glass label[style*="color:#ccc"], body.glass strong[style*="color:#ccc"], body.glass h2[style*="color:#ccc"]{color:var(--gs-tx) !important;}
+body.glass #stop-bar span{color:var(--gs-mut) !important;}
+body.glass #skin-url-input, body.glass #presence-server-input, body.glass #bugreport-webhook-input, body.glass #bugreport-title, body.glass #bugreport-desc{background:var(--gs-wh)!important;color:var(--gs-tx)!important;border-color:var(--gs-bd2)!important;}
+
+/* ════════════════════════════════════════════
+   CUSTOM LIST SURFACES — every list container adapts to the theme
+   via the --ls-* variables (set on :root / body.light / body.glass).
+   Hardcoded dark/light colors are neutralized with
+   !important so all lists stay consistent in every theme.
+   ════════════════════════════════════════════ */
+/* ── list containers (boxed panels) ── */
+.mod-list, .admin-list, .account-list, .instance-list, .log-instances,
+.mod-results, .server-console, .profile-sec-bar, .mod-search-input, .pack-input{
+  background:var(--ls-bg) !important;
+  border-color:var(--ls-bd) !important;
+}
+/* ── standalone items (their own surface, sit on the page) ── */
+.server-item, .server-type-card, .friend-item, .pack-tag{
+  background:var(--ls-bg) !important;
+  border-color:var(--ls-bd) !important;
+}
+/* ── rows inside a boxed list (subtle tint on top of the container) ── */
+.mod-item, .profile-item, .account-item, .instance-item, .mod-result-item, .server-mod-result,
+.profile-sec-btn, .log-instances .instance-item{
+  background:var(--ls-bg2) !important;
+  border-color:var(--ls-bd) !important;
+}
+/* ── item separators ── */
+.mod-item, .profile-item, .account-item, .instance-item, .server-mod-result, .mod-result-item{
+  border-bottom:1px solid var(--ls-sep);
+}
+/* ── hover ── */
+.mod-item:hover,.profile-item:hover,.account-item:hover,.instance-item:hover,.server-item:hover,
+.server-type-card:hover,.friend-item:hover,.mod-result-item:hover,.server-mod-result:hover,
+.profile-sec-btn:hover,.log-instances .instance-item:hover{
+  background:var(--ls-hover) !important;
+}
+/* ── selection (uses accent) ── */
+.profile-item.sel,.instance-item.sel,.server-item.sel,.server-type-card.sel,.account-item.sel,
+.log-instances .instance-item.sel{
+  background:var(--ls-selbg) !important;
+  border-color:var(--ls-selbd) !important;
+}
+.profile-sec-btn.active{background:var(--acc) !important;color:#fff !important;border-color:var(--acc) !important;}
+/* ── muted text inside lists ── */
+body .mod-meta,body .profile-meta,body .account-type,body .server-meta,body .mod-result-desc,body .mod-list-empty,
+body .lp-label,body .skin-change-label{color:var(--ls-mut) !important;}
+body .server-name{color:var(--gs-strong,#ccc) !important;}
+body .friend-item .friend-head{background:var(--ls-hover) !important;}
+/* ── selection dropdowns (select + native popup options) ── */
+select{color-scheme:dark;}
+select{
+  background:var(--ls-bg) !important;
+  color:var(--gs-tx,currentColor) !important;
+  border-color:var(--ls-bd) !important;
+}
+select:hover{background:var(--ls-hover) !important;border-color:var(--ls-bd) !important;}
+select:focus{border-color:var(--acc) !important;}
+select option{
+  background:var(--ls-opt-bg,#181818) !important;
+  color:var(--ls-opt-tx,#eee) !important;
+}
+body.light select{color-scheme:light;}
+/* ── inputs inside lists keep the list surface ── */
+body .mod-search-input, body .pack-input{color:var(--gs-tx,currentColor) !important;}
 .pack-section{margin-bottom:1em;}
 .pack-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5em;}
 .pack-section h3{font-size:.8em;text-transform:uppercase;letter-spacing:.05em;color:#555;}
@@ -458,6 +640,54 @@ body.light .instance-item{border-bottom-color:#eee;color:#111;}
 .feature-card p{margin:0;font-size:.76em;color:#777;line-height:1.5;}
 body.light .feature-card{background:#fff;border-color:#ddd;}
 body.light .feature-card p{color:#666;}
+
+/* ════════════════════════════════════════════
+   CUSTOM DROPDOWN — replaces native <select> so it matches every theme
+   ════════════════════════════════════════════ */
+.cdrop{position:relative;display:inline-block;vertical-align:middle;max-width:100%;}
+.cdrop select{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;border:none;background:transparent;appearance:none;-webkit-appearance:none;color:transparent;border-radius:0;padding:0;margin:0;font:inherit;}
+.cdrop-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:.6em;padding:.5em .85em;border:1px solid var(--ls-bd,#2a2a2a);border-radius:var(--r,.5em);background:var(--ls-bg,#0d0d0d);color:var(--gs-tx,currentColor) !important;font-size:.85em;cursor:pointer;font-family:inherit;line-height:1.25;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:inset 0 1px 0 rgba(255,255,255,.55);transition:all .15s;}
+.cdrop-trigger::after{content:'▾';flex-shrink:0;color:var(--ls-mut,#888);margin-left:auto;transition:transform .15s;}
+.cdrop-tiny .cdrop-trigger{padding:.08em .55em;border-radius:999px;font-size:.8em;}
+.cdrop:hover .cdrop-trigger{background:var(--ls-hover,#141414) !important;border-color:var(--ls-bd,#2a2a2a);}
+.cdrop.open .cdrop-trigger{border-color:var(--acc) !important;}
+.cdrop.open .cdrop-trigger::after{transform:rotate(180deg);}
+body .cdrop-menu{position:fixed;z-index:5000;min-width:100%;max-width:min(100vw,32em);max-height:280px;overflow-y:auto;background:var(--ls-opt-bg,#181818) !important;border:1px solid var(--ls-bd,#2a2a2a);border-radius:var(--r,.5em);box-shadow:0 14px 40px rgba(0,0,0,.32);display:none;padding:.3em;}
+body .cdrop.open .cdrop-menu{display:block;}
+body .cdrop-opt{display:flex;align-items:center;gap:.5em;padding:.34em .6em;border-radius:calc(var(--r,.5em)*.6);cursor:pointer;font-size:.8em;color:var(--ls-opt-tx,#eee) !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .12s;}
+body .cdrop-opt:hover{background:var(--ls-hover,#141414) !important;}
+body .cdrop-opt.sel{background:var(--ls-selbg,color-mix(in srgb,var(--acc) 22%,transparent)) !important;color:var(--gs-strong,var(--ls-opt-tx,#eee)) !important;font-weight:600;}
+body .cdrop-opt.disabled{opacity:.4;pointer-events:none;}
+body .cdrop-menu::-webkit-scrollbar{width:8px;}
+body .cdrop-menu::-webkit-scrollbar-thumb{background:var(--ls-bd,#333);border-radius:999px;}
+.cdrop:focus-within .cdrop-trigger{border-color:var(--acc) !important;}
+
+/* ── theme-specific dropdown surfaces ── */
+/* glass: frosted, transparent, text adapts via setGlassTone (always readable) */
+body.glass .cdrop-trigger{background:var(--gs-wh,#232a33);border-color:var(--gs-bd,#3a4445) !important;color:var(--gs-tx,#ddd) !important;box-shadow:var(--gs-hl,inset 0 1px 0 rgba(255,255,255,.6));backdrop-filter:var(--gs-blur,blur(30px) saturate(150%));-webkit-backdrop-filter:var(--gs-blur,blur(30px) saturate(150%));}
+body.glass .cdrop:hover .cdrop-trigger{background:var(--gs-wh2,#2d3640) !important;border-color:var(--gs-bd2,#4a5658) !important;}
+body.glass .cdrop-menu{
+  --ls-opt-bg:var(--gs-list,var(--gs-wh,rgba(255,255,255,.32)));
+  --ls-opt-tx:var(--gs-tx,#ddd);
+  background:var(--ls-opt-bg) !important;
+  border-color:var(--gs-bd,#3a4445) !important;
+  backdrop-filter:blur(30px) saturate(160%) !important;
+  -webkit-backdrop-filter:blur(30px) saturate(160%) !important;
+  box-shadow:var(--gs-hl,inset 0 1px 0 rgba(255,255,255,.5)),0 18px 50px rgba(0,0,0,.35);
+}
+body.glass .cdrop-opt{color:var(--gs-tx,#ddd) !important;}
+body.glass .cdrop-opt:hover{background:var(--gs-wh2,#2d3640) !important;}
+body.glass .cdrop-opt.sel{background:color-mix(in srgb,var(--acc) 26%,transparent) !important;color:var(--gs-strong,#fff) !important;border-color:color-mix(in srgb,var(--acc) 55%,transparent) !important;}
+body.glass .cdrop-opt.disabled{color:var(--gs-mut,#8a9499) !important;}
+body.glass .cdrop-menu::-webkit-scrollbar-thumb{background:var(--gs-bd2,#4a5658);}
+/* light: solid white surface, black text for max readability */
+body.light .cdrop-trigger{color:#000 !important;}
+body.light .cdrop-menu{background:#fff !important;border-color:#ccc !important;}
+body.light .cdrop-opt{color:#000 !important;}
+body.light .cdrop-opt:hover{background:#f0f0f0 !important;}
+body.light .cdrop-opt.sel{background:#ddeeff !important;color:#000 !important;border-color:var(--acc) !important;}
+body.light .cdrop-opt.disabled{color:#999 !important;}
+body.light .cdrop-trigger::after{color:#666 !important;}
 </style>
 </head>
 <body>
@@ -465,7 +695,6 @@ body.light .feature-card p{color:#666;}
 <div id="launcher-screen" style="display:flex">
   <div class="toolbar">
     <button class="tb-btn active" data-page="launch-page" data-i18n="tab_launch">Launch</button>
-    <button class="tb-btn" data-page="recent-page" data-i18n="tab_recent">Recent</button>
     <button class="tb-btn" data-page="mods-page" data-i18n="tab_mods">Client Options</button>
     <button class="tb-btn" data-page="profiles-page" data-i18n="tab_profiles">Profiles</button>
     <button class="tb-btn" data-page="cape-page" data-i18n="tab_cape">Capes</button>
@@ -515,13 +744,15 @@ body.light .feature-card p{color:#666;}
             <div class="lp-bg"><div class="lp-fill" id="lp-fill"></div></div>
             <div class="lp-label" id="lp-label"></div>
           </div>
-          <div class="launch-stats" id="launch-stats">
-            <div class="stat-card"><div class="stat-label" data-i18n="stat_played">Playtime</div><div class="stat-value" id="stat-played">—</div></div>
-            <div class="stat-card"><div class="stat-label" data-i18n="stat_launcher_open">Launcher open</div><div class="stat-value" id="stat-launcher-open">—</div></div>
-            <div class="stat-card"><div class="stat-label" data-i18n="stat_launches">Launches</div><div class="stat-value" id="stat-launches">—</div></div>
-            <div class="stat-card"><div class="stat-label" data-i18n="stat_avg_session">Avg session</div><div class="stat-value" id="stat-avg-session">—</div></div>
-            <div class="stat-card"><div class="stat-label" data-i18n="stat_last_played">Last played</div><div class="stat-value" id="stat-last-played">—</div></div>
-            <div class="stat-card"><div class="stat-label" data-i18n="stat_first_launch">First launch</div><div class="stat-value" id="stat-first-launch">—</div></div>
+          <div class="launch-recent" style="margin-top:1.5em;padding-top:1em">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8em;flex-wrap:wrap;gap:.4em">
+              <h2 style="font-size:.95em;margin:0;color:#ccc" data-i18n="h_recent">Recent Played</h2>
+              <div style="display:flex;align-items:center;gap:.4em">
+                <button class="btn btn-sm" id="recent-clear-btn" style="color:#f44;width:auto" data-i18n="btn_clear_history">Clear History</button>
+                <span style="font-size:.8em;color:#555" id="recent-count"></span>
+              </div>
+            </div>
+            <div id="recent-sections"></div>
           </div>
         </div>
         <div class="launch-right">
@@ -550,33 +781,14 @@ body.light .feature-card p{color:#666;}
         </div>
       </div>
 
-    <!-- ══ RECENT ══ -->
-    <div id="recent-page" class="page">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8em;flex-wrap:wrap;gap:.4em">
-        <h1 style="margin:0" data-i18n="h_recent">Recent Played</h1>
-        <div style="display:flex;align-items:center;gap:.4em">
-          <button class="btn btn-sm" id="recent-clear-btn" style="color:#f44;width:auto" data-i18n="btn_clear_history">Clear History</button>
-          <span style="font-size:.8em;color:#555" id="recent-count"></span>
-        </div>
-      </div>
-      <div id="recent-sections"></div>
-    </div>
-
     <!-- ══ CLIENT-MODS ══ -->
     <div id="mods-page" class="page">
       <div class="mods-header">
         <h1 data-i18n="h_mods">Client Options</h1>
         <div class="mods-actions">
-          <button class="btn btn-sm btn-modrinth" id="btn-modrinth-global" data-i18n="btn_modrinth">Modrinth</button>
-          <button class="btn btn-sm btn-curseforge" id="btn-curseforge-global" data-i18n="btn_curseforge">CurseForge</button>
+          <button class="btn btn-sm btn-modrinth" id="btn-modrinth-global">+</button>
         </div>
 
-      </div>
-      <div style="display:flex;gap:.6em;align-items:center;margin-bottom:.6em;flex-wrap:wrap">
-        <label style="display:flex;align-items:center;gap:.5em;cursor:pointer;font-size:.82em;color:#ccc;user-select:none">
-          <input type="checkbox" id="use-crux-mod-toggle" style="width:1.1em;height:1.1em;cursor:pointer">
-          <span>Use Crux Client Features</span>
-        </label>
       </div>
       <div style="display:flex;gap:.4em;margin-bottom:.6em;flex-wrap:wrap">
         <button class="btn btn-sm mod-filter-btn active" data-filter="all" id="filter-all" data-i18n="filter_all">All</button>
@@ -595,8 +807,7 @@ body.light .feature-card p{color:#666;}
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6em;flex-wrap:wrap;gap:.4em">
           <h2 style="font-size:.95em;margin:0;color:#ccc" data-i18n="client_rp_title">Client Resource Packs</h2>
           <div style="display:flex;gap:.4em;align-items:center">
-            <button class="btn btn-sm btn-modrinth" id="btn-rp-modrinth-global">Modrinth</button>
-            <button class="btn btn-sm btn-curseforge" id="btn-rp-curseforge-global">CurseForge</button>
+            <button class="btn btn-sm btn-modrinth" id="btn-rp-modrinth-global">+</button>
             <label style="display:flex;align-items:center;gap:.5em;cursor:pointer;font-size:.82em;color:#ccc;user-select:none">
               <span data-i18n="auto_use">Auto-use</span>
               <div id="auto-rp-toggle" style="width:2.4em;height:1.3em;border-radius:999px;background:#333;border:1px solid #444;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
@@ -617,10 +828,15 @@ body.light .feature-card p{color:#666;}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8em;flex-wrap:wrap;gap:.4em">
         <h1 style="margin:0" data-i18n="h_profiles">Profiles</h1>
         <div style="display:flex;gap:.4em">
-          <button class="btn btn-sm btn-modrinth" id="import-modpack-modrinth-btn" data-i18n="btn_import_modpack_modrinth">📦 Modrinth</button>
-          <button class="btn btn-sm btn-curseforge" id="import-modpack-curseforge-btn" data-i18n="btn_import_modpack_curseforge">📦 CurseForge</button>
-          <button class="btn btn-sm" id="import-share-btn" style="border-color:#1bd96a44;color:#1bd96a" data-i18n="btn_import_share">📋 Import Share Code</button>
-          <button class="btn btn-sm" id="import-norisk-btn" style="border-color:#e63c8a44;color:#e63c8a" data-i18n="btn_import_norisk">⬇ NoRisk Client</button>
+          <div style="position:relative">
+            <button class="btn btn-sm btn-primary" id="import-btn" style="color:#000">Import ▾</button>
+            <div id="import-dropdown" style="display:none;position:absolute;right:0;top:calc(100% + .35em);background:#1a1a1a;border:1px solid #2f2f2f;border-radius:.6em;padding:.35em;min-width:14em;z-index:1200;box-shadow:0 8px 24px rgba(0,0,0,.5)">
+              <button class="btn btn-sm btn-modrinth" id="import-modpack-modrinth-btn" style="width:100%;text-align:left" data-i18n="btn_import_modpack_modrinth">📦 Modrinth Modpack</button>
+              <button class="btn btn-sm btn-curseforge" id="import-modpack-curseforge-btn" style="width:100%;text-align:left" data-i18n="btn_import_modpack_curseforge">📦 CurseForge Modpack</button>
+              <button class="btn btn-sm" id="import-share-btn" style="width:100%;text-align:left;color:#1bd96a" data-i18n="btn_import_share">📋 Import Share Code</button>
+              <button class="btn btn-sm" id="import-norisk-btn" style="width:100%;text-align:left;color:#e63c8a" data-i18n="btn_import_norisk">⬇ NoRisk Client</button>
+            </div>
+          </div>
           <button class="btn btn-sm btn-primary" id="new-profile-btn" data-i18n="new_profile">+ New Profile</button>
         </div>
       </div>
@@ -721,7 +937,20 @@ body.light .feature-card p{color:#666;}
           <select id="theme-select">
             <option value="dark" data-i18n="theme_dark">Dark</option>
             <option value="light" data-i18n="theme_light">Light</option>
+            <option value="glass" data-i18n="theme_glass">Glass</option>
           </select>
+        </div>
+      </div>
+      <div class="settings-section" id="glass-bg-section" style="display:none">
+        <h2 data-i18n="sec_glass_bg">Glass Background</h2>
+        <p style="color:#555;font-size:.76em;margin-top:.2em;margin-bottom:.6em" data-i18n="desc_glass_bg">Custom background behind the frosted glass. Only shown in the Glass theme.</p>
+        <div style="display:flex;align-items:center;gap:.8em">
+          <img id="glass-bg-preview" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid #444;display:none">
+          <label class="btn" style="cursor:pointer;margin:0">
+            <span data-i18n="btn_choose_bg">Choose Image…</span>
+            <input type="file" id="glass-bg-file-input" accept="image/*" hidden>
+          </label>
+          <button class="btn" id="glass-bg-remove-btn" style="margin:0;display:none" data-i18n="btn_remove_bg">Remove</button>
         </div>
       </div>
       <div class="settings-section">
@@ -734,7 +963,7 @@ body.light .feature-card p{color:#666;}
       <div class="settings-section">
         <h2 data-i18n="sec_launch_mode">Launch Mode</h2>
         <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc">
-          <input type="checkbox" id="use-original-launcher-toggle" style="width:1.1em;height:1.1em;cursor:pointer">
+          <label class="mod-switch"><input type="checkbox" id="use-original-launcher-toggle"><span class="slider"></span></label>
           <span data-i18n="launch_via_launcher">Launch via original Minecraft Launcher</span>
         </label>
         <p style="color:#555;font-size:.76em;margin-top:.3em" data-i18n="desc_launch_mode_detail">Opens the official Minecraft Launcher (Java Edition) instead of launching directly.</p>
@@ -752,11 +981,11 @@ body.light .feature-card p{color:#666;}
       <div class="settings-section">
         <h2 data-i18n="sec_after_launch">After Launch</h2>
         <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc">
-          <input type="checkbox" id="open-logs-toggle" style="width:1.1em;height:1.1em;cursor:pointer">
+          <label class="mod-switch"><input type="checkbox" id="open-logs-toggle"><span class="slider"></span></label>
           <span data-i18n="after_launch_logs">Open logs after launch</span>
         </label>
         <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc;margin-top:.4em">
-          <input type="checkbox" id="close-launcher-toggle" style="width:1.1em;height:1.1em;cursor:pointer">
+          <label class="mod-switch"><input type="checkbox" id="close-launcher-toggle"><span class="slider"></span></label>
           <span data-i18n="after_launch_close">Close launcher while playing</span>
         </label>
       </div>
@@ -804,7 +1033,7 @@ body.light .feature-card p{color:#666;}
           <textarea id="bugreport-desc" rows="5" placeholder="What happened? What did you expect?" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;font-family:inherit;resize:vertical;outline:none"></textarea>
         </div>
         <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc;margin-bottom:1em">
-          <input type="checkbox" id="bugreport-include-logs" style="width:1.1em;height:1.1em;cursor:pointer" checked>
+          <label class="mod-switch"><input type="checkbox" id="bugreport-include-logs" checked><span class="slider"></span></label>
           <span data-i18n="bugreport_include_logs">Attach launcher &amp; game logs (recommended)</span>
         </label>
         <button class="btn btn-primary" id="bugreport-send-btn" style="font-size:1em;padding:.6em 1.5em" data-i18n="btn_report_send">📨 Send Report</button>
@@ -1043,24 +1272,24 @@ body.light .feature-card p{color:#666;}
               <label data-i18n="sv_motd">MOTD</label>
               <input type="text" id="server-motd-input" value="Crux Server" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
             </div>
-            <div class="form-row">
+              <div class="form-row">
               <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                <input type="checkbox" id="server-online-mode" checked style="accent-color:var(--acc)"> <span data-i18n="sv_online_mode">Online Mode</span>
+                <label class="mod-switch"><input type="checkbox" id="server-online-mode" checked><span class="slider"></span></label> <span data-i18n="sv_online_mode">Online Mode</span>
               </label>
             </div>
             <div class="form-row">
               <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                <input type="checkbox" id="server-pvp" checked style="accent-color:var(--acc)"> <span data-i18n="sv_pvp">PvP</span>
+                <label class="mod-switch"><input type="checkbox" id="server-pvp" checked><span class="slider"></span></label> <span data-i18n="sv_pvp">PvP</span>
               </label>
             </div>
             <div class="form-row">
               <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                <input type="checkbox" id="server-cmdblocks" checked style="accent-color:var(--acc)"> <span data-i18n="sv_command_blocks">Command Blocks</span>
+                <label class="mod-switch"><input type="checkbox" id="server-cmdblocks" checked><span class="slider"></span></label> <span data-i18n="sv_command_blocks">Command Blocks</span>
               </label>
             </div>
             <div class="form-row">
               <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                <input type="checkbox" id="server-whitelist" style="accent-color:var(--acc)"> <span data-i18n="sv_whitelist">Whitelist</span>
+                <label class="mod-switch"><input type="checkbox" id="server-whitelist"><span class="slider"></span></label> <span data-i18n="sv_whitelist">Whitelist</span>
               </label>
             </div>
             <div class="form-row">
@@ -1081,47 +1310,47 @@ body.light .feature-card p{color:#666;}
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6em;max-width:40em">
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-allow-flight" style="accent-color:var(--acc)"> <span data-i18n="sv_allow_flight">Allow Flight</span>
+                  <label class="mod-switch"><input type="checkbox" id="server-allow-flight"><span class="slider"></span></label> <span data-i18n="sv_allow_flight">Allow Flight</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-spawn-animals" checked style="accent-color:var(--acc)"> <span data-i18n="sv_spawn_animals">Spawn Animals</span>
+                  <label class="mod-switch"><input type="checkbox" id="server-spawn-animals" checked><span class="slider"></span></label> <span data-i18n="sv_spawn_animals">Spawn Animals</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-spawn-monsters" checked style="accent-color:var(--acc)"> <span data-i18n="sv_spawn_monsters">Spawn Monsters</span>
+                  <label class="mod-switch"><input type="checkbox" id="server-spawn-monsters" checked><span class="slider"></span></label> <span data-i18n="sv_spawn_monsters">Spawn Monsters</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-spawn-npcs" checked style="accent-color:var(--acc)"> <span data-i18n="sv_spawn_npcs">Spawn NPCs</span>
+                  <label class="mod-switch"><input type="checkbox" id="server-spawn-npcs" checked><span class="slider"></span></label> <span data-i18n="sv_spawn_npcs">Spawn NPCs</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-allow-nether" checked style="accent-color:var(--acc)"> <span data-i18n="sv_allow_nether">Allow Nether</span>
+                  <label class="mod-switch"><input type="checkbox" id="server-allow-nether" checked><span class="slider"></span></label> <span data-i18n="sv_allow_nether">Allow Nether</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-force-gamemode" style="accent-color:var(--acc)"> <span data-i18n="sv_force_gamemode">Force Gamemode</span>
+                  <label class="mod-switch"><input type="checkbox" id="server-force-gamemode"><span class="slider"></span></label> <span data-i18n="sv_force_gamemode">Force Gamemode</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-prevent-proxy" style="accent-color:var(--acc)"> <span data-i18n="sv_prevent_proxy">Prevent Proxy</span>
+                  <label class="mod-switch"><input type="checkbox" id="server-prevent-proxy"><span class="slider"></span></label> <span data-i18n="sv_prevent_proxy">Prevent Proxy</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-sync-chunks" checked style="accent-color:var(--acc)"> <span data-i18n="sv_sync_chunks">Sync Chunk Writes</span>
+                  <label class="mod-switch"><input type="checkbox" id="server-sync-chunks" checked><span class="slider"></span></label> <span data-i18n="sv_sync_chunks">Sync Chunk Writes</span>
                 </label>
               </div>
               <div class="form-row">
                 <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <input type="checkbox" id="server-hide-players" style="accent-color:var(--acc)"> <span data-i18n="sv_hide_players">Hide Online Players</span>
+                  <label class="mod-switch"><input type="checkbox" id="server-hide-players"><span class="slider"></span></label> <span data-i18n="sv_hide_players">Hide Online Players</span>
                 </label>
               </div>
               <div class="form-row">
@@ -1391,6 +1620,7 @@ body.light .feature-card p{color:#666;}
           <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="forge" id="ml-forge"> Forge</label>
           <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="neoforge" id="ml-neoforge"> NeoForge</label>
           <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="vanilla" id="ml-vanilla"> Vanilla</label>
+          <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="bedrock" id="ml-bedrock"> Bedrock</label>
         </div>
       </div>
       <div class="form-row" style="max-width:100%">
@@ -1415,8 +1645,7 @@ body.light .feature-card p{color:#666;}
           <div class="pack-section-header">
             <h3 data-i18n="profile_mods">Mods</h3>
             <div style="display:flex;gap:.35em">
-              <button class="btn btn-sm btn-modrinth" id="profile-btn-modrinth">+ Modrinth</button>
-              <button class="btn btn-sm btn-curseforge" id="profile-btn-curseforge">+ CurseForge</button>
+              <button class="btn btn-sm btn-modrinth" id="profile-btn-modrinth">+</button>
             </div>
           </div>
           <div class="profile-split" id="profile-split">
@@ -1433,8 +1662,7 @@ body.light .feature-card p{color:#666;}
                 <div class="pack-section-header">
                   <h3 data-i18n="profile_datapacks">Datapacks</h3>
                   <div style="display:flex;gap:.35em">
-                    <button class="btn btn-sm btn-modrinth" id="profile-btn-dp-modrinth">+ Modrinth</button>
-                    <button class="btn btn-sm btn-curseforge" id="profile-btn-dp-curseforge">+ CurseForge</button>
+                    <button class="btn btn-sm btn-modrinth" id="profile-btn-dp-modrinth">+</button>
                   </div>
                 </div>
                 <div class="pack-list" id="profile-datapacks"></div>
@@ -1443,8 +1671,7 @@ body.light .feature-card p{color:#666;}
                 <div class="pack-section-header">
                   <h3 data-i18n="profile_resourcepacks">Resource Packs</h3>
                   <div style="display:flex;gap:.35em">
-                    <button class="btn btn-sm btn-modrinth" id="profile-btn-rp-modrinth">+ Modrinth</button>
-                    <button class="btn btn-sm btn-curseforge" id="profile-btn-rp-curseforge">+ CurseForge</button>
+                    <button class="btn btn-sm btn-modrinth" id="profile-btn-rp-modrinth">+</button>
                   </div>
                 </div>
                 <div class="pack-list" id="profile-resourcepacks"></div>
@@ -1453,8 +1680,7 @@ body.light .feature-card p{color:#666;}
                 <div class="pack-section-header">
                   <h3 data-i18n="profile_shaderpacks">Shader Packs</h3>
                   <div style="display:flex;gap:.35em">
-                    <button class="btn btn-sm btn-modrinth" id="profile-btn-sp-modrinth">+ Modrinth</button>
-                    <button class="btn btn-sm btn-curseforge" id="profile-btn-sp-curseforge">+ CurseForge</button>
+                    <button class="btn btn-sm btn-modrinth" id="profile-btn-sp-modrinth">+</button>
                   </div>
                 </div>
                 <div class="pack-list" id="profile-shaderpacks"></div>
@@ -1469,15 +1695,20 @@ body.light .feature-card p{color:#666;}
       </div>
       <div style="border-top:1px solid #1e1e1e;padding-top:.7em;margin-top:.4em">
         <label style="display:flex;align-items:center;gap:.5em;cursor:pointer;font-size:.82em;color:#ccc;margin-bottom:.4em">
-          <input type="checkbox" id="profile-use-client-mods" checked>
-          Use Client Mods (from Client Options tab)
+          <label class="mod-switch"><input type="checkbox" id="profile-use-crux-mod" checked><span class="slider"></span></label>
+          <span data-i18n="btn_use_crux_mod">Use Crux Client Features</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:.5em;cursor:pointer;font-size:.82em;color:#ccc;margin-bottom:.4em">
+          <label class="mod-switch"><input type="checkbox" id="profile-use-client-mods" checked><span class="slider"></span></label>
+          <span data-i18n="btn_use_client_mods">Use Client Mods (from Client Options tab)</span>
         </label>
         <label style="display:flex;align-items:center;gap:.5em;cursor:pointer;font-size:.82em;color:#ccc">
-          <input type="checkbox" id="profile-use-client-rps" checked>
-          Use Client Resource Packs (from Client Options tab)
+          <label class="mod-switch"><input type="checkbox" id="profile-use-client-rps" checked><span class="slider"></span></label>
+          <span data-i18n="btn_use_client_rps">Use Client Resource Packs (from Client Options tab)</span>
         </label>
       </div>
       <div style="display:flex;gap:.5em;margin-top:.8em;align-items:center">
+        <button class="btn btn-sm btn-primary" id="save-profile-btn" style="width:auto;display:none" data-i18n="btn_save">Save</button>
         <button class="btn btn-sm" id="share-profile-btn" style="width:auto;border-color:#1bd96a44;color:#1bd96a" data-i18n="btn_share">Share</button>
         <button class="btn btn-sm" id="download-offline-btn" style="width:auto" title="Download all mods + game files so this profile works without internet">⬇ Download for offline</button>
         <button class="btn btn-sm" id="delete-profile-btn" style="width:auto;border-color:#f4444444;color:#f44" data-i18n="btn_delete">Delete</button>
@@ -1638,6 +1869,7 @@ body.light .feature-card p{color:#666;}
   <div id="update-content" style="max-width:500px;width:100%">
     <h1 style="margin-bottom:.3em" id="update-title">Update Available</h1>
     <p style="color:#aaa;margin-bottom:.5em" id="update-version-text"></p>
+    <div id="update-notes-box" style="display:none;margin:.5em auto 1.2em;max-height:180px;overflow-y:auto;text-align:left;background:#111;border:1px solid #222;border-radius:var(--r);padding:.8em 1em;font-size:.8em;color:#bbb;line-height:1.5;white-space:pre-wrap"></div>
     <div id="update-progress-wrap" style="display:none;margin-bottom:1.5em">
       <div style="background:#222;border-radius:.5em;height:8px;overflow:hidden;margin-bottom:.5em">
         <div id="update-progress-bar" style="background:var(--acc,#0088ff);height:100%;width:0%;transition:width .3s"></div>
@@ -1650,6 +1882,7 @@ body.light .feature-card p{color:#666;}
       <button class="btn" id="update-github-btn" style="display:none" data-i18n="update_github">Download from GitHub</button>
       <button class="btn" id="update-bugreport-btn" style="border-color:#f44;color:#f44" data-i18n="update_bugreport">🐛 Bug Report</button>
     </div>
+    <button class="btn" id="update-later-btn" style="margin-top:1em;font-size:.85em;border-color:#444;color:#888" data-i18n="update_later">Later</button>
     <p id="update-error-text" style="color:#f44;font-size:.85em;margin-top:1em;display:none"></p>
     <p id="update-done-text" style="color:#5f5;font-size:.85em;margin-top:1em;display:none"></p>
   </div>
@@ -1699,7 +1932,6 @@ window.addEventListener('visibilitychange',()=>{
   if(!appInForeground()) return;
   checkConnectivity();
   updateSkinDisplay();
-  if(document.getElementById('launch-page').classList.contains('active')) renderLaunchStats();
   refreshFriendStatuses(); renderChatFriends(); refreshFriendRequests();
 });
 
@@ -1777,9 +2009,14 @@ async function bootLauncher(){
     } catch {}
 
     if(settings.theme==='light') applyTheme(true);
+    else if(settings.theme==='glass' || !settings.theme) applyTheme('glass');
+    else applyTheme(false);
     if(typeof settings.accentIdx==='number'){currentAccentIdx=settings.accentIdx;}
     applyLanguage(settings.lang || 'en');
     applyCornerRadius();
+    updateGlassBgSection();
+    try { glassDefaultBg = (await ipcRenderer.invoke('get-default-glass-bg')) || ''; } catch {}
+    applyGlassBg();
 
     buildColorGrid();
     applyAccent(currentAccentIdx);
@@ -1790,7 +2027,6 @@ async function bootLauncher(){
       document.getElementById('open-logs-toggle').checked = !!settings.openLogsAfterLaunch;
       document.getElementById('close-launcher-toggle').checked = !!settings.closeLauncherWhilePlaying;
       document.getElementById('use-original-launcher-toggle').checked = !!settings.useOriginalLauncher;
-      document.getElementById('use-crux-mod-toggle').checked = !!settings.useCruxClientMod;
     } catch {}
     applyTabBarPosition();
     renderModList();
@@ -1894,50 +2130,10 @@ function showPage(id){
   });
   if(id==='mods-page') syncModFilterToProfile();
   if(id==='logs-page'){ renderInstanceList(); refreshLogSelect(); updateStopButtons(); }
-  if(id==='recent-page'||id==='launch-page') renderRecentList();
+  if(id==='launch-page') renderRecentList();
   if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
   if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); refreshChat(); }
-  if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); renderLaunchStats(); }
-}
-
-let _statsTimer = null;
-function renderLaunchStats(){
-  if(_statsTimer===null){ _statsTimer=setInterval(()=>{ if(appInForeground() && document.getElementById('launch-page').classList.contains('active')) renderLaunchStats(); },5000); }
-  ipcRenderer.invoke('load-stats').then(s=>{
-    s = s||{};
-    const set=(id,val)=>document.getElementById(id).textContent=val;
-    set('stat-played', fmtDuration(s.playMs));
-    set('stat-launcher-open', fmtDuration(s.launcherOpenMs));
-    set('stat-launches', String(s.launches||0));
-    const avg = s.launches>0 ? Math.round((s.playMs||0)/s.launches) : 0;
-    set('stat-avg-session', avg>0 ? fmtDuration(avg) : '—');
-    set('stat-last-played', fmtRelative(s.lastPlayed));
-    set('stat-first-launch', fmtDate(s.firstLaunch));
-  }).catch(()=>{});
-}
-function fmtDuration(ms){
-  if(!ms || ms<0) return '—';
-  const totalMin = Math.floor(ms/60000);
-  const h = Math.floor(totalMin/60);
-  const m = totalMin % 60;
-  if(h>0) return h+'h '+(m>0?m+'m':'');
-  if(m>0) return m+'m';
-  return Math.max(1,Math.floor(ms/1000))+'s';
-}
-function fmtRelative(ts){
-  if(!ts) return '—';
-  const min = Math.floor((Date.now()-ts)/60000);
-  if(min<1) return t('stat_now');
-  if(min<60) return min+'m';
-  const h = Math.floor(min/60);
-  if(h<24) return h+'h';
-  const d = Math.floor(h/24);
-  if(d<30) return d+'d';
-  return fmtDate(ts);
-}
-function fmtDate(ts){
-  if(!ts) return '—';
-  return new Date(ts).toLocaleDateString();
+  if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); }
 }
 
 function bindToolbar(){
@@ -1945,11 +2141,13 @@ function bindToolbar(){
 }
 
 function applyTheme(l){
-  document.body.classList.toggle('light',l);
-  // Theme is only switched from Settings now; the toolbar icons were removed.
+  const isLight = (l === true || l === 'light' || l === 'glass');
+  document.body.classList.toggle('light', isLight);
+  document.body.classList.toggle('glass', l === 'glass');
+  document.body.classList.remove('win7','xp');
   const moon=document.getElementById('icon-moon'), sun=document.getElementById('icon-sun');
-  if(moon) moon.style.display=l?'none':'';
-  if(sun) sun.style.display=l?'':'none';
+  if(moon) moon.style.display=isLight?'none':'';
+  if(sun) sun.style.display=isLight?'':'none';
 }
 
 // ════════════════════════════════════════
@@ -2124,12 +2322,14 @@ const LANGS={
     desc_launch_mode_detail:'Opens the official Minecraft Launcher (Java Edition) instead of launching directly.',
     sec_after_launch:'After Launch', desc_open_logs:'Open logs after launch', desc_close_launcher:'Close launcher while playing',
     sec_tab_bar:'Tab Bar', lbl_tab_bar_pos:'Position', tab_bar_top:'Top', tab_bar_bottom:'Bottom',
-    sec_theme:'Theme', lbl_theme:'Appearance', theme_dark:'Dark', theme_light:'Light',
+    sec_theme:'Theme', lbl_theme:'Appearance', theme_dark:'Dark', theme_light:'Light', theme_glass:'Glass', theme_win7:'Windows 7', theme_xp:'Windows XP',
+    sec_glass_bg:'Glass Background', desc_glass_bg:'Custom background behind the frosted glass. Only shown in the Glass theme.', btn_choose_bg:'Choose Image…', btn_remove_bg:'Remove',
     sec_corner_radius:'Corner Radius', lbl_corner_radius:'Roundness', corner_small:'Small', corner_medium:'Medium', corner_large:'Large', corner_round:'Round',
     sec_reset:'Reset', desc_reset:'Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.',
     btn_reset:'Reset Launcher', sec_updates:'Updates', btn_check_update:'Check for Updates',
     desc_current_version:'Current version:',
     sec_uninstall:'Uninstall', btn_uninstall:'Uninstall Crux Client', desc_uninstall:'Removes the launcher and all its data from your system.',
+    btn_use_crux_mod:'Use Crux Client Features',
     btn_use_client_mods:'Use Client Mods (from Client Options tab)',
     btn_use_client_rps:'Use Client Resource Packs (from Client Options tab)',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
@@ -2214,9 +2414,7 @@ const LANGS={
     sv_type_forge:'Classic mod loader', sv_type_neoforge:'Forge fork for modern MC',
     sv_type_modpack:'Modpack server + Loader',
     update_wait_text:'Please wait a few minutes for the download and restart button to appear.',
-    update_install:'Update & Restart', update_github:'Download from GitHub', update_bugreport:'🐛 Bug Report',
-    stat_played:'Playtime', stat_launcher_open:'Launcher open', stat_launches:'Launches', stat_avg_session:'Avg session',
-    stat_last_played:'Last played', stat_first_launch:'First launch', stat_now:'now',
+    update_install:'Update & Restart', update_github:'Download from GitHub', update_bugreport:'🐛 Bug Report', update_later:'Later',
   },
   de:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes',
@@ -2260,12 +2458,14 @@ const LANGS={
     desc_launch_mode_detail:'Öffnet den offiziellen Minecraft Launcher (Java Edition) anstatt direkt zu starten.',
     sec_after_launch:'Nach dem Start', desc_open_logs:'Protokolle nach dem Start öffnen', desc_close_launcher:'Launcher beim Spielen schließen',
     sec_tab_bar:'Tab-Leiste', lbl_tab_bar_pos:'Position', tab_bar_top:'Oben', tab_bar_bottom:'Unten',
-    sec_theme:'Design', lbl_theme:'Darstellung', theme_dark:'Dunkel', theme_light:'Hell',
+    sec_theme:'Design', lbl_theme:'Darstellung', theme_dark:'Dunkel', theme_light:'Hell', theme_glass:'Glas', theme_win7:'Windows 7', theme_xp:'Windows XP',
+    sec_glass_bg:'Glas-Hintergrund', desc_glass_bg:'Eigener Hintergrund hinter dem mattierten Glas. Wird nur im Glas-Theme angezeigt.', btn_choose_bg:'Bild wählen…', btn_remove_bg:'Entfernen',
     sec_corner_radius:'Eckenradius', lbl_corner_radius:'Abrundung', corner_small:'Klein', corner_medium:'Mittel', corner_large:'Groß', corner_round:'Rund',
     sec_reset:'Zurücksetzen', desc_reset:'Löscht alle Konten, Profile, Einstellungen und Mods. Der Launcher startet wie beim ersten Mal.',
     btn_reset:'Launcher zurücksetzen', sec_updates:'Updates', btn_check_update:'Nach Updates suchen',
     desc_current_version:'Aktuelle Version:',
     sec_uninstall:'Deinstallieren', btn_uninstall:'Crux Client deinstallieren', desc_uninstall:'Entfernt den Launcher und alle seine Daten von deinem System.',
+    btn_use_crux_mod:'Crux Client Features verwenden',
     btn_use_client_mods:'Client Mods verwenden (aus Client Options Tab)',
     btn_use_client_rps:'Client Ressourcenpakete verwenden (aus Client Options Tab)',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
@@ -2351,8 +2551,7 @@ const LANGS={
     sv_type_modpack:'Modpack-Server + Loader',
     update_wait_text:'Bitte warte ein paar Minuten, bis der Download- und Neustart-Button erscheint.',
     update_install:'Aktualisieren & Neustart', update_github:'Von GitHub herunterladen', update_bugreport:'🐛 Fehler melden',
-    stat_played:'Spielzeit', stat_launcher_open:'Launcher offen', stat_launches:'Starts', stat_avg_session:'Ø Sitzung',
-    stat_last_played:'Zuletzt gespielt', stat_first_launch:'Erster Start', stat_now:'jetzt',
+    update_later:'Später',
   },
   fr:{
     tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes',
@@ -2396,12 +2595,14 @@ const LANGS={
     desc_launch_mode_detail:'Ouvre le lanceur Minecraft officiel (Java Edition) au lieu de lancer directement.',
     sec_after_launch:'Après le lancement', desc_open_logs:'Ouvrir les journaux après le lancement', desc_close_launcher:'Fermer le lanceur pendant le jeu',
     sec_tab_bar:'Barre d\'onglets', lbl_tab_bar_pos:'Position', tab_bar_top:'Haut', tab_bar_bottom:'Bas',
-    sec_theme:'Thème', lbl_theme:'Apparence', theme_dark:'Sombre', theme_light:'Clair',
+    sec_theme:'Thème', lbl_theme:'Apparence', theme_dark:'Sombre', theme_light:'Clair', theme_glass:'Verre', theme_win7:'Windows 7', theme_xp:'Windows XP',
+    sec_glass_bg:'Fond du verre', desc_glass_bg:'Fond personnalisé derrière le verre dépoli. Affiché uniquement dans le thème Verre.', btn_choose_bg:'Choisir une image…', btn_remove_bg:'Retirer',
     sec_corner_radius:'Rayon des coins', lbl_corner_radius:'Arrondi', corner_small:'Petit', corner_medium:'Moyen', corner_large:'Grand', corner_round:'Rond',
     sec_reset:'Réinitialiser', desc_reset:'Supprime tous les comptes, profils, paramètres et mods. Le lanceur redémarrera comme au premier lancement.',
     btn_reset:'Réinitialiser le Lanceur', sec_updates:'Mises à jour', btn_check_update:'Vérifier les mises à jour',
     desc_current_version:'Version actuelle :',
     sec_uninstall:'Désinstaller', btn_uninstall:'Désinstaller Crux Client', desc_uninstall:'Supprime le lanceur et toutes ses données de votre système.',
+    btn_use_crux_mod:'Utiliser les Fonctionnalités Crux Client',
     btn_use_client_mods:'Utiliser les Mods Client (onglet Options Client)',
     btn_use_client_rps:'Utiliser les Packs de Ressources Client (onglet Options Client)',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
@@ -2484,9 +2685,7 @@ const LANGS={
     sv_type_forge:'Mod Loader classique', sv_type_neoforge:'Fork Forge pour MC moderne',
     sv_type_modpack:'Serveur Modpack + Loader',
     update_wait_text:'Veuillez patienter quelques minutes pour que le bouton de téléchargement et de redémarrage apparaisse.',
-    update_install:'Mettre à jour & Redémarrer', update_github:'Télécharger depuis GitHub', update_bugreport:'🐛 Signaler un bug',
-    stat_played:'Temps de jeu', stat_launcher_open:'Launcher ouvert', stat_launches:'Lancements', stat_avg_session:'Sess. moy.',
-    stat_last_played:'Dernière session', stat_first_launch:'Premier lancement', stat_now:'maintenant',
+    update_install:'Mettre à jour & Redémarrer', update_github:'Télécharger depuis GitHub', update_bugreport:'🐛 Signaler un bug', update_later:'Plus tard',
   },
   es:{
     tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas',
@@ -2530,12 +2729,14 @@ const LANGS={
     desc_launch_mode_detail:'Abre el Minecraft Launcher oficial (Java Edition) en lugar de iniciar directamente.',
     sec_after_launch:'Después de iniciar', desc_open_logs:'Abrir registros después de iniciar', desc_close_launcher:'Cerrar launcher mientras juegas',
     sec_tab_bar:'Barra de pestañas', lbl_tab_bar_pos:'Posición', tab_bar_top:'Arriba', tab_bar_bottom:'Abajo',
-    sec_theme:'Tema', lbl_theme:'Apariencia', theme_dark:'Oscuro', theme_light:'Claro',
+    sec_theme:'Tema', lbl_theme:'Apariencia', theme_dark:'Oscuro', theme_light:'Claro', theme_glass:'Vidrio', theme_win7:'Windows 7', theme_xp:'Windows XP',
+    sec_glass_bg:'Fondo de vidrio', desc_glass_bg:'Fondo personalizado detrás del vidrio esmerilado. Solo se muestra en el tema Vidrio.', btn_choose_bg:'Elegir imagen…', btn_remove_bg:'Quitar',
     sec_corner_radius:'Radio de esquinas', lbl_corner_radius:'Redondeo', corner_small:'Pequeño', corner_medium:'Medio', corner_large:'Grande', corner_round:'Redondo',
     sec_reset:'Restablecer', desc_reset:'Elimina todas las cuentas, perfiles, ajustes y mods. El launcher se reiniciará como si se abriera por primera vez.',
     btn_reset:'Restablecer Launcher', sec_updates:'Actualizaciones', btn_check_update:'Buscar actualizaciones',
     desc_current_version:'Versión actual:',
     sec_uninstall:'Desinstalar', btn_uninstall:'Desinstalar Crux Client', desc_uninstall:'Elimina el launcher y todos sus datos del sistema.',
+    btn_use_crux_mod:'Usar Funciones Crux Client',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
     btn_import_share:'📋 Importar código', btn_import_norisk:'⬇ NoRisk Client', btn_share:'Compartir',
     btn_stop_server:'■ Detener Servidor', btn_op_player:'OP Jugador', btn_whitelist:'Whitelist', btn_backup_world:'Copiar mundo',
@@ -2611,9 +2812,7 @@ const LANGS={
     sv_type_spigot:'Plugins + Rendimiento', sv_type_purpur:'Fork Paper + Opciones extra',
     sv_type_fabric:'Servidor Mod Loader', sv_type_quilt:'Fork Fabric Mod Loader',
     sv_type_forge:'Mod Loader clásico', sv_type_neoforge:'Fork Forge para MC moderno',
-    sv_type_modpack:'Servidor Modpack + Loader',
-    stat_played:'Tiempo de juego', stat_launcher_open:'Launcher abierto', stat_launches:'Lanzamientos', stat_avg_session:'Sesión med.',
-    stat_last_played:'Última sesión', stat_first_launch:'Primer inicio', stat_now:'ahora',
+    sv_type_modpack:'Servidor Modpack + Loader', update_later:'Más tarde',
   },
 };
 
@@ -2795,19 +2994,22 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
   const pid=document.getElementById('profileSelect').value;
   const profile=profiles.find(p=>p.id===pid)||profiles[0];
   let version = profile?.mcVersion || '';
-  if (!version || version === '') version = mcVersionList.find(v=>v.type==='release')?.id || '';
-  else if (version === '__latest_snapshot__') version = mcVersionList.find(v=>v.type==='snapshot')?.id || mcVersionList[0]?.id || '';
+  const modLoader=profile?.modLoader||'fabric';
+  const isBedrock=modLoader==='bedrock';
+  if (!isBedrock) {
+    if (!version || version === '') version = mcVersionList.find(v=>v.type==='release')?.id || '';
+    else if (version === '__latest_snapshot__') version = mcVersionList.find(v=>v.type==='snapshot')?.id || mcVersionList[0]?.id || '';
+  }
   const javaPath=document.getElementById('javaSelect').value;
   const ram=document.getElementById('ramSlider').value;
   const ramUnit=settings.ramUnit||'gb';
-  const modLoader=profile?.modLoader||'fabric';
 
-  if(!version){ document.getElementById('status').textContent='No version selected.'; return; }
+  if(!isBedrock){ if(!version){ document.getElementById('status').textContent='No version selected.'; return; } }
   const acc=getSelectedAccount();
-  if(!acc||(!acc.accessToken&&acc.type!=='Microsoft')){ document.getElementById('status').textContent='Please log in with a Microsoft or Mojang account first.'; return; }
+  if(!isBedrock){ if(!acc||(!acc.accessToken&&acc.type!=='Microsoft')){ document.getElementById('status').textContent='Please log in with a Microsoft or Mojang account first.'; return; } }
 
   // Auto-add shader mod to PROFILE mods (not client mods)
-  if(profile?.shaderPacks?.length && modLoader!=='vanilla'){
+  if(profile?.shaderPacks?.length && modLoader!=='vanilla' && !isBedrock){
     const profileIdx = profiles.findIndex(p=>p.id===pid);
     if (profileIdx >= 0) {
       let profileModsChanged = false;
@@ -2829,7 +3031,7 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
   const lpWrap=document.getElementById('lp-wrap'), lpFill=document.getElementById('lp-fill'), lpLabel=document.getElementById('lp-label');
   lpWrap.classList.add('vis'); lpFill.style.width='1%'; lpLabel.textContent='Starting...';
   updateStopButtons();
-  if(!launchedVersions.includes(version)){
+  if(!isBedrock && !launchedVersions.includes(version)){
     launchedVersions.push(version); ipcRenderer.send('save-launched-versions',launchedVersions);
     autoDownloadForVersion(version);
   }
@@ -2843,7 +3045,7 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
     profileResourcePacks: profile?.resourcePacks||[],
     useClientMods: profile?.useClientMods !== false,
     useClientRPs:  profile?.useClientRPs  !== false,
-    useCruxClientMod: !!settings.useCruxClientMod,
+    useCruxClientMod: profile?.useCruxMod !== false,
     profileMods: profile?.mods||[],
     mrpackMods: profile?.mrpackMods||[],
     mrpackRPs: profile?.mrpackRPs||[],
@@ -3031,7 +3233,6 @@ ipcRenderer.on('instance-closed',(_,{instanceId,code})=>{
   refreshLogSelect();
   if(settings.closeLauncherWhilePlaying) ipcRenderer.send('show-launcher');
   reportPresence();
-  renderLaunchStats();
 });
 ipcRenderer.on('instance-crashed',(_,{instanceId})=>{
   if(instances[instanceId])instances[instanceId].status='crashed';
@@ -3186,6 +3387,25 @@ function updateModLoaderVisibility(){
   const modsSection=document.getElementById('profile-mods-section');
   if(modsSection) modsSection.style.opacity=loader==='vanilla'?'0.4':'1';
   if(modsSection) modsSection.style.pointerEvents=loader==='vanilla'?'none':'';
+  // Bedrock mode: hide everything except Name, Version, Save, Share, Delete
+  const profileModal=document.getElementById('profile-modal');
+  if(!profileModal) return;
+  const isBedrock=loader==='bedrock';
+  const secBar=document.getElementById('profile-sec-bar');
+  const secSections=document.querySelectorAll('.profile-section');
+  const secRenderApi=document.getElementById('profile-render-api')?.closest('.form-row');
+  const secGroupInput=document.getElementById('profile-group-input')?.closest('.form-row');
+  const secImportSettings=document.getElementById('profile-import-settings-btn')?.closest('.form-row');
+  const secClientMods=document.getElementById('profile-use-client-mods')?.closest('div');
+  const secClientRPs=document.getElementById('profile-use-client-rps')?.closest('div');
+  [secBar,...secSections].forEach(el=>{ if(el) el.style.display=isBedrock?'none':''; });
+  [secRenderApi,secGroupInput,secImportSettings].forEach(el=>{ if(el) el.style.display=isBedrock?'none':''; });
+  if(secClientMods) secClientMods.style.display=isBedrock?'none':'';
+  if(secClientRPs) secClientRPs.style.display=isBedrock?'none':'';
+  const offlineBtn=document.getElementById('download-offline-btn');
+  if(offlineBtn) offlineBtn.style.display=isBedrock?'none':'';
+  const saveBtn=document.getElementById('save-profile-btn');
+  if(saveBtn) saveBtn.style.display=isBedrock?'':'none';
 }
 
 async function checkLoaderAvailability(mcVersion){
@@ -3532,6 +3752,7 @@ function openProfileModal(profileId){
   updateModLoaderVisibility();
   document.querySelectorAll('input[name="modLoader"]').forEach(r=>r.addEventListener('change',updateModLoaderVisibility));
 
+  document.getElementById('profile-use-crux-mod').checked = p.useCruxMod !== false;
   document.getElementById('profile-use-client-mods').checked = p.useClientMods !== false;
   document.getElementById('profile-use-client-rps').checked  = p.useClientRPs  !== false;
   document.getElementById('profile-render-api').value = p.renderApi || 'opengl';
@@ -3623,6 +3844,7 @@ function saveProfileEdits(){
   const oldMcVersion=curP.mcVersion;
   profiles[idx].mcVersion=newMcVersion;
   profiles[idx].modLoader=document.querySelector('input[name="modLoader"]:checked')?.value||'fabric';
+  profiles[idx].useCruxMod  = document.getElementById('profile-use-crux-mod').checked;
   profiles[idx].useClientMods = document.getElementById('profile-use-client-mods').checked;
   profiles[idx].useClientRPs  = document.getElementById('profile-use-client-rps').checked;
   profiles[idx].renderApi = document.getElementById('profile-render-api').value;
@@ -3645,9 +3867,17 @@ document.getElementById('profile-name-input').addEventListener('input',saveProfi
 document.getElementById('profile-group-input').addEventListener('input',saveProfileEdits);
 document.getElementById('profile-version-select').addEventListener('change',saveProfileEdits);
 document.getElementById('profile-render-api').addEventListener('change',saveProfileEdits);
+document.getElementById('profile-use-crux-mod').addEventListener('change',saveProfileEdits);
 document.getElementById('profile-use-client-mods').addEventListener('change',saveProfileEdits);
 document.getElementById('profile-use-client-rps').addEventListener('change',saveProfileEdits);
 document.querySelectorAll('input[name="modLoader"]').forEach(r=>r.addEventListener('change',saveProfileEdits));
+
+// ── Save button (Bedrock profiles) ──
+document.getElementById('save-profile-btn').addEventListener('click',()=>{
+  saveProfileEdits();
+  document.getElementById('profile-modal').style.display='none';
+  profileModMode=false; profilePackMode=null;
+});
 
 // ── Download profile for offline ──────────────────────────────────────────────
 let offlineDlBusy = false;
@@ -3758,6 +3988,7 @@ function shareProfile(profileId){
     mcVersion:p.mcVersion,
     modLoader:p.modLoader,
     renderApi:p.renderApi||'opengl',
+    useCruxMod:p.useCruxMod!==false,
     useClientMods:p.useClientMods!==false,
     useClientRPs:p.useClientRPs!==false,
     mods:(p.mods||[]).map(m=>({name:m.name,modrinthId:m.modrinthId,curseforgeId:m.curseforgeId,version:m.version,mcVersion:m.mcVersion,source:m.source,iconUrl:m.iconUrl,downloadAllVersions:!!m.downloadAllVersions,disabled:!!m.disabled,loader:m.loader})),
@@ -3779,6 +4010,16 @@ document.getElementById('share-copy-btn').addEventListener('click',()=>{
   document.getElementById('share-copy-btn').textContent='✓ Copied!';
   setTimeout(()=>{document.getElementById('share-copy-btn').textContent='📋 Copy Code';},2000);
 });
+
+// ── Import dropdown ──
+(function(){
+  const btn=document.getElementById('import-btn');
+  const dd=document.getElementById('import-dropdown');
+  if(!btn||!dd) return;
+  btn.addEventListener('click',(e)=>{ e.stopPropagation(); dd.style.display=dd.style.display==='block'?'none':'block'; });
+  dd.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ dd.style.display='none'; }));
+  document.addEventListener('click',()=>{ dd.style.display='none'; });
+})();
 
 // ── Import Share Code ──
 document.getElementById('import-share-btn').addEventListener('click',()=>{
@@ -3810,6 +4051,7 @@ document.getElementById('import-share-confirm-btn').addEventListener('click',asy
       datapacks:data.datapacks||[],
       resourcePacks:data.resourcePacks||[],
       shaderPacks:data.shaderPacks||[],
+      useCruxMod:data.useCruxMod!==false,
       useClientMods:data.useClientMods!==false,
       useClientRPs:data.useClientRPs!==false,
       isModpack:!!data.isModpack,
@@ -3872,13 +4114,9 @@ document.getElementById('import-norisk-confirm-btn').addEventListener('click',()
 
 // Profile pack buttons
 document.getElementById('profile-btn-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='mods'; openModModal('modrinth'); });
-document.getElementById('profile-btn-curseforge').addEventListener('click',()=>{ profileModMode=true; profilePackMode='mods'; openModModal('curseforge'); });
 document.getElementById('profile-btn-dp-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='datapacks'; openModModal('modrinth'); });
-document.getElementById('profile-btn-dp-curseforge').addEventListener('click',()=>{ profileModMode=true; profilePackMode='datapacks'; openModModal('curseforge'); });
 document.getElementById('profile-btn-rp-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='resourcePacks'; openModModal('modrinth'); });
-document.getElementById('profile-btn-rp-curseforge').addEventListener('click',()=>{ profileModMode=true; profilePackMode='resourcePacks'; openModModal('curseforge'); });
 document.getElementById('profile-btn-sp-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='shaderPacks'; openModModal('modrinth'); });
-document.getElementById('profile-btn-sp-curseforge').addEventListener('click',()=>{ profileModMode=true; profilePackMode='shaderPacks'; openModModal('curseforge'); });
 
 function renderProfilePackList(containerId, key, isMods=false){
   const el=document.getElementById(containerId); el.innerHTML='';
@@ -3890,8 +4128,13 @@ function renderProfilePackList(containerId, key, isMods=false){
   if(isMods){
     // Render mods like the Client Options tab (icon + name + version + buttons)
     // plus a per-mod version dropdown (Modrinth versions).
-    appendItemsChunked(el, items, (mod,i)=>{
+    // Active mods go left, disabled mods go right.
+    const activeItems=[], disabledItems=[];
+    items.forEach((m,i)=>(m.disabled?disabledItems:activeItems).push({...m,_idx:i}));
+    appendItemsChunked(el, [...activeItems, ...disabledItems], (mod,i)=>{
+      const isDisabled=mod.disabled;
       const item=document.createElement('div'); item.className='mod-item';
+      if(i===activeItems.length && disabledItems.length) item.classList.add('mod-list-sep');
       const op=mod.disabled?'opacity:0.45':'';
       const versionDisplay=mod.mcVersion==='all'?'All versions':`MC ${mod.mcVersion||'?'}`;
       const modVer=mod.version&&mod.version!=='latest'?` · ${mod.version}`:'';
@@ -3905,9 +4148,9 @@ function renderProfilePackList(containerId, key, isMods=false){
           <div class="mod-meta">${versionDisplay}${modVer} · ${mod.source||'Modrinth'}</div>
         </div>
         <div class="mod-btns">
-          <select class="btn mod-ver-select" data-i="${i}" style="width:auto;max-width:11em;padding:.22em .4em;font-size:.68em;color:#aaa" title="Mod version"><option value="">${mod.version&&mod.version!=='latest'?mod.version:'Version…'}</option></select>
-          <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-i="${i}" ${mod.disabled?'':'checked'}><span class="slider"></span></label>
-          <button class="btn mod-btn mod-remove" data-i="${i}">Remove</button>
+          <select class="btn mod-ver-select" data-i="${mod._idx}" style="width:auto;max-width:11em;padding:.22em .4em;font-size:.68em;color:#aaa" title="Mod version"><option value="">${mod.version&&mod.version!=='latest'?mod.version:'Version…'}</option></select>
+          <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-i="${mod._idx}" ${mod.disabled?'':'checked'}><span class="slider"></span></label>
+          <button class="btn mod-btn mod-remove" data-i="${mod._idx}">Remove</button>
         </div>`;
       return item;
     }).then(()=>{
@@ -3936,18 +4179,26 @@ function renderProfilePackList(containerId, key, isMods=false){
     });
   } else {
     // Datapacks / Resource Packs / Shader Packs: chips like the Client Options RP list
+    // Active packs go left, disabled packs go right.
     const profileMC = (editingProfileId ? profiles.find(p=>p.id===editingProfileId)?.mcVersion : null) || 'all';
+    const activeItems=[], disabledItems=[];
     items.forEach((item,i)=>{
       const isObj = typeof item==='object' && item!==null;
       const raw = isObj ? (item.name||'') : item;
       let name = isObj ? (item.name||item) : item;
       if(typeof raw==='string' && raw.startsWith('file://')) name = raw.slice(7).split(/[\\/]/).pop()||name;
-      const tag=document.createElement('span'); tag.className='pack-tag';
+      (isObj&&item.disabled?disabledItems:activeItems).push({item,name,isObj,i});
+    });
+    [...activeItems, ...disabledItems].forEach(({item,name,isObj,i})=>{
+      const isDisabled=isObj&&item.disabled;
+      const tag=document.createElement('span'); tag.className='pack-tag'
+        +(activeItems.length&&disabledItems.length&&i===activeItems[0].i?' pack-tag-sep':'');
+      if(isDisabled) tag.style.opacity='0.45';
       let verSel='';
       if(key==='resourcePacks'){
         verSel=`<select class="pack-ver-select" data-i="${i}" title="Minecraft version"><option value="all">All</option><option value="${(profileMC||'').replace(/"/g,'&quot;')}">${profileMC||'All'}</option></select>`;
       }
-      tag.innerHTML=`${name} ${verSel} <span class="rt" data-i="${i}">✕</span>`;
+      tag.innerHTML=`<label class="mod-switch" style="align-self:center" title="${isDisabled?'Enable':'Disable'}"><input type="checkbox" class="pack-toggle" data-i="${i}" ${isDisabled?'':'checked'}><span class="slider"></span></label> ${name} ${verSel} <span class="rt" data-i="${i}">✕</span>`;
       const vs=tag.querySelector('.pack-ver-select');
       if(vs) vs.value = isObj ? (item.mcVersion||'all') : 'all';
       if(vs) vs.addEventListener('change',()=>{
@@ -3959,6 +4210,17 @@ function renderProfilePackList(containerId, key, isMods=false){
           editingPackData[key][idx] = (curIsObj && cur.modrinthId) ? {name:nm,modrinthId:cur.modrinthId} : nm;
         } else {
           editingPackData[key][idx] = Object.assign({name:nm,mcVersion:vs.value}, curIsObj&&cur.modrinthId?{modrinthId:cur.modrinthId}:{});
+        }
+        renderProfilePackList(containerId,key,false);
+        saveProfileEdits();
+      });
+      tag.querySelector('.pack-toggle')?.addEventListener('change',e=>{
+        const idx=parseInt(e.target.dataset.i,10);
+        const cur=editingPackData[key][idx];
+        if(typeof cur==='object'&&cur!==null){
+          cur.disabled=!e.target.checked;
+        } else {
+          editingPackData[key][idx]={name:cur,disabled:!e.target.checked};
         }
         renderProfilePackList(containerId,key,false);
         saveProfileEdits();
@@ -4063,17 +4325,30 @@ wireProfileDropZones();
 async function loadProfileModVersions(sel, mod){
   if(!sel) return;
   try{
+    const edProfile=editingProfileId?profiles.find(p=>p.id===editingProfileId):null;
+    const profileLoader=(edProfile?.modLoader||'fabric');
+    const profileMC=edProfile?.mcVersion||'';
     const vd=await ipcRenderer.invoke('fetch-json-no-cors', `https://api.modrinth.com/v2/project/${mod.modrinthId}/version`);
     const versions=Array.isArray(vd)?vd:[];
     sel.innerHTML='<option value="">Version…</option>';
-    for(const v of versions){
-      if(v.version_number===undefined) continue;
+    const filtered=versions.filter(v=>{
+      if(v.version_number===undefined) return false;
+      if(profileLoader && profileLoader!=='any' && Array.isArray(v.loaders) && v.loaders.length && !mod.loader){
+        if(!v.loaders.includes(profileLoader)) return false;
+      }
+      if(mod.loader && Array.isArray(v.loaders) && v.loaders.length && mod.loader!=='any'){
+        if(!v.loaders.includes(mod.loader)) return false;
+      }
+      return true;
+    });
+    const list=filtered.length?filtered:versions;
+    for(const v of list){
       const o=document.createElement('option');
       o.value=v.version_number;
       o.textContent=v.version_number+(v.game_versions&&v.game_versions.length?` (${v.game_versions[v.game_versions.length-1]})`:'');
       sel.appendChild(o);
     }
-    if(mod.version && mod.version!=='latest' && versions.some(v=>v.version_number===mod.version)) sel.value=mod.version;
+    if(mod.version && mod.version!=='latest' && list.some(v=>v.version_number===mod.version)) sel.value=mod.version;
     else if(mod.version && mod.version!=='latest') sel.value='';
   }catch{ sel.innerHTML='<option value="">Version…</option>'; }
 }
@@ -4269,13 +4544,13 @@ function buildSkinMesh(tex){
   // JACKET (body outer layer)
   if(tex){{const j=skinBox(U*8.5,U*12.5,U*4.5,0,U*12,0,tex,uv(20,36,8,12),uv(32,36,8,12),uv(20,32,8,4),uv(28,32,8,4),uv(28,36,4,12),uv(16,36,4,12));j.renderOrder=1;skinMeshGroup.add(j);}}
   // RIGHT ARM — centered at Y=12px (3 units), X depends on slim model
-  skinMeshGroup.add(skinBox(U*armW,U*12,U*4,U*armX,U*12,0,tex,uv(44,20,armW,12),uv(44+armW+4,20,armW,12),uv(44,16,armW,4),uv(44+armW,16,armW,4),uv(44+armW,20,armW,12),uv(44-4,20,armW,12)));
+  skinMeshGroup.add(skinBox(U*armW,U*12,U*4,U*armX,U*12,0,tex,uv(44,20,armW,12),uv(44+armW+4,20,armW,12),uv(44,16,armW,4),uv(44+armW,16,armW,4),uv(44-4,20,armW,12),uv(44+armW,20,armW,12)));
   // RIGHT SLEEVE (right arm outer layer)
-  if(tex){{const s=skinBox(U*(armW+.5),U*12.5,U*4.5,U*armX,U*12,0,tex,uv(44,36,armW,12),uv(44+armW+4,36,armW,12),uv(44,32,armW,4),uv(44+armW,32,armW,4),uv(44+armW,36,armW,12),uv(44-4,36,armW,12));s.renderOrder=1;skinMeshGroup.add(s);}}
+  if(tex){{const s=skinBox(U*(armW+.5),U*12.5,U*4.5,U*armX,U*12,0,tex,uv(44,36,armW,12),uv(44+armW+4,36,armW,12),uv(44,32,armW,4),uv(44+armW,32,armW,4),uv(44-4,36,armW,12),uv(44+armW,36,armW,12));s.renderOrder=1;skinMeshGroup.add(s);}}
   // LEFT ARM — centered at Y=12px (3 units), X=-armX
-  skinMeshGroup.add(skinBox(U*armW,U*12,U*4,-U*armX,U*12,0,tex,uv(36,52,armW,12),uv(36+armW+4,52,armW,12),uv(36,48,armW,4),uv(36+armW,48,armW,4),uv(36+armW,52,armW,12),uv(36-4,52,armW,12)));
+  skinMeshGroup.add(skinBox(U*armW,U*12,U*4,-U*armX,U*12,0,tex,uv(36,52,armW,12),uv(36+armW+4,52,armW,12),uv(36,48,armW,4),uv(36+armW,48,armW,4),uv(36-4,52,armW,12),uv(36+armW,52,armW,12)));
   // LEFT SLEEVE (left arm outer layer)
-  if(tex){{const s=skinBox(U*(armW+.5),U*12.5,U*4.5,-U*armX,U*12,0,tex,uv(52,52,armW,12),uv(52+armW+4,52,armW,12),uv(52,48,armW,4),uv(52+armW,48,armW,4),uv(52+armW,52,armW,12),uv(52-4,52,armW,12));s.renderOrder=1;skinMeshGroup.add(s);}}
+  if(tex){{const s=skinBox(U*(armW+.5),U*12.5,U*4.5,-U*armX,U*12,0,tex,uv(52,52,armW,12),uv(52+armW+4,52,armW,12),uv(52,48,armW,4),uv(52+armW,48,armW,4),uv(52-4,52,armW,12),uv(52+armW,52,armW,12));s.renderOrder=1;skinMeshGroup.add(s);}}
   // RIGHT LEG — centered at Y=0px (0 units), X=2px (0.5 units)
   skinMeshGroup.add(skinBox(U*4,U*12,U*4,U*2,0,0,tex,uv(4,20,4,12),uv(12,20,4,12),uv(4,16,4,4),uv(8,16,4,4),uv(8,20,4,12),uv(0,20,4,12)));
   // RIGHT PANTS (right leg outer layer)
@@ -4507,9 +4782,7 @@ document.getElementById('copy-logs-btn').addEventListener('click',()=>{
 
 // Client RP search buttons
 document.getElementById('btn-modrinth-global').addEventListener('click',()=>{ profileModMode=false; profilePackMode=null; openModModal('modrinth'); });
-document.getElementById('btn-curseforge-global').addEventListener('click',()=>{ profileModMode=false; profilePackMode=null; openModModal('curseforge'); });
 document.getElementById('btn-rp-modrinth-global').addEventListener('click',()=>{ profileModMode=false; profilePackMode='clientRP'; openModModal('modrinth'); });
-document.getElementById('btn-rp-curseforge-global').addEventListener('click',()=>{ profileModMode=false; profilePackMode='clientRP'; openModModal('curseforge'); });
 // Client JAR upload handlers removed
 
 // ── Mod Modal ────────────────────────────────────────
@@ -4683,6 +4956,7 @@ async function appendModResults(results,seq){
             editingPackData[key].push(mod.name);renderPackTags('profile-'+key.toLowerCase(),key);saveProfileEdits();
           }
         }
+        return;
       }
       if(profilePackMode==='clientRP'){
         if(!clientResourcePacks.some(r=>(typeof r==='object'?r.modrinthId===mod.id:r===mod.name))){
@@ -6055,10 +6329,10 @@ function drawSteveSkin(c){
     group.add(hg);
     group.add(skinBox(U*8,U*12,U*4,0,U*12,0,tex,uv(20,20,8,12),uv(32,20,8,12),uv(20,16,8,4),uv(28,16,8,4),uv(28,20,4,12),uv(16,20,4,12)));
     if(tex){const j=skinBox(U*8.5,U*12.5,U*4.5,0,U*12,0,tex,uv(20,36,8,12),uv(32,36,8,12),uv(20,32,8,4),uv(28,32,8,4),uv(28,36,4,12),uv(16,36,4,12));j.renderOrder=1;group.add(j);}
-    group.add(skinBox(U*armW,U*12,U*4,U*armX,U*12,0,tex,uv(44,20,armW,12),uv(44+armW+4,20,armW,12),uv(44,16,armW,4),uv(44+armW,16,armW,4),uv(44+armW,20,armW,12),uv(44-4,20,armW,12)));
-    if(tex){const s=skinBox(U*(armW+.5),U*12.5,U*4.5,U*armX,U*12,0,tex,uv(44,36,armW,12),uv(44+armW+4,36,armW,12),uv(44,32,armW,4),uv(44+armW,32,armW,4),uv(44+armW,36,armW,12),uv(44-4,36,armW,12));s.renderOrder=1;group.add(s);}
-    group.add(skinBox(U*armW,U*12,U*4,-U*armX,U*12,0,tex,uv(36,52,armW,12),uv(36+armW+4,52,armW,12),uv(36,48,armW,4),uv(36+armW,48,armW,4),uv(36+armW,52,armW,12),uv(36-4,52,armW,12)));
-    if(tex){const s=skinBox(U*(armW+.5),U*12.5,U*4.5,-U*armX,U*12,0,tex,uv(52,52,armW,12),uv(52+armW+4,52,armW,12),uv(52,48,armW,4),uv(52+armW,48,armW,4),uv(52+armW,52,armW,12),uv(52-4,52,armW,12));s.renderOrder=1;group.add(s);}
+    group.add(skinBox(U*armW,U*12,U*4,U*armX,U*12,0,tex,uv(44,20,armW,12),uv(44+armW+4,20,armW,12),uv(44,16,armW,4),uv(44+armW,16,armW,4),uv(44-4,20,armW,12),uv(44+armW,20,armW,12)));
+    if(tex){const s=skinBox(U*(armW+.5),U*12.5,U*4.5,U*armX,U*12,0,tex,uv(44,36,armW,12),uv(44+armW+4,36,armW,12),uv(44,32,armW,4),uv(44+armW,32,armW,4),uv(44-4,36,armW,12),uv(44+armW,36,armW,12));s.renderOrder=1;group.add(s);}
+    group.add(skinBox(U*armW,U*12,U*4,-U*armX,U*12,0,tex,uv(36,52,armW,12),uv(36+armW+4,52,armW,12),uv(36,48,armW,4),uv(36+armW,48,armW,4),uv(36-4,52,armW,12),uv(36+armW,52,armW,12)));
+    if(tex){const s=skinBox(U*(armW+.5),U*12.5,U*4.5,-U*armX,U*12,0,tex,uv(52,52,armW,12),uv(52+armW+4,52,armW,12),uv(52,48,armW,4),uv(52+armW,48,armW,4),uv(52-4,52,armW,12),uv(52+armW,52,armW,12));s.renderOrder=1;group.add(s);}
     group.add(skinBox(U*4,U*12,U*4,U*2,0,0,tex,uv(4,20,4,12),uv(12,20,4,12),uv(4,16,4,4),uv(8,16,4,4),uv(8,20,4,12),uv(0,20,4,12)));
     if(tex){const p=skinBox(U*4.5,U*12.5,U*4.5,U*2,0,0,tex,uv(4,36,4,12),uv(12,36,4,12),uv(4,32,4,4),uv(8,32,4,4),uv(8,36,4,12),uv(0,36,4,12));p.renderOrder=1;group.add(p);}
     group.add(skinBox(U*4,U*12,U*4,-U*2,0,0,tex,uv(20,52,4,12),uv(28,52,4,12),uv(20,48,4,4),uv(24,48,4,4),uv(24,52,4,12),uv(16,52,4,12)));
@@ -6648,7 +6922,12 @@ document.getElementById('reset-all-btn').addEventListener('click', () => {
   if (!confirm('Reset ALL launcher data?\n\nThis will delete all accounts, profiles, settings, and mods.\nThe launcher will restart as if first opened.')) return;
   settings = {};
   accounts = [];
-  profiles = [{ id:'default', name:'Default', mcVersion:'', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] }];
+  profiles = [
+    { id:'latest-java', name:'Latest Version Java', mcVersion:'', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
+    { id:'latest-snapshot', name:'Latest Snapshot Java', mcVersion:'__latest_snapshot__', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
+    { id:'latest-bedrock', name:'Latest Bedrock', mcVersion:'', modLoader:'bedrock', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
+    { id:'latest-bedrock-pre', name:'Latest Pre-release Bedrock', mcVersion:'', modLoader:'bedrock', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] }
+  ];
   installedMods = [];
   launchedVersions = [];
   clientResourcePacks = [];
@@ -6677,10 +6956,6 @@ document.getElementById('use-original-launcher-toggle').addEventListener('change
   settings.useOriginalLauncher = e.target.checked;
   saveSettings();
 });
-document.getElementById('use-crux-mod-toggle').addEventListener('change', e => {
-  settings.useCruxClientMod = e.target.checked;
-  saveSettings();
-});
 
 // ── Tab bar position (top / bottom) ───────────────────────────────────────
 function applyTabBarPosition(){
@@ -6701,16 +6976,95 @@ function applyTabBarPosition(){
 })();
 
 // ── Theme selector (settings) ─────────────────────────────────────────────
+function updateGlassBgSection(){
+  const sec = document.getElementById('glass-bg-section');
+  if (sec) sec.style.display = settings.theme === 'glass' ? '' : 'none';
+}
+let glassDefaultBg = '';
+function setGlassTone(dark){
+  const st = document.body.style;
+  if (dark){
+    st.setProperty('--gs-tx', '#f2f6fb');
+    st.setProperty('--gs-strong', '#ffffff');
+    st.setProperty('--gs-mut', '#c6d2e0');
+    st.setProperty('--gs-list', 'rgba(15,20,28,.52)');
+  } else {
+    st.setProperty('--gs-tx', '#14171c');
+    st.setProperty('--gs-strong', '#000000');
+    st.setProperty('--gs-mut', '#5a6470');
+    st.setProperty('--gs-list', 'rgba(255,255,255,.55)');
+  }
+}
+function setGlassToneFromImage(dataUrl){
+  if (!dataUrl){ setGlassTone(false); return; }
+  const im = new Image();
+  im.onload = () => {
+    try {
+      const c = document.createElement('canvas'); c.width = 32; c.height = 32;
+      const x = c.getContext('2d');
+      x.drawImage(im, 0, 0, 32, 32);
+      const d = x.getImageData(0, 0, 32, 32).data;
+      let sum = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4){
+        sum += d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
+        n++;
+      }
+      setGlassTone(sum/n < 128);
+    } catch { setGlassTone(false); }
+  };
+  im.onerror = () => setGlassTone(false);
+  im.src = dataUrl;
+}
+function applyGlassBg(){
+  const img = settings.glassBgImage || glassDefaultBg || '';
+  if (img) document.documentElement.style.setProperty('--gs-frame', `url("${img}")`);
+  else document.documentElement.style.removeProperty('--gs-frame');
+  setGlassToneFromImage(img);
+  const prev = document.getElementById('glass-bg-preview');
+  const rm = document.getElementById('glass-bg-remove-btn');
+  if (prev){ prev.src = img || ''; prev.style.display = img ? '' : 'none'; }
+  if (rm) rm.style.display = (settings.glassBgImage || '') ? '' : 'none';
+}
 (function(){
   const sel = document.getElementById('theme-select');
   if(sel){
-    sel.value = settings.theme === 'light' ? 'light' : 'dark';
+    if (settings.theme === 'light') sel.value = 'light';
+    else if (settings.theme === 'glass' || !settings.theme) sel.value = 'glass';
+    else sel.value = 'dark';
     sel.addEventListener('change', () => {
       settings.theme = sel.value;
       saveSettings();
-      applyTheme(sel.value === 'light');
+      applyTheme(sel.value);
+      updateGlassBgSection();
     });
   }
+  updateGlassBgSection();
+  applyGlassBg();
+})();
+
+// ── Glass background (custom image behind frosted glass) ────────────────
+(function(){
+  const file = document.getElementById('glass-bg-file-input');
+  const rm = document.getElementById('glass-bg-remove-btn');
+  if (file){
+    file.addEventListener('change', () => {
+      const f = file.files[0];
+      if(!f) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        settings.glassBgImage = ev.target.result;
+        saveSettings();
+        applyGlassBg();
+      };
+      reader.readAsDataURL(f);
+      file.value = '';
+    });
+  }
+  if (rm) rm.addEventListener('click', () => {
+    settings.glassBgImage = '';
+    saveSettings();
+    applyGlassBg();
+  });
 })();
 
 // ── Corner radius (settings) ──────────────────────────────────────────────
@@ -7719,11 +8073,13 @@ function showUpdateOverlay(info) {
   document.getElementById('update-title').textContent = 'Update Available';
   document.getElementById('update-version-text').textContent = `v${info.currentVersion} → v${info.newVersion}`;
   const notesBox = document.getElementById('update-notes-box');
-  if (info.releaseNotes && info.releaseNotes.trim()) {
-    notesBox.textContent = info.releaseNotes;
-    notesBox.style.display = 'block';
-  } else {
-    notesBox.style.display = 'none';
+  if (notesBox) {
+    if (info.releaseNotes && info.releaseNotes.trim()) {
+      notesBox.textContent = info.releaseNotes;
+      notesBox.style.display = 'block';
+    } else {
+      notesBox.style.display = 'none';
+    }
   }
   document.getElementById('update-progress-wrap').style.display = 'none';
   document.getElementById('update-error-text').style.display = 'none';
@@ -8304,6 +8660,13 @@ document.getElementById('update-bugreport-btn').addEventListener('click', () => 
   shell.openExternal('https://github.com/Dev-Reds/crux-client/issues');
 });
 
+document.getElementById('update-later-btn').addEventListener('click', () => {
+  pendingUpdate = null;
+  if (window._updatePollInterval) { clearInterval(window._updatePollInterval); window._updatePollInterval = null; }
+  const overlay = document.getElementById('update-overlay');
+  if (overlay) overlay.style.display = 'none';
+});
+
 document.getElementById('bugreport-github-btn').addEventListener('click', () => {
   shell.openExternal('https://github.com/Dev-Reds/crux-client/issues/new');
 });
@@ -8341,6 +8704,168 @@ ipcRenderer.on('update-install-start', () => {
 
 document.getElementById('check-update-btn').addEventListener('click', () => checkForUpdates(false));
 ipcRenderer.on('update-log', (_, msg) => updateLog('[main] ' + msg));
+</script>
+<script>
+/* ── CUSTOM DROPDOWN: replaces every native <select> so it matches the theme ── */
+(function(){
+  if(window.__cdropInit) return; window.__cdropInit=true;
+  let openWrap=null;
+  function closeAll(){ if(openWrap){ openWrap.classList.remove('open'); if(openWrap.__cdropMenu){ const m=openWrap.__cdropMenu; if(m.parentNode) m.parentNode.removeChild(m); } openWrap.__cdropMenu=null; openWrap=null; } }
+  document.addEventListener('click',()=>closeAll());
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeAll(); });
+  document.addEventListener('scroll',e=>{ const t=e.target; if(openWrap&&t&&t.classList&&t.classList.contains('cdrop-menu')) return; closeAll(); },true);
+
+  function label(sel){
+    const o=sel.selectedOptions&&sel.selectedOptions[0];
+    return o?(o.textContent||o.value||' '):' ';
+  }
+  function syncTrigger(sel,trig){
+    const t=label(sel).replace(/\s+/g,' ').trim()||'';
+    const span=trig.querySelector('span');
+    if(span) span.textContent=t;
+  }
+  function buildMenu(sel){
+    const menu=document.createElement('div');
+    menu.className='cdrop-menu';
+    [...sel.options].forEach(o=>{
+      const it=document.createElement('div');
+      it.className='cdrop-opt'+(o.selected?' sel':'');
+      if(o.disabled) it.classList.add('disabled');
+      it.textContent=o.textContent||'\u00a0';
+      it.addEventListener('mousedown',e=>{
+        e.preventDefault();
+        if(o.disabled) return;
+        sel.value=o.value;
+        sel.selectedIndex=o.index;
+        sel.dispatchEvent(new Event('change',{bubbles:true,composed:true}));
+        closeAll();
+      });
+      menu.appendChild(it);
+    });
+    return menu;
+  }
+  function openMenu(sel,trig,wrap){
+    closeAll();
+    const menu=buildMenu(sel);
+    document.body.appendChild(menu);
+    wrap.__cdropMenu=menu;
+    wrap.classList.add('open');
+    openWrap=wrap;
+    syncTrigger(sel,trig);
+    positionMenu(wrap,menu);
+  }
+  function positionMenu(wrap,menu){
+    const r=wrap.getBoundingClientRect();
+    const vh=window.innerHeight, vw=window.innerWidth;
+    menu.style.visibility='hidden';
+    menu.style.display='block';
+    menu.style.minWidth=Math.round(r.width)+'px';
+    menu.style.top=''; menu.style.left=''; menu.style.right='auto';
+    if(r.bottom + 282 > vh - 8 && r.top - 282 > 8){
+      menu.style.top=Math.round(r.top - 6)+'px';
+      menu.style.transform='translateY(-100%)';
+    } else {
+      menu.style.top=Math.round(r.bottom + 4)+'px';
+      menu.style.transform='';
+    }
+    const ml=Math.min(r.left, vw - 8 - menu.offsetWidth);
+    menu.style.left=Math.max(8,ml)+'px';
+    menu.style.visibility='visible';
+  }
+  function convert(sel){
+    if(sel.__cdrop) return; sel.__cdrop=true;
+    sel.classList.add('cdrop-sel');
+    const wrap=document.createElement('div');
+    wrap.className='cdrop';
+    const trig=document.createElement('button');
+    trig.type='button';
+    trig.className='cdrop-trigger';
+    trig.innerHTML='<span></span>';
+    wrap.appendChild(trig);
+
+    const st=sel.getAttribute('style')||'';
+    const pick=(p)=>{ const m=new RegExp('(?:^|[;\\s])'+p+'\\s*:\\s*([^;]+)').exec(st); return m?m[1].trim():null; };
+    ['width','min-width','max-width','margin','margin-left','margin-right'].forEach(p=>{ const v=pick(p); if(v){ if(p.includes('-')) wrap.style[p]=v; else wrap.style[p]=v; } });
+    const fs=pick('font-size'); if(fs) trig.style.fontSize=fs;
+    const pad=pick('padding'); if(pad) trig.style.padding=pad;
+    const tiny = sel.classList.contains('pack-ver-select')||sel.classList.contains('mod-ver-select')||sel.id==='log-instance-select'||sel.id==='stop-instance-select';
+    if(tiny) wrap.classList.add('cdrop-tiny');
+    if(pick('width')==='auto') wrap.style.width='auto';
+    else if(tiny) wrap.style.width='auto';
+    else if(!pick('width')) wrap.style.width='100%';
+
+    const isHidden = sel.style.display==='none';
+    sel.style.setProperty('position','absolute','important');
+    sel.style.setProperty('inset','0','important');
+    sel.style.setProperty('width','100%','important');
+    sel.style.setProperty('height','100%','important');
+    sel.style.setProperty('opacity','0','important');
+    sel.style.setProperty('pointer-events','none','important');
+    sel.style.setProperty('appearance','none','important');
+    sel.style.setProperty('-webkit-appearance','none','important');
+    sel.style.setProperty('border','0','important');
+    sel.style.setProperty('background','transparent','important');
+    sel.style.setProperty('color','transparent','important');
+    sel.style.setProperty('margin','0','important');
+    sel.style.setProperty('padding','0','important');
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(sel);
+    sel.__cdropWrap=wrap;
+
+    if(isHidden) wrap.style.display='none';
+
+    trig.addEventListener('click',e=>{
+      e.stopPropagation();
+      e.preventDefault();
+      if(openWrap===wrap){ closeAll(); return; }
+      openMenu(sel,trig,wrap);
+    });
+    trig.addEventListener('mousedown',e=>e.stopPropagation());
+
+    sel.addEventListener('change',()=>syncTrigger(sel,trig));
+
+    const rebuild=()=>{
+      if(openWrap===wrap && wrap.__cdropMenu){
+        positionMenu(wrap,wrap.__cdropMenu);
+      }
+      syncTrigger(sel,trig);
+    };
+    const mo=new MutationObserver(rebuild);
+    mo.observe(sel,{childList:true,subtree:true,attributes:true,attributeFilter:['value']});
+
+    const dispWatch=new MutationObserver(()=>{ wrap.style.display = sel.style.display==='none' ? 'none' : ''; });
+    dispWatch.observe(sel,{attributes:true,attributeFilter:['style','class']});
+
+    syncTrigger(sel,trig);
+  }
+  function scan(root){
+    (root||document).querySelectorAll('select').forEach(convert);
+  }
+  const bodyMo=new MutationObserver(muts=>{
+    for(const m of muts){
+      for(const n of m.addedNodes){
+        if(n.nodeType!==1) continue;
+        if(n.matches&&n.matches('select')) convert(n);
+        if(n.querySelectorAll) n.querySelectorAll('select').forEach(convert);
+      }
+    }
+  });
+  if(document.body) bodyMo.observe(document.body,{childList:true,subtree:true});
+  scan(document);
+
+  setInterval(()=>{
+    document.querySelectorAll('select.cdrop-sel').forEach(sel=>{
+      const wrap=sel.__cdropWrap;
+      if(!wrap) return;
+      const trig=wrap.querySelector('.cdrop-trigger');
+      if(!trig) return;
+      const s=trig.querySelector('span');
+      if(!s) return;
+      const want=label(sel).replace(/\s+/g,' ').trim();
+      if(s.textContent!==want) s.textContent=want;
+    });
+  },400);
+})();
 </script>
 </body>
 </html>

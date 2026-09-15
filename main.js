@@ -67,7 +67,6 @@ const P = {
   mc:   path.join(base,'minecraft'),
   servers: path.join(base,'servers'),
   groups: path.join(base,'groups'),
-  stats: path.join(base,'stats.json'),
 };
 app.setPath('userData', base);
 app.setPath('cache', path.join(base,'Cache'));
@@ -141,6 +140,7 @@ app.whenReady().then(async () => {
       // Open the progress window so it stays visible across uninstall/reinstall
       writeUpdateProgress('uninstall', 25);
       startUpdateProgressWindow();
+      ensureUninstallWindowScript();
       // Create a batch script that waits for the launcher to close, then runs the installer
       const launcherExe = path.basename(app.getPath('exe'));
       const batchPath = path.join(os.tmpdir(), 'crux-update-' + Date.now() + '.bat');
@@ -150,6 +150,7 @@ app.whenReady().then(async () => {
         'timeout /t 1 /nobreak >nul',
         'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
         'if %errorlevel%==0 goto waitloop',
+        'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set close',
         'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set uninstall',
         'start /wait "" "' + pendingUpdatePath + '"',
         'echo done > "%TEMP%\\crux-update-installed.flag"',
@@ -183,7 +184,6 @@ app.whenReady().then(async () => {
   }
   // Restore user data backed up before the update (survives uninstall/reinstall)
   restoreUserDataAfterUpdate();
-  try { stats = await load(P.stats, stats); } catch {}
   // Clean up downloaded installer and flag so we don't loop on next startup
   if (fs.existsSync(updateDoneFlag)) {
     try { fs.unlinkSync(updateDoneFlag); } catch {}
@@ -243,7 +243,7 @@ const saveSettings = async (data) => {
       'openLogsAfterLaunch','closeLauncherWhilePlaying','useOriginalLauncher',
       'clientResourcePacks','autoUseResourcePacks',
       'presenceServer','bugreportWebhook','chatServer',
-      'useCruxClientMod','tabBarPosition','cornerRadius'
+      'useCruxClientMod','tabBarPosition','cornerRadius','glassBgImage'
     ];
     const clean = {};
     for (const k of Object.keys(existing)) { if (KNOWN_KEYS.includes(k)) clean[k] = existing[k]; }
@@ -251,34 +251,18 @@ const saveSettings = async (data) => {
   } catch {}
 };
 
-// ── Stats (playtime, launcher uptime, launches) ──────────────────────────────
-// Stored in stats.json. Playtime is accumulated per launch, launcher-open time
-// is ticked every 30s and flushed on quit so it survives crashes.
-let stats = { playMs:0, launches:0, launcherOpenMs:0, firstLaunch:null, lastPlayed:null, byVersion:{}, byProfile:{} };
-let _lastLauncherTick = Date.now();
-(async () => {
+// Default glass background image bundled in icons/ (used when user set none)
+let _glassDefaultBg = null;
+ipcMain.handle('get-default-glass-bg', async () => {
+  if (_glassDefaultBg) return _glassDefaultBg;
   try {
-    stats = await load(P.stats, stats);
-    if (!stats.firstLaunch) stats.firstLaunch = Date.now();
-    if (typeof stats.byVersion !== 'object' || !stats.byVersion) stats.byVersion = {};
-    if (typeof stats.byProfile !== 'object' || !stats.byProfile) stats.byProfile = {};
-    _lastLauncherTick = Date.now();
-    await save(P.stats, stats);
-  } catch {}
-})();
-setInterval(() => {
-  const now = Date.now();
-  stats.launcherOpenMs += now - _lastLauncherTick;
-  _lastLauncherTick = now;
-  save(P.stats, stats);
-}, 30000);
-app.on('before-quit', () => {
-  const now = Date.now();
-  stats.launcherOpenMs += now - _lastLauncherTick;
-  _lastLauncherTick = now;
-  save(P.stats, stats);
+    const p = path.join(__dirname, 'icons', 'default_background.png');
+    if (!fs.existsSync(p)) return null;
+    const buf = await fs.promises.readFile(p);
+    _glassDefaultBg = 'data:image/png;base64,' + buf.toString('base64');
+    return _glassDefaultBg;
+  } catch { return null; }
 });
-ipcMain.handle('load-stats', async () => stats);
 
 // Auto-configure the default servers on first run so installed clients
 // have the Friends and Chat tabs ready without manual setup.
@@ -305,7 +289,12 @@ ipcMain.handle('load-settings',          async () => {
   return load(P.settings, {});
 });
 ipcMain.handle('load-accounts',          async () => load(P.accounts, []));
-ipcMain.handle('load-profiles',          async () => load(P.profiles, [{ id:'default', name:'Default', mcVersion:'', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] }]));
+ipcMain.handle('load-profiles',          async () => load(P.profiles, [
+  { id:'latest-java', name:'Latest Version Java', mcVersion:'', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
+  { id:'latest-snapshot', name:'Latest Snapshot Java', mcVersion:'__latest_snapshot__', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
+  { id:'latest-bedrock', name:'Latest Bedrock', mcVersion:'', modLoader:'bedrock', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
+  { id:'latest-bedrock-pre', name:'Latest Pre-release Bedrock', mcVersion:'', modLoader:'bedrock', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] }
+]));
 ipcMain.handle('load-mods',              async () => load(P.mods, []));
 ipcMain.handle('load-launched-versions', async () => load(P.launched, []));
 ipcMain.on('save-settings',          async (e,d) => saveSettings(d));
@@ -407,6 +396,17 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
       { name:'TCDCommons',             modrinthId:'Eldc1g37', loader:'fabric' },
     ];
     for (const dep of fabricDeps) pushUnique(dep);
+  }
+
+  // Crux Client Features jar (only if the per-profile toggle is on and an asset exists)
+  if (profile.useCruxMod !== false && (modLoader === 'fabric' || modLoader === 'quilt')) {
+    try {
+      const cruxJar = await ensureCruxClientMod(version, sendProgress, 'offline');
+      if (cruxJar) {
+        const dest = path.join(modsDir, `crux-client-features-${version}.jar`);
+        if (!fs.existsSync(dest)) await fs.promises.copyFile(cruxJar, dest);
+      }
+    } catch {}
   }
 
   const versionCache = new Map();
@@ -618,7 +618,7 @@ ipcMain.handle('import-norisk-profiles', async () => {
   catch(e) { return { ok:false, error:'profiles.json is not valid JSON: ' + e.message }; }
   if (!Array.isArray(list)) return { ok:false, error:'profiles.json does not contain a profile list.' };
 
-  const VALID_LOADERS = ['vanilla','fabric','forge','quilt','neoforge'];
+  const VALID_LOADERS = ['vanilla','fabric','forge','quilt','neoforge','bedrock'];
   const NRC_REPOS = new Set(['noriskproduction','norisksnapshots','norisk']);
   const seenNames = new Set();
   const out = [];
@@ -1413,34 +1413,34 @@ const CRUX_MOD_REPO = 'Dev-Reds/crux-client-mod';
 
 async function ensureCruxClientMod(mcVersion, send, instanceId) {
   const cacheDir = path.join(P.clientMods, 'cruxclient', mcVersion);
-  const cacheJar = path.join(cacheDir, `Crux-Client-Mod-${mcVersion}.jar`);
+  const cacheJar = path.join(cacheDir, `crux-client-features-${mcVersion}.jar`);
   await fs.promises.mkdir(cacheDir, { recursive: true });
   if (fs.existsSync(cacheJar)) return cacheJar;
 
-  send('instance-log', { instanceId, line:`[CRUX-MOD] Looking for Crux Client Mod for MC ${mcVersion} on GitHub...` });
+  send('instance-log', { instanceId, line:`[CRUX-MOD] Looking for Crux Client Features for MC ${mcVersion} on GitHub...` });
   let release;
   try {
     release = await fetchJsonHttps(`https://api.github.com/repos/${CRUX_MOD_REPO}/releases/latest`);
   } catch (e) {
-    send('instance-log', { instanceId, line:`[CRUX-MOD] GitHub check failed (${e.message}) — starting without Crux Client Mod.` });
+    send('instance-log', { instanceId, line:`[CRUX-MOD] GitHub check failed (${e.message}) — starting without Crux Client Features.` });
     return null;
   }
 
-  const asset = (release && release.assets || []).find(a => a.name === `Crux-Client-Mod-${mcVersion}.jar`);
+  const asset = (release && release.assets || []).find(a => a.name === `crux-client-features-${mcVersion}.jar`);
   if (!asset) {
-    send('instance-log', { instanceId, line:`[CRUX-MOD] No asset "Crux-Client-Mod-${mcVersion}.jar" in the newest release of ${CRUX_MOD_REPO}.` });
-    send('instance-log', { instanceId, line:`[CRUX-MOD] Please name the mod jar "Crux-Client-Mod-${mcVersion}.jar" and upload it to the newest release.` });
-    send('instance-log', { instanceId, line:'[CRUX-MOD] Starting WITHOUT the Crux Client Mod.' });
+    send('instance-log', { instanceId, line:`[CRUX-MOD] No asset "crux-client-features-${mcVersion}.jar" in the newest release of ${CRUX_MOD_REPO}.` });
+    send('instance-log', { instanceId, line:`[CRUX-MOD] Please name the mod jar "crux-client-features-${mcVersion}.jar" and upload it to the newest release.` });
+    send('instance-log', { instanceId, line:'[CRUX-MOD] Starting WITHOUT the Crux Client Features mod.' });
     return null;
   }
 
-  send('instance-log', { instanceId, line:`[CRUX-MOD] Downloading Crux Client Mod ${mcVersion}...` });
+  send('instance-log', { instanceId, line:`[CRUX-MOD] Downloading Crux Client Features ${mcVersion}...` });
   try {
     await downloadFile(asset.browser_download_url, cacheJar);
     send('instance-log', { instanceId, line:`[CRUX-MOD] Downloaded & cached: ${cacheJar}` });
     return cacheJar;
   } catch (e) {
-    send('instance-log', { instanceId, line:`[CRUX-MOD] Download failed (${e.message}) — starting without Crux Client Mod.` });
+    send('instance-log', { instanceId, line:`[CRUX-MOD] Download failed (${e.message}) — starting without Crux Client Features.` });
     return null;
   }
 }
@@ -1739,6 +1739,29 @@ ipcMain.on('launch-minecraft', async (event, data) => {
   mainWindow.webContents.send('instance-started', { id:instanceId, version, profileId, profileName, startTime:instances[instanceId].startTime, serverAddress: data.serverAddress||null, serverPort: data.serverPort||null, serverName: data.serverName||null });
 
   const send = (ch,...a) => { try { if (ch === 'launch-progress' && a[0] && a[0].instanceId && stoppedInstances.has(a[0].instanceId)) return; mainWindow.webContents.send(ch,...a); } catch {} };
+
+  // ── Bedrock Edition ───────────────────────────────────────────────────────────
+  if (modLoader === 'bedrock') {
+    try {
+      send('launch-progress', { instanceId, percent:50, message:'Launching Minecraft Bedrock Edition...' });
+      const { spawn } = require('child_process');
+      await new Promise((res) => {
+        const appId = 'Microsoft.MinecraftUWP_8wekyb3d8bbwe!App';
+        const cmd = `explorer.exe shell:appsFolder\\${appId}`;
+        spawn('cmd.exe', ['/c', cmd], { detached: true, windowsHide: true, stdio: 'ignore' }).unref();
+        setTimeout(res, 250);
+      });
+      const p = spawn('cmd.exe', ['/c', 'start minecraft:'], { detached: true, windowsHide: true, stdio: 'ignore' });
+      p.unref();
+      send('launch-progress', { instanceId, percent:100, message:'Minecraft Bedrock Edition launched!', done:true });
+    } catch (be) {
+      send('instance-log', { instanceId, line: `[BEDROCK] Launch failed: ${be.message}` });
+      send('launch-progress', { instanceId, percent:0, message:'', done:true });
+      send('launch-status', 'Could not launch Bedrock. Do you have Minecraft Bedrock from the Microsoft Store installed?');
+      instances[instanceId].crashed = true;
+    }
+    return;
+  }
 
   // Safety timeout: if nothing happens for 5 min, reset UI
   const fireSafetyTimeout = () => {
@@ -2167,7 +2190,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           ));
           if (fs.existsSync(versionsDir)) {
             const newDirs = fs.readdirSync(versionsDir);
-            neoId = newDirs.find(d => d.toLowerCase().startsWith('neoforge-' + neoPrefix)) || null;
+            neoId = newDirs.find(d => d.toLowerCase().startsWith('neoforge-' + neoPrefix)) || newDirs.find(d => d.toLowerCase().startsWith(neoPrefixShort)) || null;
             if (neoId && !fs.existsSync(path.join(versionsDir, neoId, `${neoId}.json`))) neoId = null;
           }
           if (neoId) {
@@ -2524,9 +2547,9 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         const cruxJar = await ensureCruxClientMod(version, send, instanceId);
         safetyTimer = setTimeout(fireSafetyTimeout, 5 * 60 * 1000);
         if (cruxJar) {
-          const dest = path.join(modsDir, `Crux-Client-Mod-${version}.jar`);
+          const dest = path.join(modsDir, `crux-client-features-${version}.jar`);
           if (!fs.existsSync(dest)) await fs.promises.copyFile(cruxJar, dest);
-          send('instance-log', { instanceId, line:`[CRUX-MOD] Deployed Crux Client (MC ${version}) to mods folder.` });
+          send('instance-log', { instanceId, line:`[CRUX-MOD] Deployed Crux Client Features (MC ${version}) to mods folder.` });
         }
       }
 
@@ -2633,6 +2656,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     // ── Deploy resource packs (all loaders, including vanilla) ─────────────
     const profileRPs = (profileResourcePacks || []).filter(rp => {
       const v = (rp && typeof rp === 'object') ? (rp.mcVersion || 'all') : 'all';
+      if (rp && typeof rp === 'object' && rp.disabled) return false;
       return v === 'all' || v === version;
     });
     const rpList = [...((data.useClientRPs !== false) ? (data.clientResourcePacks || []) : []), ...profileRPs];
@@ -3197,10 +3221,18 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       if (modLoader === 'neoforge' && versionObj.custom) {
         try {
           // Disable NeoForge EarlyDisplay by renaming its JAR (crashes on old AMD drivers)
-          const earlyDisplayJar = path.join(P.mc, 'libraries', 'net', 'neoforged', 'fancymodloader', 'earlydisplay', '4.0.42', 'earlydisplay-4.0.42.jar');
-          const earlyDisplayDisabled = earlyDisplayJar + '.disabled';
+          // Find the actual EarlyDisplay JAR dynamically instead of hardcoding a version
+          let earlyDisplayJar = null;
           try {
-            if (fs.existsSync(earlyDisplayJar)) {
+            const edmDir = path.join(P.mc, 'libraries', 'net', 'neoforged', 'fancymodloader', 'earlydisplay');
+            if (fs.existsSync(edmDir)) {
+              const edmVersions = fs.readdirSync(edmDir).filter(v => fs.existsSync(path.join(edmDir, v, `earlydisplay-${v}.jar`))).sort();
+              if (edmVersions.length) earlyDisplayJar = path.join(edmDir, edmVersions[edmVersions.length - 1], `earlydisplay-${edmVersions[edmVersions.length - 1]}.jar`);
+            }
+          } catch {}
+          const earlyDisplayDisabled = earlyDisplayJar ? earlyDisplayJar + '.disabled' : null;
+          try {
+            if (earlyDisplayJar && fs.existsSync(earlyDisplayJar)) {
               await fs.promises.rename(earlyDisplayJar, earlyDisplayDisabled);
               send('instance-log', { instanceId, line: `[NEOFORGE] Disabled EarlyDisplay (renamed JAR)` });
             }
@@ -3222,7 +3254,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           }
 
           if (stoppedInstances.has(instanceId)) {
-            try { if (fs.existsSync(earlyDisplayDisabled)) fs.renameSync(earlyDisplayDisabled, earlyDisplayJar); } catch {}
+            try { if (earlyDisplayDisabled && fs.existsSync(earlyDisplayDisabled)) fs.renameSync(earlyDisplayDisabled, earlyDisplayJar); } catch {}
             cleanupMesaFromGameDir(P.mc);
             return { code: 0, modCrash: false };
           }
@@ -3256,7 +3288,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             if (s.toLowerCase().includes('incompatible mods found') || s.toLowerCase().includes('some of your mods are incompatible') || s.includes('FormattedException') || s.includes('Mod resolution failed') || s.toLowerCase().includes('error loading mod') || s.toLowerCase().includes('failed to load mod') || s.toLowerCase().includes('uncaught exception')) {
               modCrash = true;
             }
-            if (s.includes('atio6axx.dll') || s.includes('EXCEPTION_ACCESS_VIOLATION') && s.includes('Video')) {
+            if ((s.includes('atio6axx.dll') || s.includes('EXCEPTION_ACCESS_VIOLATION')) && (s.includes('crash') || s.includes('Video') || s.includes('VideoContext'))) {
               gpuDriverCrash = true;
             }
           };
@@ -3267,7 +3299,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
               proc.on('close', async (code) => {
                 // Restore EarlyDisplay JAR after launch
                 try {
-                  if (fs.existsSync(earlyDisplayDisabled)) {
+                  if (earlyDisplayDisabled && fs.existsSync(earlyDisplayDisabled)) {
                     fs.renameSync(earlyDisplayDisabled, earlyDisplayJar);
                   }
                 } catch {}
@@ -3290,7 +3322,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
               resolve({ code, modCrash });
             });
             proc.on('error', (err) => {
-              try { if (fs.existsSync(earlyDisplayDisabled)) fs.renameSync(earlyDisplayDisabled, earlyDisplayJar); } catch {}
+              try { if (earlyDisplayDisabled && fs.existsSync(earlyDisplayDisabled)) fs.renameSync(earlyDisplayDisabled, earlyDisplayJar); } catch {}
               cleanupMesaFromGameDir(P.mc);
               send('instance-log', { instanceId, line:`[LAUNCH ERROR] ${err.message}` });
               resolve({ code: -1, modCrash: false });
@@ -3416,20 +3448,6 @@ ipcMain.on('launch-minecraft', async (event, data) => {
 
     const mclcResult = await mclcLaunchOnce();
     clearTimeout(safetyTimer);
-
-    // Record playtime stats for this session
-    try {
-      const startedAt = instances[instanceId].gameStartedAt || instances[instanceId].startTime || Date.now();
-      const durMs = Date.now() - startedAt;
-      if (durMs > 0) {
-        stats.playMs += durMs;
-        stats.launches += 1;
-        stats.lastPlayed = Date.now();
-        if (data.version) stats.byVersion[data.version] = (stats.byVersion[data.version] || 0) + durMs;
-        if (data.profileId) stats.byProfile[data.profileId] = (stats.byProfile[data.profileId] || 0) + durMs;
-        await save(P.stats, stats);
-      }
-    } catch {}
 
     // Save the group's settings back after the game wrote options.txt on exit
     await syncGroupSettings(settingsGroup);
@@ -3608,20 +3626,27 @@ function startUpdateProgressWindow() {
   }
 }
 
+// Standalone window shown while the launcher is being uninstalled/reinstalled,
+// so the user always sees something during the update.
+function ensureUninstallWindowScript() {
+  try {
+    const winScript = path.join(os.tmpdir(), 'crux-uninstall-window.ps1');
+    fs.writeFileSync(winScript, '\uFEFF' + fs.readFileSync(path.join(__dirname, 'uninstall-window.ps1'), 'utf8'), 'utf8');
+    return true;
+  } catch (e) {
+    updateLog('Failed to copy uninstall window script: ' + (e && e.message));
+    return false;
+  }
+}
+
 // ── User data backup across updates (survives uninstall/reinstall) ──────────
 const UPDATE_BACKUP_FILE = path.join(os.tmpdir(), 'crux-update-backup.json');
 const UPDATE_INSTALLED_FLAG = path.join(os.tmpdir(), 'crux-update-installed.flag');
 
 function backupUserDataForUpdate() {
   try {
-    const now = Date.now();
-    stats.launcherOpenMs += now - _lastLauncherTick;
-    _lastLauncherTick = now;
-    fs.writeFileSync(P.stats, JSON.stringify(stats, null, 2));
-  } catch {}
-  try {
     const data = {};
-    for (const key of ['settings', 'accounts', 'profiles', 'mods', 'launched', 'stats']) {
+    for (const key of ['settings', 'accounts', 'profiles', 'mods', 'launched']) {
       try {
         data[key] = JSON.parse(fs.readFileSync(P[key], 'utf8'));
       } catch {}
@@ -3715,6 +3740,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
     // Tell the renderer the download is done and the installer window will take over
     send('update-install-start', { message: 'Download finished — installing now' });
 
+    ensureUninstallWindowScript();
     // Create a batch script that waits for the launcher to close, then runs the installer
     const launcherExe = path.basename(app.getPath('exe'));
     const batchPath = path.join(os.tmpdir(), 'crux-update-' + Date.now() + '.bat');
@@ -3724,6 +3750,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
       'timeout /t 1 /nobreak >nul',
       'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
       'if %errorlevel%==0 goto waitloop',
+      'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set close',
       'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set uninstall',
       'start /wait "" "' + installerPath + '"',
       'echo done > "%TEMP%\\crux-update-installed.flag"',

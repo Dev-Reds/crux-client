@@ -10,6 +10,7 @@ installer/win-unpacked/
 installer/linux-unpacked/
 installer/mac-unpacked/
 installer/__appImage-x64/
+installer-mac/
 installer/builder-debug.yml
 installer.log
 settings.json

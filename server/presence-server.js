@@ -121,6 +121,17 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Live count of launchers currently open worldwide (with a seen uuid in the last 90s)
+  if (p === '/v1/count' && req.method === 'GET') {
+    const t = now();
+    let live = 0;
+    for (const s of presences.values()) {
+      if (t - s.lastSeen <= OFFLINE_AFTER_MS) live++;
+    }
+    json(res, 200, { ok: true, time: t, count: live });
+    return;
+  }
+
   if (p === '/v1/status' && req.method === 'POST') {
     const body = await parseBody(req);
     if (!body) { json(res, 400, { error: 'bad body' }); return; }
