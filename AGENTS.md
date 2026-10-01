@@ -65,24 +65,75 @@ gh release upload v1.1.xx crux_code.zip --clobber -R Dev-Reds/crux-code
 - `custom-shortcuts.nsh`: Custom Page für Desktop/Startmenü-Verknüpfungen
 - `createDesktopShortcut` / `createStartMenuShortcut` in package.json steuern defaults
 - Kein `!define DONT_RUN_APP_AFTER_INSTALL` (damit Auto-Start aktiv ist)
+- Bauen: `npm run build-installer` (electron-builder 24.13.3, ~2 min, ~102 MB)
+- **Signatur-Bug**: das Nachsignieren in `installer/build-installer.js` schlägt fehl
+  (Ergebnis `NotSigned`, obwohl `CN=Crux Client` in `Cert:\CurrentUser\My` liegt).
+  Deshalb IMMER danach manuell prüfen und ggf. nachsignieren:
+  ```powershell
+  Get-AuthenticodeSignature installer\Crux-Client-Installer.exe | Select-Object Status
+  # NotSigned ->
+  $cert=Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -like '*Crux Client*' } | Select-Object -First 1
+  Set-AuthenticodeSignature -FilePath 'installer\Crux-Client-Installer.exe' -Certificate $cert `
+    -TimestampServer 'http://timestamp.digicert.com' -HashAlgorithm SHA256
+  ```
+
+### Bedrock Edition
+
+Bedrock hat **keine** Versionsliste. Es gibt genau 2 auswählbare Optionen:
+
+| Wert `mcVersion` | Anzeige | AUMID |
+|---|---|---|
+| `''` | Latest Release | `Microsoft.MinecraftUWP_8wekyb3d8bbwe!App` |
+| `'__latest_prerelease__'` | Latest Pre-release | `Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe!App` |
+
+- `index.html:3766-3772`: bei `modLoader==='bedrock'` wird die Java-Version-Liste
+  gar nicht erst aufgebaut — nur die zwei Optionen, danach `return`.
+- `index.html:3393-3411` (`updateModLoaderVisibility`): versteckt Mods/Resourcepacks/
+  Shaderpacks/Render-API/Offline-Button, lässt nur Name, Version, Save, Share, Delete.
+- **Start ohne Ordner-Fenster**: `launchBedrock()` (main.js:1755) schreibt ein
+  PowerShell-Skript nach `%TEMP%\crux-activate-app.ps1` und ruft es mit
+  `IApplicationActivationManager.ActivateApplication($aumid)` auf
+  (COM-Interop via `Add-Type`). Verstecktes Fenster (`-WindowStyle Hidden`), 30 s Timeout.
+  - NIEMALS `explorer.exe shell:appsFolder\...` — das öffnet den Apps-Ordner.
+  - NIEMALS zusätzlich `start minecraft:` — das war ein Doppelstart.
+  - Pre-Release-AUMID gegen die echte Installation prüfen:
+    `Get-StartApps | Select-String Minecraft`
+
+### Stats
+
+Das Stats-Feature (Launch-Tab-Statistiken) ist **entfernt** und darf nicht wieder
+eingeführt werden. `index.html` und `main.js` enthalten bewusst KEINE
+`renderLaunchStats` / `load-stats` / `stat_*`-Symbole mehr.
 
 ### Dev-Builds (Update-Detection aus)
 
 Version mit `-dev`-Suffix (z.B. `1.1.70-dev`) in `package.json` **und** `package-lock.json`
 (zwei Stellen: Top-Level + `packages[""]`). Dadurch ist der Build automatisch update-frei:
 
-- `main.js`: `IS_DEV_BUILD = /-dev\b/i.test(CURRENT_VERSION)` (main.js:3526)
-  - `check-for-update` → `{ updateAvailable:false, devBuild:true }`, kein GitHub-Call (main.js:3594)
-  - `download-and-install-update` → wirft Fehler (main.js:3727)
-- `index.html`: `DEV_BUILD` analog aus package.json (index.html:1930)
-  - kein Auto-Check beim Boot (index.html:2104)
-  - `checkForUpdates()` bricht sofort ab (index.html:8117)
-  - Settings-Button "Check for Updates" ist deaktiviert + umgelabelt (index.html:8783)
+- `main.js`: `IS_DEV_BUILD = /-dev\b/i.test(CURRENT_VERSION)`
+  - `check-for-update` → `{ updateAvailable:false, devBuild:true }`, kein GitHub-Call
+  - `download-and-install-update` → wirft Fehler
+- `index.html`: `DEV_BUILD` analog aus package.json
+  - kein Auto-Check beim Boot
+  - `checkForUpdates()` bricht sofort ab
+  - Settings-Button "Check for Updates" ist deaktiviert + umgelabelt
 
-**Wichtig:** Ein Dev-Build NIEMALS taggen und KEIN `gh release create` aufrufen.
-Update-Detection der User liest `https://api.github.com/repos/Dev-Reds/crux-client/releases`
-und filtert `!r.prerelease` + `/^v?\d+\.\d+\.\d+/` — ein Tag `v1.1.70-dev` würde dort
-ignoriert, aber ein Release-Tag `v1.1.70` **nicht**. Nur `main` bekommt Releases.
+**Wichtig:** Ein Dev-Build NIEMALS mit `v?\d+\.\d+\.\d+` taggen. Update-Detection der
+User liest `https://api.github.com/repos/Dev-Reds/crux-client/releases` und filtert
+`!r.prerelease` + `/^v?\d+\.\d+\.\d+/` (main.js:3626). Ein Release-Tag `v1.1.70`
+**wäre** sichtbar, `dev-1.1.70` ist es doppelt nicht (matcht den Regex nicht UND ist
+prerelease). Nur `main` bekommt Version-Releases.
+
+**Dev-Installer trotzdem bereitstellen** (z.B. zum Weitergeben): Tag `dev-<version>` auf
+`dev` mit `prerelease=true` + Asset hochladen. User-Update-Dialog bleibt auf `v1.1.69`.
+Ohne `gh` CLI geht es über die REST API:
+```powershell
+$h=@{ 'User-Agent'='CruxClient'; 'Authorization'="Bearer $tok"; 'Accept'='application/vnd.github+json' }
+$r=Invoke-RestMethod -Method Post -Uri 'https://api.github.com/repos/Dev-Reds/crux-client/releases' `
+  -Headers $h -Body ([Text.Encoding]::UTF8.GetBytes($json)) -ContentType 'application/json'
+Invoke-RestMethod -Method Post -Uri "https://uploads.github.com/repos/Dev-Reds/crux-client/releases/$($r.id)/assets?name=Crux-Client-Installer.exe" `
+  -Headers $h -ContentType 'application/octet-stream' -InFile 'installer\Crux-Client-Installer.exe' -TimeoutSec 900
+```
 
 ### Push ohne persistierten Token
 
