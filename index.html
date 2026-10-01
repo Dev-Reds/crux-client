@@ -202,6 +202,13 @@ body.light h2[style*="color:#ccc"]{color:#333!important;}
 body.light .launch-right{background:#e8e8e8;border-left-color:#ddd;}
 body.light .launch-left{background:#f0f0f0;}
 
+/* ── Launch stats ── */
+.launch-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(10.5em,1fr));gap:.6em;margin-top:auto;padding-top:1vh;}
+.stat-card{background:#111;border:1px solid #2a2a2a;border-radius:var(--r);padding:.7em .8em;display:flex;flex-direction:column;gap:.2em;min-width:0;}
+.stat-label{font-size:.68em;color:#888;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stat-value{font-size:1.05em;font-weight:bold;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+body.light .stat-card{background:#fff;border-color:#ddd;}
+
 /* ── Launch recent ── */
 
 /* 3D skin canvas */
@@ -743,6 +750,14 @@ body.light .cdrop-trigger::after{color:#666 !important;}
           <div class="lp-wrap" id="lp-wrap">
             <div class="lp-bg"><div class="lp-fill" id="lp-fill"></div></div>
             <div class="lp-label" id="lp-label"></div>
+          </div>
+          <div class="launch-stats" id="launch-stats">
+            <div class="stat-card"><div class="stat-label" data-i18n="stat_played">Playtime</div><div class="stat-value" id="stat-played">—</div></div>
+            <div class="stat-card"><div class="stat-label" data-i18n="stat_launcher_open">Launcher open</div><div class="stat-value" id="stat-launcher-open">—</div></div>
+            <div class="stat-card"><div class="stat-label" data-i18n="stat_launches">Launches</div><div class="stat-value" id="stat-launches">—</div></div>
+            <div class="stat-card"><div class="stat-label" data-i18n="stat_avg_session">Avg session</div><div class="stat-value" id="stat-avg-session">—</div></div>
+            <div class="stat-card"><div class="stat-label" data-i18n="stat_last_played">Last played</div><div class="stat-value" id="stat-last-played">—</div></div>
+            <div class="stat-card"><div class="stat-label" data-i18n="stat_first_launch">First launch</div><div class="stat-value" id="stat-first-launch">—</div></div>
           </div>
           <div class="launch-recent" style="margin-top:1.5em;padding-top:1em">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8em;flex-wrap:wrap;gap:.4em">
@@ -1662,7 +1677,8 @@ body.light .cdrop-trigger::after{color:#666 !important;}
                 <div class="pack-section-header">
                   <h3 data-i18n="profile_datapacks">Datapacks</h3>
                   <div style="display:flex;gap:.35em">
-                    <button class="btn btn-sm btn-modrinth" id="profile-btn-dp-modrinth">+</button>
+                    <button class="btn btn-sm btn-modrinth" id="profile-btn-dp-modrinth">+ Modrinth</button>
+                    <button class="btn btn-sm btn-curseforge" id="profile-btn-dp-curseforge">+ CurseForge</button>
                   </div>
                 </div>
                 <div class="pack-list" id="profile-datapacks"></div>
@@ -1671,7 +1687,8 @@ body.light .cdrop-trigger::after{color:#666 !important;}
                 <div class="pack-section-header">
                   <h3 data-i18n="profile_resourcepacks">Resource Packs</h3>
                   <div style="display:flex;gap:.35em">
-                    <button class="btn btn-sm btn-modrinth" id="profile-btn-rp-modrinth">+</button>
+                    <button class="btn btn-sm btn-modrinth" id="profile-btn-rp-modrinth">+ Modrinth</button>
+                    <button class="btn btn-sm btn-curseforge" id="profile-btn-rp-curseforge">+ CurseForge</button>
                   </div>
                 </div>
                 <div class="pack-list" id="profile-resourcepacks"></div>
@@ -1680,7 +1697,8 @@ body.light .cdrop-trigger::after{color:#666 !important;}
                 <div class="pack-section-header">
                   <h3 data-i18n="profile_shaderpacks">Shader Packs</h3>
                   <div style="display:flex;gap:.35em">
-                    <button class="btn btn-sm btn-modrinth" id="profile-btn-sp-modrinth">+</button>
+                    <button class="btn btn-sm btn-modrinth" id="profile-btn-sp-modrinth">+ Modrinth</button>
+                    <button class="btn btn-sm btn-curseforge" id="profile-btn-sp-curseforge">+ CurseForge</button>
                   </div>
                 </div>
                 <div class="pack-list" id="profile-shaderpacks"></div>
@@ -1908,6 +1926,9 @@ let instances={}, selectedInstanceId=null, autoScrollLogs=true;
 let pendingLaunchServer=null;
 const PAGE_SIZE=15;
 
+// Dev builds ("-dev" in package.json version) have update detection turned off.
+const DEV_BUILD = (()=>{ try { return /-dev\b/i.test(require('./package.json').version); } catch { return false; } })();
+
 // ── Online / offline indicator ─────────────────────────────────────────────
 let appOnline=true;
 function updateOfflineUI(){
@@ -1932,6 +1953,7 @@ window.addEventListener('visibilitychange',()=>{
   if(!appInForeground()) return;
   checkConnectivity();
   updateSkinDisplay();
+  if(document.getElementById('launch-page').classList.contains('active')) renderLaunchStats();
   refreshFriendStatuses(); renderChatFriends(); refreshFriendRequests();
 });
 
@@ -2076,8 +2098,10 @@ async function bootLauncher(){
     document.getElementById('status').textContent='Loading versions...';
     loadVersions();
 
-    // Auto-check for updates (non-blocking)
-    checkForUpdates(true);
+    renderLaunchStats();
+
+    // Auto-check for updates (non-blocking) — skipped in dev builds
+    if(!DEV_BUILD) checkForUpdates(true);
   } catch(err) {
     console.error('[Crux] Boot error:', err);
     // Fallback: at least show the UI and make toolbar clickable
@@ -2130,18 +2154,56 @@ function showPage(id){
   });
   if(id==='mods-page') syncModFilterToProfile();
   if(id==='logs-page'){ renderInstanceList(); refreshLogSelect(); updateStopButtons(); }
-  if(id==='launch-page') renderRecentList();
-  if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
+  if(id==='launch-page') renderRecentList();  if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
   if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); refreshChat(); }
-  if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); }
+  if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); renderLaunchStats(); }
 }
 
-function bindToolbar(){
-  document.querySelectorAll('.tb-btn[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+let _statsTimer = null;
+function renderLaunchStats(){
+  if(_statsTimer===null){ _statsTimer=setInterval(()=>{ if(appInForeground() && document.getElementById('launch-page').classList.contains('active')) renderLaunchStats(); },5000); }
+  ipcRenderer.invoke('load-stats').then(s=>{
+    s = s||{};
+    const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
+    set('stat-played', fmtDuration(s.playMs));
+    set('stat-launcher-open', fmtDuration(s.launcherOpenMs));
+    set('stat-launches', String(s.launches||0));
+    const avg = s.launches>0 ? Math.round((s.playMs||0)/s.launches) : 0;
+    set('stat-avg-session', avg>0 ? fmtDuration(avg) : '—');
+    set('stat-last-played', fmtRelative(s.lastPlayed));
+    set('stat-first-launch', fmtDate(s.firstLaunch));
+  }).catch(()=>{});
+}
+function fmtDuration(ms){
+  if(!ms || ms<0) return '—';
+  const totalMin = Math.floor(ms/60000);
+  const h = Math.floor(totalMin/60);
+  const m = totalMin % 60;
+  if(h>0) return h+'h '+(m>0?m+'m':'');
+  if(m>0) return m+'m';
+  return Math.max(1,Math.floor(ms/1000))+'s';
+}
+function fmtRelative(ts){
+  if(!ts) return '—';
+  const min = Math.floor((Date.now()-ts)/60000);
+  if(min<1) return t('stat_now');
+  if(min<60) return min+'m';
+  const h = Math.floor(min/60);
+  if(h<24) return h+'h';
+  const d = Math.floor(h/24);
+  if(d<30) return d+'d';
+  return fmtDate(ts);
+}
+function fmtDate(ts){
+  if(!ts) return '—';
+  return new Date(ts).toLocaleDateString();
+}
+
+function bindToolbar(){  document.querySelectorAll('.tb-btn[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 }
 
 function applyTheme(l){
-  const isLight = (l === true || l === 'light' || l === 'glass');
+const isLight = (l === true || l === 'light' || l === 'glass');
   document.body.classList.toggle('light', isLight);
   document.body.classList.toggle('glass', l === 'glass');
   document.body.classList.remove('win7','xp');
@@ -2415,6 +2477,8 @@ const LANGS={
     sv_type_modpack:'Modpack server + Loader',
     update_wait_text:'Please wait a few minutes for the download and restart button to appear.',
     update_install:'Update & Restart', update_github:'Download from GitHub', update_bugreport:'🐛 Bug Report', update_later:'Later',
+    stat_played:'Playtime', stat_launcher_open:'Launcher open', stat_launches:'Launches', stat_avg_session:'Avg session',
+    stat_last_played:'Last played', stat_first_launch:'First launch', stat_now:'now',
   },
   de:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes',
@@ -2550,8 +2614,9 @@ const LANGS={
     sv_type_forge:'Klassischer Mod-Loader', sv_type_neoforge:'Forge Fork für modernes MC',
     sv_type_modpack:'Modpack-Server + Loader',
     update_wait_text:'Bitte warte ein paar Minuten, bis der Download- und Neustart-Button erscheint.',
-    update_install:'Aktualisieren & Neustart', update_github:'Von GitHub herunterladen', update_bugreport:'🐛 Fehler melden',
-    update_later:'Später',
+    update_install:'Aktualisieren & Neustart', update_github:'Von GitHub herunterladen', update_bugreport:'🐛 Fehler melden', update_later:'Später',
+    stat_played:'Spielzeit', stat_launcher_open:'Launcher offen', stat_launches:'Starts', stat_avg_session:'Ø Sitzung',
+    stat_last_played:'Zuletzt gespielt', stat_first_launch:'Erster Start', stat_now:'jetzt',
   },
   fr:{
     tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes',
@@ -2686,6 +2751,8 @@ const LANGS={
     sv_type_modpack:'Serveur Modpack + Loader',
     update_wait_text:'Veuillez patienter quelques minutes pour que le bouton de téléchargement et de redémarrage apparaisse.',
     update_install:'Mettre à jour & Redémarrer', update_github:'Télécharger depuis GitHub', update_bugreport:'🐛 Signaler un bug', update_later:'Plus tard',
+    stat_played:'Temps de jeu', stat_launcher_open:'Launcher ouvert', stat_launches:'Lancements', stat_avg_session:'Sess. moy.',
+    stat_last_played:'Dernière session', stat_first_launch:'Premier lancement', stat_now:'maintenant',
   },
   es:{
     tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas',
@@ -2812,7 +2879,9 @@ const LANGS={
     sv_type_spigot:'Plugins + Rendimiento', sv_type_purpur:'Fork Paper + Opciones extra',
     sv_type_fabric:'Servidor Mod Loader', sv_type_quilt:'Fork Fabric Mod Loader',
     sv_type_forge:'Mod Loader clásico', sv_type_neoforge:'Fork Forge para MC moderno',
-    sv_type_modpack:'Servidor Modpack + Loader', update_later:'Más tarde',
+    sv_type_modpack:'Servidor Modpack + Loader',
+    stat_played:'Tiempo de juego', stat_launcher_open:'Launcher abierto', stat_launches:'Lanzamientos', stat_avg_session:'Sesión med.',
+    stat_last_played:'Última sesión', stat_first_launch:'Primer inicio', stat_now:'ahora', update_later:'Más tarde',
   },
 };
 
@@ -4115,8 +4184,11 @@ document.getElementById('import-norisk-confirm-btn').addEventListener('click',()
 // Profile pack buttons
 document.getElementById('profile-btn-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='mods'; openModModal('modrinth'); });
 document.getElementById('profile-btn-dp-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='datapacks'; openModModal('modrinth'); });
+document.getElementById('profile-btn-dp-curseforge').addEventListener('click',()=>{ profileModMode=true; profilePackMode='datapacks'; openModModal('curseforge'); });
 document.getElementById('profile-btn-rp-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='resourcePacks'; openModModal('modrinth'); });
+document.getElementById('profile-btn-rp-curseforge').addEventListener('click',()=>{ profileModMode=true; profilePackMode='resourcePacks'; openModModal('curseforge'); });
 document.getElementById('profile-btn-sp-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='shaderPacks'; openModModal('modrinth'); });
+document.getElementById('profile-btn-sp-curseforge').addEventListener('click',()=>{ profileModMode=true; profilePackMode='shaderPacks'; openModModal('curseforge'); });
 
 function renderProfilePackList(containerId, key, isMods=false){
   const el=document.getElementById(containerId); el.innerHTML='';
@@ -8042,6 +8114,11 @@ function updateLog(msg){
 async function checkForUpdates(silent) {
   const btn = document.getElementById('check-update-btn');
   console.log('[Crux] checkForUpdates called, silent:', silent);
+  if (DEV_BUILD) {
+    updateLog('Dev build — update detection disabled.');
+    if (!silent && btn) { btn.textContent = 'Updates disabled (dev build)'; btn.disabled = true; }
+    return;
+  }
   if (!silent && btn) { btn.textContent = 'Checking...'; btn.disabled = true; }
   updateLog('Starting update check...');
   try {
@@ -8703,6 +8780,10 @@ ipcRenderer.on('update-install-start', () => {
 });
 
 document.getElementById('check-update-btn').addEventListener('click', () => checkForUpdates(false));
+if(DEV_BUILD){
+  const cub=document.getElementById('check-update-btn');
+  if(cub){ cub.disabled=true; cub.textContent='Updates disabled (dev build)'; cub.style.opacity=.5; cub.style.cursor='not-allowed'; }
+}
 ipcRenderer.on('update-log', (_, msg) => updateLog('[main] ' + msg));
 </script>
 <script>

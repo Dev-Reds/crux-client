@@ -67,6 +67,7 @@ const P = {
   mc:   path.join(base,'minecraft'),
   servers: path.join(base,'servers'),
   groups: path.join(base,'groups'),
+  stats: path.join(base,'stats.json'),
 };
 app.setPath('userData', base);
 app.setPath('cache', path.join(base,'Cache'));
@@ -152,6 +153,7 @@ app.whenReady().then(async () => {
         'if %errorlevel%==0 goto waitloop',
         'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set close',
         'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set uninstall',
+        'start "" powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File "%TEMP%\\crux-uninstall-window.ps1"',
         'start /wait "" "' + pendingUpdatePath + '"',
         'echo done > "%TEMP%\\crux-update-installed.flag"',
         'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set launch',
@@ -184,6 +186,7 @@ app.whenReady().then(async () => {
   }
   // Restore user data backed up before the update (survives uninstall/reinstall)
   restoreUserDataAfterUpdate();
+  try { stats = await load(P.stats, stats); } catch {}
   // Clean up downloaded installer and flag so we don't loop on next startup
   if (fs.existsSync(updateDoneFlag)) {
     try { fs.unlinkSync(updateDoneFlag); } catch {}
@@ -250,6 +253,35 @@ const saveSettings = async (data) => {
     await fs.promises.writeFile(P.settings, JSON.stringify(clean,null,2));
   } catch {}
 };
+
+// ── Stats (playtime, launcher uptime, launches) ──────────────────────────────
+// Stored in stats.json. Playtime is accumulated per launch, launcher-open time
+// is ticked every 30s and flushed on quit so it survives crashes.
+let stats = { playMs:0, launches:0, launcherOpenMs:0, firstLaunch:null, lastPlayed:null, byVersion:{}, byProfile:{} };
+let _lastLauncherTick = Date.now();
+(async () => {
+  try {
+    stats = await load(P.stats, stats);
+    if (!stats.firstLaunch) stats.firstLaunch = Date.now();
+    if (typeof stats.byVersion !== 'object' || !stats.byVersion) stats.byVersion = {};
+    if (typeof stats.byProfile !== 'object' || !stats.byProfile) stats.byProfile = {};
+    _lastLauncherTick = Date.now();
+    await save(P.stats, stats);
+  } catch {}
+})();
+setInterval(() => {
+  const now = Date.now();
+  stats.launcherOpenMs += now - _lastLauncherTick;
+  _lastLauncherTick = now;
+  save(P.stats, stats);
+}, 30000);
+app.on('before-quit', () => {
+  const now = Date.now();
+  stats.launcherOpenMs += now - _lastLauncherTick;
+  _lastLauncherTick = now;
+  save(P.stats, stats);
+});
+ipcMain.handle('load-stats', async () => stats);
 
 // Default glass background image bundled in icons/ (used when user set none)
 let _glassDefaultBg = null;
@@ -398,7 +430,7 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
     for (const dep of fabricDeps) pushUnique(dep);
   }
 
-  // Crux Client Features jar (only if the per-profile toggle is on and an asset exists)
+// Crux Client Features jar (only if the per-profile toggle is on and an asset exists)
   if (profile.useCruxMod !== false && (modLoader === 'fabric' || modLoader === 'quilt')) {
     try {
       const cruxJar = await ensureCruxClientMod(version, sendProgress, 'offline');
@@ -3490,6 +3522,8 @@ function showCrashWindow(instanceId, code, log) {
 
 // ── Update ────────────────────────────────────────────────────────────────────
 const CURRENT_VERSION = require('./package.json').version;
+// Dev builds (version contains "-dev") never check for or install updates.
+const IS_DEV_BUILD = /-dev\b/i.test(CURRENT_VERSION);
 const GITHUB_REPO = 'Dev-Reds/crux-client';
 
 function updateLog(msg) {
@@ -3557,6 +3591,10 @@ function isNewer(remote, local) {
 }
 
 ipcMain.handle('check-for-update', async () => {
+  if (IS_DEV_BUILD) {
+    updateLog('Dev build — update detection disabled.');
+    return { updateAvailable: false, devBuild: true, currentVersion: CURRENT_VERSION };
+  }
   try {
     updateLog('Fetching releases from GitHub...');
     const releases = await fetchJsonHttps(`https://api.github.com/repos/${GITHUB_REPO}/releases`);
@@ -3645,8 +3683,14 @@ const UPDATE_INSTALLED_FLAG = path.join(os.tmpdir(), 'crux-update-installed.flag
 
 function backupUserDataForUpdate() {
   try {
+    const now = Date.now();
+    stats.launcherOpenMs += now - _lastLauncherTick;
+    _lastLauncherTick = now;
+    fs.writeFileSync(P.stats, JSON.stringify(stats, null, 2));
+  } catch {}
+  try {
     const data = {};
-    for (const key of ['settings', 'accounts', 'profiles', 'mods', 'launched']) {
+    for (const key of ['settings', 'accounts', 'profiles', 'mods', 'launched', 'stats']) {
       try {
         data[key] = JSON.parse(fs.readFileSync(P[key], 'utf8'));
       } catch {}
@@ -3680,6 +3724,7 @@ function restoreUserDataAfterUpdate() {
 }
 
 ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUrl) => {
+  if (IS_DEV_BUILD) throw new Error('Updates are disabled in dev builds');
   const isAsar = __dirname.endsWith('app.asar') || process.env.APPIMAGE;
   const send = (...a) => { try { mainWindow.webContents.send(...a); } catch {} };
 
@@ -3751,8 +3796,9 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
       'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
       'if %errorlevel%==0 goto waitloop',
       'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set close',
-      'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set uninstall',
-      'start /wait "" "' + installerPath + '"',
+'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set uninstall',
+        'start "" powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File "%TEMP%\\crux-uninstall-window.ps1"',
+        'start /wait "" "' + installerPath + '"',
       'echo done > "%TEMP%\\crux-update-installed.flag"',
       'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set launch',
       'del "%~f0"',

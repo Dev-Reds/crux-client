@@ -1,6 +1,6 @@
 {
     "name": "files",
-    "version": "1.1.70",
+"version": "1.1.70-dev",
     "description": "",
     "main": "main.js",
     "scripts": {

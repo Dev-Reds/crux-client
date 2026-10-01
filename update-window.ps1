@@ -61,7 +61,6 @@ function Update-Text {
   $pctEl.Text = "$p%"
   $barEl.Value = $p
   if ($phase -eq 'download') { $statusEl.Text = 'Lade Update herunter...' }
-  elseif ($phase -eq 'close') { $statusEl.Text = 'Schliesse Launcher...' }
   elseif ($phase -eq 'uninstall') {
     if ($cur -lt 50) { $statusEl.Text = 'Deinstalliere alte Version...' }
     else { $statusEl.Text = 'Installiere neue Version...' }
@@ -79,11 +78,16 @@ $timer.Add_Tick({
     if ($d -ne $null) {
       $np = [string]$d.phase
       if ($np -ne $phase) {
+        if ($np -eq 'close') {
+          $closing = $true
+          $timer.Stop()
+          try { $win.Close() } catch {}
+          return
+        }
         $phase = $np
         $startPct = $cur
         $animStart = [DateTime]::UtcNow
         if ($np -eq 'download') { $targetPct = 25.0; $animDur = 0.5 }
-        elseif ($np -eq 'close') { $targetPct = 35.0; $animDur = 6 }
         elseif ($np -eq 'uninstall') { $targetPct = 75.0; $animDur = 28 }
         elseif ($np -eq 'launch') { $targetPct = 99.0; $animDur = 12 }
         elseif ($np -eq 'done') { $targetPct = 100.0; $animDur = 1 }
