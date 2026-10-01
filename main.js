@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const https = require('https');
 const http  = require('http');
-const { exec, execSync, spawn } = require('child_process');
+const { exec, execSync, spawn, execFile } = require('child_process');
 const fs   = require('fs');
 const path = require('path');
 const os   = require('os');
@@ -67,7 +67,6 @@ const P = {
   mc:   path.join(base,'minecraft'),
   servers: path.join(base,'servers'),
   groups: path.join(base,'groups'),
-  stats: path.join(base,'stats.json'),
 };
 app.setPath('userData', base);
 app.setPath('cache', path.join(base,'Cache'));
@@ -133,7 +132,7 @@ app.whenReady().then(async () => {
   const updateDoneFlag = path.join(base, 'update-migrated.flag');
   if (fs.existsSync(pendingUpdatePath) && !fs.existsSync(updateDoneFlag)) {
     try {
-      // Save user data (settings, stats, accounts, profiles, ...) before update
+      // Save user data (settings, accounts, profiles, ...) before update
       // so nothing is lost when the installer uninstalls the old version
       backupUserDataForUpdate();
       // Mark as migrated so we don't loop on next startup
@@ -186,7 +185,6 @@ app.whenReady().then(async () => {
   }
   // Restore user data backed up before the update (survives uninstall/reinstall)
   restoreUserDataAfterUpdate();
-  try { stats = await load(P.stats, stats); } catch {}
   // Clean up downloaded installer and flag so we don't loop on next startup
   if (fs.existsSync(updateDoneFlag)) {
     try { fs.unlinkSync(updateDoneFlag); } catch {}
@@ -254,35 +252,6 @@ const saveSettings = async (data) => {
   } catch {}
 };
 
-// ── Stats (playtime, launcher uptime, launches) ──────────────────────────────
-// Stored in stats.json. Playtime is accumulated per launch, launcher-open time
-// is ticked every 30s and flushed on quit so it survives crashes.
-let stats = { playMs:0, launches:0, launcherOpenMs:0, firstLaunch:null, lastPlayed:null, byVersion:{}, byProfile:{} };
-let _lastLauncherTick = Date.now();
-(async () => {
-  try {
-    stats = await load(P.stats, stats);
-    if (!stats.firstLaunch) stats.firstLaunch = Date.now();
-    if (typeof stats.byVersion !== 'object' || !stats.byVersion) stats.byVersion = {};
-    if (typeof stats.byProfile !== 'object' || !stats.byProfile) stats.byProfile = {};
-    _lastLauncherTick = Date.now();
-    await save(P.stats, stats);
-  } catch {}
-})();
-setInterval(() => {
-  const now = Date.now();
-  stats.launcherOpenMs += now - _lastLauncherTick;
-  _lastLauncherTick = now;
-  save(P.stats, stats);
-}, 30000);
-app.on('before-quit', () => {
-  const now = Date.now();
-  stats.launcherOpenMs += now - _lastLauncherTick;
-  _lastLauncherTick = now;
-  save(P.stats, stats);
-});
-ipcMain.handle('load-stats', async () => stats);
-
 // Default glass background image bundled in icons/ (used when user set none)
 let _glassDefaultBg = null;
 ipcMain.handle('get-default-glass-bg', async () => {
@@ -325,7 +294,7 @@ ipcMain.handle('load-profiles',          async () => load(P.profiles, [
   { id:'latest-java', name:'Latest Version Java', mcVersion:'', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
   { id:'latest-snapshot', name:'Latest Snapshot Java', mcVersion:'__latest_snapshot__', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
   { id:'latest-bedrock', name:'Latest Bedrock', mcVersion:'', modLoader:'bedrock', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
-  { id:'latest-bedrock-pre', name:'Latest Pre-release Bedrock', mcVersion:'', modLoader:'bedrock', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] }
+  { id:'latest-bedrock-pre', name:'Latest Pre-release Bedrock', mcVersion:'__latest_prerelease__', modLoader:'bedrock', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] }
 ]));
 ipcMain.handle('load-mods',              async () => load(P.mods, []));
 ipcMain.handle('load-launched-versions', async () => load(P.launched, []));
@@ -1748,6 +1717,62 @@ ipcMain.on('stop-minecraft', (e, instanceId) => {
   try { mainWindow.webContents.send('instance-closed', { instanceId, code: 0 }); } catch {}
 });
 
+// ── Bedrock launch ─────────────────────────────────────────────────────────────
+// Activates the Store/UWP app by AUMID through IApplicationActivationManager.
+// This starts the game directly — no explorer.exe window and no game folder opens.
+const BEDROCK_AUMID = 'Microsoft.MinecraftUWP_8wekyb3d8bbwe!App';
+const BEDROCK_PRERELEASE_AUMID = 'Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe!App';
+
+const BEDROCK_ACTIVATE_PS = `
+$ErrorActionPreference = 'Stop'
+$aumid = $args[0]
+$code = @"
+using System;
+using System.Runtime.InteropServices;
+[ComImport, Guid("2e941141-7f97-4756-ba1d-9decde894a3d"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IApplicationActivationManager {
+    IntPtr ActivateApplication([MarshalAs(UnmanagedType.LPWStr)] string appUserModelId,
+        [MarshalAs(UnmanagedType.LPWStr)] string arguments, uint options, out uint processId);
+    IntPtr ActivateForFile(IntPtr appUserModelId, IntPtr itemArray, IntPtr verb, out uint processId);
+    IntPtr ActivateForProtocol(IntPtr appUserModelId, IntPtr itemArray, out uint processId);
+}
+[ComImport, Guid("45BA127D-10A8-46EA-8AB7-56EA9078943C")]
+class ApplicationActivationManager { }
+public static class Ctx {
+    public static uint Activate(string aumid) {
+        var mgr = (IApplicationActivationManager)new ApplicationActivationManager();
+        uint pid;
+        mgr.ActivateApplication(aumid, "", 0, out pid);
+        return pid;
+    }
+}
+"@
+Add-Type -TypeDefinition $code -Language CSharp
+$pid2 = [Ctx]::Activate($aumid)
+Write-Output "OK:$pid2"
+`.trim();
+
+async function launchBedrock(preRelease, send, instanceId) {
+  const aumid = preRelease ? BEDROCK_PRERELEASE_AUMID : BEDROCK_AUMID;
+  const scriptPath = path.join(os.tmpdir(), 'crux-activate-app.ps1');
+  try {
+    fs.writeFileSync(scriptPath, '\uFEFF' + BEDROCK_ACTIVATE_PS, 'utf8');
+  } catch (e) {
+    send('instance-log', { instanceId, line: `[BEDROCK] Could not write activation script: ${e.message}` });
+    throw e;
+  }
+  const out = await new Promise((res, rej) => {
+    execFile('powershell.exe',
+      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', scriptPath, aumid],
+      { timeout: 30000, windowsHide: true, encoding: 'utf8' },
+      (err, stdout, stderr) => err ? rej(new Error(stderr || err.message)) : res(stdout));
+  });
+  const m = /OK:(\d+)/.exec(out || '');
+  if (!m) throw new Error('activation returned no pid: ' + (out || '').trim());
+  send('instance-log', { instanceId, line: `[BEDROCK] Activated ${aumid} (pid ${m[1]})` });
+  return Number(m[1]);
+}
+
 // ── Launch ─────────────────────────────────────────────────────────────────────
 ipcMain.on('launch-minecraft', async (event, data) => {
   lastLaunchData = data;
@@ -1774,17 +1799,12 @@ ipcMain.on('launch-minecraft', async (event, data) => {
 
   // ── Bedrock Edition ───────────────────────────────────────────────────────────
   if (modLoader === 'bedrock') {
+    // Bedrock has no version list in the launcher — only "Latest" and "Latest Pre-release".
+    // Anything else in mcVersion is meaningless for UWP activation, so treat it as latest.
+    const preRelease = version === '__latest_prerelease__';
     try {
       send('launch-progress', { instanceId, percent:50, message:'Launching Minecraft Bedrock Edition...' });
-      const { spawn } = require('child_process');
-      await new Promise((res) => {
-        const appId = 'Microsoft.MinecraftUWP_8wekyb3d8bbwe!App';
-        const cmd = `explorer.exe shell:appsFolder\\${appId}`;
-        spawn('cmd.exe', ['/c', cmd], { detached: true, windowsHide: true, stdio: 'ignore' }).unref();
-        setTimeout(res, 250);
-      });
-      const p = spawn('cmd.exe', ['/c', 'start minecraft:'], { detached: true, windowsHide: true, stdio: 'ignore' });
-      p.unref();
+      await launchBedrock(preRelease, send, instanceId);
       send('launch-progress', { instanceId, percent:100, message:'Minecraft Bedrock Edition launched!', done:true });
     } catch (be) {
       send('instance-log', { instanceId, line: `[BEDROCK] Launch failed: ${be.message}` });
@@ -3683,14 +3703,8 @@ const UPDATE_INSTALLED_FLAG = path.join(os.tmpdir(), 'crux-update-installed.flag
 
 function backupUserDataForUpdate() {
   try {
-    const now = Date.now();
-    stats.launcherOpenMs += now - _lastLauncherTick;
-    _lastLauncherTick = now;
-    fs.writeFileSync(P.stats, JSON.stringify(stats, null, 2));
-  } catch {}
-  try {
     const data = {};
-    for (const key of ['settings', 'accounts', 'profiles', 'mods', 'launched', 'stats']) {
+    for (const key of ['settings', 'accounts', 'profiles', 'mods', 'launched']) {
       try {
         data[key] = JSON.parse(fs.readFileSync(P[key], 'utf8'));
       } catch {}
