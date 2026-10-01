@@ -65,3 +65,44 @@ gh release upload v1.1.xx crux_code.zip --clobber -R Dev-Reds/crux-code
 - `custom-shortcuts.nsh`: Custom Page für Desktop/Startmenü-Verknüpfungen
 - `createDesktopShortcut` / `createStartMenuShortcut` in package.json steuern defaults
 - Kein `!define DONT_RUN_APP_AFTER_INSTALL` (damit Auto-Start aktiv ist)
+
+### Dev-Builds (Update-Detection aus)
+
+Version mit `-dev`-Suffix (z.B. `1.1.70-dev`) in `package.json` **und** `package-lock.json`
+(zwei Stellen: Top-Level + `packages[""]`). Dadurch ist der Build automatisch update-frei:
+
+- `main.js`: `IS_DEV_BUILD = /-dev\b/i.test(CURRENT_VERSION)` (main.js:3526)
+  - `check-for-update` → `{ updateAvailable:false, devBuild:true }`, kein GitHub-Call (main.js:3594)
+  - `download-and-install-update` → wirft Fehler (main.js:3727)
+- `index.html`: `DEV_BUILD` analog aus package.json (index.html:1930)
+  - kein Auto-Check beim Boot (index.html:2104)
+  - `checkForUpdates()` bricht sofort ab (index.html:8117)
+  - Settings-Button "Check for Updates" ist deaktiviert + umgelabelt (index.html:8783)
+
+**Wichtig:** Ein Dev-Build NIEMALS taggen und KEIN `gh release create` aufrufen.
+Update-Detection der User liest `https://api.github.com/repos/Dev-Reds/crux-client/releases`
+und filtert `!r.prerelease` + `/^v?\d+\.\d+\.\d+/` — ein Tag `v1.1.70-dev` würde dort
+ignoriert, aber ein Release-Tag `v1.1.70` **nicht**. Nur `main` bekommt Releases.
+
+### Push ohne persistierten Token
+
+`.git/config` darf **keinen** `http.https://github.com/.extraheader` enthalten — sonst
+`remote: Duplicate header: "Authorization"` (HTTP 400). Token nur pro Befehl:
+
+```powershell
+$tok='<PAT>'
+$pair=[Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("x-access-token:$tok"))
+git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $pair" -c credential.helper= push -u origin dev
+```
+
+Alte `ghs_`-Header vorher entfernen: `git config --local --unset-all http.https://github.com/.extraheader`
+
+### PowerShell-Dateien: Kodierung
+
+`main.js` liest `update-window.ps1` / `uninstall-window.ps1` mit `encoding:'utf8'` und
+schreibt den BOM selbst (`'\uFEFF' + readFileSync(...)`). Die Dateien MÜSSEN UTF-8 sein.
+PowerShell-Redirect (`> file`) erzeugt unter Windows UTF-16LE → Skript läuft nicht.
+Bei Konfliktauflösung immer prüfen:
+```powershell
+git hash-object update-window.ps1   # muss == gewünschtem Blob stehen
+```
