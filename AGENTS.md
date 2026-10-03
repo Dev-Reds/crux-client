@@ -83,21 +83,102 @@ Bedrock hat **keine** Versionsliste. Es gibt genau 2 auswählbare Optionen:
 
 | Wert `mcVersion` | Anzeige | AUMID |
 |---|---|---|
-| `''` | Latest Release | `Microsoft.MinecraftUWP_8wekyb3d8bbwe!App` |
-| `'__latest_prerelease__'` | Latest Pre-release | `Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe!App` |
+| `''` | Latest Release | `Microsoft.MinecraftUWP_8wekyb3d8bbwe!Game` |
+| `'__latest_prerelease__'` | Latest Pre-release | `Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe!Game` |
 
-- `index.html:3766-3772`: bei `modLoader==='bedrock'` wird die Java-Version-Liste
-  gar nicht erst aufgebaut — nur die zwei Optionen, danach `return`.
-- `index.html:3393-3411` (`updateModLoaderVisibility`): versteckt Mods/Resourcepacks/
+- `index.html` `openProfileModal()`: bei `modLoader==='bedrock'` wird die Java-Version-Liste
+  nicht aufgebaut — nur die zwei Optionen. **KEIN `return`**, sonst öffnet das Modal gar nicht
+  (das war der Bug in 1.1.70-dev). `setProfileSection()` darf bei Bedrock `.profile-section`
+  nicht wieder auf `display:''` setzen.
+- `index.html` `updateModLoaderVisibility()`: versteckt Mods/Resourcepacks/
   Shaderpacks/Render-API/Offline-Button, lässt nur Name, Version, Save, Share, Delete.
-- **Start ohne Ordner-Fenster**: `launchBedrock()` (main.js:1755) schreibt ein
+  Für **`vanilla`** gelten dieselben Regeln (kein Loader → Mods, Shader Packs, Render-API,
+  „Use Crux Client Features" und „Use Client Mods" werden ausgeblendet; Datapacks,
+  Resource Packs und „Use Client Resource Packs" bleiben). ACHTUNG: Datapacks/RPs liegen
+  **innerhalb** von `#profile-mods-section` — dieses Element darf für Vanilla **nicht**
+  versteckt werden, sonst verschwinden die Packs mit. Die Mods-Liste blendet
+  `setProfileSection()` über `#profile-split-left` aus. `openProfileModal()` öffnet bei
+  ausgeblendetem Mods-Tab auf `datapacks`.
+- **AUMID endet auf `!Game`, NICHT `!App`** — das Application-Id im AppxManifest heißt `Game`.
+  Mit `!App` liefert `ActivateApplication` HRESULT `0x80270254`.
+  AUMID-Gefahr prüfen: `[xml]$m=Get-Content (Join-Path (Get-AppxPackage -Name Microsoft.MinecraftUWP).InstallLocation 'AppxManifest.xml'); $m.Package.Applications.Application.Id`
+- **Bedrock hat kein `inst.process`** (UWP-Prozess, nicht vom Launcher gestartet). Die PID aus
+  `launchBedrock()` wird über `watchBedrockProcess(instanceId, pid)` alle 3 s per
+  `process.kill(pid, 0)` geprüft. Ist die PID weg, sendet main `instance-closed` → der Renderer
+  setzt `status='closed'` (Anzeige `■`). Ohne diesen Watcher bleibt eine Bedrock-Instanz
+  nach dem Schließen **ewig auf "running"**. `stop-minecraft` killt zusätzlich `inst.bedrockPid`
+  per `taskkill /PID … /F /T` und räumt den Watcher auf.
+- **HRESULT muss geprüft werden**: `Marshal.ThrowExceptionForHR` + `pid -le 0` als Fehler.
+  Sonst meldet der Launcher "OK:0" als Erfolg, obwohl nichts gestartet wurde.
+- **Auto-Installation** (`ensureBedrockInstalled()`, main.js): Bedrock ist ein Store-MSIX-Paket,
+  kein plain Download. Ablauf: `Get-AppxPackage -Name Microsoft.MinecraftUWP` (bzw.
+  `...WindowsBeta`) → fehlt es, `shell.openExternal('ms-windows-store://downloadsandopen?id=<ID>')`,
+  dann 5 s pollen (max. 5 min), danach Start. Store-Produkt-IDs: `9NBLGGH2JHXJ` (Minecraft for
+  Windows), `9P5X4QVLC2XR` (Minecraft Preview for Windows).
+  - `winget --source msstore` findet Minecraft **nicht** (`winget show --id 9NBLGGH2JHXJ` → kein
+    Paket), also kein winget-Pfad. `.msixvc` von der Store-CDN sind DRM-verschlüsselt und ohne
+    Store nicht installierbar.
+- **Start ohne Ordner-Fenster**: `launchBedrock(aumid, send, instanceId)` schreibt ein
   PowerShell-Skript nach `%TEMP%\crux-activate-app.ps1` und ruft es mit
   `IApplicationActivationManager.ActivateApplication($aumid)` auf
   (COM-Interop via `Add-Type`). Verstecktes Fenster (`-WindowStyle Hidden`), 30 s Timeout.
   - NIEMALS `explorer.exe shell:appsFolder\...` — das öffnet den Apps-Ordner.
   - NIEMALS zusätzlich `start minecraft:` — das war ein Doppelstart.
-  - Pre-Release-AUMID gegen die echte Installation prüfen:
-    `Get-StartApps | Select-String Minecraft`
+
+### Glass Theme: Listen werden ignoriert (`--gs-list`)
+
+Zwei Fallen, die beide schon zugeschlagen haben (2026-10-03, Glass-Listen blieben weiß):
+
+1. **`setGlassTone()` überschreibt `--gs-list` als Inline-Style auf `document.body`.**
+   Das gewinnt gegen jede `body.glass{...}`-Regel im `<style>`. Der Wert darf dort
+   **nicht** hart verdrahtet werden. Helle Bilder lassen die CSS-Variable jetzt durch
+   (`st.removeProperty('--gs-list')`), nur der dunkle Ton setzt `rgba(0,0,0,.3)`.
+   Wer die Listen-Deckkraft ändern will, ändert `--gs-list` in der `body.glass`-Regel.
+2. **`body.light`-Regeln stehen im `<style>` NACH dem Glass-Block** und gewinnen bei
+   gleicher Spezifität (z.B. `.logs-container`, `.feature-card`, `.profile-split`).
+   Alle Transparenz-Overrides stehen deshalb im Block
+   `GLASS TRANSPARENCY — MUST STAY LAST` ganz am Ende des `<style>`.
+   Betroffen war u.a. das aufgeklappte Custom-Dropdown: `body.light .cdrop-menu` setzte
+   `#fff !important` → weiße Liste. Auch `.cdrop-opt:hover/.sel/.disabled` und die
+   Textfarben des Triggers werden dort für `.glass` neu gesetzt.
+
+Verwandt: der **Mod-Loader im Profil-Modal ist keine `<select>`**, sondern eine
+   Radio-Reihe (`.modloader-row` / `.modloader-pick`) und sieht deshalb anders aus als
+   die Dropdowns. Die Pills sind bewusst mit denselben Werten wie `.cdrop-trigger`
+   nachgebaut (Glas-Fläche, `--gs-*`, Akzent nur bei `:has(input:checked)`). (die laden das Theme gar nicht), sondern
+mit der echten App + Messung im Live-DOM. Muster: temporäre Harness-Datei **im Repo-Root**
+(bei `loadFile('index.html')` zählt `process.cwd()`, nicht der Skriptort), vor
+`require('main.js')` `process.env.APPDATA` auf einen Temp-Ordner setzen, dann per
+`webContents.executeJavaScript` `getComputedStyle` aller Elemente auswerten. Datei danach löschen.
+
+### Standard-Hintergrundbilder (Auswahl + Akzentfarbe, Toggle im Profil-Stil)
+
+- `main.js` `get-default-glass-bgs`: liefert **alle** `icons/default_background*.png|jpg|webp`,
+  natuerlich sortiert nach der Zahl in Klammern (`(2)`, `(3)`, ...).
+  Neue Default-Bilder einfach in `icons/` ablegen, keine Code-Aenderung noetig.
+  Renderer haelt `glassDefaultBgs` (Array); die Auswahl steckt in `settings.glassBgPreset` (Index).
+- Settings-UI: `#glass-bg-presets` mit `.gbg-preset`-Kacheln (`renderGlassBgPresets()`).
+  Klick setzt `glassBgPreset` **und** leert `glassBgImage` (sonst waere es kein Default mehr).
+  Eigenes Bild ueber "Choose Image" -> Preset-Kacheln unmarkiert, "Remove" faellt auf das
+  gewaehlte Default zurueck.
+- Akzentfarbe als **`.mod-switch`-Toggle** (`<label class="mod-switch"><input
+  id="glass-bg-tint-input" checked><span class="slider"></span></label>`) - gleicher
+  Schalter wie "Use Crux Client Features" im Profil-Modal. `settings.glassBgTint` ist per
+  `!== false` **standardmaessig AN** (undefined = an). Nur bei eigenem Bild wird nie gefaerbt.
+- **WICHTIG Chromium-Falle:** Custom Properties mit sehr grossem Wert werden verworfen.
+  Ein 2,4-MB-PNG als data-URL (~3,3 MB) in `--gs-frame` ergab `getPropertyValue() === ''`
+  und das Bild wurde gar nicht angezeigt (nur der `var(--gs-frame, <fallback>)`-Gradient).
+  Deshalb geht JEDES Bild ueber `toCssImage()`: > `CSS_IMG_LIMIT` (900000 Zeichen) wird
+  per Canvas auf max. 1600 px / JPEG 0.85 verkleinert (~0,3-0,4 MB) und danach gesetzt.
+- `tintDefaultBg()` zeichnet das Bild im Canvas mit `globalCompositeOperation='color'`
+  (Farbton der Akzentfarbe, Helligkeit bleibt) + `'overlay'` leicht obendrauf,
+  `globalAlpha` 0.7 / 0.25. ES BLEIBT DASSELBE BILD - kein zweites Bild, kein CSS-Overlay.
+  Farbwechsel im Tab Color: `applyAccent()` ruft am Ende `applyGlassBg()` auf (nur wenn
+  `settings.glassBgTint !== false`).
+- Cache: `_cssImgCache` (Key Laenge+Prefix), `_tintCache` (Key `id|accent`), Quellbild in
+  `_tintSrcIm`. Erste Faerbung ca. 50 ms, danach 0 ms.
+- `paint()` setzt erst das Originalbild, dann das gefaerbte - `_glassBgToken` verhindert,
+  dass ein langsamer Canvas-Lauf ein spaeter gewaehltes Bild ueberschreibt.
 
 ### Stats
 
@@ -157,3 +238,26 @@ Bei Konfliktauflösung immer prüfen:
 ```powershell
 git hash-object update-window.ps1   # muss == gewünschtem Blob stehen
 ```
+
+### Recent: Instances / Servers / Welten
+
+- Ein Profil-**Start** ist **immer** `type:'instance'` — auch Vanilla, auch wenn im Profil eine
+  Server-Adresse hinterlegt ist. Beim Start gibt es KEINEN Server- und KEINEN World-Eintrag.
+- **Server**-Eintrag nur, wenn in-game wirklich gejoint wird: `Connecting to server, host:port`,
+  `Connecting to host,port` oder `Server IP: host` (`ipcRenderer.on('instance-log')`).
+- **Welt**-Eintrag nur bei echter Welt im Spiel: `Preparing level "Name"` / `Loading level "Name"`,
+  Fallback `Loaded n advancements from ...\saves\<Ordner>\...`. Der Save-**Ordner** wird
+  nachgetragen, sobald die advancements-Zeile kommt (`_worldFolder`, wird in recentHistory gespeichert).
+- Migration beim Boot: `type==='world' && !worldName && !worldId` → `instance` (Alte Schein-Welten).
+- `recentEntryKey()`: Welten über `worldName`, Server über Adresse+Port entprechen — nicht über
+  das Profil, sonst überschreiben sich zwei Welten im selben Profil.
+- **Join aus Recent:**
+  - Server: `pendingLaunchServer` → `--server`/`--port` (in beiden Launch-Pfaden: Vanilla/NeoForge
+    und MCLC).
+  - Welt: `pendingLaunchWorld` → `worldFolder` → main.js `worldJoinArgs()`.
+    Ordner-Auflösung: Ordner == Weltname? sonst `LevelName` aus `level.dat`
+    (`readLevelNameFromDat()`, gzip + roh, NBT-String-Scan), sonst normalisiert/Quasi-Gleichstand.
+  - **Nur Java ≥ 1.20** kennt `--quickPlaySingleplayer`. Für Bedrock und <1.20 gibt es keinen
+    Auto-Join; Fallback `markSaveAsLastPlayed()` schreibt `LastPlayed` (TAG_Long, 8 Byte — Länge
+    bleibt gleich, NBT-Offsets bleiben gültig) in die `level.dat`, damit die Welt oben in der
+    Singleplayer-Liste steht. Ein Klick bleibt nötig.

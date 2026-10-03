@@ -281,7 +281,6 @@ body.light .mod-meta{color:#888;}
 /* ── Modal ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:2000;display:flex;align-items:center;justify-content:center;}
 .profile-modal{z-index:1500;}
-.login-modal{z-index:2100;}
 .modal{background:#111;border:1px solid #2a2a2a;border-radius:.8em;width:min(88vw,660px);max-height:82vh;display:flex;flex-direction:column;overflow:hidden;}
 #mod-modal .modal{width:min(95vw,1400px);}
 #mod-modal .modal-body{min-height:60vh;}
@@ -349,7 +348,7 @@ body.light .profile-sec-btn.active{background:var(--acc);color:#fff;border-color
 body.glass{
   --gs-wh:rgba(255,255,255,.05);
   --gs-wh2:rgba(255,255,255,.12);
-  --gs-list:rgba(255,255,255,.32);
+  --gs-list:rgba(255,255,255,.1);
   --gs-bd:rgba(255,255,255,.5);
   --gs-bd2:rgba(255,255,255,.7);
   --gs-sd:rgba(0,0,0,.18);
@@ -357,11 +356,12 @@ body.glass{
   --gs-mut:#5a6470;
   --gs-blur:blur(38px) saturate(160%);
   --gs-hl:inset 0 1px 0 rgba(255,255,255,.65),0 12px 40px rgba(0,0,0,.10);
-  --ls-bg:var(--gs-list);--ls-bg2:var(--gs-wh);--ls-bd:var(--gs-bd);--ls-hover:var(--gs-wh2);--ls-sep:rgba(255,255,255,.4);--ls-selbg:color-mix(in srgb,var(--acc) 24%,transparent);--ls-selbd:var(--acc);--ls-mut:var(--gs-mut);--ls-opt-bg:#fff;--ls-opt-tx:#222;
+  --ls-bg:var(--gs-list);--ls-bg2:var(--gs-wh);--ls-bd:var(--gs-bd);--ls-hover:rgba(255,255,255,.24);--ls-sep:rgba(255,255,255,.22);--ls-selbg:color-mix(in srgb,var(--acc) 24%,transparent);--ls-selbd:var(--acc);--ls-mut:var(--gs-mut);--ls-opt-bg:#fff;--ls-opt-tx:#222;
   background:#ffffff;
   color-scheme:light;
 }
 body.glass::before{content:'';position:fixed;inset:0;z-index:-2;background-image:var(--gs-frame,linear-gradient(135deg,#e0e7ff 0%,#ffe3f0 35%,#e3f7ff 70%,#e6ffe3 100%));background-size:cover;background-position:center;background-attachment:fixed;}
+/* Default-Glasbild an die Akzentfarbe anpassen (nur wenn kein eigenes Bild gesetzt ist) */
 @keyframes glassDrift{0%{transform:translate(0,0) scale(1);}100%{transform:translate(1.5%,1%) scale(1.02);}}
 body.glass .toolbar{background:var(--gs-wh);border-bottom-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
 body.glass .page{background:transparent;}
@@ -396,6 +396,7 @@ body.glass .mod-search-input{background:var(--gs-wh);color:var(--gs-tx);border-c
 body.glass .mod-result-item{border-bottom-color:rgba(255,255,255,.2);}
 body.glass .mod-result-item:hover{background:rgba(255,255,255,.1);}
 body.glass .profile-list, body.glass .admin-list{background:var(--gs-list);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .account-list, body.glass .instance-list, body.glass .mod-results{background:var(--gs-list);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
 body.glass .profile-item, body.glass .instance-item, body.glass .account-item{border-bottom-color:rgba(255,255,255,.2);}
 body.glass .profile-item:hover, body.glass .instance-item:hover, body.glass .account-item:hover{background:rgba(255,255,255,.1);}
 body.glass .profile-item.sel, body.glass .instance-item.sel, body.glass .account-item.sel{background:color-mix(in srgb,var(--acc) 24%,transparent);}
@@ -406,12 +407,12 @@ body.glass .server-item{background:var(--gs-list);border-color:var(--gs-bd);back
 body.glass .server-item:hover{background:var(--gs-wh2);}
 body.glass .server-item.sel{background:color-mix(in srgb,var(--acc) 24%,transparent);border-color:var(--acc);}
 body.glass .server-console{background:var(--gs-wh);border-color:var(--gs-bd);color:var(--gs-tx);}
-body.glass .server-type-card{background:var(--gs-list);border-color:var(--gs-bd);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+body.glass .server-type-card{background:var(--gs-list);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
 body.glass .server-type-card:hover{background:var(--gs-wh2);}
 body.glass .server-type-card.sel{background:color-mix(in srgb,var(--acc) 24%,transparent);border-color:var(--acc);}
 body.glass .server-mod-result{border-bottom-color:rgba(255,255,255,.4);}
 body.glass .server-mod-added-tag{background:rgba(255,255,255,.1);border-color:var(--gs-bd);color:var(--gs-tx);}
-body.glass .friend-item{background:var(--gs-list);border-color:var(--gs-bd);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+body.glass .friend-item{background:var(--gs-list);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
 body.glass .friend-item .friend-head{background:rgba(255,255,255,.1);}
 body.glass .settings-nav button{color:var(--gs-mut);}
 body.glass .settings-nav button:hover{background:rgba(255,255,255,.1);color:var(--gs-tx);}
@@ -439,7 +440,20 @@ body.glass #skin-url-input, body.glass #presence-server-input, body.glass #bugre
 body.glass #auto-rp-toggle{background:rgba(20,26,36,.15)!important;border-color:var(--gs-bd2)!important;}
 body.glass #auto-rp-knob{background:var(--gs-mut)!important;}
 body.glass .skin-change-label, body.glass .mod-result-desc, body.glass .lp-label{color:var(--gs-mut);}
-body.glass .corner-grid, body.glass .corner-preview{background:var(--gs-list);border-color:var(--gs-bd);box-shadow:var(--gs-hl);}
+body.glass .corner-grid, body.glass .corner-preview{background:var(--gs-list);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+/* lists & boxes that were still opaque in glass */
+body.glass .logs-container{background:var(--gs-list);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .log-line{border-bottom-color:rgba(255,255,255,.22);}
+body.glass .feature-card{background:var(--gs-list);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .skin-editor-overlay{background:rgba(10,14,20,.12);backdrop-filter:blur(6px) saturate(140%);-webkit-backdrop-filter:blur(6px) saturate(140%);}
+body.glass .skin-editor-panel{background:var(--gs-wh);border-color:var(--gs-bd2);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .skin-editor-3d-wrap{background:var(--gs-list);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .skin-editor-toolbar .tool-btn{background:var(--gs-wh);border-color:var(--gs-bd);}
+body.glass .skin-editor-toolbar .tool-btn:hover{background:var(--gs-wh2);}
+body.glass .skin-editor-toolbar .sep{background:var(--gs-bd);}
+body.glass .skin-editor-canvas{border-color:var(--gs-bd);}
+body.glass .launch-recent{border-top-color:var(--gs-bd);}
+body.glass .toolbar::-webkit-scrollbar-thumb{background:var(--gs-bd2);border-radius:999px;}
 body.glass #glass-bg-section .btn{background:var(--gs-wh2);}
 
 /* ── Glass: force ALL text to adapt to the background tone ── */
@@ -476,7 +490,7 @@ body.glass #skin-url-input, body.glass #presence-server-input, body.glass #bugre
    !important so all lists stay consistent in every theme.
    ════════════════════════════════════════════ */
 /* ── list containers (boxed panels) ── */
-.mod-list, .admin-list, .account-list, .instance-list, .log-instances,
+.mod-list, .admin-list, .account-list, .instance-list,
 .mod-results, .server-console, .profile-sec-bar, .mod-search-input, .pack-input{
   background:var(--ls-bg) !important;
   border-color:var(--ls-bd) !important;
@@ -488,7 +502,7 @@ body.glass #skin-url-input, body.glass #presence-server-input, body.glass #bugre
 }
 /* ── rows inside a boxed list (subtle tint on top of the container) ── */
 .mod-item, .profile-item, .account-item, .instance-item, .mod-result-item, .server-mod-result,
-.profile-sec-btn, .log-instances .instance-item{
+.profile-sec-btn{
   background:var(--ls-bg2) !important;
   border-color:var(--ls-bd) !important;
 }
@@ -499,12 +513,11 @@ body.glass #skin-url-input, body.glass #presence-server-input, body.glass #bugre
 /* ── hover ── */
 .mod-item:hover,.profile-item:hover,.account-item:hover,.instance-item:hover,.server-item:hover,
 .server-type-card:hover,.friend-item:hover,.mod-result-item:hover,.server-mod-result:hover,
-.profile-sec-btn:hover,.log-instances .instance-item:hover{
+.profile-sec-btn:hover{
   background:var(--ls-hover) !important;
 }
 /* ── selection (uses accent) ── */
-.profile-item.sel,.instance-item.sel,.server-item.sel,.server-type-card.sel,.account-item.sel,
-.log-instances .instance-item.sel{
+.profile-item.sel,.instance-item.sel,.server-item.sel,.server-type-card.sel,.account-item.sel{
   background:var(--ls-selbg) !important;
   border-color:var(--ls-selbd) !important;
 }
@@ -573,7 +586,6 @@ body.light .profile-split-right .pack-section{border-bottom-color:#eee;}
 .account-del:hover{border-color:#f44;color:#f44;}
 .account-add-btns{display:flex;gap:.5em;margin-top:.5em;}
 .btn-ms{background:#0078d4;border-color:#0078d4;color:#fff;}
-.btn-mojang{background:#b87333;border-color:#b87333;color:#fff;}
 body.light .account-list{background:#fff;border-color:#ddd;}
 body.light .account-item{background:#fff;border-bottom-color:#eee;color:#111;}
 body.light .account-type{color:#888;}
@@ -608,15 +620,6 @@ body.light .log-line.err{color:#cc0000;}
 body.light .log-line.warn{color:#cc7700;}
 body.light .log-line.info{color:#0066aa;}
 
-/* ── Instances (shown at top of Logs tab) ── */
-.log-instances{display:flex;gap:.4em;overflow-x:auto;padding:.2em .1em .5em;flex-shrink:0;}
-.log-instances .instance-item{flex:0 0 14em;border:1px solid #1a1a1a;border-radius:var(--r);background:#0d0d0d;padding:.45em .6em;}
-.log-instances .instance-item:hover{background:#141414;}
-.log-instances .instance-item.sel{border-color:var(--acc);background:#0d1a2e;border-left:1px solid var(--acc);}
-.log-instances .mod-list-empty{flex:1;text-align:center;padding:1em;color:#444;font-size:.8em;}
-.log-instances::-webkit-scrollbar{height:3px;}
-.log-instances::-webkit-scrollbar-thumb{background:#333;border-radius:999px;}
-
 /* ── Instances ── */
 .instance-list{width:100%;border:1px solid #1a1a1a;border-radius:var(--r);background:#0d0d0d;overflow:hidden;}
 .instance-item{display:flex;align-items:center;gap:.7em;padding:.6em .9em;border-bottom:1px solid #141414;font-size:.82em;cursor:pointer;}
@@ -629,9 +632,6 @@ body.light .log-line.info{color:#0066aa;}
 .badge-closed{background:#33333322;color:#666;border:1px solid #33333344;}
 body.light .instance-list{background:#fff;border-color:#ddd;}
 body.light .instance-item{border-bottom-color:#eee;color:#111;}
-
-/* ── Mojang login modal ── */
-.login-modal .modal{max-width:380px;}
 
 /* ── Features page ── */
 .feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.8em;max-width:72em;}
@@ -688,6 +688,57 @@ body.light .cdrop-opt:hover{background:#f0f0f0 !important;}
 body.light .cdrop-opt.sel{background:#ddeeff !important;color:#000 !important;border-color:var(--acc) !important;}
 body.light .cdrop-opt.disabled{color:#999 !important;}
 body.light .cdrop-trigger::after{color:#666 !important;}
+
+/* ════════════════════════════════════════════
+   GLASS TRANSPARENCY — MUST STAY LAST
+   The body.light overrides below the glass section (e.g.
+   body.light .logs-container / .feature-card / .profile-split)
+   come later in the stylesheet and would win by source order, so
+   every glass surface that has such a light counterpart is
+   re-stated here.
+   ════════════════════════════════════════════ */
+body.glass .logs-container{background:var(--gs-list) !important;border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .feature-card{background:var(--gs-list) !important;border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .profile-split{background:var(--gs-list) !important;border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .account-head-sm, body.glass .mod-result-icon{background:var(--gs-list) !important;}
+body.glass .log-line, body.glass .feature-card p{border-bottom-color:var(--ls-sep);}
+
+/* Aufgeklappte Auswahllisten (Custom Dropdowns). body.light setzt beim Theme
+   'glass' ebenfalls .light und erzwingt hier #fff / #f0f0f0 / #ddeeff. */
+body.glass .cdrop-menu{background:var(--gs-list) !important;border-color:var(--gs-bd) !important;backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
+body.glass .cdrop-opt{color:var(--gs-tx) !important;}
+body.glass .cdrop-opt:hover{background:var(--gs-wh2,#2d3640) !important;}
+body.glass .cdrop-opt.sel{background:color-mix(in srgb,var(--acc) 26%,transparent) !important;color:var(--gs-strong) !important;}
+body.glass .cdrop-opt.disabled{color:var(--gs-mut,#8a9499) !important;}
+body.glass .cdrop-trigger{color:var(--gs-tx) !important;}
+body.glass .cdrop-trigger::after{color:var(--gs-mut,#8a9499) !important;}
+
+/* Mod-Loader-Pills im Profil: optisch identisch zu .cdrop-trigger */
+.gbg-preset{width:74px;height:48px;border-radius:10px;overflow:hidden;padding:0;cursor:pointer;
+  border:2px solid var(--ls-bd,#2a2a2a);background:var(--ls-bg,#0d0d0d);position:relative;
+  transition:border-color .12s ease,transform .12s ease;flex:0 0 auto;}
+.gbg-preset img{width:100%;height:100%;object-fit:cover;display:block;}
+.gbg-preset:hover{transform:translateY(-1px);border-color:var(--acc);}
+.gbg-preset.sel{border-color:var(--acc);box-shadow:0 0 0 2px color-mix(in srgb,var(--acc) 35%,transparent);}
+body.glass .gbg-preset{background:var(--gs-wh);border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);}
+body.glass .gbg-preset:hover{border-color:var(--acc);}
+body.glass .gbg-preset.sel{border-color:var(--acc);}
+  .modloader-row{display:flex;gap:.4em;flex-wrap:wrap;width:100%;}
+body .modloader-pick{display:flex;align-items:center;gap:0;cursor:pointer;padding:.5em .85em;border:1px solid var(--ls-bd,#2a2a2a);border-radius:var(--r,.5em);background:var(--ls-bg,#0d0d0d);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);font-size:.85em;line-height:1.25;white-space:nowrap;color:var(--gs-tx,currentColor) !important;transition:background .15s,border-color .15s,box-shadow .15s;}
+body .modloader-pick:hover{background:var(--ls-hover,#141414);}
+body .modloader-pick input{appearance:none;-webkit-appearance:none;width:0;height:0;min-width:0;margin:0;padding:0;border:0;opacity:0;pointer-events:none;}
+body .modloader-pick:has(input:focus-visible){outline:2px solid var(--acc);outline-offset:2px;}
+body .modloader-pick:has(input:checked){border-color:var(--acc) !important;background:color-mix(in srgb,var(--acc) 16%,var(--ls-bg,#0d0d0d));box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 16%,transparent),inset 0 1px 0 rgba(255,255,255,.35);}
+body.glass .modloader-pick{background:var(--gs-wh,#232a33);border-color:var(--gs-bd,#3a4445) !important;color:var(--gs-tx) !important;box-shadow:var(--gs-hl,inset 0 1px 0 rgba(255,255,255,.6));backdrop-filter:var(--gs-blur,blur(30px) saturate(150%));-webkit-backdrop-filter:var(--gs-blur,blur(30px) saturate(150%));}
+body.glass .modloader-pick:hover{background:var(--gs-wh2,#2d3640) !important;border-color:var(--gs-bd2,#4a5658) !important;}
+body.glass .modloader-pick:has(input:checked){border-color:var(--acc) !important;background:color-mix(in srgb,var(--acc) 20%,var(--gs-wh,#232a33));box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 20%,transparent),var(--gs-hl,inset 0 1px 0 rgba(255,255,255,.6));}
+
+/* Aktiv markierte Buttons: Akzent bleibt erkennbar, Glas scheint durch */
+body.glass .tb-btn.active{background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 72%,transparent),color-mix(in srgb,var(--acc) 52%,transparent)) !important;backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);}
+body.glass .profile-sec-btn.active{background:color-mix(in srgb,var(--acc) 62%,transparent) !important;backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);}
+body.glass .settings-nav button.active{background:color-mix(in srgb,var(--acc) 62%,transparent) !important;backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);}
+body.glass .skin-editor-toolbar .tool-btn.active{background:color-mix(in srgb,var(--acc) 62%,transparent) !important;backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);}
+body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transparent) !important;}
 </style>
 </head>
 <body>
@@ -944,7 +995,12 @@ body.light .cdrop-trigger::after{color:#666 !important;}
       <div class="settings-section" id="glass-bg-section" style="display:none">
         <h2 data-i18n="sec_glass_bg">Glass Background</h2>
         <p style="color:#555;font-size:.76em;margin-top:.2em;margin-bottom:.6em" data-i18n="desc_glass_bg">Custom background behind the frosted glass. Only shown in the Glass theme.</p>
-        <div style="display:flex;align-items:center;gap:.8em">
+        <div id="glass-bg-presets" style="display:none;flex-wrap:wrap;gap:.5em;margin-bottom:.7em"></div>
+        <label style="display:flex;align-items:center;gap:.5em;cursor:pointer;font-size:.82em;color:#ccc;margin-bottom:.6em">
+          <label class="mod-switch"><input type="checkbox" id="glass-bg-tint-input" checked><span class="slider"></span></label>
+          <span data-i18n="lbl_bg_tint">Tint image with accent colour</span>
+        </label>
+        <div style="display:flex;align-items:center;gap:.8em;flex-wrap:wrap">
           <img id="glass-bg-preview" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid #444;display:none">
           <label class="btn" style="cursor:pointer;margin:0">
             <span data-i18n="btn_choose_bg">Choose Image…</span>
@@ -1094,9 +1150,6 @@ body.light .cdrop-trigger::after{color:#666 !important;}
           <button class="btn btn-sm" id="clear-logs-btn" data-i18n="clear_logs">Clear</button>
           <button class="btn btn-sm" id="autoscroll-btn" style="border-color:#7ec8e344;color:#7ec8e3" title="Auto-scroll to bottom">📌 Auto-scroll</button>
         </div>
-      </div>
-      <div class="log-instances" id="logs-instance-list">
-        <div class="mod-list-empty" data-i18n="no_instances">No instances launched yet.</div>
       </div>
       <div class="log-select-row">
         <label data-i18n="lbl_instance">Instance:</label>
@@ -1469,7 +1522,6 @@ body.light .cdrop-trigger::after{color:#666 !important;}
         </div>
         <div class="account-add-btns">
           <button class="btn btn-sm btn-ms" id="btn-add-ms" data-i18n="add_ms">+ Microsoft</button>
-          <button class="btn btn-sm btn-mojang" id="btn-add-mojang" data-i18n="add_mojang">+ Mojang</button>
         </div>
       </div>
     </div>
@@ -1614,13 +1666,13 @@ body.light .cdrop-trigger::after{color:#666 !important;}
       </div>
       <div class="form-row" style="max-width:100%">
         <label data-i18n="lbl_mod_loader">Mod Loader:</label>
-        <div style="display:flex;gap:.5em">
-          <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="fabric" id="ml-fabric" checked> Fabric</label>
-          <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="quilt" id="ml-quilt"> Quilt</label>
-          <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="forge" id="ml-forge"> Forge</label>
-          <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="neoforge" id="ml-neoforge"> NeoForge</label>
-          <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="vanilla" id="ml-vanilla"> Vanilla</label>
-          <label style="display:flex;align-items:center;gap:.3em;cursor:pointer;color:#ccc;font-size:.85em"><input type="radio" name="modLoader" value="bedrock" id="ml-bedrock"> Bedrock</label>
+        <div class="modloader-row">
+          <label class="modloader-pick"><input type="radio" name="modLoader" value="fabric" id="ml-fabric" checked> Fabric</label>
+          <label class="modloader-pick"><input type="radio" name="modLoader" value="quilt" id="ml-quilt"> Quilt</label>
+          <label class="modloader-pick"><input type="radio" name="modLoader" value="forge" id="ml-forge"> Forge</label>
+          <label class="modloader-pick"><input type="radio" name="modLoader" value="neoforge" id="ml-neoforge"> NeoForge</label>
+          <label class="modloader-pick"><input type="radio" name="modLoader" value="vanilla" id="ml-vanilla"> Vanilla</label>
+          <label class="modloader-pick"><input type="radio" name="modLoader" value="bedrock" id="ml-bedrock"> Bedrock</label>
         </div>
       </div>
       <div class="form-row" style="max-width:100%">
@@ -1736,29 +1788,6 @@ body.light .cdrop-trigger::after{color:#666 !important;}
       <p style="color:#888;font-size:.82em;margin-bottom:.6em" data-i18n="modal_import_settings_desc">Import keybinds and settings from another launcher (Feather, vanilla, …). They are saved into this profile's settings group and apply to every profile in that group.</p>
       <div id="import-settings-list" style="max-height:380px;overflow-y:auto"></div>
       <div id="import-settings-status" style="font-size:.8em;color:#888;margin-top:.6em;min-height:1.2em"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ── Mojang login modal ── -->
-<div id="mojang-modal" class="modal-overlay login-modal" style="display:none">
-  <div class="modal">
-    <div class="modal-header">
-      <h2 data-i18n="modal_mojang_login">Mojang Login</h2>
-      <button class="btn modal-close" id="mojang-modal-close">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-row" style="max-width:100%">
-        <label data-i18n="lbl_email">Email:</label>
-        <input type="email" class="pack-input" id="mojang-email" placeholder="you@example.com">
-      </div>
-      <div class="form-row" style="max-width:100%">
-        <label data-i18n="lbl_password">Password:</label>
-        <input type="password" class="pack-input" id="mojang-password" placeholder="••••••••">
-      </div>
-      <div id="mojang-error" style="color:#f44;font-size:.78em;margin-bottom:.5em;display:none"></div>
-      <button class="btn btn-primary btn-sm" id="mojang-login-btn" style="width:auto" data-i18n="btn_login">Login</button>
-      <p style="color:#555;font-size:.72em;margin-top:.6em" data-i18n="mojang_note">Note: Mojang accounts migrated to Microsoft should use the Microsoft option.</p>
     </div>
   </div>
 </div>
@@ -1909,6 +1938,7 @@ let searchDebounce=null, modSearchOffset=0, modSearchQuery='', isLoadingMods=fal
 let modSearchSeq=0;
 let instances={}, selectedInstanceId=null, autoScrollLogs=true;
 let pendingLaunchServer=null;
+let pendingLaunchWorld=null;
 const PAGE_SIZE=15;
 
 // Dev builds ("-dev" in package.json version) have update detection turned off.
@@ -1956,10 +1986,11 @@ function applyAccent(idx){
     if(b.classList.contains('active')){
       b.style.background=col; b.style.borderColor=col;
       b.style.color=lightText?'#111':'#fff';
-    } else { b.style.background=''; b.style.borderColor=''; b.style.color=''; }
+} else { b.style.background=''; b.style.borderColor=''; b.style.color=''; }
   });
+  // Akzentfarbe gewechselt -> Default-Hintergrundbild sofort neu faerben
+  try { if (typeof applyGlassBg === 'function' && !settings.glassBgImage && settings.glassBgTint !== false) applyGlassBg(); } catch (e) {}
 }
-
 function buildColorGrid(){
   const g=document.getElementById('color-grid'); g.innerHTML='';
   ACCENTS.forEach((c,i)=>{
@@ -1996,6 +2027,15 @@ async function bootLauncher(){
     installedMods = results[3].status==='fulfilled' ? results[3].value : [];
     launchedVersions = results[4].status==='fulfilled' ? results[4].value : [];
     recentHistory = settings.recentHistory || [];
+    // Alte Schein-"Worlds"-Einträge migrieren: es waren nur Spielstarts ohne Welt
+    try {
+      let recFix=0;
+      recentHistory=recentHistory.filter(r=>{
+        if(r && r.type==='world' && !r.worldName && !r.worldId){ r.type='instance'; recFix++; }
+        return true;
+      });
+      if(recFix){ settings.recentHistory=recentHistory; saveSettings(); }
+    } catch {}
     renderRecentList();
 
     if (settings.ram === undefined || settings.ram === null) {
@@ -2021,8 +2061,9 @@ async function bootLauncher(){
     applyLanguage(settings.lang || 'en');
     applyCornerRadius();
     updateGlassBgSection();
-    try { glassDefaultBg = (await ipcRenderer.invoke('get-default-glass-bg')) || ''; } catch {}
+    try { glassDefaultBgs = (await ipcRenderer.invoke('get-default-glass-bgs')) || []; } catch {}
     applyGlassBg();
+    renderGlassBgPresets();
 
     buildColorGrid();
     applyAccent(currentAccentIdx);
@@ -2290,9 +2331,7 @@ const LANGS={
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
     h_logs:'Logs', h_account:'Acount', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends',
     lbl_profile:'Profile:', lbl_version:'Version:', lbl_change_skin:'Change Skin:', lbl_actions:'Actions:', lbl_ram:'RAM:', lbl_instance:'Instance:',
-    lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod Loader', lbl_render_api:'Rendering API:', lbl_added:'Added:',
-    lbl_email:'Email:', lbl_password:'Password:',
-    btn_launch:'▶ Launch Minecraft', btn_stop:'■ Stop', btn_stop_all:'■ Stop All',
+    lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod Loader', lbl_render_api:'Rendering API:', lbl_added:'Added:',    btn_launch:'▶ Launch Minecraft', btn_stop:'■ Stop', btn_stop_all:'■ Stop All',
     btn_add:'Add', btn_add_png:'📁 Add PNG to List', btn_pixel_editor:'🎨 Pixel Editor', btn_skin_list:'📋 Skin List',
     btn_apply_skin:'Apply to Skin', btn_export_png:'Export PNG', btn_import_png:'Import PNG', btn_close:'Close',
     btn_save_cape:'Save Cape', btn_open_cape_editor:'Open Cape Editor', btn_disable_cape:'Disable Cape',
@@ -2309,7 +2348,7 @@ const LANGS={
     new_profile:'+ New Profile', edit:'Edit', save:'Save', delete:'Delete',
     no_mods:'No mods installed yet.', no_profiles:'No profiles yet.', no_accounts:'No accounts added yet.', no_instances:'No instances launched yet.',
     no_custom_capes:'No custom capes saved yet.', no_servers:'No servers created yet. Click "+ New Server" to start.', skin_list_empty:'No skins saved yet.',
-    add_ms:'+ Microsoft', add_mojang:'+ Mojang', add_offline:'+ Offline',
+    add_ms:'+ Microsoft', add_offline:'+ Offline',
     ver_latest:'— Latest Release —', ver_latest_snap:'— Latest Snapshot —', ver_latest_prerelease:'— Latest Pre-release —', ver_releases:'Releases', ver_snapshots:'Snapshots', ver_other:'Other',
     profile_name:'Name:', profile_version:'Minecraft Version:', profile_section:'Section:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Resource Packs', profile_shaderpacks:'Shader Packs',
@@ -2327,7 +2366,7 @@ const LANGS={
     sec_after_launch:'After Launch', desc_open_logs:'Open logs after launch', desc_close_launcher:'Close launcher while playing',
     sec_tab_bar:'Tab Bar', lbl_tab_bar_pos:'Position', tab_bar_top:'Top', tab_bar_bottom:'Bottom',
     sec_theme:'Theme', lbl_theme:'Appearance', theme_dark:'Dark', theme_light:'Light', theme_glass:'Glass', theme_win7:'Windows 7', theme_xp:'Windows XP',
-    sec_glass_bg:'Glass Background', desc_glass_bg:'Custom background behind the frosted glass. Only shown in the Glass theme.', btn_choose_bg:'Choose Image…', btn_remove_bg:'Remove',
+    sec_glass_bg:'Glass Background', desc_glass_bg:'Custom background behind the frosted glass. Only shown in the Glass theme.', btn_choose_bg:'Choose Image…', btn_remove_bg:'Remove', lbl_bg_tint:'Tint image with accent colour',
     sec_corner_radius:'Corner Radius', lbl_corner_radius:'Roundness', corner_small:'Small', corner_medium:'Medium', corner_large:'Large', corner_round:'Round',
     sec_reset:'Reset', desc_reset:'Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.',
     btn_reset:'Reset Launcher', sec_updates:'Updates', btn_check_update:'Check for Updates',
@@ -2340,7 +2379,7 @@ const LANGS={
     btn_import_share:'📋 Import Share Code', btn_import_norisk:'⬇ NoRisk Client', btn_share:'Share',
     btn_stop_server:'■ Stop Server', btn_op_player:'OP Player', btn_whitelist:'Whitelist', btn_backup_world:'Backup World',
     btn_new_server:'+ New Server', server_count:'servers',
-    btn_microsoft:'Microsoft', btn_mojang_login:'Mojang', mojang_note:'Note: Mojang accounts migrated to Microsoft should use the Microsoft option.',
+    btn_microsoft:'Microsoft',
     skin_editor_title:'Skin Pixel Editor', skin_editor_size:'64×64',
     cape_editor_title:'Cape Pixel Editor', cape_editor_size:'22×17',
     skin_list_title:'📋 Skin List', skin_list_desc:'Click a skin to apply it. Skins are saved locally.',
@@ -2395,7 +2434,7 @@ const LANGS={
     modal_import:'Import Profile', modal_import_desc:'Paste a share code from another Crux Launcher user.',
     modal_import_norisk:'Import NoRisk Client Profiles', modal_import_norisk_desc:'Profiles found in NoRisk Client v3 (NoRiskClientV3). Select the ones to import.',
     nrc_scanning:'Reading NoRisk Client profiles...', nrc_none:'No profiles found.', nrc_imported:'✓ {n} profile(s) imported.',
-    modal_edit_profile:'Edit Profile', modal_mojang_login:'Mojang Login',
+    modal_edit_profile:'Edit Profile',
     ws_step1:'① Type', ws_step2:'② Version', ws_step3:'③ Mods', ws_step4:'④ Settings',
     sv_choose_type:'Choose Server Type', sv_choose_version:'Choose MC Version',
     sv_add_mods:'Add Mods', sv_add_mods_desc:'Search and add mods for your server.',
@@ -2426,9 +2465,7 @@ const LANGS={
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
     h_logs:'Protokolle', h_account:'Acount', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde',
     lbl_profile:'Profil:', lbl_version:'Version:', lbl_change_skin:'Skin wechseln:', lbl_actions:'Aktionen:', lbl_ram:'RAM:', lbl_instance:'Instanz:',
-    lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod-Loader', lbl_render_api:'Rendering-API:', lbl_added:'Hinzugefügt:',
-    lbl_email:'E-Mail:', lbl_password:'Passwort:',
-    btn_launch:'▶ Minecraft starten', btn_stop:'■ Stoppen', btn_stop_all:'■ Alle stoppen',
+    lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod-Loader', lbl_render_api:'Rendering-API:', lbl_added:'Hinzugefügt:',    btn_launch:'▶ Minecraft starten', btn_stop:'■ Stoppen', btn_stop_all:'■ Alle stoppen',
     btn_add:'Hinzufügen', btn_add_png:'📁 PNG zur Liste hinzufügen', btn_pixel_editor:'🎨 Pixel Editor', btn_skin_list:'📋 Skin Liste',
     btn_apply_skin:'Auf Skin anwenden', btn_export_png:'PNG exportieren', btn_import_png:'PNG importieren', btn_close:'Schließen',
     btn_save_cape:'Cape speichern', btn_open_cape_editor:'Cape Editor öffnen', btn_disable_cape:'Cape deaktivieren',
@@ -2445,7 +2482,7 @@ const LANGS={
     new_profile:'+ Neues Profil', edit:'Bearbeiten', save:'Speichern', delete:'Löschen',
     no_mods:'Keine Mods installiert.', no_profiles:'Keine Profile vorhanden.', no_accounts:'Keine Konten vorhanden.', no_instances:'Keine Instanzen gestartet.',
     no_custom_capes:'Noch keine Custom Capes gespeichert.', no_servers:'Noch keine Server erstellt. Klicke auf "+ Neuer Server" zum Starten.', skin_list_empty:'Noch keine Skins gespeichert.',
-    add_ms:'+ Microsoft', add_mojang:'+ Mojang', add_offline:'+ Offline',
+    add_ms:'+ Microsoft', add_offline:'+ Offline',
     ver_latest:'— Neueste Version —', ver_latest_snap:'— Neuester Snapshot —', ver_latest_prerelease:'— Neueste Vorabversion —', ver_releases:'Vollversionen', ver_snapshots:'Snapshots', ver_other:'Sonstige',
     profile_name:'Name:', profile_version:'Minecraft-Version:', profile_section:'Bereich:', profile_mods:'Mods', profile_datapacks:'Datenpakete',
     profile_resourcepacks:'Ressourcenpakete', profile_shaderpacks:'Shaderpakete',
@@ -2463,7 +2500,7 @@ const LANGS={
     sec_after_launch:'Nach dem Start', desc_open_logs:'Protokolle nach dem Start öffnen', desc_close_launcher:'Launcher beim Spielen schließen',
     sec_tab_bar:'Tab-Leiste', lbl_tab_bar_pos:'Position', tab_bar_top:'Oben', tab_bar_bottom:'Unten',
     sec_theme:'Design', lbl_theme:'Darstellung', theme_dark:'Dunkel', theme_light:'Hell', theme_glass:'Glas', theme_win7:'Windows 7', theme_xp:'Windows XP',
-    sec_glass_bg:'Glas-Hintergrund', desc_glass_bg:'Eigener Hintergrund hinter dem mattierten Glas. Wird nur im Glas-Theme angezeigt.', btn_choose_bg:'Bild wählen…', btn_remove_bg:'Entfernen',
+    sec_glass_bg:'Glas-Hintergrund', desc_glass_bg:'Eigener Hintergrund hinter dem mattierten Glas. Wird nur im Glas-Theme angezeigt.', btn_choose_bg:'Bild wählen…', btn_remove_bg:'Entfernen', lbl_bg_tint:'Bild mit Akzentfarbe einfärben',
     sec_corner_radius:'Eckenradius', lbl_corner_radius:'Abrundung', corner_small:'Klein', corner_medium:'Mittel', corner_large:'Groß', corner_round:'Rund',
     sec_reset:'Zurücksetzen', desc_reset:'Löscht alle Konten, Profile, Einstellungen und Mods. Der Launcher startet wie beim ersten Mal.',
     btn_reset:'Launcher zurücksetzen', sec_updates:'Updates', btn_check_update:'Nach Updates suchen',
@@ -2476,7 +2513,7 @@ const LANGS={
     btn_import_share:'📋 Import-Code', btn_import_norisk:'⬇ NoRisk Client', btn_share:'Teilen',
     btn_stop_server:'■ Server stoppen', btn_op_player:'OP Spieler', btn_whitelist:'Whitelist', btn_backup_world:'Welt sichern',
     btn_new_server:'+ Neuer Server', server_count:'Server',
-    btn_microsoft:'Microsoft', btn_mojang_login:'Mojang', mojang_note:'Hinweis: Mojang-Konten, die zu Microsoft migriert sind, sollten die Microsoft-Option verwenden.',
+    btn_microsoft:'Microsoft',
     skin_editor_title:'Skin Pixel Editor', skin_editor_size:'64×64',
     cape_editor_title:'Cape Pixel Editor', cape_editor_size:'22×17',
     skin_list_title:'📋 Skin Liste', skin_list_desc:'Klicke auf einen Skin, um ihn anzuwenden. Skins werden lokal gespeichert.',
@@ -2531,7 +2568,7 @@ const LANGS={
     modal_import:'Profil importieren', modal_import_desc:'Füge einen Share-Code von einem anderen Crux Launcher Benutzer ein.',
     modal_import_norisk:'NoRisk Client-Profile importieren', modal_import_norisk_desc:'Profile in NoRisk Client v3 (NoRiskClientV3) gefunden. Wähle aus, welche importiert werden sollen.',
     nrc_scanning:'Lese NoRisk Client-Profile...', nrc_none:'Keine Profile gefunden.', nrc_imported:'✓ {n} Profil(e) importiert.',
-    modal_edit_profile:'Profil bearbeiten', modal_mojang_login:'Mojang Anmeldung',
+    modal_edit_profile:'Profil bearbeiten',
     ws_step1:'① Typ', ws_step2:'② Version', ws_step3:'③ Mods', ws_step4:'④ Einstellungen',
     sv_choose_type:'Servertyp wählen', sv_choose_version:'MC-Version wählen',
     sv_add_mods:'Mods hinzufügen', sv_add_mods_desc:'Suche und füge Mods für deinen Server hinzu.',
@@ -2562,9 +2599,7 @@ const LANGS={
     h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
     h_logs:'Journaux', h_account:'Acount', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis',
     lbl_profile:'Profil :', lbl_version:'Version :', lbl_change_skin:'Changer de skin :', lbl_actions:'Actions :', lbl_ram:'RAM :', lbl_instance:'Instance :',
-    lbl_launcher_ram:'RAM du Lanceur :', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de rendu :', lbl_added:'Ajouté :',
-    lbl_email:'E-mail :', lbl_password:'Mot de passe :',
-    btn_launch:'▶ Lancer Minecraft', btn_stop:'■ Arrêter', btn_stop_all:'■ Tout arrêter',
+    lbl_launcher_ram:'RAM du Lanceur :', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de rendu :', lbl_added:'Ajouté :',    btn_launch:'▶ Lancer Minecraft', btn_stop:'■ Arrêter', btn_stop_all:'■ Tout arrêter',
     btn_add:'Ajouter', btn_add_png:'📁 Ajouter PNG à la liste', btn_pixel_editor:'🎨 Éditeur Pixel', btn_skin_list:'📋 Liste de Skins',
     btn_apply_skin:'Appliquer au Skin', btn_export_png:'Exporter PNG', btn_import_png:'Importer PNG', btn_close:'Fermer',
     btn_save_cape:'Sauvegarder Cape', btn_open_cape_editor:'Ouvrir l\'éditeur de Cape', btn_disable_cape:'Désactiver la Cape',
@@ -2581,7 +2616,7 @@ const LANGS={
     new_profile:'+ Nouveau profil', edit:'Modifier', save:'Enregistrer', delete:'Supprimer',
     no_mods:'Aucun mod installé.', no_profiles:'Aucun profil.', no_accounts:'Aucun compte.', no_instances:'Aucune instance.',
     no_custom_capes:'Aucune cape custom sauvegardée.', no_servers:'Aucun serveur créé. Cliquez sur "+ Nouveau Serveur" pour commencer.', skin_list_empty:'Aucun skin sauvegardé.',
-    add_ms:'+ Microsoft', add_mojang:'+ Mojang', add_offline:'+ Hors ligne',
+    add_ms:'+ Microsoft', add_offline:'+ Hors ligne',
     ver_latest:'— Dernière version —', ver_latest_snap:'— Dernier instantané —', ver_latest_prerelease:'— Dernière préversion —', ver_releases:'Versions', ver_snapshots:'Instantanés', ver_other:'Autres',
     profile_name:'Nom :', profile_version:'Version Minecraft :', profile_section:'Section :', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Packs de ressources', profile_shaderpacks:'Packs de shaders',
@@ -2599,7 +2634,7 @@ const LANGS={
     sec_after_launch:'Après le lancement', desc_open_logs:'Ouvrir les journaux après le lancement', desc_close_launcher:'Fermer le lanceur pendant le jeu',
     sec_tab_bar:'Barre d\'onglets', lbl_tab_bar_pos:'Position', tab_bar_top:'Haut', tab_bar_bottom:'Bas',
     sec_theme:'Thème', lbl_theme:'Apparence', theme_dark:'Sombre', theme_light:'Clair', theme_glass:'Verre', theme_win7:'Windows 7', theme_xp:'Windows XP',
-    sec_glass_bg:'Fond du verre', desc_glass_bg:'Fond personnalisé derrière le verre dépoli. Affiché uniquement dans le thème Verre.', btn_choose_bg:'Choisir une image…', btn_remove_bg:'Retirer',
+    sec_glass_bg:'Fond du verre', desc_glass_bg:'Fond personnalisé derrière le verre dépoli. Affiché uniquement dans le thème Verre.', btn_choose_bg:'Choisir une image…', btn_remove_bg:'Retirer', lbl_bg_tint:'Teinter l’image avec la couleur d’accentuation',
     sec_corner_radius:'Rayon des coins', lbl_corner_radius:'Arrondi', corner_small:'Petit', corner_medium:'Moyen', corner_large:'Grand', corner_round:'Rond',
     sec_reset:'Réinitialiser', desc_reset:'Supprime tous les comptes, profils, paramètres et mods. Le lanceur redémarrera comme au premier lancement.',
     btn_reset:'Réinitialiser le Lanceur', sec_updates:'Mises à jour', btn_check_update:'Vérifier les mises à jour',
@@ -2612,7 +2647,7 @@ const LANGS={
     btn_import_share:'📋 Importer un code', btn_import_norisk:'⬇ NoRisk Client', btn_share:'Partager',
     btn_stop_server:'■ Arrêter le Serveur', btn_op_player:'OP Joueur', btn_whitelist:'Whitelist', btn_backup_world:'Sauvegarder le monde',
     btn_new_server:'+ Nouveau Serveur', server_count:'serveurs',
-    btn_microsoft:'Microsoft', btn_mojang_login:'Mojang', mojang_note:'Note : Les comptes Mojang migrés vers Microsoft devraient utiliser l\'option Microsoft.',
+    btn_microsoft:'Microsoft',
     skin_editor_title:'Éditeur Pixel de Skin', skin_editor_size:'64×64',
     cape_editor_title:'Éditeur Pixel de Cape', cape_editor_size:'22×17',
     skin_list_title:'📋 Liste de Skins', skin_list_desc:'Cliquez sur un skin pour l\'appliquer. Les skins sont sauvegardés localement.',
@@ -2665,7 +2700,7 @@ const LANGS={
     modal_import:'Importer le Profil', modal_import_desc:'Collez un code de partage d\'un autre utilisateur Crux Launcher.',
     modal_import_norisk:'Importer les profils NoRisk Client', modal_import_norisk_desc:'Profils trouvés dans NoRisk Client v3 (NoRiskClientV3). Sélectionnez ceux à importer.',
     nrc_scanning:'Lecture des profils NoRisk Client...', nrc_none:'Aucun profil trouvé.', nrc_imported:'✓ {n} profil(s) importé(s).',
-    modal_edit_profile:'Modifier le Profil', modal_mojang_login:'Connexion Mojang',
+    modal_edit_profile:'Modifier le Profil',
     ws_step1:'① Type', ws_step2:'② Version', ws_step3:'③ Mods', ws_step4:'④ Paramètres',
     sv_choose_type:'Choisir le type de serveur', sv_choose_version:'Choisir la version MC',
     sv_add_mods:'Ajouter des Mods', sv_add_mods_desc:'Recherchez et ajoutez des mods pour votre serveur.',
@@ -2696,9 +2731,7 @@ const LANGS={
     h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
     h_logs:'Registros', h_account:'Acount', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos',
     lbl_profile:'Perfil:', lbl_version:'Versión:', lbl_change_skin:'Cambiar Skin:', lbl_actions:'Acciones:', lbl_ram:'RAM:', lbl_instance:'Instancia:',
-    lbl_launcher_ram:'RAM del Launcher:', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de Renderizado:', lbl_added:'Añadido:',
-    lbl_email:'Correo:', lbl_password:'Contraseña:',
-    btn_launch:'▶ Iniciar Minecraft', btn_stop:'■ Detener', btn_stop_all:'■ Detener Todo',
+    lbl_launcher_ram:'RAM del Launcher:', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de Renderizado:', lbl_added:'Añadido:',    btn_launch:'▶ Iniciar Minecraft', btn_stop:'■ Detener', btn_stop_all:'■ Detener Todo',
     btn_add:'Agregar', btn_add_png:'📁 Agregar PNG a la lista', btn_pixel_editor:'🎨 Editor de Píxeles', btn_skin_list:'📋 Lista de Skins',
     btn_apply_skin:'Aplicar al Skin', btn_export_png:'Exportar PNG', btn_import_png:'Importar PNG', btn_close:'Cerrar',
     btn_save_cape:'Guardar Capa', btn_open_cape_editor:'Abrir Editor de Capa', btn_disable_cape:'Desactivar Capa',
@@ -2715,7 +2748,7 @@ const LANGS={
     new_profile:'+ Nuevo perfil', edit:'Editar', save:'Guardar', delete:'Eliminar',
     no_mods:'Sin mods instalados.', no_profiles:'Sin perfiles.', no_accounts:'Sin cuentas.', no_instances:'Sin instancias.',
     no_custom_capes:'No hay capas personalizadas guardadas.', no_servers:'No hay servidores creados. Haz clic en "+ Nuevo Servidor" para empezar.', skin_list_empty:'No hay skins guardados.',
-    add_ms:'+ Microsoft', add_mojang:'+ Mojang', add_offline:'+ Sin conexión',
+    add_ms:'+ Microsoft', add_offline:'+ Sin conexión',
     ver_latest:'— Última versión —', ver_latest_snap:'— Último instantáneo —', ver_latest_prerelease:'— Última versión preliminar —', ver_releases:'Versiones', ver_snapshots:'Instantáneas', ver_other:'Otras',
     profile_name:'Nombre:', profile_version:'Versión de Minecraft:', profile_section:'Sección:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Paquetes de recursos', profile_shaderpacks:'Paquetes de shaders',
@@ -2733,7 +2766,7 @@ const LANGS={
     sec_after_launch:'Después de iniciar', desc_open_logs:'Abrir registros después de iniciar', desc_close_launcher:'Cerrar launcher mientras juegas',
     sec_tab_bar:'Barra de pestañas', lbl_tab_bar_pos:'Posición', tab_bar_top:'Arriba', tab_bar_bottom:'Abajo',
     sec_theme:'Tema', lbl_theme:'Apariencia', theme_dark:'Oscuro', theme_light:'Claro', theme_glass:'Vidrio', theme_win7:'Windows 7', theme_xp:'Windows XP',
-    sec_glass_bg:'Fondo de vidrio', desc_glass_bg:'Fondo personalizado detrás del vidrio esmerilado. Solo se muestra en el tema Vidrio.', btn_choose_bg:'Elegir imagen…', btn_remove_bg:'Quitar',
+    sec_glass_bg:'Fondo de vidrio', desc_glass_bg:'Fondo personalizado detrás del vidrio esmerilado. Solo se muestra en el tema Vidrio.', btn_choose_bg:'Elegir imagen…', btn_remove_bg:'Quitar', lbl_bg_tint:'Teñir la imagen con el color de acento',
     sec_corner_radius:'Radio de esquinas', lbl_corner_radius:'Redondeo', corner_small:'Pequeño', corner_medium:'Medio', corner_large:'Grande', corner_round:'Redondo',
     sec_reset:'Restablecer', desc_reset:'Elimina todas las cuentas, perfiles, ajustes y mods. El launcher se reiniciará como si se abriera por primera vez.',
     btn_reset:'Restablecer Launcher', sec_updates:'Actualizaciones', btn_check_update:'Buscar actualizaciones',
@@ -2744,7 +2777,7 @@ const LANGS={
     btn_import_share:'📋 Importar código', btn_import_norisk:'⬇ NoRisk Client', btn_share:'Compartir',
     btn_stop_server:'■ Detener Servidor', btn_op_player:'OP Jugador', btn_whitelist:'Whitelist', btn_backup_world:'Copiar mundo',
     btn_new_server:'+ Nuevo Servidor', server_count:'servidores',
-    btn_microsoft:'Microsoft', btn_mojang_login:'Mojang',
+    btn_microsoft:'Microsoft',
     skin_editor_title:'Editor de Pixel de Skin', skin_editor_size:'64×64',
     cape_editor_title:'Editor de Pixel de Capa', cape_editor_size:'22×17',
     skin_list_title:'📋 Lista de Skins', skin_list_desc:'Haz clic en un skin para aplicarlo. Los skins se guardan localmente.',
@@ -2794,7 +2827,7 @@ const LANGS={
     modal_import:'Importar Perfil', modal_import_desc:'Pega un código de otro usuario de Crux Launcher.',
     modal_import_norisk:'Importar perfiles de NoRisk Client', modal_import_norisk_desc:'Perfiles encontrados en NoRisk Client v3 (NoRiskClientV3). Selecciona cuáles importar.',
     nrc_scanning:'Leyendo perfiles de NoRisk Client...', nrc_none:'No se encontraron perfiles.', nrc_imported:'✓ {n} perfil(es) importado(s).',
-    modal_edit_profile:'Editar Perfil', modal_mojang_login:'Inicio de sesión Mojang',
+    modal_edit_profile:'Editar Perfil',
     ws_step1:'① Tipo', ws_step2:'② Versión', ws_step3:'③ Mods', ws_step4:'④ Ajustes',
     sv_choose_type:'Elegir tipo de servidor', sv_choose_version:'Elegir versión MC',
     sv_add_mods:'Agregar Mods', sv_add_mods_desc:'Busca y agrega mods para tu servidor.',
@@ -3009,7 +3042,7 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
 
   if(!isBedrock){ if(!version){ document.getElementById('status').textContent='No version selected.'; return; } }
   const acc=getSelectedAccount();
-  if(!isBedrock){ if(!acc||(!acc.accessToken&&acc.type!=='Microsoft')){ document.getElementById('status').textContent='Please log in with a Microsoft or Mojang account first.'; return; } }
+  if(!isBedrock){ if(!acc||(!acc.accessToken&&acc.type!=='Microsoft')){ document.getElementById('status').textContent='Please log in with a Microsoft account first.'; return; } }
 
   // Auto-add shader mod to PROFILE mods (not client mods)
   if(profile?.shaderPacks?.length && modLoader!=='vanilla' && !isBedrock){
@@ -3062,9 +3095,11 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
     renderApi: profile?.renderApi||'opengl',
     serverAddress: pendingLaunchServer?.address||null,
     serverPort: pendingLaunchServer?.port||null,
-    serverName: pendingLaunchServer?.name||null
+    serverName: pendingLaunchServer?.name||null,
+    worldFolder: pendingLaunchWorld||null
   });
   pendingLaunchServer=null;
+  pendingLaunchWorld=null;
 });
 
 // No Java found — auto-scan
@@ -3148,7 +3183,9 @@ ipcRenderer.on('mc-launched',(_,instanceId)=>{
 // ══ RECENT HISTORY HELPERS ══
 function recentEntryKey(r){
   if(r.type==='server') return 'server|'+(r.serverAddress||r.serverName||'')+'|'+(r.serverPort||25565);
-  return (r.type==='instance'?'instance':'world')+'|'+(r.profileId||r.profileName||'');
+  // Welten werden ueber ihren Namen entprecht, nicht ueber das Profil
+  if(r.type==='world') return 'world|'+(r.worldName||r.worldId||r.profileId||r.profileName||'');
+  return 'instance|'+(r.profileId||r.profileName||'');
 }
 // Add to recent history without duplicates; keeps max 6 entries per category
 // (when the 7th of a category is added, the oldest one of that category is removed).
@@ -3177,16 +3214,12 @@ ipcRenderer.on('instance-started',(_,inst)=>{
   if(settings.closeLauncherWhilePlaying) ipcRenderer.send('close-launcher');
   const p=profiles.find(x=>x.id===inst.profileId);
   const entry={ profileId:inst.profileId, profileName:inst.profileName||p?.name||'World', version:inst.version, modLoader:p?.modLoader||'', time:Date.now() };
-  if(inst.serverAddress){
-    entry.type='server';
-    entry.serverAddress=inst.serverAddress;
-    entry.serverPort=inst.serverPort||25565;
-    entry.serverName=inst.serverName||inst.serverAddress;
-  } else if(p?.modLoader && p.modLoader!=='vanilla'){
-    entry.type='instance';
-  } else {
-    entry.type='world';
-  }
+  // Beim Start wird NIEMALS ein Server-Eintrag angelegt - auch nicht wenn ein Server
+  // im Profil hinterlegt ist. Ein Server landet erst in Recent, wenn in-game wirklich
+  // einem Server beigetreten wird (Log-Erkennung unten in 'instance-log').
+  // Ohne echte Welt ist ein Start auch keine "World", sondern ein Profil-Start.
+  entry.type='instance';
+  if(!entry.profileName) entry.profileName=p?.name||'Minecraft';
   addRecentEntry(entry);
   reportPresence();
 });
@@ -3276,19 +3309,8 @@ function updateRunningBadge(){
 }
 
 function renderInstanceList(){
-  const el=document.getElementById('logs-instance-list'); el.innerHTML='';
-  const list=Object.values(instances);
-  if(!list.length){el.innerHTML='<div class="mod-list-empty">No instances launched yet.</div>';return;}
-  list.forEach(inst=>{
-    const item=document.createElement('div');
-    item.className='instance-item'+(inst.id===selectedInstanceId?' sel':'');
-    const badge=inst.status==='running'?'<span class="instance-badge badge-running">Running</span>':inst.status==='crashed'?'<span class="instance-badge badge-crashed">Crashed</span>':'<span class="instance-badge badge-closed">Closed</span>';
-    const t=new Date(inst.startTime).toLocaleTimeString();
-    const pn=inst.profileName?`<span style="color:#777">${inst.profileName}</span>`:'';
-    item.innerHTML=`<div style="flex:1;min-width:0"><div style="font-weight:bold;font-size:.85em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">#${Object.values(instances).indexOf(inst)+1} ${inst.version} ${pn}</div><div style="color:#555;font-size:.72em">${t}</div></div>${badge}`;
-    item.addEventListener('click',()=>{ selectedInstanceId=inst.id; renderInstanceList(); refreshLogSelect(); document.getElementById('log-instance-select').value=inst.id; renderLogsForInstance(inst.id); });
-    el.appendChild(item);
-  });
+  // Nur noch die Auswahlliste im Logs-Tab — die Instanz-Karten wurden entfernt.
+  refreshLogSelect();
 }
 
 function refreshLogSelect(){
@@ -3409,6 +3431,24 @@ function updateModLoaderVisibility(){
   if(offlineBtn) offlineBtn.style.display=isBedrock?'none':'';
   const saveBtn=document.getElementById('save-profile-btn');
   if(saveBtn) saveBtn.style.display=isBedrock?'':'none';
+
+  // Vanilla hat keinen Mod-Loader: alles ausblenden, was ohne Loader nicht laeuft.
+  // Mods + Shader Packs werden beim Start ohnehin uebersprungen (siehe Launch-Pfad),
+  // Client-Mods/Crux-Client-Mod sind JARs und Render-API (Vulkan) braucht ebenfalls einen Loader.
+  const isVanilla=loader==='vanilla';
+  const rowOf=id=>document.getElementById(id)?.closest('label')?.parentElement||null;
+  const hide=(el,off)=>{ if(el) el.style.display=off?'none':''; };
+  document.querySelectorAll('#profile-sec-bar .profile-sec-btn').forEach(b=>{
+    b.style.display=(isBedrock||(isVanilla&&(b.dataset.section==='mods'||b.dataset.section==='shaderPacks'))) ? 'none' : '';
+  });
+  hide(document.querySelector('#profile-split-right .pack-section[data-sub="shaderPacks"]'), isBedrock||isVanilla);
+  // #profile-mods-section NICHT verstecken: Datapacks/Resource Packs liegen darin.
+  // Die Mods-Liste blendet setProfileSection() ueber #profile-split-left ohnehin aus.
+  hide(document.getElementById('profile-render-api')?.closest('.form-row'), isBedrock||isVanilla);
+  hide(rowOf('profile-use-client-mods'), isBedrock||isVanilla);
+  hide(rowOf('profile-use-crux-mod'), isBedrock||isVanilla);
+  const active=document.querySelector('#profile-sec-bar .profile-sec-btn.active')?.dataset.section;
+  if(!isBedrock&&isVanilla&&(active==='mods'||active==='shaderPacks')) setProfileSection('datapacks');
 }
 
 async function checkLoaderAvailability(mcVersion){
@@ -3547,19 +3587,25 @@ function renderRecentList(){
         });
       } else { // world
         item.innerHTML=`
-          <span class="profile-name">${escHtml(r.profileName||r.worldName||'World')}</span>
-          <span class="profile-meta">${r.version||'?'} · ${r.modLoader||''} · ${date}</span>
+          <span class="profile-name">${escHtml(r.worldName||r.profileName||r.version||'Minecraft')}</span>
+          <span class="profile-meta">${[r.version,r.modLoader,r.profileName,date].filter(Boolean).join(' · ')}</span>
           <button class="btn btn-sm recent-launch-btn" style="width:auto">▶ Play</button>
           <button class="btn btn-sm recent-remove-btn" style="width:auto;padding:.2em .5em;color:#f44">✕</button>`;
-        item.querySelector('.recent-launch-btn').addEventListener('click',()=>{
+        item.querySelector('.recent-launch-btn').addEventListener('click',async()=>{
           const p=profiles.find(x=>x.id===r.profileId);
-          if(p){
-            document.getElementById('profileSelect').value=p.id;
-            settings.selectedProfile=p.id;
-            saveSettings();
-            showPage('launch-page');
-            setTimeout(()=>document.getElementById('launch-btn').click(),200);
-          }
+          if(!p) return;
+          // Save-Ordner der Welt ermitteln, damit direkt in die Welt gestartet wird
+          let folder=r.worldFolder||r.worldName;
+          try{
+            const f=await ipcRenderer.invoke('resolve-save-folder',folder);
+            if(f) folder=f;
+          }catch{}
+          pendingLaunchWorld=folder;
+          document.getElementById('profileSelect').value=p.id;
+          settings.selectedProfile=p.id;
+          saveSettings();
+          showPage('launch-page');
+          setTimeout(()=>document.getElementById('launch-btn').click(),200);
         });
       }
 
@@ -3766,43 +3812,47 @@ function openProfileModal(profileId){
   const isBedrockProfile=ml==='bedrock';
   if(isBedrockProfile){
     // Bedrock is version-less: only "Latest" and "Latest Pre-release" are selectable.
+    // NOTE: no return here — the rest of the function (pack lists, modal display) must still run.
     sel.innerHTML=`<option value="">${t('ver_latest')}</option><option value="__latest_prerelease__">${t('ver_latest_prerelease')}</option>`;
     sel.value = (p.mcVersion==='__latest_prerelease__') ? '__latest_prerelease__' : '';
-    return;
-  }
-  sel.innerHTML=`<option value="">${t('ver_latest')}</option><option value="__latest_snapshot__">${t('ver_latest_snap')}</option>`;
-  if(mcVersionList.length>0){
-    const releases  = mcVersionList.filter(v=>v.type==='release');
-    const snapshots = mcVersionList.filter(v=>v.type==='snapshot');
-    const others    = mcVersionList.filter(v=>v.type!=='release'&&v.type!=='snapshot');
-    if(releases.length){ const g=document.createElement('optgroup'); g.label=t('ver_releases'); releases.forEach(v=>{const o=document.createElement('option');o.value=v.id;o.textContent=v.id;g.appendChild(o);}); sel.appendChild(g); }
-    if(snapshots.length){ const g=document.createElement('optgroup'); g.label=t('ver_snapshots'); snapshots.forEach(v=>{const o=document.createElement('option');o.value=v.id;o.textContent=v.id;g.appendChild(o);}); sel.appendChild(g); }
-    if(others.length){ const g=document.createElement('optgroup'); g.label=t('ver_other'); others.forEach(v=>{const o=document.createElement('option');o.value=v.id;o.textContent=`${v.id} (${v.type})`;g.appendChild(o);}); sel.appendChild(g); }
   } else {
-    loadVersions().then(()=>openProfileModal(profileId));
-    return;
+    sel.innerHTML=`<option value="">${t('ver_latest')}</option><option value="__latest_snapshot__">${t('ver_latest_snap')}</option>`;
+    if(mcVersionList.length>0){
+      const releases  = mcVersionList.filter(v=>v.type==='release');
+      const snapshots = mcVersionList.filter(v=>v.type==='snapshot');
+      const others    = mcVersionList.filter(v=>v.type!=='release'&&v.type!=='snapshot');
+      if(releases.length){ const g=document.createElement('optgroup'); g.label=t('ver_releases'); releases.forEach(v=>{const o=document.createElement('option');o.value=v.id;o.textContent=v.id;g.appendChild(o);}); sel.appendChild(g); }
+      if(snapshots.length){ const g=document.createElement('optgroup'); g.label=t('ver_snapshots'); snapshots.forEach(v=>{const o=document.createElement('option');o.value=v.id;o.textContent=v.id;g.appendChild(o);}); sel.appendChild(g); }
+      if(others.length){ const g=document.createElement('optgroup'); g.label=t('ver_other'); others.forEach(v=>{const o=document.createElement('option');o.value=v.id;o.textContent=`${v.id} (${v.type})`;g.appendChild(o);}); sel.appendChild(g); }
+    } else {
+      loadVersions().then(()=>openProfileModal(profileId));
+      return;
+    }
+    sel.value=p.mcVersion||'';
+
+    // Check loader availability for selected version
+    let checkVer = sel.value;
+    if (!checkVer) checkVer = mcVersionList.find(v=>v.type==='release')?.id || '';
+    else if (checkVer === '__latest_snapshot__') checkVer = mcVersionList.find(v=>v.type==='snapshot')?.id || '';
+    if (checkVer) checkLoaderAvailability(checkVer);
+
+    sel.addEventListener('change', () => {
+      let v = sel.value;
+      if (!v) v = mcVersionList.find(x=>x.type==='release')?.id || '';
+      else if (v === '__latest_snapshot__') v = mcVersionList.find(x=>x.type==='snapshot')?.id || '';
+      checkLoaderAvailability(v || '');
+    });
   }
-  sel.value=p.mcVersion||'';
-
-  // Check loader availability for selected version
-  let checkVer = sel.value;
-  if (!checkVer) checkVer = mcVersionList.find(v=>v.type==='release')?.id || '';
-  else if (checkVer === '__latest_snapshot__') checkVer = mcVersionList.find(v=>v.type==='snapshot')?.id || '';
-  if (checkVer) checkLoaderAvailability(checkVer);
-
-  sel.addEventListener('change', () => {
-    let v = sel.value;
-    if (!v) v = mcVersionList.find(x=>x.type==='release')?.id || '';
-    else if (v === '__latest_snapshot__') v = mcVersionList.find(x=>x.type==='snapshot')?.id || '';
-    checkLoaderAvailability(v || '');
-  });
 
   renderProfilePackList('profile-mods-list','mods',true);
   renderPackTags('profile-datapacks','datapacks');
   renderPackTags('profile-resourcepacks','resourcePacks');
   renderPackTags('profile-shaderpacks','shaderPacks');
-  document.querySelectorAll('.profile-sec-btn').forEach(b=>b.classList.toggle('active', b.dataset.section==='mods'));
-  setProfileSection('mods');
+  // Vanilla kann keine Mods — dann mit Datapacks oeffnen statt mit dem (unsichtbaren) Mods-Tab
+  const modsBtn=document.querySelector('#profile-sec-bar .profile-sec-btn[data-section="mods"]');
+  const defaultSection=(modsBtn&&modsBtn.style.display!=='none')?'mods':'datapacks';
+  document.querySelectorAll('.profile-sec-btn').forEach(b=>b.classList.toggle('active', b.dataset.section===defaultSection));
+  setProfileSection(defaultSection);
   document.getElementById('profile-modal').style.display='flex';
 }
 
@@ -3815,7 +3865,8 @@ function setProfileSection(section){
   const divider=document.getElementById('profile-split-divider');
   const right=document.getElementById('profile-split-right');
   const modsHeader=document.querySelector('#profile-mods-section .pack-section-header');
-  document.querySelectorAll('.profile-section').forEach(s=>{ s.style.display=''; });
+  const isBedrock=(document.querySelector('input[name="modLoader"]:checked')?.value)==='bedrock';
+  if(!isBedrock) document.querySelectorAll('.profile-section').forEach(s=>{ s.style.display=''; });
   if(split&&left&&divider&&right){
     if(section==='mods'){
       // Mods full width — right side (Datapacks) hidden
@@ -4443,30 +4494,6 @@ document.getElementById('btn-add-ms').addEventListener('click',async()=>{
     document.getElementById('status').textContent='Login error: '+e.message;
   }
   btn.textContent='+ Microsoft'; btn.disabled=false;
-});
-
-// Mojang login
-document.getElementById('btn-add-mojang').addEventListener('click',()=>{
-  document.getElementById('mojang-email').value=''; document.getElementById('mojang-password').value='';
-  document.getElementById('mojang-error').style.display='none';
-  document.getElementById('mojang-modal').style.display='flex';
-});
-document.getElementById('mojang-modal-close').addEventListener('click',()=>{ document.getElementById('mojang-modal').style.display='none'; });
-document.getElementById('mojang-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('mojang-modal'))document.getElementById('mojang-modal').style.display='none'; });
-document.getElementById('mojang-login-btn').addEventListener('click',async()=>{
-  const email=document.getElementById('mojang-email').value.trim();
-  const pass=document.getElementById('mojang-password').value;
-  if(!email||!pass)return;
-  document.getElementById('mojang-login-btn').textContent='Logging in...';
-  const result=await ipcRenderer.invoke('login-mojang',{email,password:pass});
-  document.getElementById('mojang-login-btn').textContent='Login';
-  if(result.error){ document.getElementById('mojang-error').textContent=result.error; document.getElementById('mojang-error').style.display='block'; return; }
-  const id='acc_'+Date.now();
-    accounts.push({id,name:result.name,uuid:result.uuid,type:'Mojang',accessToken:result.accessToken,clientToken:result.clientToken,skinUrl:result.skinUrl,skinModel:'classic'});
-    if(!settings.selectedAccount)settings.selectedAccount=id;
-    ipcRenderer.send('save-accounts',accounts); saveSettings(); renderAccountList(); updateSkinDisplay();
-    document.getElementById('mojang-modal').style.display='none';
-  document.getElementById('status').textContent='Logged in as '+result.name;
 });
 
 function getSelectedAccount(){ return accounts.find(a=>a.id===settings.selectedAccount)||accounts[0]||null; }
@@ -5190,8 +5217,42 @@ async function showModpackVersionPicker(projectId, projectName) {
         } catch(err) {
           document.getElementById('status').textContent = `Import failed: ${err.message}`;
           rlog('Version install error: '+err.message+' | '+err.stack);
-        }
+}
+  // Detect a joined singleplayer world from MC logs ("Preparing level "Name"" /
+  // aeltere "Loading level", sonst "Loaded n advancements from <saves/Welt>")
+  if(!instances[instanceId]._worldDetected){
+    let world=null;
+    if((world=line.match(/Preparing level "([^"]+)"/i)) || (world=line.match(/Loading level "([^"]+)"/i))){
+      world={name:world[1]};
+    } else if((world=line.match(/Loaded \d+ advancements? from .*?[\\\/]saves[\\\/]([^\\\/"\r\n]+)/i))){
+      world={name:world[1].trim(), folder:world[1].trim()};
+    }
+    if(world && world.name){
+      const inst=instances[instanceId];
+      inst._worldDetected=true;
+      inst._worldFolder=world.folder||null;
+      addRecentEntry({
+        type:'world',
+        worldName:world.name,
+        worldFolder:world.folder||null,
+        profileId:inst.profileId||null,
+        profileName:inst.profileName||'',
+        version:inst.version||'',
+        modLoader:inst.modLoader||'',
+        instanceId:instanceId,
+        time:Date.now()
       });
+    }
+  } else if(!instances[instanceId]._worldFolder){
+    // "Preparing level" nennt nur den Anzeigenamen -> Save-Ordner nachziehen
+    const mf=line.match(/Loaded \d+ advancements? from .*?[\\\/]saves[\\\/]([^\\\/"\r\n]+)/i);
+    if(mf){
+      instances[instanceId]._worldFolder=mf[1].trim();
+      const e=recentHistory.find(r=>r.type==='world'&&r.instanceId===instanceId);
+      if(e){ e.worldFolder=instances[instanceId]._worldFolder; settings.recentHistory=recentHistory; saveSettings(); renderRecentList(); }
+    }
+  }
+});
       listEl.appendChild(div);
     }
   } catch(e) {
@@ -6992,20 +7053,21 @@ function applyTabBarPosition(){
 function updateGlassBgSection(){
   const sec = document.getElementById('glass-bg-section');
   if (sec) sec.style.display = settings.theme === 'glass' ? '' : 'none';
+  if (typeof renderGlassBgPresets === 'function') renderGlassBgPresets();
 }
-let glassDefaultBg = '';
+let glassDefaultBgs = [];
 function setGlassTone(dark){
   const st = document.body.style;
   if (dark){
     st.setProperty('--gs-tx', '#f2f6fb');
     st.setProperty('--gs-strong', '#ffffff');
     st.setProperty('--gs-mut', '#c6d2e0');
-    st.setProperty('--gs-list', 'rgba(15,20,28,.52)');
+    st.setProperty('--gs-list', 'rgba(0,0,0,.3)');
   } else {
     st.setProperty('--gs-tx', '#14171c');
     st.setProperty('--gs-strong', '#000000');
     st.setProperty('--gs-mut', '#5a6470');
-    st.setProperty('--gs-list', 'rgba(255,255,255,.55)');
+    st.removeProperty('--gs-list');
   }
 }
 function setGlassToneFromImage(dataUrl){
@@ -7028,15 +7090,140 @@ function setGlassToneFromImage(dataUrl){
   im.onerror = () => setGlassTone(false);
   im.src = dataUrl;
 }
+// Bilder fuer CSS aufbereiten. Chromium verwirft Custom Properties mit sehr
+// grossen Werten (ca. 3 MB data-URL -> var(--gs-frame) ist ungueltig, das Bild
+// erscheint gar nicht). Deshalb werden Bilder > ~900 KB vorher auf JPEG
+// verkleinert (max. 1600 px breit).
+var CSS_IMG_LIMIT = 900000;
+var _cssImgCache = {};
+function toCssImage(dataUrl){
+  return new Promise(function(resolve){
+    if (!dataUrl) return resolve('');
+    if (dataUrl.length <= CSS_IMG_LIMIT) return resolve(dataUrl);
+    var key = dataUrl.length + '|' + dataUrl.slice(0, 64);
+    if (_cssImgCache[key]) return resolve(_cssImgCache[key]);
+    var im = new Image();
+    im.onload = function(){
+      try{
+        var w0 = im.naturalWidth || 1600, h0 = im.naturalHeight || 900;
+        var sc = Math.min(1, 1600 / w0);
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w0 * sc));
+        c.height = Math.max(1, Math.round(h0 * sc));
+        var x = c.getContext('2d');
+        x.drawImage(im, 0, 0, c.width, c.height);
+        var out = c.toDataURL('image/jpeg', 0.85);
+        _cssImgCache[key] = out.length <= CSS_IMG_LIMIT ? out : dataUrl;
+        resolve(_cssImgCache[key]);
+      } catch (e) { resolve(dataUrl); }
+    };
+    im.onerror = function(){ resolve(dataUrl); };
+    im.src = dataUrl;
+  });
+}
+var _tintCache = {};
+var _tintSrcUrl = '';
+var _tintSrcIm = null;
+function tintDefaultBg(dataUrl, accent, key){
+  return new Promise(function(resolve){
+    if (!dataUrl || !accent) return resolve(dataUrl || '');
+    var ck = (key || dataUrl.slice(-24)) + '|' + accent;
+    if (_tintCache[ck]) return resolve(_tintCache[ck]);
+    var work = function(im){
+      try{
+        var w0 = im.naturalWidth || 1920;
+        var h0 = im.naturalHeight || 1080;
+        var sc = Math.min(1, 1920 / w0);
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w0 * sc));
+        c.height = Math.max(1, Math.round(h0 * sc));
+        var x = c.getContext('2d');
+        x.drawImage(im, 0, 0, c.width, c.height);
+        x.globalCompositeOperation = 'color';
+        x.globalAlpha = 0.7;
+        x.fillStyle = accent;
+        x.fillRect(0, 0, c.width, c.height);
+        x.globalCompositeOperation = 'overlay';
+        x.globalAlpha = 0.25;
+        x.fillStyle = accent;
+        x.fillRect(0, 0, c.width, c.height);
+        x.globalAlpha = 1;
+        x.globalCompositeOperation = 'source-over';
+        var out = c.toDataURL('image/jpeg', 0.85);
+        _tintCache[ck] = out;
+        resolve(out);
+      } catch (e) { resolve(dataUrl); }
+    };
+    if (_tintSrcIm && _tintSrcUrl === dataUrl){
+      if (_tintSrcIm.complete && _tintSrcIm.naturalWidth) return work(_tintSrcIm);
+      _tintSrcIm.onload = function(){ work(_tintSrcIm); };
+      _tintSrcIm.onerror = function(){ resolve(dataUrl); };
+      return;
+    }
+    var im = new Image();
+    im.onload = function(){ _tintSrcUrl = dataUrl; _tintSrcIm = im; work(im); };
+    im.onerror = function(){ resolve(dataUrl); };
+    im.src = dataUrl;
+  });
+}
+var _glassBgToken = 0;
+function currentDefaultBg(){
+  var i = Number(settings.glassBgPreset);
+  if (!isFinite(i) || i < 0) i = 0;
+  var e = glassDefaultBgs[i] || glassDefaultBgs[0];
+  return e ? e.dataUrl : '';
+}
+function currentDefaultBgId(){
+  var i = Number(settings.glassBgPreset);
+  if (!isFinite(i) || i < 0) i = 0;
+  var e = glassDefaultBgs[i] || glassDefaultBgs[0];
+  return e ? e.id : '';
+}
 function applyGlassBg(){
-  const img = settings.glassBgImage || glassDefaultBg || '';
-  if (img) document.documentElement.style.setProperty('--gs-frame', `url("${img}")`);
-  else document.documentElement.style.removeProperty('--gs-frame');
-  setGlassToneFromImage(img);
-  const prev = document.getElementById('glass-bg-preview');
-  const rm = document.getElementById('glass-bg-remove-btn');
-  if (prev){ prev.src = img || ''; prev.style.display = img ? '' : 'none'; }
-  if (rm) rm.style.display = (settings.glassBgImage || '') ? '' : 'none';
+  var custom = settings.glassBgImage || '';
+  var base = custom || currentDefaultBg() || '';
+  var token = ++_glassBgToken;
+  function paint(url){
+    if (token !== _glassBgToken) return;
+    if (url) document.documentElement.style.setProperty('--gs-frame', 'url("' + url + '")');
+    else document.documentElement.style.removeProperty('--gs-frame');
+    setGlassToneFromImage(url);
+    var prev = document.getElementById('glass-bg-preview');
+    var rm = document.getElementById('glass-bg-remove-btn');
+    if (prev){ prev.src = url || ''; prev.style.display = url ? '' : 'none'; }
+    if (rm) rm.style.display = custom ? '' : 'none';
+  }
+  toCssImage(base).then(function(prep){
+    if (token !== _glassBgToken) return;
+    paint(prep);
+    if (!custom && prep && settings.glassBgTint !== false){
+      var acc = (typeof ACCENTS !== 'undefined' && ACCENTS[currentAccentIdx]) || '';
+      if (acc) tintDefaultBg(prep, acc, currentDefaultBgId()).then(function(t){ paint(t || prep); });
+    }
+  });
+}
+function renderGlassBgPresets(){
+  var box = document.getElementById('glass-bg-presets');
+  if (!box) return;
+  box.innerHTML = '';
+  if (!glassDefaultBgs.length){
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'flex';
+  var cur = Number(settings.glassBgPreset);
+  if (!isFinite(cur) || cur < 0) cur = 0;
+  glassDefaultBgs.forEach(function(bg, i){
+    var b = document.createElement('button');
+    b.className = 'gbg-preset' + (i === cur && !settings.glassBgImage ? ' sel' : '');
+    b.title = bg.name || bg.id;
+    b.dataset.i = i;
+    var im = document.createElement('img');
+    im.src = bg.dataUrl;
+    im.alt = '';
+    b.appendChild(im);
+    box.appendChild(b);
+  });
 }
 (function(){
   const sel = document.getElementById('theme-select');
@@ -7053,12 +7240,34 @@ function applyGlassBg(){
   }
   updateGlassBgSection();
   applyGlassBg();
+  renderGlassBgPresets();
 })();
 
 // ── Glass background (custom image behind frosted glass) ────────────────
 (function(){
   const file = document.getElementById('glass-bg-file-input');
   const rm = document.getElementById('glass-bg-remove-btn');
+  const presets = document.getElementById('glass-bg-presets');
+  const tintBox = document.getElementById('glass-bg-tint-input');
+  if (tintBox){
+    tintBox.checked = settings.glassBgTint !== false;
+    tintBox.addEventListener('change', () => {
+      settings.glassBgTint = tintBox.checked;
+      saveSettings();
+      applyGlassBg();
+    });
+  }
+  if (presets){
+    presets.addEventListener('click', e => {
+      const b = e.target.closest('.gbg-preset');
+      if (!b) return;
+      settings.glassBgPreset = Number(b.dataset.i) || 0;
+      settings.glassBgImage = '';
+      saveSettings();
+      renderGlassBgPresets();
+      applyGlassBg();
+    });
+  }
   if (file){
     file.addEventListener('change', () => {
       const f = file.files[0];
@@ -7067,6 +7276,7 @@ function applyGlassBg(){
       reader.onload = ev => {
         settings.glassBgImage = ev.target.result;
         saveSettings();
+        renderGlassBgPresets();
         applyGlassBg();
       };
       reader.readAsDataURL(f);
@@ -7076,6 +7286,7 @@ function applyGlassBg(){
   if (rm) rm.addEventListener('click', () => {
     settings.glassBgImage = '';
     saveSettings();
+    renderGlassBgPresets();
     applyGlassBg();
   });
 })();

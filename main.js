@@ -252,17 +252,30 @@ const saveSettings = async (data) => {
   } catch {}
 };
 
-// Default glass background image bundled in icons/ (used when user set none)
-let _glassDefaultBg = null;
-ipcMain.handle('get-default-glass-bg', async () => {
-  if (_glassDefaultBg) return _glassDefaultBg;
+// Default glass background images bundled in icons/ (selectable in settings)
+let _glassDefaultBgs = null;
+const _glassBgMime = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp' };
+ipcMain.handle('get-default-glass-bgs', async () => {
+  if (_glassDefaultBgs) return _glassDefaultBgs;
   try {
-    const p = path.join(__dirname, 'icons', 'default_background.png');
-    if (!fs.existsSync(p)) return null;
-    const buf = await fs.promises.readFile(p);
-    _glassDefaultBg = 'data:image/png;base64,' + buf.toString('base64');
-    return _glassDefaultBg;
-  } catch { return null; }
+    const dir = path.join(__dirname, 'icons');
+    const num = n => { const m = n.match(/\((\d+)\)/); return m ? parseInt(m[1], 10) : 1; };
+    const files = fs.readdirSync(dir)
+      .filter(n => /^default_background/i.test(n) && /\.(png|jpe?g|webp)$/i.test(n))
+      .sort((a, b) => (num(a) - num(b)) || a.localeCompare(b));
+    const out = [];
+    for (const f of files) {
+      const buf = await fs.promises.readFile(path.join(dir, f));
+      const ext = (f.match(/\.([^.]+)$/) || [, 'png'])[1].toLowerCase();
+      out.push({
+        id: f,
+        name: f.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').replace(/\s*\(\d+\)\s*$/, ''),
+        dataUrl: 'data:' + (_glassBgMime[ext] || 'image/png') + ';base64,' + buf.toString('base64')
+      });
+    }
+    _glassDefaultBgs = out;
+    return out;
+  } catch { return []; }
 });
 
 // Auto-configure the default servers on first run so installed clients
@@ -729,6 +742,101 @@ function setCurrentGroup(group){
 }
 function groupSavesPath(group){
   return path.join(P.groups, groupDirName(group), 'saves');
+}
+// Liest den LevelName aus einer (gepackten) level.dat — reiner NBT-String-Scan.
+function readLevelNameFromDat(datFile){
+  try {
+    const zlib = require('zlib');
+    let buf = fs.readFileSync(datFile);
+    if (buf[0] === 0x1f && buf[1] === 0x8b) buf = zlib.gunzipSync(buf);
+    const i = buf.indexOf('LevelName');
+    if (i < 0) return null;
+    const p = i + 9;              // nach dem 9-Byte-Schluessel kommt die String-Laenge (int16)
+    if (p + 2 > buf.length) return null;
+    const len = buf.readUInt16BE(p);
+    if (len <= 0 || p + 2 + len > buf.length) return null;
+    return buf.toString('utf8', p + 2, p + 2 + len);
+  } catch { return null; }
+}
+// "Weltname" -> Save-Ordner (fuer --quickPlaySingleplayer aus Recent > Welten)
+function resolveSaveFolder(worldName){
+  const savesDir = path.join(P.mc, 'saves');
+  if (!worldName || !fs.existsSync(savesDir)) return null;
+  let dirs = [];
+  try { dirs = fs.readdirSync(savesDir).filter(d => fs.existsSync(path.join(savesDir, d, 'level.dat'))); } catch { return null; }
+  if (!dirs.length) return null;
+  const name = String(worldName);
+  if (dirs.includes(name)) return name;
+  const norm = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const want = norm(name);
+  for (const d of dirs) {
+    const lvl = readLevelNameFromDat(path.join(savesDir, d, 'level.dat'));
+    if (lvl && norm(lvl) === want) return d;
+  }
+  const loose = dirs.find(d => norm(d) === want);
+  if (loose) return loose;
+  // Quasi-Gleichstand ("Meine Welt" <-> "Meine Welt (Kopie)")
+  const score = dirs.map(d => {
+    const a = norm(readLevelNameFromDat(path.join(savesDir, d, 'level.dat')) || d);
+    let s = 0;
+    for (const ch of new Set(want)) if (a.includes(ch)) s++;
+    return { d, s };
+  }).sort((x, y) => y.s - x.s)[0];
+  if (score && score.s / Math.max(1, new Set(want).size) >= 0.8) return score.d;
+  return null;
+}
+// --quickPlaySingleplayer gibt es erst ab 1.20 (Bedrock kennt keine CLI-Args)
+function mcVersionAtLeast(v, major, minor){
+  if (!v) return false;
+  const bedrock = v === '__latest_prerelease__' || v === 'bedrock' || (typeof v === 'string' && /bedrock/i.test(v));
+  if (bedrock) return false;
+  const m = String(v).match(/(\d+)\.(\d+)/);
+  if (!m) return false;
+  const a = +m[1], b = +m[2];
+  return a > major || (a === major && b >= minor);
+}
+// Setzt LastPlayed der level.dat auf jetzt -> Welt steht oben in der Singleplayer-Liste.
+// Das ist der Fallback fuer Minecraft < 1.20 und Bedrock: dort gibt es kein --quickPlaySingleplayer,
+// also wird die Welt wenigstens als "zuletzt gespielt" markiert (1 Klick noetig).
+// TAG_Long hat immer 8 Byte Payload -> Laenge bleibt gleich, alle NBT-Offsets bleiben gueltig.
+function markSaveAsLastPlayed(folder){
+  try {
+    const file = path.join(P.mc, 'saves', folder, 'level.dat');
+    if (!fs.existsSync(file)) return false;
+    const zlib = require('zlib');
+    let buf = fs.readFileSync(file);
+    const gz = buf[0] === 0x1f && buf[1] === 0x8b;
+    if (gz) buf = zlib.gunzipSync(buf);
+    const i = buf.indexOf('LastPlayed');
+    if (i < 0) return false;
+    const p = i + 10;                  // 10 Byte Schluesselname, danach 8 Byte Long
+    if (p + 8 > buf.length) return false;
+    buf.writeBigInt64BE(BigInt(Date.now()), p);
+    fs.writeFileSync(file, gz ? zlib.gzipSync(buf) : buf);
+    return true;
+  } catch { return false; }
+}
+function worldJoinArgs(data, log){
+  const out = [];
+  if (!data.worldFolder) return out;
+  const folder = resolveSaveFolder(data.worldFolder);
+  if (!folder) {
+    log(`[LAUNCH] Welt "${data.worldFolder}" nicht unter saves gefunden — starte ohne Welt-Join`);
+    return out;
+  }
+  // Java ab 1.20: echter Direct-Join
+  if (data.modLoader !== 'bedrock' && mcVersionAtLeast(data.version, 1, 20)) {
+    out.push('--quickPlaySingleplayer', folder);
+    log(`[LAUNCH] Join Welt: ${folder}`);
+    return out;
+  }
+  // Fallback: Welt als zuletzt gespielt markieren, damit sie in der Liste oben steht
+  if (markSaveAsLastPlayed(folder)) {
+    log(`[LAUNCH] ${data.modLoader === 'bedrock' ? 'Bedrock' : 'Minecraft ' + data.version} kann die Welt nicht direkt oeffnen — Welt "${folder}" als "zuletzt gespielt" markiert (Singleplayer -> 1. Klick)`);
+  } else {
+    log(`[LAUNCH] ${data.modLoader === 'bedrock' ? 'Bedrock' : 'Minecraft ' + data.version} kann die Welt nicht direkt oeffnen — starte normal (Singleplayer -> "${folder}")`);
+  }
+  return out;
 }
 function groupServersDatPath(group){
   return path.join(P.groups, groupDirName(group), 'servers.dat');
@@ -1536,17 +1644,9 @@ async function exchangeMicrosoftCode(code) {
   };
 }
 
-// ── Mojang ─────────────────────────────────────────────────────────────────────
-ipcMain.handle('login-mojang', async (e, { email, password }) => {
-  try {
-    const res = await postJson('https://authserver.mojang.com/authenticate', {
-      agent:{ name:'Minecraft', version:1 }, username:email, password,
-      clientToken:require('crypto').randomBytes(16).toString('hex'), requestUser:true
-    });
-    const profile = res.selectedProfile;
-    return { name:profile.name, uuid:profile.id, type:'Mojang', accessToken:res.accessToken, clientToken:res.clientToken, skinUrl:null };
-  } catch(err) { return { error: err.message }; }
-});
+// ── Accounts ───────────────────────────────────────────────────────────────────
+// Kein Mojang-Login mehr: nur Microsoft (OAuth). Der Token-Refresh unten bleibt
+// bewusst erhalten, damit bereits gespeicherte "Mojang"-Konten nicht ungueltig werden.
 
 // ── Skin upload ────────────────────────────────────────────────────────────────
 ipcMain.handle('upload-skin', async (e, { accessToken, skinDataUrl, variant }) => {
@@ -1681,6 +1781,12 @@ ipcMain.on('stop-minecraft', (e, instanceId) => {
   inst.stopped = true;
   const cp = require('child_process');
 
+  // 0. Bedrock is a Store/UWP process we did not spawn — no child to wait for,
+  //    so kill the activated PID directly.
+  if (inst.bedrockPid) {
+    try { cp.exec(`taskkill /PID ${inst.bedrockPid} /F /T`, ()=>{}); } catch {}
+  }
+
   // 1. Kill the direct child process (the one we spawned) - also kill javaw
   if (inst.process && inst.process.pid) {
     try { cp.exec(`taskkill /PID ${inst.process.pid} /F /T`, ()=>{}); } catch {}
@@ -1714,17 +1820,117 @@ ipcMain.on('stop-minecraft', (e, instanceId) => {
   } catch {}
 
   inst.crashed = false;
+  if (inst.bedrockPid) { try { clearInterval(inst.bedrockWatcher); } catch {} }
   try { mainWindow.webContents.send('instance-closed', { instanceId, code: 0 }); } catch {}
 });
 
-// ── Bedrock launch ─────────────────────────────────────────────────────────────
+// ── Bedrock ────────────────────────────────────────────────────────────────────
+// Bedrock runs as a Store/UWP process that the launcher does not spawn, so there is
+// no ChildProcess to wait for. Poll the PID returned by ActivateApplication instead:
+// when the player closes Minecraft by hand the PID disappears and the instance has to
+// flip to "closed" — otherwise the launcher keeps showing "running" forever.
+function isProcessAlive(pid) {
+  if (!pid || pid <= 0) return false;
+  try { process.kill(pid, 0); return true; }
+  catch (e) { return e && e.code === 'EPERM'; }  // exists, but we may not open it
+}
+
+function watchBedrockProcess(instanceId, pid) {
+  const inst = instances[instanceId];
+  if (!inst || !pid) return;
+  inst.bedrockPid = pid;
+  if (inst.bedrockWatcher) { try { clearInterval(inst.bedrockWatcher); } catch {} }
+  inst.bedrockWatcher = setInterval(() => {
+    const live = instances[instanceId];
+    if (!live || live !== inst) { try { clearInterval(inst.bedrockWatcher); } catch {} return; }
+    if (isProcessAlive(pid)) return;
+    try { clearInterval(inst.bedrockWatcher); } catch {}
+    if (stoppedInstances.has(instanceId)) return;   // stop-minecraft already reported it
+    inst.stopped = true;
+    try { mainWindow.webContents.send('instance-closed', { instanceId, code: 0 }); } catch {}
+  }, 3000);
+  if (inst.bedrockWatcher.unref) inst.bedrockWatcher.unref();
+}
+
+// Bedrock is a Microsoft Store (UWP/MSIX) app — it cannot be downloaded as a plain
+// file, so the Store itself has to deliver it. Flow: check the package with
+// Get-AppxPackage, and if it is missing hand the download over to the Store
+// (ms-windows-store://downloadsandopen), wait for the package to appear, then start
+// the game by AUMID through IApplicationActivationManager.
+const BEDROCK_PKG               = 'Microsoft.MinecraftUWP';            // stable
+const BEDROCK_PKG_PRERELEASE    = 'Microsoft.MinecraftWindowsBeta';    // preview
+const BEDROCK_PUBLISHER_SUFFIX  = '_8wekyb3d8bbwe';
+const BEDROCK_AUMID             = BEDROCK_PKG            + BEDROCK_PUBLISHER_SUFFIX + '!Game';
+const BEDROCK_PRERELEASE_AUMID  = BEDROCK_PKG_PRERELEASE + BEDROCK_PUBLISHER_SUFFIX + '!Game';
+// Store product IDs for ms-windows-store://downloadsandopen.
+const BEDROCK_STORE_ID            = '9NBLGGH2JHXJ'; // Minecraft for Windows
+const BEDROCK_PRERELEASE_STORE_ID = '9P5X4QVLC2XR'; // Minecraft Preview for Windows
+
+// Reports whether the Bedrock app is installed and which AUMID actually starts it.
+const BEDROCK_INFO_PS = `
+$ErrorActionPreference = 'SilentlyContinue'
+$OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8
+$p = Get-AppxPackage -Name '__PKG__' | Where-Object { $_.Status -eq 'Ok' } | Select-Object -First 1
+if (-not $p) { Write-Output 'NONE'; exit 0 }
+$aumid = (Get-StartApps | Where-Object { $_.AppID -like ($p.Name + '_8wekyb3d8bbwe!*') } | Select-Object -First 1).AppID
+if (-not $aumid) { $aumid = $p.Name + '_8wekyb3d8bbwe!Game' }
+Write-Output ('OK|' + $p.Version + '|' + $aumid)
+`.trim();
+
+async function runPowerShellFile(scriptPath, args, timeout) {
+  return new Promise((res, rej) => {
+    execFile('powershell.exe',
+      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', scriptPath, ...args],
+      { timeout, windowsHide: true, encoding: 'utf8' },
+      (err, stdout, stderr) => err ? rej(new Error(stderr || err.message)) : res(stdout || ''));
+  });
+}
+
+// → { installed:boolean, version:string, aumid:string }
+async function bedrockInfo(preRelease) {
+  const pkg = preRelease ? BEDROCK_PKG_PRERELEASE : BEDROCK_PKG;
+  const scriptPath = path.join(os.tmpdir(), 'crux-bedrock-info.ps1');
+  try {
+    fs.writeFileSync(scriptPath, '\uFEFF' + BEDROCK_INFO_PS.replace('__PKG__', pkg), 'utf8');
+    const out = await runPowerShellFile(scriptPath, [], 45000);
+    const m = /^OK\|([^|]*)\|(.+)$/m.exec((out || '').trim());
+    if (!m) return { installed: false };
+    return { installed: true, version: m[1].trim(), aumid: m[2].trim() };
+  } catch (e) {
+    return { installed: false, error: e.message };
+  }
+}
+
+// Makes sure the app file is on disk, downloading it via the Store when it is missing.
+async function ensureBedrockInstalled(preRelease, send, instanceId) {
+  let info = await bedrockInfo(preRelease);
+  if (info.installed) return info;
+
+  const storeId = preRelease ? BEDROCK_PRERELEASE_STORE_ID : BEDROCK_STORE_ID;
+  send('instance-log', { instanceId, line: `[BEDROCK] Not installed - downloading from Microsoft Store (product ${storeId})...` });
+  send('launch-progress', { instanceId, percent:5, message:'Downloading Minecraft Bedrock Edition from the Microsoft Store...' });
+  try { await shell.openExternal(`ms-windows-store://downloadsandopen?id=${storeId}`); }
+  catch { try { await shell.openExternal(`ms-windows-store://pdp/?ProductId=${storeId}`); } catch {} }
+
+  // ~900 MB download — poll for up to 5 minutes, then give up with a hint.
+  for (let i = 1; i <= 60; i++) {
+    await new Promise(r => setTimeout(r, 5000));
+    info = await bedrockInfo(preRelease);
+    if (info.installed) {
+      send('instance-log', { instanceId, line: `[BEDROCK] Installed ${info.version} - starting...` });
+      return info;
+    }
+    if (i % 4 === 0) send('launch-progress', { instanceId, percent:Math.min(90, 5 + i), message:'Installing Minecraft Bedrock Edition - this can take a few minutes...' });
+  }
+  try { await shell.openExternal(`ms-windows-store://pdp/?ProductId=${storeId}`); } catch {}
+  throw new Error(`Minecraft Bedrock Edition is not installed. Install it from the Microsoft Store (product ${storeId}) and try again.`);
+}
+
 // Activates the Store/UWP app by AUMID through IApplicationActivationManager.
 // This starts the game directly — no explorer.exe window and no game folder opens.
-const BEDROCK_AUMID = 'Microsoft.MinecraftUWP_8wekyb3d8bbwe!App';
-const BEDROCK_PRERELEASE_AUMID = 'Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe!App';
-
 const BEDROCK_ACTIVATE_PS = `
 $ErrorActionPreference = 'Stop'
+$OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8
 $aumid = $args[0]
 $code = @"
 using System;
@@ -1741,19 +1947,27 @@ class ApplicationActivationManager { }
 public static class Ctx {
     public static uint Activate(string aumid) {
         var mgr = (IApplicationActivationManager)new ApplicationActivationManager();
-        uint pid;
-        mgr.ActivateApplication(aumid, "", 0, out pid);
+        uint pid = 0;
+        int hr = (int)mgr.ActivateApplication(aumid, "", 0, out pid);
+        if (hr < 0) Marshal.ThrowExceptionForHR(hr);
         return pid;
     }
 }
 "@
 Add-Type -TypeDefinition $code -Language CSharp
-$pid2 = [Ctx]::Activate($aumid)
-Write-Output "OK:$pid2"
+try {
+    $pid2 = [Ctx]::Activate($aumid)
+    if ($pid2 -le 0) { Write-Output 'FAIL:activation returned no process id'; exit 1 }
+    Write-Output "OK:$pid2"
+} catch {
+    $ex = $_.Exception
+    while ($ex.InnerException) { $ex = $ex.InnerException }
+    Write-Output ('FAIL:activation failed (HRESULT 0x' + ('{0:X8}' -f $ex.HResult) + ')')
+    exit 1
+}
 `.trim();
 
-async function launchBedrock(preRelease, send, instanceId) {
-  const aumid = preRelease ? BEDROCK_PRERELEASE_AUMID : BEDROCK_AUMID;
+async function launchBedrock(aumid, send, instanceId) {
   const scriptPath = path.join(os.tmpdir(), 'crux-activate-app.ps1');
   try {
     fs.writeFileSync(scriptPath, '\uFEFF' + BEDROCK_ACTIVATE_PS, 'utf8');
@@ -1761,14 +1975,17 @@ async function launchBedrock(preRelease, send, instanceId) {
     send('instance-log', { instanceId, line: `[BEDROCK] Could not write activation script: ${e.message}` });
     throw e;
   }
-  const out = await new Promise((res, rej) => {
-    execFile('powershell.exe',
-      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', scriptPath, aumid],
-      { timeout: 30000, windowsHide: true, encoding: 'utf8' },
-      (err, stdout, stderr) => err ? rej(new Error(stderr || err.message)) : res(stdout));
-  });
+  let out = '';
+  try {
+    out = await runPowerShellFile(scriptPath, [aumid], 30000);
+  } catch (e) {
+    out = e.message || '';
+  }
   const m = /OK:(\d+)/.exec(out || '');
-  if (!m) throw new Error('activation returned no pid: ' + (out || '').trim());
+  if (!m || Number(m[1]) <= 0) {
+    const fail = /FAIL:(.+)/.exec(out || '');
+    throw new Error(fail ? fail[1].trim() : ('could not activate ' + aumid));
+  }
   send('instance-log', { instanceId, line: `[BEDROCK] Activated ${aumid} (pid ${m[1]})` });
   return Number(m[1]);
 }
@@ -1803,14 +2020,17 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     // Anything else in mcVersion is meaningless for UWP activation, so treat it as latest.
     const preRelease = version === '__latest_prerelease__';
     try {
+      const info = await ensureBedrockInstalled(preRelease, send, instanceId);
       send('launch-progress', { instanceId, percent:50, message:'Launching Minecraft Bedrock Edition...' });
-      await launchBedrock(preRelease, send, instanceId);
+      const pid = await launchBedrock(info.aumid || (preRelease ? BEDROCK_PRERELEASE_AUMID : BEDROCK_AUMID), send, instanceId);
+      watchBedrockProcess(instanceId, pid);
       send('launch-progress', { instanceId, percent:100, message:'Minecraft Bedrock Edition launched!', done:true });
     } catch (be) {
       send('instance-log', { instanceId, line: `[BEDROCK] Launch failed: ${be.message}` });
       send('launch-progress', { instanceId, percent:0, message:'', done:true });
-      send('launch-status', 'Could not launch Bedrock. Do you have Minecraft Bedrock from the Microsoft Store installed?');
+      send('launch-status', 'Could not launch Bedrock: ' + be.message);
       instances[instanceId].crashed = true;
+      try { mainWindow.webContents.send('instance-crashed', { instanceId }); } catch {}
     }
     return;
   }
@@ -2036,7 +2256,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       };
     } else {
       // No valid account — block launch
-      send('launch-status', 'No valid account. Please log in with a Microsoft or Mojang account in the MC-Account tab.');
+      send('launch-status', 'No valid account. Please log in with a Microsoft account in the MC-Account tab.');
       send('launch-progress', { instanceId, percent:0, message:'', done:true });
       send('no-account-found', 0);
       clearTimeout(safetyTimer);
@@ -3226,6 +3446,9 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         if (data.serverPort) gameArgs.push('--port', String(data.serverPort));
       }
 
+      // Direkter Welt-Join aus Recent > Welten
+      gameArgs.push(...worldJoinArgs(data, line => send('instance-log', { instanceId, line })));
+
       // Crux Client custom arg — placed AFTER -cp but before mainClass
       // forge.eagerDisplay=false disables NeoForge EarlyDisplay entirely
       // fml.earlyWindowControl=false is an alternative property name
@@ -3422,6 +3645,13 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         mclcVersionObj.arguments.game.push('--server', data.serverAddress);
         if (data.serverPort) mclcVersionObj.arguments.game.push('--port', String(data.serverPort));
         send('instance-log', { instanceId, line: `[LAUNCH] Direct connect: ${data.serverAddress}:${data.serverPort || 25565}` });
+      }
+      // Direkter Welt-Join aus Recent > Welten
+      const mclcWorldArgs = worldJoinArgs(data, line => send('instance-log', { instanceId, line }));
+      if (mclcWorldArgs.length) {
+        if (!mclcVersionObj.arguments) mclcVersionObj.arguments = {};
+        if (!mclcVersionObj.arguments.game) mclcVersionObj.arguments.game = [];
+        mclcVersionObj.arguments.game.push(...mclcWorldArgs);
       }
       if (stoppedInstances.has(instanceId)) return { code: 0, modCrash: false };
       return new Promise((resolve) => {
@@ -4270,6 +4500,11 @@ ipcMain.handle('get-server-status', (event, serverId) => {
   const srv = serverProcesses[serverId];
   if (!srv) return { status: 'stopped' };
   return { status: srv.status, logs: srv.logs.slice(-200) };
+});
+
+// Weltname -> Save-Ordner (Recent > Welten: damit "--quickPlaySingleplayer" greift)
+ipcMain.handle('resolve-save-folder', (event, worldName) => {
+  try { return resolveSaveFolder(worldName); } catch { return null; }
 });
 
 // ── Server Whitelist IPC ────────────────────────────────────────────────────────
