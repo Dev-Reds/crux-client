@@ -62,13 +62,36 @@ gh release upload v1.1.xx crux_code.zip --clobber -R Dev-Reds/crux-code
 
 - NSIS-Installer in `installer/`
 - `package.json`: `"runAfterFinish": true` (Autostart nach Installation)
+- **Startseite** (`customInit` + `customWelcomePage` in `installer/custom-shortcuts.nsh`):
+  erkennt eine bestehende Installation über `HKCU/HKLM\Software\${APP_GUID}\InstallLocation`
+  + `UNINSTALL_REGISTRY_KEY\DisplayVersion` und zeigt dann **nur** „Update to version X“ und
+  „Uninstall Crux Client“. Ohne bestehende Installation gibt es nur „Install“.
+  - Update-Modus: `customInstallMode` überspringt den Benutzer-/Installationsmodus-Dialog
+    (Hook in `multiUserUi.nsh:41`), `$INSTDIR` = alter InstallLocation. Die **Ordnerseite**
+    bleibt beim manuellen Update sichtbar (vorausgefüllt) — `skipPageIfUpdated` kann nicht
+    überschrieben werden (Makro-Redefinition), beim stillen `/S --updated` wird sie per
+    Template ohnehin übersprungen.
+  - Reihenfolge in `.onInit`: `initMultiUser` (installer.nsi:70) läuft **vor** `customInit`
+    (:72) → `$installMode`/`$INSTDIR` stehen beim Löschen der Registry fest.
+  - Update läuft über `uninstallOldVersion` hinweg. Dafür löscht `cruxHideOldVersionReg`
+    vorher `UninstallString`/`QuietUninstallString`/`InstallLocation` der alten Installation
+    (passend zu `$installMode`), sonst würde der Installer die App samt
+    `%APPDATA%\Crux Client` deinstallieren. `registryAddInstallInfo` schreibt sie neu.
+  - Deinstallieren: `cruxDoUninstall` fragt nach, prüft `CHECK_APP_RUNNING` und ruft
+    den alten Uninstaller mit `/S /currentuser` bzw. `/S /allusers`.
+  - NSIS-Fallen hier: `!macro` darf nicht doppelt definiert werden, LogicLib-`${If}` kann
+    keine geklammerten `MessageBox`-Ausdrücke, und der Build läuft mit `-WX` (jede
+    Warnung ist ein Fehler) → ungenutzte Vars per `!ifdef BUILD_UNINSTALLER` ausblenden.
 - `custom-shortcuts.nsh`: Custom Page für Desktop/Startmenü-Verknüpfungen
 - `createDesktopShortcut` / `createStartMenuShortcut` in package.json steuern defaults
 - Kein `!define DONT_RUN_APP_AFTER_INSTALL` (damit Auto-Start aktiv ist)
 - Bauen: `npm run build-installer` (electron-builder 24.13.3, ~2 min, ~102 MB)
-- **Signatur-Bug**: das Nachsignieren in `installer/build-installer.js` schlägt fehl
-  (Ergebnis `NotSigned`, obwohl `CN=Crux Client` in `Cert:\CurrentUser\My` liegt).
-  Deshalb IMMER danach manuell prüfen und ggf. nachsignieren:
+- **Signatur**: `installer/build-installer.js` signiert am Ende selbst. Es MUSS
+  `-EncodedCommand` (UTF-16LE + Base64) benutzen — mit `-Command "…"` schluckt cmd.exe
+  die inneren Anführungszeichen, PowerShell läuft ins Leere und das Ergebnis ist
+  `NotSigned`, ohne Fehlermeldung (2026-10-04 gefixt). Das Skript prueft danach selbst
+  per `Get-AuthenticodeSignature` und meldet `SIGNING FAILED: …`.
+  Nach dem Build trotzdem gegenpruefen und ggf. manuell nachsignieren:
   ```powershell
   Get-AuthenticodeSignature installer\Crux-Client-Installer.exe | Select-Object Status
   # NotSigned ->
@@ -231,13 +254,45 @@ Alte `ghs_`-Header vorher entfernen: `git config --local --unset-all http.https:
 
 ### PowerShell-Dateien: Kodierung
 
-`main.js` liest `update-window.ps1` / `uninstall-window.ps1` mit `encoding:'utf8'` und
-schreibt den BOM selbst (`'\uFEFF' + readFileSync(...)`). Die Dateien MÜSSEN UTF-8 sein.
+`main.js` liest `update-window.ps1` mit `encoding:'utf8'` und
+schreibt den BOM selbst (`'\uFEFF' + readFileSync(...)`). Die Date MUSS UTF-8 sein.
 PowerShell-Redirect (`> file`) erzeugt unter Windows UTF-16LE → Skript läuft nicht.
 Bei Konfliktauflösung immer prüfen:
 ```powershell
 git hash-object update-window.ps1   # muss == gewünschtem Blob stehen
 ```
+
+### Update-Ablauf (kein Deinstallieren mehr)
+
+`uninstall-window.ps1` ist **entfernt** (gelöscht + aus `package.json` `files` raus).
+Grund: Das Update macht jetzt ein echtes In-Place-Update über den Installer.
+
+- `main.js` `download-and-install-update`: Download läuft **ohne** externes Fenster
+  (Fortschritt im Renderer-Overlay `update-download-progress`). Erst **nach** fertigem
+  Download ruft der Handler `startUpdateProgressWindow()` auf — das ist die ganze
+  Anforderung „Bildschirm erst zeigen, wenn die Datei da ist“.
+- `startUpdateProgressWindow()` löscht vorher `crux-update-progress.json` (sonst zeigt
+  das neue Fenster sofort 100 % aus der alten Datei), schreibt `phase:'install'` und
+  startet das PS-Fenster detached.
+- Die Batch-Datei startet `"<Installer>" /S --updated` (`start /wait`) und danach
+  `start "" "<InstallDir>\<Crux Client.exe>"` — der Launcher startet sich selbst neu,
+  also Pfad hart aus `app.getPath('exe')` nehmen, nicht `process.execPath` (im
+  Dev-Mode zeigt das auf node.exe).
+- Reihenfolge in der Batch: Installer → `echo done > %TEMP%\crux-update-installed.flag`
+  → `update-window.ps1 set launch` → Launcher starten.
+- Beim Boot: liegt `base\Crux-Client-Installer.exe` **und** weder `base\update-migrated.flag`
+  **noch** `%TEMP%\crux-update-installed.flag` vor, wird das Update automatisch gestartet.
+  Nach dem Installer-Lauf wird die `installed.flag` gesetzt, damit der liegengebliebene
+  Installer beim nächsten Start **nicht** nochmal läuft. Beide Flags + Installer werden
+  im normalen Boot-Pfad wieder gelöscht.
+- `update-window.ps1` kennt nur noch `install` / `launch` / `done` / `cancel`
+  (alte Phase `uninstall` entfernt). Das Skript kommt als **UTF-8 ohne BOM** in git;
+  der BOM wird von `main.js` beim Kopieren nach `%TEMP%` gesetzt.
+- **PS-Falle im selben Skript**: der `DispatcherTimer.Add_Tick`-Handler läuft in einem
+  eigenen Scope. `$phase = …` darin blieb im Child-Scope hängen → Text wechselte nie
+  und das Fenster schloss nie (jeder andere Handler-Code sieht davon nichts). Zustand
+  liegt deshalb in der Hashtable `$S` (`$S.phase`, `$S.cur`, …) — Hashtable-Mutationen
+  sind scope-unabhängig. `$win.Close()` als Methodenaufruf war immer schon ok.
 
 ### Recent: Instances / Servers / Welten
 

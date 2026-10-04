@@ -130,30 +130,30 @@ app.whenReady().then(async () => {
   // Check for pending update installer before creating window
   const pendingUpdatePath = path.join(base, 'Crux-Client-Installer.exe');
   const updateDoneFlag = path.join(base, 'update-migrated.flag');
-  if (fs.existsSync(pendingUpdatePath) && !fs.existsSync(updateDoneFlag)) {
+  // The batch script writes this after the installer finished - then the pending
+  // installer is just a leftover and must NOT be started again.
+  const installRanFlag = path.join(os.tmpdir(), 'crux-update-installed.flag');
+  if (fs.existsSync(pendingUpdatePath) && !fs.existsSync(updateDoneFlag) && !fs.existsSync(installRanFlag)) {
     try {
-      // Save user data (settings, accounts, profiles, ...) before update
-      // so nothing is lost when the installer uninstalls the old version
+      // Save user data (settings, accounts, profiles, ...) as a safety net
       backupUserDataForUpdate();
       // Mark as migrated so we don't loop on next startup
       fs.writeFileSync(updateDoneFlag, 'done');
-      // Open the progress window so it stays visible across uninstall/reinstall
-      writeUpdateProgress('uninstall', 25);
+      // Open the progress window - the update file is already there, so the
+      // window can show up right away
       startUpdateProgressWindow();
-      ensureUninstallWindowScript();
       // Create a batch script that waits for the launcher to close, then runs the installer
       const launcherExe = path.basename(app.getPath('exe'));
       const batchPath = path.join(os.tmpdir(), 'crux-update-' + Date.now() + '.bat');
+      // /S --updated = silent in-place update (the installer replaces the app
+      // files, it does not uninstall the old version first)
       const batchContent = [
         '@echo off',
         ':waitloop',
         'timeout /t 1 /nobreak >nul',
         'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
         'if %errorlevel%==0 goto waitloop',
-        'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set close',
-        'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set uninstall',
-        'start "" powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File "%TEMP%\\crux-uninstall-window.ps1"',
-        'start /wait "" "' + pendingUpdatePath + '"',
+        'start /wait "" "' + pendingUpdatePath + '" /S --updated',
         'echo done > "%TEMP%\\crux-update-installed.flag"',
         'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set launch',
         'start "" "' + path.dirname(app.getPath('exe')) + '\\' + launcherExe + '"',
@@ -183,12 +183,13 @@ app.whenReady().then(async () => {
       console.error('[UPDATE] Auto-install failed:', e.message);
     }
   }
-  // Restore user data backed up before the update (survives uninstall/reinstall)
+  // Restore user data backed up before the update (safety net)
   restoreUserDataAfterUpdate();
-  // Clean up downloaded installer and flag so we don't loop on next startup
+  // Clean up downloaded installer and flags so we don't loop on next startup
   if (fs.existsSync(updateDoneFlag)) {
     try { fs.unlinkSync(updateDoneFlag); } catch {}
   }
+  try { fs.unlinkSync(installRanFlag); } catch {}
   try { fs.unlinkSync(pendingUpdatePath); console.log('[UPDATE] Installer cleaned up.'); } catch {}
   // Tell any leftover update-progress window that the client is up and running
   writeUpdateProgress('done', 100);
@@ -3893,7 +3894,7 @@ ipcMain.handle('check-for-update', async () => {
   }
 });
 
-// ── Update progress window (separate process, survives launcher uninstall) ──
+// ── Update progress window (separate process, survives the launcher quitting) ──
 const UPDATE_PROGRESS_FILE = path.join(os.tmpdir(), 'crux-update-progress.json');
 
 function writeUpdateProgress(phase, percent) {
@@ -3902,27 +3903,21 @@ function writeUpdateProgress(phase, percent) {
   } catch {}
 }
 
+// Only called once the update file is on disk - before that the download runs
+// inside the launcher and is shown in the update overlay, so this window must
+// not appear yet.
 function startUpdateProgressWindow() {
   try {
+    // Drop the state of a previous update, otherwise the new window would
+    // instantly jump to "done" from the leftover file
+    try { fs.unlinkSync(UPDATE_PROGRESS_FILE); } catch {}
+    writeUpdateProgress('install', 15);
     const winScript = path.join(os.tmpdir(), 'crux-update-window.ps1');
     fs.writeFileSync(winScript, '\uFEFF' + fs.readFileSync(path.join(__dirname, 'update-window.ps1'), 'utf8'), 'utf8');
     spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-STA', '-WindowStyle', 'Hidden', '-File', winScript], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
     return true;
   } catch (e) {
     updateLog('Failed to start update progress window: ' + (e && e.message));
-    return false;
-  }
-}
-
-// Standalone window shown while the launcher is being uninstalled/reinstalled,
-// so the user always sees something during the update.
-function ensureUninstallWindowScript() {
-  try {
-    const winScript = path.join(os.tmpdir(), 'crux-uninstall-window.ps1');
-    fs.writeFileSync(winScript, '\uFEFF' + fs.readFileSync(path.join(__dirname, 'uninstall-window.ps1'), 'utf8'), 'utf8');
-    return true;
-  } catch (e) {
-    updateLog('Failed to copy uninstall window script: ' + (e && e.message));
     return false;
   }
 }
@@ -3979,43 +3974,37 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
     updateLog(`Installer URL: ${exeUrl}`);
     const installerPath = path.join(base, 'Crux-Client-Installer.exe');
 
-    writeUpdateProgress('download', 0);
-    startUpdateProgressWindow();
-
+    // No progress window here on purpose: the download runs inside the launcher
+    // and is shown in the update overlay. The window only appears once the
+    // installer file is completely on disk.
     // Download installer with progress
     try {
       await new Promise((resolve, reject) => {
-        let lastDownloadPct = -1;
-      const doRequest = (reqUrl) => {
-        const lib = reqUrl.startsWith('https') ? https : http;
-        const req = lib.get(reqUrl, { headers: { 'User-Agent': 'CruxClient' } }, res => {
-          if (res.statusCode === 301 || res.statusCode === 302) return doRequest(res.headers.location);
-          if (res.statusCode !== 200) return reject(new Error('HTTP ' + res.statusCode));
-          const total = parseInt(res.headers['content-length'], 10) || 0;
-          let downloaded = 0;
-          const ws = fs.createWriteStream(installerPath);
-          res.on('data', chunk => {
-            ws.write(chunk);
-            downloaded += chunk.length;
-            send('update-download-progress', { downloaded, total });
-            const pct25 = total ? Math.round((downloaded / total) * 25) : 0;
-            if (pct25 !== lastDownloadPct) { lastDownloadPct = pct25; writeUpdateProgress('download', pct25); }
-          });
-          res.on('end', () => { ws.end(() => resolve()); });
-          res.on('error', reject);
-        }).on('error', reject);
-        req.setTimeout(300000, () => { req.destroy(); reject(new Error('Download timeout')); });
-        req.on('timeout', () => { req.destroy(); reject(new Error('Download timeout')); });
-      };
+        const doRequest = (reqUrl) => {
+          const lib = reqUrl.startsWith('https') ? https : http;
+          const req = lib.get(reqUrl, { headers: { 'User-Agent': 'CruxClient' } }, res => {
+            if (res.statusCode === 301 || res.statusCode === 302) return doRequest(res.headers.location);
+            if (res.statusCode !== 200) return reject(new Error('HTTP ' + res.statusCode));
+            const total = parseInt(res.headers['content-length'], 10) || 0;
+            let downloaded = 0;
+            const ws = fs.createWriteStream(installerPath);
+            res.on('data', chunk => {
+              ws.write(chunk);
+              downloaded += chunk.length;
+              send('update-download-progress', { downloaded, total });
+            });
+            res.on('end', () => { ws.end(() => resolve()); });
+            res.on('error', reject);
+          }).on('error', reject);
+          req.setTimeout(300000, () => { req.destroy(); reject(new Error('Download timeout')); });
+          req.on('timeout', () => { req.destroy(); reject(new Error('Download timeout')); });
+        };
         doRequest(exeUrl);
       });
     } catch (err) {
       updateLog('Installer download failed: ' + (err && err.message));
-      writeUpdateProgress('cancel', 0);
       throw err;
     }
-    writeUpdateProgress('download', 25);
-
     updateLog('Installer downloaded. Removing security block (Zone.Identifier)...');
     try {
       await new Promise((resolve, reject) => {
@@ -4026,25 +4015,29 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
       });
     } catch {}
 
+    // Update file is complete - now the progress window may show up and take
+    // over until the launcher comes back up
+    startUpdateProgressWindow();
+
     // Tell the renderer the download is done and the installer window will take over
     send('update-install-start', { message: 'Download finished — installing now' });
 
-    ensureUninstallWindowScript();
     // Create a batch script that waits for the launcher to close, then runs the installer
     const launcherExe = path.basename(app.getPath('exe'));
     const batchPath = path.join(os.tmpdir(), 'crux-update-' + Date.now() + '.bat');
+    // /S --updated = silent in-place update: the installer overwrites the app
+    // files, the old version is NOT uninstalled first (profiles/accounts/settings
+    // in %APPDATA%\Crux Client stay untouched).
     const batchContent = [
       '@echo off',
       ':waitloop',
       'timeout /t 1 /nobreak >nul',
       'tasklist /FI "IMAGENAME eq ' + launcherExe + '" 2>nul | find /I "' + launcherExe + '" >nul',
       'if %errorlevel%==0 goto waitloop',
-      'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set close',
-'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set uninstall',
-        'start "" powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File "%TEMP%\\crux-uninstall-window.ps1"',
-        'start /wait "" "' + installerPath + '"',
+      'start /wait "" "' + installerPath + '" /S --updated',
       'echo done > "%TEMP%\\crux-update-installed.flag"',
       'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%TEMP%\\crux-update-window.ps1" set launch',
+      'start "" "' + path.dirname(app.getPath('exe')) + '\\' + launcherExe + '"',
       'del "%~f0"',
     ].join('\r\n');
     await fs.promises.writeFile(batchPath, batchContent, 'utf8');

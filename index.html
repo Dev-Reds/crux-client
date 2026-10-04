@@ -739,6 +739,24 @@ body.glass .profile-sec-btn.active{background:color-mix(in srgb,var(--acc) 62%,t
 body.glass .settings-nav button.active{background:color-mix(in srgb,var(--acc) 62%,transparent) !important;backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);}
 body.glass .skin-editor-toolbar .tool-btn.active{background:color-mix(in srgb,var(--acc) 62%,transparent) !important;backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);}
 body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transparent) !important;}
+
+/* Update-Overlay: fester dunkler Hintergrund (#0a0a0a). Die globale Regel
+   body.glass *{color:var(--gs-tx)!important} setzt dort sonst dunklen Text auf
+   dunklen Grund (#14171c) - Titel, Version, Fortschritt und "Later" waren
+   unsichtbar. Deshalb die beabsichtigten Farben hier nochmal fest verankern. */
+#update-overlay, #update-overlay *{color:#fff !important;}
+#update-overlay #update-version-text{color:#cfd6de !important;}
+#update-overlay #update-notes-box{color:#c3cad2 !important;}
+#update-overlay #update-progress-text{color:#9aa3ad !important;}
+#update-overlay #update-wait-text{color:#ffa500 !important;}
+#update-overlay #update-error-text{color:#ff6b6b !important;}
+#update-overlay #update-done-text{color:#7ee787 !important;}
+#update-overlay .btn{color:#e6e9ef !important;border-color:#4a4f57 !important;}
+#update-overlay .btn:not(.btn-primary){background:rgba(255,255,255,.06) !important;}
+#update-overlay .btn-primary{color:#fff !important;background:var(--acc) !important;border-color:var(--acc) !important;}
+#update-overlay .btn:not(.btn-primary):hover{color:#fff !important;border-color:#6b7280 !important;background:rgba(255,255,255,.12) !important;}
+#update-overlay .btn-primary:hover{background:var(--acc) !important;filter:brightness(1.1);}
+#update-overlay #update-bugreport-btn{color:#ff6b6b !important;border-color:#ff6b6b !important;}
 </style>
 </head>
 <body>
@@ -8926,7 +8944,7 @@ ipcRenderer.on('update-download-progress', (_, { downloaded, total }) => {
 ipcRenderer.on('update-install-start', () => {
   _applyUpdateProgress(1, 1);
   const txt = document.getElementById('update-progress-text');
-  if (txt) txt.textContent = 'Download abgeschlossen (100%) — Installation läuft. Der Fortschritt ist jetzt im Installationsfenster zu sehen.';
+  if (txt) txt.textContent = 'Download abgeschlossen (100%) — Crux Client wird aktualisiert. Der Fortschritt ist jetzt im Update-Fenster zu sehen.';
   const wait = document.getElementById('update-wait-text');
   if (wait) wait.style.display = 'block';
 });
