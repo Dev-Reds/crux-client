@@ -73,11 +73,16 @@ app.setPath('cache', path.join(base,'Cache'));
 
 // Default presence server so the Friends tab works out of the box.
 // Points to the Render Blueprint service defined in render.yaml (see server/README.md).
-const DEFAULT_PRESENCE_SERVER = 'https://crux-presence.onrender.com';
+const DEFAULT_PRESENCE_SERVER = "";
 
 // Default chat server so the Chat tab works out of the box.
 // Points to the Deno Deploy app (server/chat-server.ts, see server/README.md).
-const DEFAULT_CHAT_SERVER = 'https://crux-chat.dev-reds.deno.net';
+const DEFAULT_CHAT_SERVER = "";
+
+// Default bug-report webhook so shipped installs can report without any setup.
+// Ships in cleartext: anyone can extract it from the installed client and post
+// to that channel, so give it a dedicated channel with sane permissions.
+const DEFAULT_BUGREPORT_WEBHOOK = "https://discord.com/api/webhooks/1556665583133532272/XXnqbE0-Qc3eYXH-gZmvt9UMK5wRJKApGdPk6s9njMN5ltjzmEDpGcXc_TuQjdqYVoTB";
 
 // ── Window ─────────────────────────────────────────────────────────────────────
 function createWindow() {
@@ -195,6 +200,7 @@ app.whenReady().then(async () => {
   writeUpdateProgress('done', 100);
 
   createWindow();
+  startServiceMonitor();
   // Auto-scan Java in background after window loads
   mainWindow.webContents.on('did-finish-load', async () => {
     try {
@@ -293,6 +299,14 @@ async function ensureDefaultServers() {
     if (s.chatServer === undefined || s.chatServer === null || s.chatServer === '') {
       s.chatServer = DEFAULT_CHAT_SERVER;
       console.log('[Crux] Chat server default applied: ' + DEFAULT_CHAT_SERVER);
+      changed = true;
+    }
+    // Only `undefined`, NOT `''` — load-settings runs on every launch, so an
+    // empty-string check would re-apply the default to anyone who deliberately
+    // cleared the field and make opting out impossible.
+    if (s.bugreportWebhook === undefined) {
+      s.bugreportWebhook = DEFAULT_BUGREPORT_WEBHOOK;
+      console.log('[Crux] Bug report webhook default applied');
       changed = true;
     }
     if (changed) await save(P.settings, s);
@@ -4918,6 +4932,91 @@ function fetchJson(url) {
     req.setTimeout(15000, () => { req.destroy(); rj(new Error('Timeout: '+url.slice(0,80))); });
   });
 }
+// ── Service health monitoring ──────────────────────────────────────────────────
+// Each entry is probed with a plain HEAD/GET. Any 2xx/3xx counts as up; a 4xx from
+// CurseForge means the host answered, so it counts as up too — we only care about
+// "host unreachable / not answering", not about a 403 on a missing API key.
+const SERVICE_PROBES = [
+  { id: 'modrinth',   name: 'Modrinth',    url: 'https://api.modrinth.com/v2/tag/loader' },
+  { id: 'curseforge', name: 'CurseForge',  url: 'https://www.curseforge.com/' },
+  { id: 'discord',    name: 'Discord',     url: 'https://discord.com/api/v10/gateway' },
+  { id: 'github',     name: 'GitHub',      url: 'https://api.github.com/rate_limit' },
+  { id: 'minecraft',  name: 'Minecraft',   url: 'https://api.minecraftservices.com/minecraft/launcher' },
+  { id: 'mojang',     name: 'Mojang',      url: 'https://launchermeta.mojang.com/mc/game/version_manifest_v2.json' },
+];
+let _svcState = {};        // id -> { up, dismissed, at }
+let _svcTimer = null;
+
+function probeService(svc) {
+  return new Promise((resolve) => {
+    const done = (up) => resolve({ id: svc.id, name: svc.name, up });
+    let u;
+    try { u = new URL(svc.url); } catch { return done(false); }
+    const req = https.request({
+      hostname: u.hostname, path: u.pathname + u.search, method: 'GET',
+      headers: { 'User-Agent': 'CruxClient/1.0 (service-health)', 'Accept': '*/*' }
+    }, (res) => {
+      // host answered -> service is reachable, whatever the status code says
+      res.resume();
+      done(res.statusCode < 500);
+    });
+    req.on('error', () => done(false));
+    req.setTimeout(8000, () => { req.destroy(); done(false); });
+    req.end();
+  });
+}
+
+async function checkServices() {
+  const results = await Promise.all(SERVICE_PROBES.map(probeService));
+  const changed = [];
+  for (const r of results) {
+    const prev = _svcState[r.id];
+    if (!prev) {
+      // First probe: record the state without emitting a change event, so a cold
+      // start does not fire a burst of toasts for services that are merely slow
+      // to answer. The broadcast after it still carries the real state, so a
+      // service that is genuinely down right now does show a toast.
+      _svcState[r.id] = { up: r.up, dismissed: false, at: Date.now() };
+      continue;
+    }
+    const wasDown = !prev.up;
+    prev.up = r.up; prev.at = Date.now();
+    if (r.up && wasDown) changed.push({ ...r, recovered: true });
+    else if (!r.up && !wasDown) { prev.dismissed = false; changed.push({ ...r, recovered: false }); }
+  }
+  return changed;
+}
+
+function broadcastServices() {
+  const list = Object.entries(_svcState).map(([id, s]) => ({
+    id, name: (SERVICE_PROBES.find(p => p.id === id) || {}).name || id,
+    up: s.up, dismissed: s.dismissed,
+  }));
+  // mainWindow may not exist yet (first probe runs right after createWindow) and
+  // webContents is briefly undefined while the window initialises
+  try {
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents)
+      mainWindow.webContents.send('service-status', list);
+  } catch {}
+}
+
+function startServiceMonitor() {
+  if (_svcTimer) return;
+  checkServices().then(() => broadcastServices());
+  _svcTimer = setInterval(async () => {
+    const changed = await checkServices();
+    if (changed.length) broadcastServices();
+  }, 60000);
+  _svcTimer.unref?.();
+}
+
+ipcMain.handle('service-check-now', async () => { await checkServices(); broadcastServices(); return true; });
+ipcMain.handle('service-dismiss', (e, id) => {
+  if (_svcState[id]) _svcState[id].dismissed = true;
+  broadcastServices();
+  return true;
+});
+
 // ── Offline detection ──────────────────────────────────────────────────────────
 let _netOnline = null;
 let _netCheckAt = 0;

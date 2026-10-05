@@ -83,8 +83,8 @@ body.light input::placeholder{color:#777;}
 body.light .skin-change-label{color:#666;}
 body.light .skin-name-display, body.light .skin-version-display{color:#111;}
 body.light #skin-url-input{background:#fff!important;color:#111!important;border-color:#ccc!important;}
-body.light #presence-server-input, body.light #bugreport-webhook-input, body.light #bugreport-title, body.light #bugreport-desc{background:#fff!important;color:#111!important;border-color:#ccc!important;}
-body.light #presence-server-input::placeholder, body.light #bugreport-webhook-input::placeholder, body.light #bugreport-title::placeholder, body.light #bugreport-desc::placeholder{color:#777!important;}
+body.light , body.light #bugreport-webhook-input, body.light #bugreport-title, body.light #bugreport-desc{background:#fff!important;color:#111!important;border-color:#ccc!important;}
+body.light ::placeholder, body.light #bugreport-webhook-input::placeholder, body.light #bugreport-title::placeholder, body.light #bugreport-desc::placeholder{color:#777!important;}
 body.light #skin-url-input::placeholder{color:#777!important;}
 body.light .btn:hover{background:#eee;}
 body.light h1{color:#111;}
@@ -436,7 +436,7 @@ body.glass .mod-list-empty{color:var(--gs-mut);}
 body.glass .profile-meta{color:var(--gs-mut);}
 body.glass .btn-primary{background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 90%,#fff),var(--acc));border-color:var(--acc);box-shadow:var(--gs-hl),0 6px 22px color-mix(in srgb,var(--acc) 35%,transparent);}
 body.glass textarea, body.glass input{color-scheme:light;}
-body.glass #skin-url-input, body.glass #presence-server-input, body.glass #bugreport-webhook-input, body.glass #bugreport-title, body.glass #bugreport-desc{background:var(--gs-wh)!important;color:var(--gs-tx)!important;border-color:var(--gs-bd2)!important;backdrop-filter:var(--gs-blur)!important;-webkit-backdrop-filter:var(--gs-blur)!important;}
+body.glass #skin-url-input, body.glass , body.glass #bugreport-webhook-input, body.glass #bugreport-title, body.glass #bugreport-desc{background:var(--gs-wh)!important;color:var(--gs-tx)!important;border-color:var(--gs-bd2)!important;backdrop-filter:var(--gs-blur)!important;-webkit-backdrop-filter:var(--gs-blur)!important;}
 body.glass #auto-rp-toggle{background:rgba(20,26,36,.15)!important;border-color:var(--gs-bd2)!important;}
 body.glass #auto-rp-knob{background:var(--gs-mut)!important;}
 body.glass .skin-change-label, body.glass .mod-result-desc, body.glass .lp-label{color:var(--gs-mut);}
@@ -481,7 +481,7 @@ body.glass .color-btn.sel{border-color:#fff !important;}
 body.glass #profile-version-display, body.glass #profile-version-select{color:var(--gs-tx) !important;}
 body.glass label[style*="color:#ccc"], body.glass strong[style*="color:#ccc"], body.glass h2[style*="color:#ccc"]{color:var(--gs-tx) !important;}
 body.glass #stop-bar span{color:var(--gs-mut) !important;}
-body.glass #skin-url-input, body.glass #presence-server-input, body.glass #bugreport-webhook-input, body.glass #bugreport-title, body.glass #bugreport-desc{background:var(--gs-wh)!important;color:var(--gs-tx)!important;border-color:var(--gs-bd2)!important;}
+body.glass #skin-url-input, body.glass , body.glass #bugreport-webhook-input, body.glass #bugreport-title, body.glass #bugreport-desc{background:var(--gs-wh)!important;color:var(--gs-tx)!important;border-color:var(--gs-bd2)!important;}
 
 /* ════════════════════════════════════════════
    CUSTOM LIST SURFACES — every list container adapts to the theme
@@ -701,7 +701,33 @@ body.glass .logs-container{background:var(--gs-list) !important;border-color:var
 body.glass .feature-card{background:var(--gs-list) !important;border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
 body.glass .profile-split{background:var(--gs-list) !important;border-color:var(--gs-bd);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);}
 body.glass .account-head-sm, body.glass .mod-result-icon{background:var(--gs-list) !important;}
+
+/* Service-down toasts (bottom right). Kept in this block so the light-mode
+   overrides below cannot repaint them opaque. */
+#svc-toasts{position:fixed;right:1rem;bottom:1rem;z-index:99999;display:flex;flex-direction:column;gap:.5rem;align-items:flex-end;pointer-events:none;}
+.svc-toast{pointer-events:auto;display:flex;align-items:center;gap:.6em;padding:.6em .9em;border-radius:var(--r);border:1px solid #ff5a5a55;background:#2a1414;color:#ffd7d7;font-size:.85em;font-weight:600;box-shadow:0 8px 24px #0008;cursor:pointer;max-width:min(22em,60vw);opacity:0;transform:translateX(140%);transition:transform .32s cubic-bezier(.2,.9,.3,1.2),opacity .32s ease;user-select:none;}
+.svc-toast.svc-in{opacity:1;transform:translateX(0);}
+.svc-toast.svc-out{opacity:0;transform:translateX(140%);transition:transform .26s ease-in,opacity .26s ease-in;}
+.svc-toast .svc-dot{width:.55em;height:.55em;border-radius:50%;background:#ff5a5a;flex:0 0 auto;box-shadow:0 0 0 0 #ff5a5aaa;animation:svc-pulse 1.6s infinite;}
+@keyframes svc-pulse{0%{box-shadow:0 0 0 0 #ff5a5aaa;}70%{box-shadow:0 0 0 .5em #ff5a5a00;}100%{box-shadow:0 0 0 0 #ff5a5a00;}}
+body.light .svc-toast{background:#fff0f0;border-color:#ff5a5a66;color:#a11;}
+body.glass .svc-toast{background:var(--gs-frame) !important;border-color:rgba(255,90,90,.35);backdrop-filter:var(--gs-blur);-webkit-backdrop-filter:var(--gs-blur);box-shadow:var(--gs-hl);color:#ffb4b4;}
+body.glass .svc-toast .svc-dot{background:#ff5a5a;}
 body.glass .log-line, body.glass .feature-card p{border-bottom-color:var(--ls-sep);}
+
+/* Tab-Leiste und Actions-Leiste: bewusst OHNE Füllung und OHNE backdrop-filter.
+   Ein 5%-weißer Layer + blur(38px) sah zwar technisch "transparent" aus, war aber
+   ein milchiger Streifen, durch den man das Hintergrundbild nicht erkannte.
+   Jetzt kommt das Bild unverfälscht durch, getrennt nur durch eine Haarlinie.
+   #stop-bar hat einen Inline background, deshalb !important. */
+body.glass .toolbar, body.glass #stop-bar{background:transparent !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;box-shadow:none !important;}
+body.glass .toolbar{border-bottom-color:var(--gs-bd);}
+body.tabs-bottom.glass .toolbar{border-top-color:var(--gs-bd);}
+body.glass #stop-bar{border-bottom-color:var(--gs-bd);}
+body.glass #stop-bar span[data-i18n]{color:var(--gs-mut) !important;}
+/* Ohne Leisten-Füllung brauchen die Buttons darin eine eigene Fläche,
+   sonst verschwinden sie auf hellem Hintergrund. */
+body.glass .tb-btn{background:var(--gs-list) !important;}
 
 /* Aufgeklappte Auswahllisten (Custom Dropdowns). body.light setzt beim Theme
    'glass' ebenfalls .light und erzwingt hier #fff / #f0f0f0 / #ddeeff. */
@@ -767,10 +793,11 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
     <button class="tb-btn" data-page="mods-page" data-i18n="tab_mods">Client Options</button>
     <button class="tb-btn" data-page="profiles-page" data-i18n="tab_profiles">Profiles</button>
     <button class="tb-btn" data-page="cape-page" data-i18n="tab_cape">Capes</button>
-    <button class="tb-btn" data-page="friends-page" data-i18n="tab_friends">Friends</button>
+    <!-- <button class="tb-btn" data-page="friends-page" data-i18n="tab_friends">Friends</button> -->
     <button class="tb-btn" data-page="logs-page" data-i18n="tab_logs">Logs<span id="running-badge" style="display:none;margin-left:.3em;background:#1bd96a;color:#000;border-radius:999px;font-size:.7em;padding:.05em .45em;font-weight:bold"></span></button>
     <button class="tb-btn" data-page="servers-page" data-i18n="tab_servers">Servers</button>
     <button class="tb-btn" data-page="features-page" data-i18n="tab_features">Features</button>
+    <button class="tb-btn" data-page="bugreport-page" data-i18n="tab_bugreport">Bug Report</button>
     <button class="tb-btn" data-page="account-page" id="tb-account-btn" data-i18n="tab_account">
       <canvas class="tb-head" id="tb-account-head" width="24" height="24"></canvas>
       Acount
@@ -1067,54 +1094,9 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
       <div class="settings-section">
         <h2 data-i18n="sec_social">Friends &amp; Bug Reports</h2>
         <div class="form-row" style="max-width:100%">
-          <label data-i18n="lbl_presence_server">Presence server URL (Friends online status)</label>
-          <input type="text" id="presence-server-input" placeholder="https://your-presence-server.example.com" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
-          <div class="status-text" data-i18n="desc_presence_server">Leave empty to disable. A ready-to-deploy server is in server/presence-server.js.</div>
-        </div>
-        <div class="form-row" style="max-width:100%">
-          <label data-i18n="lbl_chat_server">Chat server URL (friend messaging)</label>
-          <input type="text" id="chat-server-input" placeholder="https://your-chat-server.deno.dev" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
-          <div class="status-text" data-i18n="desc_chat_server">Leave empty to disable. Deploy server/chat-server.ts on Deno Deploy (free, always-on).</div>
-        </div>
-        <div class="form-row" style="max-width:100%">
           <label data-i18n="lbl_bugreport_webhook">Bug report webhook URL (Discord or compatible)</label>
           <input type="text" id="bugreport-webhook-input" placeholder="https://discord.com/api/webhooks/..." style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
           <div class="status-text" data-i18n="desc_bugreport_webhook">Bug reports are sent here directly — no GitHub account needed.</div>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <h2 data-i18n="h_bugreport">Bug Report</h2>
-        <p style="color:#aaa;margin-bottom:1.2em;line-height:1.6;font-size:.85em" data-i18n="bugreport_desc">Found a bug? Report it. Attach launcher files and game logs.</p>
-        <div class="form-row">
-          <label data-i18n="bugreport_category">Category</label>
-          <select id="bugreport-category">
-            <option value="Launcher" data-i18n="bugreport_cat_launcher">Launcher</option>
-            <option value="Game Crash" data-i18n="bugreport_cat_crash">Game Crash</option>
-            <option value="Mods" data-i18n="bugreport_cat_mods">Mods</option>
-            <option value="Skin / Cape" data-i18n="bugreport_cat_skincape">Skin / Cape</option>
-            <option value="Installer" data-i18n="bugreport_cat_installer">Installer</option>
-            <option value="Servers" data-i18n="bugreport_cat_servers">Servers</option>
-            <option value="Other" data-i18n="bugreport_cat_other">Other</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <label data-i18n="bugreport_title">Title</label>
-          <input type="text" id="bugreport-title" data-i18n-ph="ph_bugreport_title" placeholder="Short summary of the problem" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
-        </div>
-        <div class="form-row">
-          <label data-i18n="bugreport_desc_label">Description</label>
-          <textarea id="bugreport-desc" rows="5" placeholder="What happened? What did you expect?" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;font-family:inherit;resize:vertical;outline:none"></textarea>
-        </div>
-        <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc;margin-bottom:1em">
-          <label class="mod-switch"><input type="checkbox" id="bugreport-include-logs" checked><span class="slider"></span></label>
-          <span data-i18n="bugreport_include_logs">Attach launcher &amp; game logs (recommended)</span>
-        </label>
-        <button class="btn btn-primary" id="bugreport-send-btn" style="font-size:1em;padding:.6em 1.5em" data-i18n="btn_report_send">📨 Send Report</button>
-        <p class="status-text" id="bugreport-status" style="min-height:1.2em"></p>
-        <div style="margin-top:1.5em;border-top:1px solid #2a2a2a;padding-top:1em;text-align:center">
-          <p style="color:#666;font-size:.82em;margin-bottom:.6em" data-i18n="bugreport_note">Prefer GitHub? You can also open an issue there (requires a GitHub account).</p>
-          <button class="btn" id="bugreport-github-btn" style="font-size:.9em" data-i18n="btn_report_github">🐛 Report on GitHub</button>
         </div>
       </div>
 
@@ -1150,7 +1132,7 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
         <div class="feature-card"><h3>🎨 Client Options</h3><p>Install client mods once and use them across every version, or auto-install them for all launched versions.</p></div>
         <div class="feature-card"><h3>📁 Profiles</h3><p>Create profiles with their own mod loader, Minecraft version, mods, datapacks and resource packs — including per-version packs.</p></div>
         <div class="feature-card"><h3>🖼️ Resource Packs</h3><p>Add resource packs from Modrinth/CurseForge, your disk, or drag & drop — always applied to the right version.</p></div>
-        <div class="feature-card"><h3>🧑‍🤝‍🧑 Friends & Chat</h3><p>Add friends, see who's online, chat with them and share profiles via share codes.</p></div>
+        <!-- Friends & Chat removed -->
         <div class="feature-card"><h3>🎭 Skins & Capes</h3><p>Upload skins, edit pixels, preview your skin in 3D, and use custom capes.</p></div>
         <div class="feature-card"><h3>🌐 Servers</h3><p>Manage your servers and expose them to friends with free playit.gg tunnels.</p></div>
         <div class="feature-card"><h3>🎨 Themes</h3><p>Switch between dark and light theme, pick your accent color and adjust the corner radius.</p></div>
@@ -1544,38 +1526,52 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
       </div>
     </div>
 
-    <!-- ══ FRIENDS & CHAT ══ -->
-    <div id="friends-page" class="page" style="display:none">
-      <h1 data-i18n="h_friends">Friends</h1>
-      <div class="friend-add-row">
-        <input type="text" id="friend-name-input" data-i18n-ph="ph_friend_add" placeholder="Send friend request by Minecraft username">
-        <button class="btn" id="friend-add-btn" data-i18n="add_friend">+ Send Request</button>
+    <!-- ══ BUG REPORT ══ -->
+    <div id="bugreport-page" class="page" style="display:none">
+      <h1 data-i18n="h_bugreport">Bug Report</h1>
+      <p style="color:#aaa;margin-bottom:1.2em;line-height:1.6;font-size:.85em" data-i18n="bugreport_desc">Found a bug? Report it. Attach launcher files and game logs.</p>
+      <div class="form-row">
+        <label data-i18n="bugreport_category">Category</label>
+        <select id="bugreport-category">
+          <option value="Launcher" data-i18n="bugreport_cat_launcher">Launcher</option>
+          <option value="Game Crash" data-i18n="bugreport_cat_crash">Game Crash</option>
+          <option value="Mods" data-i18n="bugreport_cat_mods">Mods</option>
+          <option value="Skin / Cape" data-i18n="bugreport_cat_skincape">Skin / Cape</option>
+          <option value="Installer" data-i18n="bugreport_cat_installer">Installer</option>
+          <option value="Servers" data-i18n="bugreport_cat_servers">Servers</option>
+          <option value="Other" data-i18n="bugreport_cat_other">Other</option>
+        </select>
       </div>
-      <p class="status-text" id="friend-status-msg"></p>
-      <div id="friend-requests" style="max-width:520px;margin-bottom:1.2em"></div>
-      <div id="friend-list" class="friend-list" style="max-width:520px"></div>
-      <div id="friend-empty" class="mod-list-empty" style="padding:2em;text-align:center;max-width:520px" data-i18n="friends_empty">No friends yet. Send a friend request by username above.</div>
-
-      <div style="margin-top:2em;border-top:1px solid #1e1e1e;padding-top:1.2em">
-        <h1 style="margin:0 0 .6em" data-i18n="tab_chat">Chat</h1>
-        <div id="chat-no-server" class="mod-list-empty" style="padding:2em;text-align:center;max-width:520px;display:none" data-i18n="chat_no_server">No chat server configured. Set the URL in Settings → Friends &amp; Bug Reports.</div>
-        <div id="chat-wrap" style="display:flex;gap:1em;align-items:stretch;max-width:900px;height:55vh">
-          <div id="chat-friends" style="flex:0 0 220px;overflow-y:auto;border:1px solid #2a2a2a;border-radius:var(--r);padding:.5em;display:flex;flex-direction:column;gap:.4em"></div>
-          <div id="chat-thread-wrap" style="flex:1;display:flex;flex-direction:column;border:1px solid #2a2a2a;border-radius:var(--r);min-width:0">
-            <div id="chat-thread-header" style="padding:.6em .9em;border-bottom:1px solid #2a2a2a;font-weight:bold;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-            <div id="chat-thread" style="flex:1;overflow-y:auto;padding:.8em;display:flex;flex-direction:column;gap:.4em;background:#0d0d0d"></div>
-            <div id="chat-empty" style="flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:.9em" data-i18n="chat_select">Select a friend to start chatting.</div>
-            <div id="chat-input-wrap" style="display:flex;gap:.5em;padding:.6em;border-top:1px solid #2a2a2a">
-              <input type="text" id="chat-input" data-i18n-ph="ph_chat" placeholder="Type a message..." style="flex:1;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
-              <button class="btn" id="chat-send-btn" data-i18n="chat_send">Send</button>
-            </div>
-          </div>
-        </div>
+      <div class="form-row">
+        <label data-i18n="bugreport_title">Title</label>
+        <input type="text" id="bugreport-title" placeholder="Short summary of the problem" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
       </div>
+      <div class="form-row">
+        <label data-i18n="bugreport_desc_label">Description</label>
+        <textarea id="bugreport-desc" rows="6" placeholder="What happened? What did you expect?" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;font-family:inherit;resize:vertical;outline:none"></textarea>
+      </div>
+      <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc;margin-bottom:1em">
+        <label class="mod-switch"><input type="checkbox" id="bugreport-include-logs" checked><span class="slider"></span></label>
+        <span data-i18n="bugreport_include_logs">Attach launcher &amp; game logs (recommended)</span>
+      </label>
+      <button class="btn btn-primary" id="bugreport-send-btn" style="font-size:1em;padding:.6em 1.5em" data-i18n="btn_report_send">📨 Send Report</button>
+      <p class="status-text" id="bugreport-status" style="min-height:1.2em"></p>
     </div>
+
+    <!-- ══ FRIENDS & CHAT ══ -->
+    <!-- (removed)
+    <div id="friends-page" class="page" style="display:none">
+      ...
+    </div>
+    -->
 
   </div>
 </div>
+
+<!-- ── Service-down toasts ── -->
+<!-- Direct child of <body> on purpose: inside #launch-page it would inherit
+     display:none whenever the user switches to another tab. -->
+<div id="svc-toasts"></div>
 
 <!-- ── Mod search modal ── -->
 <div id="modpack-version-modal" class="modal-overlay" style="display:none">
@@ -1867,8 +1863,6 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
       <div class="sep"></div>
       <button class="tool-btn" id="cape-ed-clear" title="Clear All">🗑️</button>
       <div class="sep"></div>
-      <button class="tool-btn" id="cape-ed-elytra" title="Toggle Cape/Elytra">🪽 Cape</button>
-      <div class="sep"></div>
       <button class="tool-btn active" id="cape-ed-template-toggle" title="Toggle Cape Template">🔲 Template</button>
       <div class="sep"></div>
       <span style="font-size:.72em;color:#888" id="cape-ed-coords">-</span>
@@ -1944,6 +1938,54 @@ const path = require('path');
 function rlog(msg){ try{ ipcRenderer.send('renderer-log', msg); }catch{} }
 window.onerror = (msg, src, line, col, err) => { rlog(`ERROR: ${msg} at ${src}:${line}:${col} ${err?.stack||''}`); };
 window.addEventListener('unhandledrejection', (e) => { rlog(`UNHANDLED PROMISE: ${e.reason?.stack||e.reason}`); });
+
+// ── Service-down toasts ───────────────────────────────────────────────────────
+// A toast stays on screen until it is clicked away OR the service answers again.
+// The main process owns the polling; this side only reacts to its broadcasts.
+(() => {
+  const box = document.getElementById('svc-toasts');
+  if(!box) return;
+  const live = new Map(); // id -> element (the dismissed flag lives in main)
+
+  function flashOut(el){
+    if(!el) return;
+    el.classList.remove('svc-in');
+    el.classList.add('svc-out');
+    setTimeout(()=>el.remove(), 300);
+  }
+
+  function upsert(s){
+    const el = live.get(s.id);
+    if(s.up){ if(el){ flashOut(el); live.delete(s.id); } return; }
+    if(s.dismissed){ if(el){ flashOut(el); live.delete(s.id); } return; }
+    if(live.has(s.id)) return;
+    const d = document.createElement('div');
+    d.className = 'svc-toast';
+    d.innerHTML = '<span class="svc-dot"></span>';
+    const t = document.createElement('span');
+    t.textContent = s.name + ' is down';
+    d.appendChild(t);
+    d.addEventListener('click', ()=>{
+      flashOut(d);
+      live.delete(s.id);
+      ipcRenderer.invoke('service-dismiss', s.id).catch(()=>{});
+    });
+    live.set(s.id, d);
+    box.appendChild(d);
+    // Force a layout flush so the transition actually runs: without this the
+    // element is inserted and classed in the same frame and it would just pop in.
+    void d.offsetWidth;
+    d.classList.add('svc-in');
+  }
+
+  ipcRenderer.on('service-status', (_e, list)=>{
+    if(!Array.isArray(list)) return;
+    for(const s of list) upsert(s);
+  });
+  // kick off one poll shortly after boot so a service that is already down
+  // is caught on the very first minute instead of after the first interval
+  setTimeout(()=>ipcRenderer.invoke('service-check-now').catch(()=>{}), 8000);
+})();
 
 // ════════════════════════════════════════
 // STATE
@@ -2359,7 +2401,6 @@ const LANGS={
     btn_save:'Save', btn_delete:'Delete', btn_login:'Login', btn_search:'Search',
     btn_copy:'📋 Copy', btn_clear:'Clear', btn_clear_history:'Clear History',
     btn_copy_code:'📋 Copy Code', btn_import_profile:'Import Profile',
-    btn_report_github:'🐛 Report on GitHub',
     status_ready:'Ready.', status_loading:'Loading versions...',
     sec_java:'Java Installation', sec_ram:'RAM for Minecraft', sec_lang:'Language', sec_color:'Active Tab Color (16 colors)',
     btn_rescan:'↻ Rescan Java', btn_dl21:'Download Java 21', btn_dl17:'Download Java 17',
@@ -2415,15 +2456,14 @@ const LANGS={
     after_launch_logs:'Open logs after launch',
     after_launch_close:'Close launcher while playing',
     bugreport_desc:'Found a bug? Report it. Attach launcher files and game logs.',
-    bugreport_note:'Prefer GitHub? You can also open an issue there (requires a GitHub account).',
     bugreport_category:'Category', bugreport_cat_launcher:'Launcher', bugreport_cat_crash:'Game Crash',
     bugreport_cat_mods:'Mods', bugreport_cat_skincape:'Skin / Cape', bugreport_cat_installer:'Installer',
     bugreport_cat_servers:'Servers', bugreport_cat_other:'Other',
     bugreport_title:'Title', bugreport_desc_label:'Description', bugreport_include_logs:'Attach launcher & game logs (recommended)',
     btn_report_send:'📨 Send Report',
-    br_sending:'Sending report...', br_sent:'Report sent. Thank you!', br_no_webhook:'No webhook configured. Set it in Settings → Friends & Bug Reports.',
+    br_sending:'Sending report...', br_sent:'Report sent. Thank you!', br_no_webhook:'No webhook configured. Set it under Settings → Bug Reports.',
     br_failed:'Sending failed (HTTP {code}). Check the webhook URL in Settings.',
-    sec_social:'Friends & Bug Reports',
+    sec_social:'Bug Reports',
     lbl_presence_server:'Presence server URL (Friends online status)',
     desc_presence_server:'Leave empty to disable. A ready-to-deploy server is in server/presence-server.js.',
     lbl_chat_server:'Chat server URL (friend messaging)', desc_chat_server:'Leave empty to disable. Deploy server/chat-server.ts on Deno Deploy (free, always-on).',
@@ -2493,7 +2533,6 @@ const LANGS={
     btn_save:'Speichern', btn_delete:'Löschen', btn_login:'Anmelden', btn_search:'Suchen',
     btn_copy:'📋 Kopieren', btn_clear:'Leeren', btn_clear_history:'Verlauf löschen',
     btn_copy_code:'📋 Code kopieren', btn_import_profile:'Profil importieren',
-    btn_report_github:'🐛 Auf GitHub melden',
     status_ready:'Bereit.', status_loading:'Versionen laden...',
     sec_java:'Java-Installation', sec_ram:'RAM für Minecraft', sec_lang:'Sprache', sec_color:'Tab-Farbe (16 Farben)',
     btn_rescan:'↻ Java scannen', btn_dl21:'Java 21 herunterladen', btn_dl17:'Java 17 herunterladen',
@@ -2549,15 +2588,14 @@ const LANGS={
     after_launch_logs:'Protokolle nach dem Start öffnen',
     after_launch_close:'Launcher beim Spielen schließen',
     bugreport_desc:'Fehler gefunden? Melde ihn uns. Füge Launcher-Dateien und Spiellogs bei.',
-    bugreport_note:'Lieber GitHub? Du kannst dort auch ein Issue öffnen (erfordert einen GitHub-Account).',
     bugreport_category:'Kategorie', bugreport_cat_launcher:'Launcher', bugreport_cat_crash:'Spielabsturz',
     bugreport_cat_mods:'Mods', bugreport_cat_skincape:'Skin / Cape', bugreport_cat_installer:'Installer',
     bugreport_cat_servers:'Server', bugreport_cat_other:'Sonstiges',
     bugreport_title:'Titel', bugreport_desc_label:'Beschreibung', bugreport_include_logs:'Launcher- & Spiellogs anhängen (empfohlen)',
     btn_report_send:'📨 Report senden',
-    br_sending:'Report wird gesendet...', br_sent:'Report gesendet. Danke!', br_no_webhook:'Kein Webhook konfiguriert. Lege ihn unter Einstellungen → Freunde & Bug-Reports fest.',
+    br_sending:'Report wird gesendet...', br_sent:'Report gesendet. Danke!', br_no_webhook:'Kein Webhook konfiguriert. Lege ihn unter Einstellungen → Bug-Reports fest.',
     br_failed:'Senden fehlgeschlagen (HTTP {code}). Überprüfe die Webhook-URL in den Einstellungen.',
-    sec_social:'Freunde & Bug-Reports',
+    sec_social:'Bug-Reports',
     lbl_presence_server:'Presence-Server-URL (Freunde Online-Status)',
     desc_presence_server:'Leer lassen zum Deaktivieren. Einen einsatzbereiten Server gibt es in server/presence-server.js.',
     lbl_chat_server:'Chat-Server-URL (Freunde-Nachrichten)', desc_chat_server:'Leer lassen zum Deaktivieren. Deploye server/chat-server.ts auf Deno Deploy (kostenlos, always-on).',
@@ -2627,7 +2665,6 @@ const LANGS={
     btn_save:'Enregistrer', btn_delete:'Supprimer', btn_login:'Connexion', btn_search:'Rechercher',
     btn_copy:'📋 Copier', btn_clear:'Effacer', btn_clear_history:'Effacer l\'historique',
     btn_copy_code:'📋 Copier le code', btn_import_profile:'Importer le profil',
-    btn_report_github:'🐛 Signaler sur GitHub',
     status_ready:'Prêt.', status_loading:'Chargement des versions...',
     sec_java:'Installation Java', sec_ram:'RAM pour Minecraft', sec_lang:'Langue', sec_color:'Couleur de l\'onglet actif',
     btn_rescan:'↻ Analyser Java', btn_dl21:'Télécharger Java 21', btn_dl17:'Télécharger Java 17',
@@ -2681,15 +2718,14 @@ const LANGS={
     after_launch_logs:'Ouvrir les journaux après le lancement',
     after_launch_close:'Fermer le lanceur pendant le jeu',
     bugreport_desc:'Un bug ? Signalez-le. Joignez les fichiers du launcher et les journaux du jeu.',
-    bugreport_note:'Vous préférez GitHub ? Vous pouvez aussi y ouvrir une issue (nécessite un compte GitHub).',
     bugreport_category:'Catégorie', bugreport_cat_launcher:'Launcher', bugreport_cat_crash:'Crash du jeu',
     bugreport_cat_mods:'Mods', bugreport_cat_skincape:'Skin / Cape', bugreport_cat_installer:'Installer',
     bugreport_cat_servers:'Serveurs', bugreport_cat_other:'Autre',
     bugreport_title:'Titre', bugreport_desc_label:'Description', bugreport_include_logs:'Joindre les journaux du launcher et du jeu (recommandé)',
     btn_report_send:'📨 Envoyer le rapport',
-    br_sending:'Envoi du rapport...', br_sent:'Rapport envoyé. Merci !', br_no_webhook:'Aucun webhook configuré. Définissez-le dans Paramètres → Amis & Bug Reports.',
+    br_sending:'Envoi du rapport...', br_sent:'Rapport envoyé. Merci !', br_no_webhook:'Aucun webhook configuré. Définissez-le dans Paramètres → Rapports de bugs.',
     br_failed:'Échec de l\'envoi (HTTP {code}). Vérifiez l\'URL du webhook dans les Paramètres.',
-    sec_social:'Amis & Bug Reports',
+    sec_social:'Rapports de bugs',
     lbl_presence_server:'URL du serveur de présence (statut en ligne des amis)',
     desc_presence_server:'Laisser vide pour désactiver. Un serveur prêt à déployer se trouve dans server/presence-server.js.',
     lbl_chat_server:'URL du serveur de discussion (messages entre amis)', desc_chat_server:'Laisser vide pour désactiver. Déployez server/chat-server.ts sur Deno Deploy (gratuit, toujours actif).',
@@ -2759,7 +2795,6 @@ const LANGS={
     btn_save:'Guardar', btn_delete:'Eliminar', btn_login:'Iniciar sesión', btn_search:'Buscar',
     btn_copy:'📋 Copiar', btn_clear:'Limpiar', btn_clear_history:'Limpiar historial',
     btn_copy_code:'📋 Copiar código', btn_import_profile:'Importar perfil',
-    btn_report_github:'🐛 Reportar en GitHub',
     status_ready:'Listo.', status_loading:'Cargando versiones...',
     sec_java:'Instalación de Java', sec_ram:'RAM para Minecraft', sec_lang:'Idioma', sec_color:'Color de pestaña activa',
     btn_rescan:'↻ Buscar Java', btn_dl21:'Descargar Java 21', btn_dl17:'Descargar Java 17',
@@ -2808,15 +2843,14 @@ const LANGS={
     after_launch_logs:'Abrir registros después de iniciar',
     after_launch_close:'Cerrar launcher mientras juegas',
     bugreport_desc:'¿Encontraste un bug? Repórtalo. Adjunta los archivos del launcher y los registros del juego.',
-    bugreport_note:'¿Prefieres GitHub? También puedes abrir una issue allí (requiere una cuenta de GitHub).',
     bugreport_category:'Categoría', bugreport_cat_launcher:'Launcher', bugreport_cat_crash:'Crash del juego',
     bugreport_cat_mods:'Mods', bugreport_cat_skincape:'Skin / Cape', bugreport_cat_installer:'Instalador',
     bugreport_cat_servers:'Servidores', bugreport_cat_other:'Otro',
     bugreport_title:'Título', bugreport_desc_label:'Descripción', bugreport_include_logs:'Adjuntar registros del launcher y del juego (recomendado)',
     btn_report_send:'📨 Enviar informe',
-    br_sending:'Enviando informe...', br_sent:'Informe enviado. ¡Gracias!', br_no_webhook:'No hay webhook configurado. Defínelo en Ajustes → Amigos y Bug Reports.',
+    br_sending:'Enviando informe...', br_sent:'Informe enviado. ¡Gracias!', br_no_webhook:'No hay webhook configurado. Defínelo en Ajustes → Informes de errores.',
     br_failed:'Error al enviar (HTTP {code}). Comprueba la URL del webhook en Ajustes.',
-    sec_social:'Amigos y Bug Reports',
+    sec_social:'Informes de errores',
     lbl_presence_server:'URL del servidor de presencia (estado en línea de amigos)',
     desc_presence_server:'Déjalo vacío para desactivar. Hay un servidor listo para desplegar en server/presence-server.js.',
     lbl_chat_server:'URL del servidor de chat (mensajes entre amigos)', desc_chat_server:'Déjalo vacío para desactivar. Despliega server/chat-server.ts en Deno Deploy (gratis, siempre activo).',
@@ -3712,7 +3746,7 @@ async function loadMCCapes(){
             const fresh=await refreshAccountToken(acc);
             if(!fresh){ document.getElementById('capes-status').textContent='Session expired. Please log in again.'; return; }
             const res2=await fetch('https://api.minecraftservices.com/minecraft/profile/capes/active',{ method:'PUT', headers:{'Authorization':`Bearer ${fresh.accessToken}`,'Content-Type':'application/json'}, body:JSON.stringify({capeId:cape.id})});
-            if(res2.ok){ document.getElementById('capes-status').textContent=`Equipped: ${cape.name||cape.id}`; loadMCCapes(); }
+            if(res2.ok){ document.getElementById('capes-status').textContent=`Equipped: ${cape.name||cape.id}`; loadMCCapes(); loadSkinCape(); }
             else{ const errBody=await res2.text().catch(()=>''); document.getElementById('capes-status').textContent=`Failed (${res2.status}): ${errBody.slice(0,80)}`; }
           } catch(e){ document.getElementById('capes-status').textContent='Error: '+e.message; }
         });
@@ -3729,7 +3763,7 @@ document.getElementById('capes-remove-btn').addEventListener('click',async()=>{
   if(!acc){ document.getElementById('capes-status').textContent='Session expired. Please log in again.'; return; }
   try {
     const res=await fetch('https://api.minecraftservices.com/minecraft/profile/capes/active',{ method:'DELETE', headers:{'Authorization':`Bearer ${acc.accessToken}`,'Content-Type':'application/json'}});
-    if(res.ok){ document.getElementById('capes-status').textContent='Cape removed.'; loadMCCapes(); }
+    if(res.ok){ document.getElementById('capes-status').textContent='Cape removed.'; loadMCCapes(); loadSkinCape(); }
     else document.getElementById('capes-status').textContent='Failed to remove cape';
   } catch(e){ document.getElementById('capes-status').textContent='Error: '+e.message; }
 });
@@ -3787,6 +3821,7 @@ async function useCustomCape(cape) {
     document.getElementById('cape-custom-status').textContent = 'Equipped: ' + (cape.name || 'Custom Cape');
     document.getElementById('cape-custom-status').style.color = '#1bd96a';
     document.getElementById('cape-custom-toggle').style.display = '';
+    loadSkinCape();
   }
 }
 
@@ -4473,10 +4508,12 @@ function updateSkinDisplay(){
     } else {
       buildSkinMesh(null);
     }
+    loadSkinCape();
   } else {
     label.textContent = 'No account';
     skinModel = 'classic';
     buildSkinMesh(null);
+    loadSkinCape();
   }
 }
 
@@ -4520,6 +4557,7 @@ function getSelectedAccount(){ return accounts.find(a=>a.id===settings.selectedA
 // SKIN 3D
 // ════════════════════════════════════════
 let skinTexture=null, skinModel='classic', threeScene=null, threeRenderer=null, threeCamera=null, skinMeshGroup=null;
+let skinCapeTexture=null, skinCapeToken=0, skinCapeSolid=false, skinCapeW=64, skinCapeH=32;
 let skin3DDrag={active:false,startX:0,startY:0,rotY:0,rotX:0};
 let currentRotY=30, currentRotX=10;
 
@@ -4585,9 +4623,132 @@ function skinBox(gw,gh,gd,px,py,pz,tex,fFront,fBack,fTop,fBottom,fLeft,fRight){
 
 function uv(sx,sy,sw,sh){return makeUV(sx,sy,sw,sh);}
 
+// Cape strip inside a 64x32 cape texture (same rect renderCape3D uses)
+function capeCropRect(img){
+  return (img.width===64&&img.height===32)?{sx:1,sy:1,sw:10,sh:16}:{sx:0,sy:0,sw:11,sh:17};
+}
+
+// Solid 3D cape for the standard 64x32 cape layout: all six faces with real thickness.
+// Regions match the cape editor: BACK 1,1 / FRONT 12,1 / TOP 1,0 / BOTTOM 12,0 /
+// LEFT 0,1 / RIGHT 11,1. CapeTexture has flipY=true, so v=1 is the image TOP.
+function makeSkinCapeSolid(tex,W,H){
+  const U=0.25, CW=U*10, CH=U*16, CT=U*0.8;
+  const R=(sx,sy,sw,sh)=>({u0:sx/W,u1:(sx+sw)/W,vT:1-sy/H,vB:1-(sy+sh)/H});
+  const grp=new THREE.Group();
+  // drape: edges curl toward the body (+z), middle bows away from it
+  const bend=(x,y,z)=>{
+    const fv=Math.min(1,Math.max(0,(CH/2-y)/CH));
+    const edge=Math.pow(Math.min(1,Math.abs(2*x/CW)),2);
+    // keep the forward edge curl small enough that the cape never reaches the jacket
+    return z+edge*CT*0.5*fv-Math.sin(fv*Math.PI)*U*0.35;
+  };
+  function face(segW,segH,rect,place){
+    const pos=[],uvs=[],idx=[];
+    for(let j=0;j<=segH;j++)for(let i=0;i<=segW;i++){
+      const fu=i/segW, fv=j/segH, p=place(fu,fv);
+      // bend() only offsets z — push all THREE components, not one scalar
+      pos.push(p[0],p[1],bend(p[0],p[1],p[2]));
+      uvs.push(rect.u0+(rect.u1-rect.u0)*(p[3]?1-fu:fu), rect.vT+(rect.vB-rect.vT)*fv);
+    }
+    for(let j=0;j<segH;j++)for(let i=0;i<segW;i++){const a=j*(segW+1)+i,b=a+1,c=a+segW+1,d=c+1;idx.push(a,b,c,b,d,c);}
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+    g.setIndex(idx); g.computeVertexNormals();
+    grp.add(new THREE.Mesh(g,new THREE.MeshLambertMaterial({map:tex,transparent:true,alphaTest:0.05,side:THREE.DoubleSide})));
+  }
+  const X=fu=>(fu-0.5)*CW, Y=fv=>CH/2-fv*CH, ZF=CT/2, ZB=-CT/2;
+  // The outer face is authored as seen from BEHIND, and the inner face as seen from
+  // the front, so the two halves need opposite u direction -> mirror flags are swapped.
+  face(6,8,R(1,1,10,16), (fu,fv)=>[X(fu),Y(fv),ZB,1]);              // BACK (outer)  mirror
+  face(6,8,R(12,1,10,16),(fu,fv)=>[X(fu),Y(fv),ZF,0]);              // FRONT (inner) no mirror
+  // side strips: the cape is worn on the back, so seen from behind the character's
+  // left lands on the viewer's RIGHT (+X) -> texture column 0 belongs to +X
+  face(2,8,R(11,1,1,16), (fu,fv)=>[-CW/2,Y(fv),ZB+(ZF-ZB)*fu,0]);   // RIGHT (-X)
+  face(2,8,R(0,1,1,16),  (fu,fv)=>[ CW/2,Y(fv),ZF-(ZF-ZB)*fu,0]);   // LEFT  (+X)
+  face(6,2,R(1,0,10,1),  (fu,fv)=>[X(fu), CH/2,ZF-(ZF-ZB)*fv,0]);   // TOP
+  face(6,2,R(12,0,10,1), (fu,fv)=>[X(fu),-CH/2,ZB+(ZF-ZB)*fv,0]);   // BOTTOM
+  grp.position.set(0,U*18-CH/2,-U*3.45);
+  grp.userData.skinCape=true;
+  return grp;
+}
+
+// Fallback for non-64x32 cape textures (no known face layout -> single draped sheet).
+function makeSkinCapeDrape(tex){
+  const U=0.25, CW=U*10, CH=U*16, TOP=U*18;
+  const segsW=6, segsH=8, v2=[],u2=[],ix=[];
+  for(let j=0;j<=segsH;j++)for(let i=0;i<=segsW;i++){
+    const fu=i/segsW, fv=j/segsH;
+    const edge=Math.pow(Math.abs(fu-0.5)*2,2);
+    v2.push((fu-0.5)*CW, TOP-fv*CH, -U*2.7-Math.sin(fv*Math.PI)*U*0.5+edge*U*0.4*fv);
+    u2.push(1-fu, 1-fv);
+  }
+  for(let j=0;j<segsH;j++)for(let i=0;i<segsW;i++){const a=j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;ix.push(a,b,c,b,d,c);}
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));
+  g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));
+  g.setIndex(ix); g.computeVertexNormals();
+  return new THREE.Mesh(g,new THREE.MeshLambertMaterial({map:tex,transparent:true,alphaTest:0.05,side:THREE.DoubleSide}));
+}
+
+function makeSkinCape(tex,solid,W,H){
+  const m=solid?makeSkinCapeSolid(tex,W,H):makeSkinCapeDrape(tex);
+  m.userData.skinCape=true;
+  return m;
+}
+
+// Equipped cape = saved custom cape UNLESS it is disabled (main.js:1047 drops the
+// custom resource pack from the launch options then), otherwise the ACTIVE Mojang cape.
+function loadSkinCape(){
+  const token=++skinCapeToken;
+  const apply=img=>{
+    if(token!==skinCapeToken)return;
+    if(skinCapeTexture){skinCapeTexture.dispose();skinCapeTexture=null;}
+    skinCapeSolid=false;
+    if(img){
+      const official=img.width===64&&img.height===32;
+      let src=img;
+      if(!official){
+        const c=capeCropRect(img);
+        const cv=document.createElement('canvas'); cv.width=c.sw; cv.height=c.sh;
+        const g=cv.getContext('2d'); g.imageSmoothingEnabled=false;
+        g.drawImage(img,c.sx,c.sy,c.sw,c.sh,0,0,c.sw,c.sh);
+        src=cv;
+      }
+      const t=new THREE.CanvasTexture(src);
+      t.magFilter=THREE.NearestFilter; t.minFilter=THREE.NearestFilter; t.generateMipmaps=false;
+      skinCapeTexture=t; skinCapeSolid=official; skinCapeW=src.width; skinCapeH=src.height;
+    }
+    buildSkinMesh(skinTexture);
+  };
+  (async()=>{
+    try{
+      const st=await ipcRenderer.invoke('get-custom-cape-state').catch(()=>null);
+      const customOff=!!st?.disabled;
+      if(!customOff){
+        const saved=await ipcRenderer.invoke('load-custom-cape');
+        if(saved){ const i=new Image(); i.onload=()=>apply(i); i.onerror=()=>apply(null); i.src=saved; return; }
+      }
+      const url=await getEquippedCapeUrl();
+      if(!url){apply(null);return;}
+      const src=String(url).replace(/^http:\/\//,'https://');
+      const dataUrl=await ipcRenderer.invoke('fetch-image-dataurl',src).catch(()=>null);
+      const i=new Image(); i.onload=()=>apply(i); i.onerror=()=>apply(null); i.src=dataUrl||src;
+    }catch{ apply(null); }
+  })();
+}
+
 function buildSkinMesh(tex){
   if(!skinMeshGroup)return;
-  while(skinMeshGroup.children.length)skinMeshGroup.remove(skinMeshGroup.children[0]);
+  // dispose geometry+materials, but NEVER material.map (shared skin/cape textures)
+  while(skinMeshGroup.children.length){
+    const c=skinMeshGroup.children[0];
+    c.traverse(o=>{
+      if(o.geometry)o.geometry.dispose();
+      if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms)if(m)m.dispose();}
+    });
+    skinMeshGroup.remove(c);
+  }
   const U=0.25;
   const isSlim=skinModel==='slim';
   const armW=isSlim?3:4;
@@ -4601,22 +4762,24 @@ function buildSkinMesh(tex){
   skinMeshGroup.add(skinBox(U*8,U*12,U*4,0,U*12,0,tex,uv(20,20,8,12),uv(32,20,8,12),uv(20,16,8,4),uv(28,16,8,4),uv(28,20,4,12),uv(16,20,4,12)));
   // JACKET (body outer layer)
   if(tex){{const j=skinBox(U*8.5,U*12.5,U*4.5,0,U*12,0,tex,uv(20,36,8,12),uv(32,36,8,12),uv(20,32,8,4),uv(28,32,8,4),uv(28,36,4,12),uv(16,36,4,12));j.renderOrder=1;skinMeshGroup.add(j);}}
-  // RIGHT ARM — centered at Y=12px (3 units), X depends on slim model
-  skinMeshGroup.add(skinBox(U*armW,U*12,U*4,U*armX,U*12,0,tex,uv(44,20,armW,12),uv(44+armW+4,20,armW,12),uv(44,16,armW,4),uv(44+armW,16,armW,4),uv(44-4,20,armW,12),uv(44+armW,20,armW,12)));
+  // RIGHT ARM — centered at Y=12px (3 units), X=-armX (character's right is -X)
+  skinMeshGroup.add(skinBox(U*armW,U*12,U*4,-U*armX,U*12,0,tex,uv(44,20,armW,12),uv(44+armW+4,20,armW,12),uv(44,16,armW,4),uv(44+armW,16,armW,4),uv(44-4,20,armW,12),uv(44+armW,20,armW,12)));
   // RIGHT SLEEVE (right arm outer layer)
-  if(tex){{const s=skinBox(U*(armW+.5),U*12.5,U*4.5,U*armX,U*12,0,tex,uv(44,36,armW,12),uv(44+armW+4,36,armW,12),uv(44,32,armW,4),uv(44+armW,32,armW,4),uv(44-4,36,armW,12),uv(44+armW,36,armW,12));s.renderOrder=1;skinMeshGroup.add(s);}}
-  // LEFT ARM — centered at Y=12px (3 units), X=-armX
-  skinMeshGroup.add(skinBox(U*armW,U*12,U*4,-U*armX,U*12,0,tex,uv(36,52,armW,12),uv(36+armW+4,52,armW,12),uv(36,48,armW,4),uv(36+armW,48,armW,4),uv(36-4,52,armW,12),uv(36+armW,52,armW,12)));
+  if(tex){{const s=skinBox(U*(armW+.5),U*12.5,U*4.5,-U*armX,U*12,0,tex,uv(44,36,armW,12),uv(44+armW+4,36,armW,12),uv(44,32,armW,4),uv(44+armW,32,armW,4),uv(44-4,36,armW,12),uv(44+armW,36,armW,12));s.renderOrder=1;skinMeshGroup.add(s);}}
+  // LEFT ARM — centered at Y=12px (3 units), X=+armX
+  skinMeshGroup.add(skinBox(U*armW,U*12,U*4,U*armX,U*12,0,tex,uv(36,52,armW,12),uv(36+armW+4,52,armW,12),uv(36,48,armW,4),uv(36+armW,48,armW,4),uv(36+armW,52,armW,12),uv(36-4,52,armW,12)));
   // LEFT SLEEVE (left arm outer layer)
-  if(tex){{const s=skinBox(U*(armW+.5),U*12.5,U*4.5,-U*armX,U*12,0,tex,uv(52,52,armW,12),uv(52+armW+4,52,armW,12),uv(52,48,armW,4),uv(52+armW,48,armW,4),uv(52-4,52,armW,12),uv(52+armW,52,armW,12));s.renderOrder=1;skinMeshGroup.add(s);}}
-  // RIGHT LEG — centered at Y=0px (0 units), X=2px (0.5 units)
-  skinMeshGroup.add(skinBox(U*4,U*12,U*4,U*2,0,0,tex,uv(4,20,4,12),uv(12,20,4,12),uv(4,16,4,4),uv(8,16,4,4),uv(8,20,4,12),uv(0,20,4,12)));
+  if(tex){{const s=skinBox(U*(armW+.5),U*12.5,U*4.5,U*armX,U*12,0,tex,uv(52,52,armW,12),uv(52+armW+4,52,armW,12),uv(52,48,armW,4),uv(52+armW,48,armW,4),uv(52+armW,52,armW,12),uv(52-4,52,armW,12));s.renderOrder=1;skinMeshGroup.add(s);}}
+  // RIGHT LEG — centered at Y=0px (0 units), X=-2px (-0.5 units)
+  skinMeshGroup.add(skinBox(U*4,U*12,U*4,-U*2,0,0,tex,uv(4,20,4,12),uv(12,20,4,12),uv(4,16,4,4),uv(8,16,4,4),uv(0,20,4,12),uv(8,20,4,12)));
   // RIGHT PANTS (right leg outer layer)
-  if(tex){{const p=skinBox(U*4.5,U*12.5,U*4.5,U*2,0,0,tex,uv(4,36,4,12),uv(12,36,4,12),uv(4,32,4,4),uv(8,32,4,4),uv(8,36,4,12),uv(0,36,4,12));p.renderOrder=1;skinMeshGroup.add(p);}}
-  // LEFT LEG — centered at Y=0px (0 units), X=-2px (-0.5 units)
-  skinMeshGroup.add(skinBox(U*4,U*12,U*4,-U*2,0,0,tex,uv(20,52,4,12),uv(28,52,4,12),uv(20,48,4,4),uv(24,48,4,4),uv(24,52,4,12),uv(16,52,4,12)));
+  if(tex){{const p=skinBox(U*4.5,U*12.5,U*4.5,-U*2,0,0,tex,uv(4,36,4,12),uv(12,36,4,12),uv(4,32,4,4),uv(8,32,4,4),uv(0,36,4,12),uv(8,36,4,12));p.renderOrder=1;skinMeshGroup.add(p);}}
+  // LEFT LEG — centered at Y=0px (0 units), X=+2px (0.5 units)
+  skinMeshGroup.add(skinBox(U*4,U*12,U*4,U*2,0,0,tex,uv(20,52,4,12),uv(28,52,4,12),uv(20,48,4,4),uv(24,48,4,4),uv(24,52,4,12),uv(16,52,4,12)));
   // LEFT PANTS (left leg outer layer)
-  if(tex){{const p=skinBox(U*4.5,U*12.5,U*4.5,-U*2,0,0,tex,uv(4,52,4,12),uv(12,52,4,12),uv(4,48,4,4),uv(8,48,4,4),uv(8,52,4,12),uv(0,52,4,12));p.renderOrder=1;skinMeshGroup.add(p);}}
+  if(tex){{const p=skinBox(U*4.5,U*12.5,U*4.5,U*2,0,0,tex,uv(4,52,4,12),uv(12,52,4,12),uv(4,48,4,4),uv(8,48,4,4),uv(8,52,4,12),uv(0,52,4,12));p.renderOrder=1;skinMeshGroup.add(p);}}
+  // CAPE — hanging off the back, only if an equipped cape texture loaded
+  if(skinCapeTexture) skinMeshGroup.add(makeSkinCape(skinCapeTexture,skinCapeSolid,skinCapeW,skinCapeH));
   // Center the whole model vertically (body center at origin)
   skinMeshGroup.position.set(0,-U*12,0);
 }
@@ -4660,20 +4823,26 @@ function drawDefaultAvatar(){}
 function drawSkin3D(){}
 
 function renderCape3D(targetCanvas,capeUrl){
-  const W=200,H=280;
+  const W=targetCanvas.width||200,H=targetCanvas.height||280;
   const capeSrc=String(capeUrl||'').replace(/^http:\/\//,'https://');
   const ctx2=targetCanvas.getContext('2d');
   let loadedImg=null;
+  function capeCrop(img){
+    const official=img.width===64&&img.height===32;
+    return official?{sx:1,sy:1,sw:10,sh:16}:{sx:0,sy:0,sw:11,sh:17};
+  }
   function drawFlatCape(img){
     try{
       ctx2.clearRect(0,0,W,H);
       ctx2.imageSmoothingEnabled=false;
-      const dw=W*0.6,dh=H*0.55,dx=W/2-dw/2,dy=H/2-dh/2;
+      const c=img?capeCrop(img):{sx:0,sy:0,sw:11,sh:17};
+      const sw=c.sw,sh=c.sh;
+      // fit the strip inside the canvas WITHOUT distorting it
+      const scale=Math.min((W*0.6)/sw,(H*0.55)/sh);
+      const dw=sw*scale,dh=sh*scale;
+      const dx=(W-dw)/2,dy=(H-dh)/2;
       if(img){
-        const official=img.width===64&&img.height===32;
-        const sx=official?1:0,sy=official?1:0;
-        const sw=official?10:11,sh=official?16:17;
-        ctx2.drawImage(img,sx,sy,sw,sh,dx,dy,dw,dh);
+        ctx2.drawImage(img,c.sx,c.sy,sw,sh,dx,dy,dw,dh);
         return;
       }
       ctx2.fillStyle='#3a3a3a';
@@ -4687,8 +4856,9 @@ function renderCape3D(targetCanvas,capeUrl){
   }
   function isBlank(){
     try{
-      for(const fx of [0.5,0.35,0.65,0.5]){
-        const d=ctx2.getImageData(Math.floor(W*fx),Math.floor(H*0.55),1,1).data;
+      const cx=W/2,cy=H/2,r=Math.max(2,Math.round(Math.min(W,H)*0.14));
+      for(const f of [[0,0],[-0.4,0],[0.4,0],[0,0.4],[-0.3,-0.3],[0.3,0.3]]){
+        const d=ctx2.getImageData(Math.round(cx+f[0]*r),Math.round(cy+f[1]*r),1,1).data;
         if(d[3]>0)return false;
       }
       return true;
@@ -4704,14 +4874,23 @@ function renderCape3D(targetCanvas,capeUrl){
     try{
       const scene=new THREE.Scene();
       const camera=new THREE.PerspectiveCamera(30,W/H,0.1,100);
-      camera.position.set(0,0,9);camera.lookAt(0,0,0);
+      // A cape strip is 10x16px — keep that ratio or the pixels get stretched
+      const CW=2.0,CH=CW*16/10;
+      // frame the cape so it fits both axes without distorting it
+      const tanV=Math.tan(THREE.MathUtils.degToRad(15));
+      const distV=(CH*0.72)/tanV;
+      const distH=(CW*0.72)/(tanV*(W/H));
+      camera.position.set(0,0,Math.max(distV,distH));
+      camera.lookAt(0,0,0);
       scene.add(new THREE.AmbientLight(0xffffff,0.8));
       const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(3,5,4);scene.add(dl);
       const dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-3,-1,-2);scene.add(dl2);
       function makeDrapeBack(){
-        const segsW=8,segsH=12,CW=2.0,CH=4.0;
+        const segsW=8,segsH=12;
         const v2=[],u2=[],ix=[];
-        for(let j=0;j<=segsH;j++){const fv=j/segsH;for(let i=0;i<=segsW;i++){const ft=i/segsW;v2.push((ft-0.5)*CW,CH*0.5-fv*CH,-0.2+Math.sin(fv*Math.PI)*0.2+Math.sin(ft*Math.PI)*0.08*fv);u2.push(1-ft,fv);}}
+        // v is flipped: CanvasTexture has flipY=true, so v=1 is the image TOP.
+        // The j=0 row sits at y=+CH/2 (model top) and must therefore get v=1.
+        for(let j=0;j<=segsH;j++){const fv=j/segsH;for(let i=0;i<=segsW;i++){const ft=i/segsW;v2.push((ft-0.5)*CW,CH*0.5-fv*CH,-0.2+Math.sin(fv*Math.PI)*0.2+Math.sin(ft*Math.PI)*0.08*fv);u2.push(1-ft,1-fv);}}
         for(let j=0;j<segsH;j++)for(let i=0;i<segsW;i++){const a=j*(segsW+1)+i,b=a+1,c=a+segsW+1,d=c+1;ix.push(a,b,c,b,d,c);}
         const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v2,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(u2,2));g.setIndex(ix);g.computeVertexNormals();return g;
       }
@@ -4721,8 +4900,8 @@ function renderCape3D(targetCanvas,capeUrl){
         ctx.drawImage(loadedImg,sx,sy,sw,sh,0,0,sw,sh);
         const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;return t;
       }
-      const official=loadedImg.width===64&&loadedImg.height===32;
-      const backTex=official?cropCape(1,1,10,16):cropCape(0,0,11,17);
+      const cc=capeCrop(loadedImg);
+      const backTex=cropCape(cc.sx,cc.sy,cc.sw,cc.sh);
       const back=new THREE.Mesh(makeDrapeBack(),new THREE.MeshLambertMaterial({map:backTex,side:THREE.DoubleSide}));
       const grp=new THREE.Group();scene.add(grp);grp.add(back);grp.position.set(0,0,0);
       renderer.render(scene,camera);
@@ -6421,14 +6600,14 @@ function drawSteveSkin(c){
     group.add(hg);
     group.add(skinBox(U*8,U*12,U*4,0,U*12,0,tex,uv(20,20,8,12),uv(32,20,8,12),uv(20,16,8,4),uv(28,16,8,4),uv(28,20,4,12),uv(16,20,4,12)));
     if(tex){const j=skinBox(U*8.5,U*12.5,U*4.5,0,U*12,0,tex,uv(20,36,8,12),uv(32,36,8,12),uv(20,32,8,4),uv(28,32,8,4),uv(28,36,4,12),uv(16,36,4,12));j.renderOrder=1;group.add(j);}
-    group.add(skinBox(U*armW,U*12,U*4,U*armX,U*12,0,tex,uv(44,20,armW,12),uv(44+armW+4,20,armW,12),uv(44,16,armW,4),uv(44+armW,16,armW,4),uv(44-4,20,armW,12),uv(44+armW,20,armW,12)));
-    if(tex){const s=skinBox(U*(armW+.5),U*12.5,U*4.5,U*armX,U*12,0,tex,uv(44,36,armW,12),uv(44+armW+4,36,armW,12),uv(44,32,armW,4),uv(44+armW,32,armW,4),uv(44-4,36,armW,12),uv(44+armW,36,armW,12));s.renderOrder=1;group.add(s);}
-    group.add(skinBox(U*armW,U*12,U*4,-U*armX,U*12,0,tex,uv(36,52,armW,12),uv(36+armW+4,52,armW,12),uv(36,48,armW,4),uv(36+armW,48,armW,4),uv(36-4,52,armW,12),uv(36+armW,52,armW,12)));
-    if(tex){const s=skinBox(U*(armW+.5),U*12.5,U*4.5,-U*armX,U*12,0,tex,uv(52,52,armW,12),uv(52+armW+4,52,armW,12),uv(52,48,armW,4),uv(52+armW,48,armW,4),uv(52-4,52,armW,12),uv(52+armW,52,armW,12));s.renderOrder=1;group.add(s);}
-    group.add(skinBox(U*4,U*12,U*4,U*2,0,0,tex,uv(4,20,4,12),uv(12,20,4,12),uv(4,16,4,4),uv(8,16,4,4),uv(8,20,4,12),uv(0,20,4,12)));
-    if(tex){const p=skinBox(U*4.5,U*12.5,U*4.5,U*2,0,0,tex,uv(4,36,4,12),uv(12,36,4,12),uv(4,32,4,4),uv(8,32,4,4),uv(8,36,4,12),uv(0,36,4,12));p.renderOrder=1;group.add(p);}
-    group.add(skinBox(U*4,U*12,U*4,-U*2,0,0,tex,uv(20,52,4,12),uv(28,52,4,12),uv(20,48,4,4),uv(24,48,4,4),uv(24,52,4,12),uv(16,52,4,12)));
-    if(tex){const p=skinBox(U*4.5,U*12.5,U*4.5,-U*2,0,0,tex,uv(4,52,4,12),uv(12,52,4,12),uv(4,48,4,4),uv(8,48,4,4),uv(8,52,4,12),uv(0,52,4,12));p.renderOrder=1;group.add(p);}
+    group.add(skinBox(U*armW,U*12,U*4,-U*armX,U*12,0,tex,uv(44,20,armW,12),uv(44+armW+4,20,armW,12),uv(44,16,armW,4),uv(44+armW,16,armW,4),uv(44-4,20,armW,12),uv(44+armW,20,armW,12)));
+    if(tex){const s=skinBox(U*(armW+.5),U*12.5,U*4.5,-U*armX,U*12,0,tex,uv(44,36,armW,12),uv(44+armW+4,36,armW,12),uv(44,32,armW,4),uv(44+armW,32,armW,4),uv(44-4,36,armW,12),uv(44+armW,36,armW,12));s.renderOrder=1;group.add(s);}
+    group.add(skinBox(U*armW,U*12,U*4,U*armX,U*12,0,tex,uv(36,52,armW,12),uv(36+armW+4,52,armW,12),uv(36,48,armW,4),uv(36+armW,48,armW,4),uv(36+armW,52,armW,12),uv(36-4,52,armW,12)));
+    if(tex){const s=skinBox(U*(armW+.5),U*12.5,U*4.5,U*armX,U*12,0,tex,uv(52,52,armW,12),uv(52+armW+4,52,armW,12),uv(52,48,armW,4),uv(52+armW,48,armW,4),uv(52+armW,52,armW,12),uv(52-4,52,armW,12));s.renderOrder=1;group.add(s);}
+    group.add(skinBox(U*4,U*12,U*4,-U*2,0,0,tex,uv(4,20,4,12),uv(12,20,4,12),uv(4,16,4,4),uv(8,16,4,4),uv(0,20,4,12),uv(8,20,4,12)));
+    if(tex){const p=skinBox(U*4.5,U*12.5,U*4.5,-U*2,0,0,tex,uv(4,36,4,12),uv(12,36,4,12),uv(4,32,4,4),uv(8,32,4,4),uv(0,36,4,12),uv(8,36,4,12));p.renderOrder=1;group.add(p);}
+    group.add(skinBox(U*4,U*12,U*4,U*2,0,0,tex,uv(20,52,4,12),uv(28,52,4,12),uv(20,48,4,4),uv(24,48,4,4),uv(24,52,4,12),uv(16,52,4,12)));
+    if(tex){const p=skinBox(U*4.5,U*12.5,U*4.5,U*2,0,0,tex,uv(4,52,4,12),uv(12,52,4,12),uv(4,48,4,4),uv(8,48,4,4),uv(8,52,4,12),uv(0,52,4,12));p.renderOrder=1;group.add(p);}
     group.position.set(0,-U*12,0);
   }
 })();
@@ -6514,9 +6693,9 @@ function drawSteveSkin(c){
       l.style.cssText=`position:absolute;left:${pct(x/CANVAS_W)};top:${pct(y/CANVAS_H)};transform:translate(-50%,-50%);font-size:10px;letter-spacing:.4px;color:${color};opacity:.9;user-select:none;pointer-events:none;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.9);white-space:nowrap`;
       g.appendChild(l);
     }
-    tag('TOP', 5.5, 0.4, '#7fe8a8');
+tag('TOP', 5.5, 0.4, '#7fe8a8');
     tag('LEFT', 0.5, 8, '#ffb04e');
-    tag('BACK', 6, 8, '#9fb6ff');
+tag('BACK', 6, 8, '#9fb6ff');
     tag('RIGHT', 11.5, 8, '#ff86c8');
     tag('FRONT', 16.5, 8, '#8fffb0');
     tag('BOTTOM', 16.5, 0.4, '#7fe8a8');
@@ -6695,12 +6874,6 @@ function drawSteveSkin(c){
     ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,ART_W,ART_H);
   });
 
-  document.getElementById('cape-ed-elytra').addEventListener('click',()=>{
-    capeEd3dIsElytra=!capeEd3dIsElytra;
-    document.getElementById('cape-ed-elytra').textContent=capeEd3dIsElytra?'🪽 Elytra':'🪽 Cape';
-    if(window._capeEdRebuild)window._capeEdRebuild();
-  });
-
   document.getElementById('cape-editor-btn').addEventListener('click',()=>{overlay.classList.add('open');setTimeout(()=>{setCapeCanvasSize();initCapeEditor3D();},100);});
   document.getElementById('cape-ed-close').addEventListener('click',()=>overlay.classList.remove('open'));
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.classList.remove('open');});
@@ -6745,17 +6918,20 @@ function drawSteveSkin(c){
     document.getElementById('cape-custom-status').textContent='Custom cape removed';
     document.getElementById('cape-custom-status').style.color='#888';
     document.getElementById('cape-custom-toggle').style.display='none';
+    loadSkinCape();
   });
 
   document.getElementById('cape-custom-toggle').addEventListener('click',async()=>{
     const result=await ipcRenderer.invoke('toggle-custom-cape');
-    if(result?.success) updateToggleBtn(result.disabled);
+    if(result?.success){ updateToggleBtn(result.disabled); loadSkinCape(); }
   });
 
   // ── Cape 3D Editor ──
   let capeEd3dRenderer=null, capeEd3dScene=null, capeEd3dCamera=null, capeEd3dGroup=null, capeEd3dRaycaster=null;
-  let capeEd3dRotY=30, capeEd3dRotX=10, capeEd3dIsElytra=false;
+  let capeEd3dRotY=30, capeEd3dRotX=10;
   let capeEdFrontTex=null, capeEdBackTex=null, capeEdTopTex=null, capeEdBottomTex=null, capeEdLeftTex=null, capeEdRightTex=null;
+  const ED_W=2.2, ED_H=ED_W*16/10, ED_DEPTH=0.2;
+  const ED_HALF=ED_W/2, ED_DEPH=ED_DEPTH/2;
   function drawTemplateOn(g,sx,sy,sw,sh,dx,dy,dw,dh){
     if(!capeEdShowTemplate||!templateCanvas)return;
     g.drawImage(templateCanvas,sx,sy,sw,sh,dx,dy,dw,dh);
@@ -6768,37 +6944,7 @@ function drawSteveSkin(c){
     if(capeEdLeftTex){const c=document.createElement('canvas');c.width=1;c.height=16;const g=c.getContext('2d');g.drawImage(canvas,0,1,1,16,0,0,1,16);drawTemplateOn(g,0,1,1,16,0,0,1,16);capeEdLeftTex.image=c;capeEdLeftTex.needsUpdate=true;}
     if(capeEdRightTex){const c=document.createElement('canvas');c.width=1;c.height=16;const g=c.getContext('2d');g.drawImage(canvas,11,1,1,16,0,0,1,16);drawTemplateOn(g,11,1,1,16,0,0,1,16);capeEdRightTex.image=c;capeEdRightTex.needsUpdate=true;}
   }
-  function makeElytraWing(side){
-    const H=4.0,W=H*10/16,D=0.36;
-    const hW=W/2,hH=H/2,hD=D/2;
-    const bend=0.12;
-    function p(x,y,z){
-      const t=(y+hH)/H;
-      return [x*side,y,z-bend*t*t];
-    }
-    const verts=[],uvs=[],idx=[],groups=[];
-    function quad(a,b,c,d,u1,v1,u2,v2,mat){
-      const o=verts.length/3;
-      verts.push(...p(a[0],a[1],a[2]),...p(b[0],b[1],b[2]),...p(c[0],c[1],c[2]),...p(d[0],d[1],d[2]));
-      uvs.push(u1,v1,u2,v1,u2,v2,u1,v2);
-      idx.push(o,o+1,o+2,o,o+2,o+3);
-      groups.push({start:idx.length-6,count:6,mat});
-    }
-    quad([-hW,hH,hD],[hW,hH,hD],[hW,-hH,hD],[-hW,-hH,hD],0,1,1,0,0);
-    quad([-hW,hH,-hD],[-hW,-hH,-hD],[hW,-hH,-hD],[hW,hH,-hD],0,1,1,0,0);
-    quad([-hW,hH,hD],[hW,hH,hD],[hW,hH,-hD],[-hW,hH,-hD],0,0,1,1,1);
-    quad([-hW,-hH,hD],[hW,-hH,hD],[hW,-hH,-hD],[-hW,-hH,-hD],0,1,1,0,2);
-    quad([-hW,hH,hD],[-hW,hH,-hD],[-hW,-hH,-hD],[-hW,-hH,hD],0,1,1,0,3);
-    quad([hW,hH,hD],[hW,-hH,hD],[hW,-hH,-hD],[hW,hH,-hD],0,1,1,0,4);
-    const g=new THREE.BufferGeometry();
-    g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
-    g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
-    g.setIndex(idx);
-    groups.forEach(gr=>g.addGroup(gr.start,gr.count,gr.mat));
-    g.computeVertexNormals();
-    return g;
-  }
-  function initCapeEditor3D(){
+function initCapeEditor3D(){
     if(!window.THREE)return;
     const wrap=document.getElementById('cape-ed-3d-wrap');
     if(!wrap)return;
@@ -6841,41 +6987,12 @@ function drawSteveSkin(c){
       const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;return t;
     }
 
-    const ED_W=2.2, ED_H=3.4, ED_DEPTH=0.2;
-    const ED_HALF=ED_W/2, ED_DEPH=ED_DEPTH/2;
-
     function rebuildCapeMesh(){
       while(capeEd3dGroup.children.length){const c=capeEd3dGroup.children[0];capeEd3dGroup.remove(c);c.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m&&m.map)m.map.dispose();if(m)m.dispose();});}});}
       capeEdFrontTex=cropEditorHalf(1);capeEdBackTex=cropEditorHalf(0);
-      if(capeEd3dIsElytra){
-        capeEdTopTex=cropEditorRow(0,1,10);
-        capeEdBottomTex=cropEditorRow(0,12,10);
-        capeEdLeftTex=cropEditorEdge(0);
-        capeEdRightTex=cropEditorEdge(11);
-        const mats=[
-          new THREE.MeshLambertMaterial({map:capeEdFrontTex,side:THREE.DoubleSide}),
-          new THREE.MeshLambertMaterial({map:capeEdTopTex,side:THREE.DoubleSide}),
-          new THREE.MeshLambertMaterial({map:capeEdBottomTex,side:THREE.DoubleSide}),
-          new THREE.MeshLambertMaterial({map:capeEdLeftTex,side:THREE.DoubleSide}),
-          new THREE.MeshLambertMaterial({map:capeEdRightTex,side:THREE.DoubleSide})
-        ];
-        const leftPivot=new THREE.Group();
-        leftPivot.position.set(-1.0,0.15,-0.1);
-        leftPivot.rotation.x=0.26;
-        leftPivot.rotation.z=-0.26;
-        const left=new THREE.Mesh(makeElytraWing(1),mats);
-        left.userData={face:'front'};
-        leftPivot.add(left);
-        capeEd3dGroup.add(leftPivot);
-        const rightPivot=new THREE.Group();
-        rightPivot.position.set(1.0,0.15,-0.1);
-        rightPivot.rotation.x=0.26;
-        rightPivot.rotation.z=0.26;
-        const right=new THREE.Mesh(makeElytraWing(-1),mats);
-        right.userData={face:'front'};
-        rightPivot.add(right);
-        capeEd3dGroup.add(rightPivot);
-      }else{
+      {
+        capeEd3dGroup.scale.set(0.8,0.8,0.8);
+        capeEd3dCamera.position.z=6;
         const front=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_H),new THREE.MeshLambertMaterial({map:capeEdFrontTex,side:THREE.DoubleSide}));
         front.position.z=ED_DEPH;front.userData={face:'front'};
         capeEd3dGroup.add(front);
@@ -6900,8 +7017,8 @@ function drawSteveSkin(c){
         const bottom=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_DEPTH),new THREE.MeshLambertMaterial({map:capeEdBottomTex,side:THREE.DoubleSide}));
         bottom.rotation.x=Math.PI/2;bottom.position.y=-ED_H/2;bottom.userData={uvRow:0,uvX0:12};
         capeEd3dGroup.add(bottom);
+        capeEd3dGroup.position.set(0,0,0);
       }
-      capeEd3dGroup.position.set(0,0,0);
     }
     rebuildCapeMesh();
     capeEd3dRaycaster=new THREE.Raycaster();
@@ -6924,7 +7041,7 @@ function drawSteveSkin(c){
         document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
       }
     });
-    wrap.addEventListener('wheel',e=>{e.preventDefault();capeEd3dCamera.position.z=Math.max(3,Math.min(12,capeEd3dCamera.position.z+e.deltaY*0.005));},{passive:false});
+    wrap.addEventListener('wheel',e=>{e.preventDefault();capeEd3dCamera.position.z=Math.max(3,Math.min(20,capeEd3dCamera.position.z+e.deltaY*0.005));},{passive:false});
     let tStart=null;
     wrap.addEventListener('touchstart',e=>{const t=e.touches[0];tStart={x:t.clientX,y:t.clientY};drag.ry=capeEd3dRotY;drag.rx=capeEd3dRotX;});
     wrap.addEventListener('touchmove',e=>{if(!tStart)return;const t=e.touches[0];capeEd3dRotY=drag.ry+(t.clientX-tStart.x)*0.7;capeEd3dRotX=Math.max(-40,Math.min(40,drag.rx+(t.clientY-tStart.y)*0.4));e.preventDefault();},{passive:false});
@@ -6951,15 +7068,8 @@ function drawSteveSkin(c){
       const uv=hits[0].uv;
       const face=hits[0].object.userData?.face;
       const row=hits[0].object.userData?.uvRow;
-      const matIdx=hits[0].face?hits[0].face.materialIndex:undefined;
       let px,py;
-      if(capeEd3dIsElytra&&matIdx!==undefined){
-        if(matIdx===1){px=1+Math.floor(uv.x*10);py=0;}
-        else if(matIdx===2){px=12+Math.floor(uv.x*10);py=0;}
-        else if(matIdx===3){px=0;py=Math.floor((1-uv.y)*16)+1;}
-        else if(matIdx===4){px=11;py=Math.floor((1-uv.y)*16)+1;}
-        else{px=12+Math.floor(uv.x*10);py=Math.floor((1-uv.y)*16)+1;}
-      }else if(row!==undefined){
+      if(row!==undefined){
         px=(hits[0].object.userData?.uvX0||0)+Math.floor(uv.x*10);
         py=row;
       }else if(face==='front'){
@@ -6977,8 +7087,9 @@ function drawSteveSkin(c){
       }else{
         return;
       }
-      px=Math.max(0,Math.min(ART_W-1,px));
-      py=Math.max(0,Math.min(ART_H-1,py));
+      const maxPx=ART_W-1, maxPy=ART_H-1;
+      px=Math.max(0,Math.min(maxPx,px));
+      py=Math.max(0,Math.min(maxPy,py));
       const color=hexToRgba(colorInput.value);
       if(currentTool==='pencil')setPixel(px,py,color);
       else if(currentTool==='eraser')setPixel(px,py,'rgba(0,0,0,0)');
@@ -8904,7 +9015,9 @@ document.getElementById('update-github-btn').addEventListener('click', () => {
 });
 
 document.getElementById('update-bugreport-btn').addEventListener('click', () => {
-  shell.openExternal('https://github.com/Dev-Reds/crux-client/issues');
+  if (window.showPage) window.showPage('bugreport-page');
+  const ov = document.getElementById('update-overlay');
+  if (ov) ov.style.display = 'none';
 });
 
 document.getElementById('update-later-btn').addEventListener('click', () => {
@@ -8912,10 +9025,6 @@ document.getElementById('update-later-btn').addEventListener('click', () => {
   if (window._updatePollInterval) { clearInterval(window._updatePollInterval); window._updatePollInterval = null; }
   const overlay = document.getElementById('update-overlay');
   if (overlay) overlay.style.display = 'none';
-});
-
-document.getElementById('bugreport-github-btn').addEventListener('click', () => {
-  shell.openExternal('https://github.com/Dev-Reds/crux-client/issues/new');
 });
 
 // Block tab switching when update overlay is shown
