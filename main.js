@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
 const https = require('https');
 const http  = require('http');
 const { exec, execSync, spawn, execFile } = require('child_process');
@@ -44,6 +44,10 @@ function getJszip() {
   if (!JSZip) throw new Error('jszip module not available');
   return JSZip;
 }
+
+// ── yauzl (streaming zip reader, for large NoRisk .noriskpack exports) ────────
+let yauzl = null;
+try { yauzl = require('yauzl'); } catch (e) { logDebug('yauzl not available: ' + e.message); }
 
 // ── Launcher RAM limit ────────────────────────────────────────────────────────
 try {
@@ -632,65 +636,311 @@ ipcMain.handle('profile-download-offline', async (event, payload) => {
   }
 });
 
-ipcMain.handle('import-norisk-profiles', async () => {
-  const candidates = [
-    process.env.APPDATA ? path.join(process.env.APPDATA, 'norisk', 'NoRiskClientV3', 'profiles.json') : '',
-    path.join(os.homedir(), 'AppData', 'Roaming', 'norisk', 'NoRiskClientV3', 'profiles.json'),
-  ].filter(Boolean);
-  const file = candidates.find(p => fs.existsSync(p));
-  if (!file) return { ok:false, error:'NoRisk Client v3 profiles.json was not found under %APPDATA%\\norisk\\NoRiskClientV3' };
-  let raw;
-  try { raw = await fs.promises.readFile(file, 'utf8'); }
-  catch(e) { return { ok:false, error:'Could not read ' + file + ': ' + e.message }; }
-  let list;
-  try { list = JSON.parse(raw); }
-  catch(e) { return { ok:false, error:'profiles.json is not valid JSON: ' + e.message }; }
-  if (!Array.isArray(list)) return { ok:false, error:'profiles.json does not contain a profile list.' };
+// ── NoRisk Client import: installed client (v3 norisk_versions.json / legacy
+//    profiles.json) + exported .noriskpack files (ZIP with profile.json + overrides/) ──
+const NRC_VALID_LOADERS = ['vanilla','fabric','forge','quilt','neoforge','bedrock'];
+const NRC_REPO_SET = new Set(['noriskproduction','norisksnapshots','norisk']);
+const NRC_OVERRIDES_PREFIX = 'overrides/';
 
-  const VALID_LOADERS = ['vanilla','fabric','forge','quilt','neoforge','bedrock'];
-  const NRC_REPOS = new Set(['noriskproduction','norisksnapshots','norisk']);
-  const seenNames = new Set();
-  const out = [];
-  let skippedMods = 0;
+// Parse JSON tolerating a UTF-8 BOM (some exports write one).
+function nrcParseJson(text){
+  return JSON.parse(String(text).replace(/^\uFEFF/, ''));
+}
 
-  for (const np of list) {
-    if (!np || typeof np !== 'object' || !np.name) continue;
-    let loader = String(np.loader || 'fabric').toLowerCase();
-    if (!VALID_LOADERS.includes(loader)) loader = 'fabric';
-    const mods = [];
-    for (const m of np.mods || []) {
-      if (!m || m.enabled === false) continue;
-      const src = m.source || {};
-      const repo = String(src.repository || '').toLowerCase();
-      if (NRC_REPOS.has(repo)) { skippedMods++; continue; }
-      if (/noriskclient/i.test(String(m.display_name || m.name || ''))) { skippedMods++; continue; }
-      let conv = null;
-      if (src.type === 'modrinth' && typeof src.artifact === 'string') {
-        const parts = src.artifact.split(':');
-        if (parts[0] === 'maven.modrinth' && parts[1]) {
-          conv = { name: m.display_name || m.name || parts[1], modrinthId: parts[1] };
-        }
-      }
-      if (conv) mods.push(conv); else skippedMods++;
-    }
-    let name = String(np.name).slice(0, 60);
-    if (seenNames.has(name)) name = name + ' (NRC)';
-    seenNames.add(name);
-    out.push({
-      id: 'nrc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
-      name,
-      group: (typeof np.group === 'string' && np.group) ? np.group : 'NoRisk',
-      mcVersion: String(np.game_version || ''),
-      modLoader: loader,
-      mods,
-      datapacks: [],
-      resourcePacks: [],
-      shaderPacks: [],
-      isNrcImported: true
-    });
+function nrcNormalizeLoader(l){
+  const v = String(l || 'fabric').toLowerCase();
+  return NRC_VALID_LOADERS.includes(v) ? v : 'fabric';
+}
+
+// Convert one NoRisk mod entry into a Crux profile mod (or null when it can't be ported).
+function nrcConvertMod(m, mcVersion){
+  if (!m || typeof m !== 'object') return null;
+  const src = m.source || {};
+  const srcType = String(src.type || '').toLowerCase();
+  const repo = String(src.repository || '').toLowerCase();
+  const display = String(m.display_name || m.name || '');
+  // NoRisk's own client modules don't exist in this launcher — drop them.
+  if (NRC_REPO_SET.has(repo)) return null;
+  if (/noriskclient/i.test(display)) return null;
+  const base = {
+    name: display || 'Mod',
+    version: m.version || 'latest',
+    mcVersion: mcVersion || (Array.isArray(m.game_versions) && m.game_versions[0]) || 'latest',
+    source: '',
+    iconUrl: '',
+    downloadAllVersions: true,
+    disabled: m.enabled === false,
+    loader: 'any'
+  };
+  if (srcType === 'modrinth') {
+    const pid = src.project_id || (typeof src.artifact === 'string' ? src.artifact.split(':')[1] : null);
+    if (!pid) return null;
+    return Object.assign(base, { name: display || pid, source: 'Modrinth', modrinthId: String(pid) });
   }
+  if (srcType === 'curse_forge' || srcType === 'curseforge') {
+    const pid = src.project_id;
+    if (!pid) return null;
+    return Object.assign(base, { name: display || String(pid), source: 'CurseForge', curseforgeId: String(pid) });
+  }
+  return null;
+}
 
-  return { ok:true, file, profiles: out, skippedMods };
+// Convert one NoRisk profile object into a Crux profile object.
+function nrcConvertProfile(np){
+  const mcVersion = String(np.game_version || '');
+  const loader = nrcNormalizeLoader(np.loader);
+  const mods = [];
+  let skipped = 0;
+  for (const m of (np.mods || [])) {
+    const c = nrcConvertMod(m, mcVersion);
+    if (c) mods.push(c); else skipped++;
+  }
+  const name = String(np.name || 'NoRisk Profile').slice(0, 60);
+  return {
+    id: 'nrc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
+    name,
+    group: (typeof np.group === 'string' && np.group.trim()) ? np.group.trim() : name,
+    mcVersion,
+    modLoader: loader,
+    renderApi: 'opengl',
+    mods,
+    datapacks: [],
+    resourcePacks: [],
+    shaderPacks: [],
+    useCruxMod: true,
+    useClientMods: true,
+    useClientRPs: true,
+    isNrcImported: true,
+    _nrcSkipped: skipped
+  };
+}
+
+function nrcConvertList(list){
+  const profiles = [];
+  let skippedMods = 0;
+  for (const np of (Array.isArray(list) ? list : [])) {
+    if (!np || typeof np !== 'object' || !np.name) continue;
+    const p = nrcConvertProfile(np);
+    skippedMods += p._nrcSkipped || 0;
+    delete p._nrcSkipped;
+    profiles.push(p);
+  }
+  return { profiles, skippedMods };
+}
+
+function nrcCandidates(){
+  const dirs = [
+    process.env.APPDATA ? path.join(process.env.APPDATA, 'norisk', 'NoRiskClientV3') : '',
+    path.join(os.homedir(), 'AppData', 'Roaming', 'norisk', 'NoRiskClientV3'),
+  ].filter(Boolean);
+  const files = [];
+  for (const d of dirs) {
+    files.push(path.join(d, 'norisk_versions.json'));   // NoRisk v3
+    files.push(path.join(d, 'profiles.json'));           // legacy v2
+  }
+  return files;
+}
+
+// Read the root profile manifest out of a NoRisk ZIP export (streaming — no full load).
+function nrcReadZipProfile(zipPath){
+  return new Promise((resolve, reject) => {
+    if (!yauzl) return reject(new Error('yauzl module not available'));
+    yauzl.open(zipPath, { lazyEntries:true, autoClose:true }, (err, zip) => {
+      if (err) return reject(err);
+      let profileBuf = null;
+      let overrideBytes = 0, overrideCount = 0, hasOverrides = false;
+      zip.on('entry', (entry) => {
+        const name = entry.fileName;
+        if (name === 'profile.json' || name === 'profiles.json') {
+          zip.openReadStream(entry, (e, rs) => {
+            if (e) return reject(e);
+            const chunks = [];
+            rs.on('data', c => chunks.push(c));
+            rs.on('end', () => { profileBuf = Buffer.concat(chunks); zip.readEntry(); });
+            rs.on('error', reject);
+          });
+          return;
+        }
+        if (name.startsWith(NRC_OVERRIDES_PREFIX)) {
+          hasOverrides = true;
+          if (!name.endsWith('/')) { overrideBytes += (entry.uncompressedSize || 0); overrideCount++; }
+        }
+        zip.readEntry();
+      });
+      zip.on('end', () => resolve({ profileBuf, hasOverrides, overrideBytes, overrideCount }));
+      zip.on('error', reject);
+      zip.readEntry();
+    });
+  });
+}
+
+// Stream every overrides/* entry from a NoRisk ZIP into destRoot (skipping nothing).
+function nrcExtractOverrides(zipPath, destRoot, onBytes){
+  return new Promise((resolve, reject) => {
+    if (!yauzl) return reject(new Error('yauzl module not available'));
+    yauzl.open(zipPath, { lazyEntries:true, autoClose:true }, (err, zip) => {
+      if (err) return reject(err);
+      let extracted = 0, errors = 0;
+      const next = () => zip.readEntry();
+      zip.on('entry', (entry) => {
+        const name = entry.fileName;
+        if (!name.startsWith(NRC_OVERRIDES_PREFIX) || name.endsWith('/')) return next();
+        const rel = name.slice(NRC_OVERRIDES_PREFIX.length);
+        if (!rel) return next();
+        const dest = path.join(destRoot, rel);
+        fs.promises.mkdir(path.dirname(dest), { recursive:true }).then(() => {
+          zip.openReadStream(entry, (e, rs) => {
+            if (e) { errors++; return next(); }
+            let advanced = false;
+            const advance = () => { if (advanced) return; advanced = true; next(); };
+            const ws = fs.createWriteStream(dest);
+            rs.on('error', () => { errors++; try { ws.destroy(); } catch {} advance(); });
+            ws.on('error', () => { errors++; try { rs.destroy(); } catch {} advance(); });
+            ws.on('close', () => { extracted++; if (onBytes) onBytes(entry.uncompressedSize || 0); advance(); });
+            rs.pipe(ws);
+          });
+        }).catch(() => { errors++; next(); });
+      });
+      zip.on('end', () => resolve({ extracted, errors }));
+      zip.on('error', reject);
+      zip.readEntry();
+    });
+  });
+}
+
+// Auto-scan the installed NoRisk Client (v3 norisk_versions.json or legacy profiles.json).
+ipcMain.handle('import-norisk-profiles', async () => {
+  try {
+    const file = nrcCandidates().find(p => fs.existsSync(p));
+    if (!file) return { ok:false, error:'NoRisk Client was not found under %APPDATA%\\norisk\\NoRiskClientV3 (looked for norisk_versions.json / profiles.json). Use "Choose export file…" for a .noriskpack.' };
+    let raw;
+    try { raw = await fs.promises.readFile(file, 'utf8'); }
+    catch(e) { return { ok:false, error:'Could not read ' + file + ': ' + e.message }; }
+    let list;
+    try { list = nrcParseJson(raw); }
+    catch(e) { return { ok:false, error: path.basename(file) + ' is not valid JSON: ' + e.message }; }
+    if (list && !Array.isArray(list) && Array.isArray(list.profiles)) list = list.profiles;   // NoRisk v3
+    if (!Array.isArray(list)) return { ok:false, error: path.basename(file) + ' does not contain a profile list.' };
+    const { profiles, skippedMods } = nrcConvertList(list);
+    return { ok:true, file, profiles, skippedMods };
+  } catch (e) { return { ok:false, error: e.message }; }
+});
+
+// Open a file dialog and parse a NoRisk export (any name/location: .noriskpack/.zip/.json).
+ipcMain.handle('choose-norisk-export', async () => {
+  try {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select a NoRisk Client export',
+      properties: ['openFile'],
+      filters: [
+        { name: 'NoRisk Export', extensions: ['noriskpack','zip','json'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+    if (res.canceled || !res.filePaths || !res.filePaths.length) return { ok:true, canceled:true };
+    const file = res.filePaths[0];
+    const stat = await fs.promises.stat(file);
+
+    // Detect ZIP by magic bytes ("PK").
+    const fh = await fs.promises.open(file, 'r');
+    const head = Buffer.alloc(4);
+    await fh.read(head, 0, 4, 0);
+    await fh.close();
+    const isZip = head[0] === 0x50 && head[1] === 0x4b;
+
+    let parsed = null, hasOverrides = false;
+    if (isZip) {
+      const r = await nrcReadZipProfile(file);
+      hasOverrides = r.hasOverrides;
+      if (!r.profileBuf) return { ok:false, error:'The archive contains no profile.json — is this really a NoRisk export?' };
+      try { parsed = nrcParseJson(r.profileBuf.toString('utf8')); }
+      catch(e) { return { ok:false, error:'profile.json inside the export is not valid JSON: ' + e.message }; }
+    } else {
+      const raw = await fs.promises.readFile(file, 'utf8');
+      try { parsed = nrcParseJson(raw); }
+      catch(e) { return { ok:false, error:'Not a valid NoRisk export or JSON file: ' + e.message }; }
+    }
+
+    let list;
+    if (Array.isArray(parsed)) list = parsed;
+    else if (parsed && Array.isArray(parsed.profiles)) list = parsed.profiles;
+    else if (parsed && (parsed.game_version || parsed.mods)) list = [parsed];
+    else return { ok:false, error:'No NoRisk profile found in this file.' };
+
+    const { profiles, skippedMods } = nrcConvertList(list);
+    if (!profiles.length) return { ok:false, error:'No importable profile found in this file.' };
+    return { ok:true, canceled:false, file, isZip, hasOverrides, sizeBytes: stat.size, profiles, skippedMods };
+  } catch (e) { return { ok:false, error: e.message }; }
+});
+
+// Extract the export's overrides/ game files into the (shared) Minecraft folder,
+// then move worlds/settings into the profile's own settings group.
+ipcMain.handle('extract-norisk-overrides', async (e, opts = {}) => {
+  const { file, groupName, profileName } = opts;
+  try {
+    if (!file || !fs.existsSync(file)) return { ok:false, error:'Export file not found.' };
+    const group = String(groupName || profileName || 'NoRisk').trim() || 'NoRisk';
+    const gDir = path.join(P.groups, groupDirName(group));
+    await fs.promises.mkdir(P.mc, { recursive:true });
+
+    const notify = (payload) => { try { mainWindow.webContents.send('norisk-import-progress', payload); } catch {} };
+
+    notify({ message:'Reading export…', percent:0, phase:'scan' });
+    const scan = await nrcReadZipProfile(file);
+    const total = scan.overrideBytes || 1;
+    let doneBytes = 0, lastPct = -1;
+
+    // Preserve the currently active profile's saves/settings before we merge.
+    let cur;
+    try {
+      cur = getCurrentGroup();
+      const curOpts = path.join(P.mc, 'options.txt');
+      const curGFile = path.join(P.groups, groupDirName(cur), 'options.txt');
+      if (fs.existsSync(curOpts) && !fs.existsSync(curGFile)) {
+        await fs.promises.mkdir(path.dirname(curGFile), { recursive:true });
+        await fs.promises.copyFile(curOpts, curGFile);
+      }
+      await stashGameDataToGroup(cur);
+    } catch {}
+
+    notify({ message:'Importing game files…', percent:0, phase:'extract' });
+    const res = await nrcExtractOverrides(file, P.mc, (bytes) => {
+      doneBytes += bytes;
+      const pct = Math.min(99, Math.round(doneBytes / total * 100));
+      if (pct !== lastPct) { lastPct = pct; notify({ message:'Importing game files…', percent:pct, phase:'extract' }); }
+    });
+
+    // Move the imported worlds + settings into the profile's own group.
+    await fs.promises.mkdir(gDir, { recursive:true });
+    const mcSaves = path.join(P.mc, 'saves');
+    const gSaves = path.join(gDir, 'saves');
+    if (fs.existsSync(mcSaves)) {
+      await fs.promises.mkdir(gSaves, { recursive:true });
+      for (const en of await fs.promises.readdir(mcSaves)) {
+        const src = path.join(mcSaves, en), dst = path.join(gSaves, en);
+        try { await fs.promises.rm(dst, { recursive:true, force:true }); } catch {}
+        try { await fs.promises.rename(src, dst); }
+        catch { try { await fs.promises.cp(src, dst, { recursive:true }); await fs.promises.rm(src, { recursive:true, force:true }); } catch {} }
+      }
+    }
+    const moveIntoGroup = async (name) => {
+      const src = path.join(P.mc, name);
+      if (!fs.existsSync(src)) return;
+      const dst = path.join(gDir, name);
+      try { await fs.promises.rename(src, dst); }
+      catch { try { await fs.promises.copyFile(src, dst); } catch {} }
+    };
+    await moveIntoGroup('options.txt');
+    await moveIntoGroup('servers.dat');
+
+    // Restore the previously-active group's own data so P.mc stays consistent
+    // with current-group.json (the imported profile's data now lives in its group).
+    try { if (cur) await restoreGameDataToMc(cur); } catch {}
+
+    notify({ message:'Game files imported.', percent:100, phase:'done' });
+    logDebug(`[NRC] Imported overrides from ${file} into group "${group}" (${res.extracted} files, ${res.errors} errors)`);
+    return { ok:true, group, extracted:res.extracted, errors:res.errors, totalBytes:scan.overrideBytes, hasOverrides:scan.hasOverrides };
+  } catch (err) { return { ok:false, error: err.message }; }
 });
 ipcMain.on('save-launched-versions', async (e,d) => save(P.launched, d));
 ipcMain.on('show-launcher', () => { if(mainWindow) mainWindow.show(); });
@@ -3852,10 +4102,32 @@ function parseVersion(v) {
 }
 
 function isNewer(remote, local) {
-  return remote !== local;
+  const r = parseVersion(String(remote || '0'));
+  const l = parseVersion(String(local || '0'));
+  for (let i = 0; i < Math.max(r.length, l.length); i++) {
+    const diff = (r[i] || 0) - (l[i] || 0);
+    if (diff !== 0) return diff > 0;
+  }
+  return false;
 }
 
-ipcMain.handle('check-for-update', async () => {
+// Remembers which version the user already updated to, so the silent startup
+// check doesn't nag about a version that was already installed/handled.
+const UPDATE_STATE_FILE = path.join(base, 'update-state.json');
+function getUpdateState() {
+  try { return JSON.parse(fs.readFileSync(UPDATE_STATE_FILE, 'utf8')) || {}; } catch { return {}; }
+}
+function setUpdateState(patch) {
+  try {
+    const s = getUpdateState();
+    Object.assign(s, patch);
+    fs.mkdirSync(base, { recursive: true });
+    fs.writeFileSync(UPDATE_STATE_FILE, JSON.stringify(s, null, 2));
+  } catch {}
+}
+
+ipcMain.handle('check-for-update', async (e, opts) => {
+  const manual = !!(opts && opts.manual);
   if (IS_DEV_BUILD) {
     updateLog('Dev build — update detection disabled.');
     return { updateAvailable: false, devBuild: true, currentVersion: CURRENT_VERSION };
@@ -3890,9 +4162,11 @@ ipcMain.handle('check-for-update', async () => {
       const installer = latest.assets.find(a => a.name === 'Crux-Client-Installer.exe' || (a.name.endsWith('.exe') && a.name.includes('Installer')));
       const url = launcherZip ? launcherZip.browser_download_url : null;
       const installerUrl = installer ? installer.browser_download_url : null;
-      updateLog(`Update available! Launcher.zip: ${url ? 'yes' : 'NO'} | Installer: ${installerUrl ? installer.name : 'NO'}`);
+      const alreadyHandled = !manual && getUpdateState().updatedTo === latestVersion;
+      updateLog(`Update available! Launcher.zip: ${url ? 'yes' : 'NO'} | Installer: ${installerUrl ? installer.name : 'NO'} | alreadyHandled: ${alreadyHandled}`);
       return {
-        updateAvailable: true,
+        updateAvailable: !alreadyHandled,
+        alreadyHandled,
         currentVersion: CURRENT_VERSION,
         newVersion: latestVersion,
         releaseNotes: latest.body || '',
@@ -3976,7 +4250,7 @@ function restoreUserDataAfterUpdate() {
   }
 }
 
-ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUrl) => {
+ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUrl, newVersion) => {
   if (IS_DEV_BUILD) throw new Error('Updates are disabled in dev builds');
   const isAsar = __dirname.endsWith('app.asar') || process.env.APPIMAGE;
   const send = (...a) => { try { mainWindow.webContents.send(...a); } catch {} };
@@ -4074,6 +4348,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
       }
     }
     await new Promise(r => setTimeout(r, 500));
+    if (newVersion) setUpdateState({ updatedTo: String(newVersion).replace(/^v/, '') });
     app.quit();
   } else {
     // Dev mode: extract zip over source files
@@ -4096,6 +4371,7 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
       }));
     });
     await Promise.all(promises);
+    if (newVersion) setUpdateState({ updatedTo: String(newVersion).replace(/^v/, '') });
     app.relaunch();
     app.quit();
   }

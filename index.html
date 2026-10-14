@@ -45,6 +45,21 @@ body.tabs-bottom #stop-bar{order:2;}
 body.tabs-bottom #offline-banner{order:3;}
 body.tabs-bottom .pages{order:1;}
 
+/* ── Tab bar position (left/right) ── */
+#main-col{order:0;flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;}
+body.tabs-left #launcher-screen,
+body.tabs-right #launcher-screen{flex-direction:row;}
+body.tabs-left .toolbar,
+body.tabs-right .toolbar{flex-direction:column;flex-wrap:nowrap;width:clamp(90px,12vw,190px);height:100%;min-height:0;align-self:stretch;overflow-x:hidden;overflow-y:auto;padding:8px 6px;border-bottom:none;gap:.4em;}
+body.tabs-left .toolbar{border-right:1px solid #1e1e1e;order:0;justify-content:flex-start;}
+body.tabs-right .toolbar{border-left:1px solid #1e1e1e;order:99;justify-content:flex-start;}
+body.tabs-left .tb-btn,
+body.tabs-right .tb-btn{flex:0 0 auto;width:100%;height:auto;min-height:calc(var(--tb) * .8);}
+body.tabs-left #tb-account-btn,
+body.tabs-right #tb-account-btn{margin-top:auto;}
+body.tabs-right #settings-fab{right:auto;left:16px;}
+body.tabs-left .pages, body.tabs-right .pages{order:0;}
+
 /* ── Pages ── */
 .pages{flex:1;overflow:hidden;position:relative;}
 .page{position:absolute;inset:0;overflow-y:auto;padding:2.5vh 2.5vw;display:none;}
@@ -73,6 +88,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:1.3em;heig
 /* ── Light ── */
 body.light{background:#f0f0f0;color:#111;--ls-bg:#fff;--ls-bg2:#fafafa;--ls-bd:#ddd;--ls-hover:#f0f0f0;--ls-sep:#eee;--ls-selbg:#ddeeff;--ls-selbd:var(--acc);--ls-mut:#888;--ls-opt-bg:#fff;--ls-opt-tx:#222;}
 body.light .toolbar{background:rgba(240,240,240,.98);border-bottom-color:#ddd;}
+body.light.tabs-left .toolbar{border-right-color:#ddd;}
+body.light.tabs-right .toolbar{border-left-color:#ddd;}
 body.light .tb-btn{background:#fff;color:#555;border-color:#ddd;}
 body.light .tb-btn:hover{background:#eee;}
 body.light .tb-btn.active{background:var(--acc);color:#fff;border-color:var(--acc);}
@@ -723,6 +740,8 @@ body.glass .log-line, body.glass .feature-card p{border-bottom-color:var(--ls-se
 body.glass .toolbar, body.glass #stop-bar{background:transparent !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;box-shadow:none !important;}
 body.glass .toolbar{border-bottom-color:var(--gs-bd);}
 body.tabs-bottom.glass .toolbar{border-top-color:var(--gs-bd);}
+body.tabs-left.glass .toolbar{border-right-color:var(--gs-bd);}
+body.tabs-right.glass .toolbar{border-left-color:var(--gs-bd);}
 body.glass #stop-bar{border-bottom-color:var(--gs-bd);}
 body.glass #stop-bar span[data-i18n]{color:var(--gs-mut) !important;}
 /* Ohne Leisten-Füllung brauchen die Buttons darin eine eigene Fläche,
@@ -808,6 +827,7 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
   </button>
 
+  <div id="main-col">
   <div id="stop-bar" style="display:flex;gap:.5em;padding:.35em .8em;background:#0d0d0d;border-bottom:1px solid #1a1a1a;align-items:center;min-height:2em">
     <span style="font-size:.78em;color:#555;margin-right:.4em" data-i18n="lbl_actions">Actions:</span>
     <select id="stop-instance-select" style="display:none;background:#1a1a1a;color:#ccc;border:1px solid #333;border-radius:4px;padding:.25em .4em;font-size:.78em;max-width:220px"></select>
@@ -1076,6 +1096,8 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
           <select id="tab-bar-position-select">
             <option value="top" data-i18n="tab_bar_top">Top</option>
             <option value="bottom" data-i18n="tab_bar_bottom">Bottom</option>
+            <option value="left" data-i18n="tab_bar_left">Left</option>
+            <option value="right" data-i18n="tab_bar_right">Right</option>
           </select>
         </div>
       </div>
@@ -1583,6 +1605,7 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
     -->
 
   </div>
+  </div>
 </div>
 
 <!-- ── Service-down toasts ── -->
@@ -1663,10 +1686,16 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
       <button class="btn modal-close" onclick="document.getElementById('import-norisk-modal').style.display='none'">✕</button>
     </div>
     <div style="padding:1rem">
-      <p style="color:#888;font-size:.82em;margin-bottom:.6em" data-i18n="modal_import_norisk_desc">Profiles found in NoRisk Client v3 (NoRiskClientV3). Select the ones to import.</p>
+      <p style="color:#888;font-size:.82em;margin-bottom:.6em" data-i18n="modal_import_norisk_desc">Import your NoRisk Client profiles — from the installed client or from an exported .noriskpack file (any name, any location).</p>
+      <div id="import-norisk-file" style="font-size:.75em;color:#6cf;margin-bottom:.5em;word-break:break-all"></div>
+      <div id="import-norisk-hint" style="font-size:.72em;color:#c98;margin-bottom:.5em;display:none"></div>
       <div id="import-norisk-list" style="max-height:40vh;overflow-y:auto"></div>
+      <div id="import-norisk-bar-wrap" style="display:none;margin-top:.6em"><div class="lp-bg"><div class="lp-fill" id="import-norisk-bar"></div></div></div>
       <div id="import-norisk-status" style="font-size:.8em;color:#888;margin-top:.4em;min-height:1.2em"></div>
-      <button class="btn btn-sm btn-primary" id="import-norisk-confirm-btn" style="width:auto;margin-top:.5em" data-i18n="btn_import">Import</button>
+      <div style="display:flex;gap:.4em;margin-top:.5em;flex-wrap:wrap">
+        <button class="btn btn-sm btn-primary" id="import-norisk-confirm-btn" style="width:auto" data-i18n="btn_import">Import</button>
+        <button class="btn btn-sm" id="import-norisk-file-btn" style="width:auto" data-i18n="btn_choose_export">Choose export file…</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2442,7 +2471,7 @@ const LANGS={
     sec_launch_mode:'Launch Mode', desc_launch_mode:'Launch via original Minecraft Launcher',
     desc_launch_mode_detail:'Opens the official Minecraft Launcher (Java Edition) instead of launching directly.',
     sec_after_launch:'After Launch', desc_open_logs:'Open logs after launch', desc_close_launcher:'Close launcher while playing',
-    sec_tab_bar:'Tab Bar', lbl_tab_bar_pos:'Position', tab_bar_top:'Top', tab_bar_bottom:'Bottom',
+    sec_tab_bar:'Tab Bar', lbl_tab_bar_pos:'Position', tab_bar_top:'Top', tab_bar_bottom:'Bottom', tab_bar_left:'Left', tab_bar_right:'Right',
     sec_theme:'Theme', lbl_theme:'Appearance', theme_dark:'Dark', theme_light:'Light', theme_glass:'Glass', theme_win7:'Windows 7', theme_xp:'Windows XP',
     sec_glass_bg:'Glass Background', desc_glass_bg:'Custom background behind the frosted glass. Only shown in the Glass theme.', btn_choose_bg:'Choose Image…', btn_remove_bg:'Remove', lbl_bg_tint:'Tint image with accent colour',
     sec_corner_radius:'Corner Radius', lbl_corner_radius:'Roundness', corner_small:'Small', corner_medium:'Medium', corner_large:'Large', corner_round:'Round',
@@ -2509,8 +2538,11 @@ const LANGS={
     loading_popular_mods:'Loading popular mods...',
     modal_share:'Share Profile', modal_share_desc:'Copy this code and send it to someone. They can import it in their Crux Launcher.',
     modal_import:'Import Profile', modal_import_desc:'Paste a share code from another Crux Launcher user.',
-    modal_import_norisk:'Import NoRisk Client Profiles', modal_import_norisk_desc:'Profiles found in NoRisk Client v3 (NoRiskClientV3). Select the ones to import.',
+    modal_import_norisk:'Import NoRisk Client Profiles', modal_import_norisk_desc:'Import your NoRisk Client profiles — from the installed client or from an exported .noriskpack file (any name, any location).',
     nrc_scanning:'Reading NoRisk Client profiles...', nrc_none:'No profiles found.', nrc_imported:'✓ {n} profile(s) imported.',
+    btn_choose_export:'Choose export file…',
+    nrc_overrides_hint:'This export contains full game files (configs, worlds, packs). Worlds and settings are stored in this profile\'s own group; mods, configs and packs go into the shared game folder.',
+    nrc_overrides_done:'✓ Game files imported.',
     modal_edit_profile:'Edit Profile',
     ws_step1:'① Type', ws_step2:'② Version', ws_step3:'③ Mods', ws_step4:'④ Settings',
     sv_choose_type:'Choose Server Type', sv_choose_version:'Choose MC Version',
@@ -2576,7 +2608,7 @@ const LANGS={
     sec_launch_mode:'Startmodus', desc_launch_mode:'Über den offiziellen Minecraft Launcher starten',
     desc_launch_mode_detail:'Öffnet den offiziellen Minecraft Launcher (Java Edition) anstatt direkt zu starten.',
     sec_after_launch:'Nach dem Start', desc_open_logs:'Protokolle nach dem Start öffnen', desc_close_launcher:'Launcher beim Spielen schließen',
-    sec_tab_bar:'Tab-Leiste', lbl_tab_bar_pos:'Position', tab_bar_top:'Oben', tab_bar_bottom:'Unten',
+    sec_tab_bar:'Tab-Leiste', lbl_tab_bar_pos:'Position', tab_bar_top:'Oben', tab_bar_bottom:'Unten', tab_bar_left:'Links', tab_bar_right:'Rechts',
     sec_theme:'Design', lbl_theme:'Darstellung', theme_dark:'Dunkel', theme_light:'Hell', theme_glass:'Glas', theme_win7:'Windows 7', theme_xp:'Windows XP',
     sec_glass_bg:'Glas-Hintergrund', desc_glass_bg:'Eigener Hintergrund hinter dem mattierten Glas. Wird nur im Glas-Theme angezeigt.', btn_choose_bg:'Bild wählen…', btn_remove_bg:'Entfernen', lbl_bg_tint:'Bild mit Akzentfarbe einfärben',
     sec_corner_radius:'Eckenradius', lbl_corner_radius:'Abrundung', corner_small:'Klein', corner_medium:'Mittel', corner_large:'Groß', corner_round:'Rund',
@@ -2643,8 +2675,11 @@ const LANGS={
     loading_popular_mods:'Beliebte Mods werden geladen...',
     modal_share:'Profil teilen', modal_share_desc:'Kopiere diesen Code und sende ihn jemandem. Er kann ihn in seinem Crux Launcher importieren.',
     modal_import:'Profil importieren', modal_import_desc:'Füge einen Share-Code von einem anderen Crux Launcher Benutzer ein.',
-    modal_import_norisk:'NoRisk Client-Profile importieren', modal_import_norisk_desc:'Profile in NoRisk Client v3 (NoRiskClientV3) gefunden. Wähle aus, welche importiert werden sollen.',
+    modal_import_norisk:'NoRisk Client-Profile importieren', modal_import_norisk_desc:'Importiere deine NoRisk Client-Profile — aus dem installierten Client oder aus einer exportierten .noriskpack-Datei (beliebiger Name, beliebiger Ort).',
     nrc_scanning:'Lese NoRisk Client-Profile...', nrc_none:'Keine Profile gefunden.', nrc_imported:'✓ {n} Profil(e) importiert.',
+    btn_choose_export:'Exportdatei wählen…',
+    nrc_overrides_hint:'Dieser Export enthält komplette Spieldateien (Configs, Welten, Packs). Welten und Einstellungen kommen in die eigene Gruppe dieses Profils; Mods, Configs und Packs in den gemeinsamen Spieleordner.',
+    nrc_overrides_done:'✓ Spieldateien importiert.',
     modal_edit_profile:'Profil bearbeiten',
     ws_step1:'① Typ', ws_step2:'② Version', ws_step3:'③ Mods', ws_step4:'④ Einstellungen',
     sv_choose_type:'Servertyp wählen', sv_choose_version:'MC-Version wählen',
@@ -2710,7 +2745,7 @@ const LANGS={
     sec_launch_mode:'Mode de lancement', desc_launch_mode:'Lancer via le lanceur Minecraft original',
     desc_launch_mode_detail:'Ouvre le lanceur Minecraft officiel (Java Edition) au lieu de lancer directement.',
     sec_after_launch:'Après le lancement', desc_open_logs:'Ouvrir les journaux après le lancement', desc_close_launcher:'Fermer le lanceur pendant le jeu',
-    sec_tab_bar:'Barre d\'onglets', lbl_tab_bar_pos:'Position', tab_bar_top:'Haut', tab_bar_bottom:'Bas',
+    sec_tab_bar:'Barre d\'onglets', lbl_tab_bar_pos:'Position', tab_bar_top:'Haut', tab_bar_bottom:'Bas', tab_bar_left:'Gauche', tab_bar_right:'Droite',
     sec_theme:'Thème', lbl_theme:'Apparence', theme_dark:'Sombre', theme_light:'Clair', theme_glass:'Verre', theme_win7:'Windows 7', theme_xp:'Windows XP',
     sec_glass_bg:'Fond du verre', desc_glass_bg:'Fond personnalisé derrière le verre dépoli. Affiché uniquement dans le thème Verre.', btn_choose_bg:'Choisir une image…', btn_remove_bg:'Retirer', lbl_bg_tint:'Teinter l’image avec la couleur d’accentuation',
     sec_corner_radius:'Rayon des coins', lbl_corner_radius:'Arrondi', corner_small:'Petit', corner_medium:'Moyen', corner_large:'Grand', corner_round:'Rond',
@@ -2775,8 +2810,11 @@ const LANGS={
     loading_popular_mods:'Chargement des mods populaires...',
     modal_share:'Partager le Profil', modal_share_desc:'Copiez ce code et envoyez-le à quelqu\'un. Il peut l\'importer dans son Crux Launcher.',
     modal_import:'Importer le Profil', modal_import_desc:'Collez un code de partage d\'un autre utilisateur Crux Launcher.',
-    modal_import_norisk:'Importer les profils NoRisk Client', modal_import_norisk_desc:'Profils trouvés dans NoRisk Client v3 (NoRiskClientV3). Sélectionnez ceux à importer.',
+    modal_import_norisk:'Importer les profils NoRisk Client', modal_import_norisk_desc:'Importez vos profils NoRisk Client — depuis le client installé ou depuis un fichier .noriskpack exporté (nom et emplacement libres).',
     nrc_scanning:'Lecture des profils NoRisk Client...', nrc_none:'Aucun profil trouvé.', nrc_imported:'✓ {n} profil(s) importé(s).',
+    btn_choose_export:'Choisir un fichier d\'export…',
+    nrc_overrides_hint:'Cet export contient les fichiers de jeu complets (configs, mondes, packs). Les mondes et paramètres vont dans le groupe propre à ce profil ; les mods, configs et packs dans le dossier de jeu partagé.',
+    nrc_overrides_done:'✓ Fichiers de jeu importés.',
     modal_edit_profile:'Modifier le Profil',
     ws_step1:'① Type', ws_step2:'② Version', ws_step3:'③ Mods', ws_step4:'④ Paramètres',
     sv_choose_type:'Choisir le type de serveur', sv_choose_version:'Choisir la version MC',
@@ -2842,7 +2880,7 @@ const LANGS={
     sec_launch_mode:'Modo de lanzamiento', desc_launch_mode:'Iniciar a través del Minecraft Launcher original',
     desc_launch_mode_detail:'Abre el Minecraft Launcher oficial (Java Edition) en lugar de iniciar directamente.',
     sec_after_launch:'Después de iniciar', desc_open_logs:'Abrir registros después de iniciar', desc_close_launcher:'Cerrar launcher mientras juegas',
-    sec_tab_bar:'Barra de pestañas', lbl_tab_bar_pos:'Posición', tab_bar_top:'Arriba', tab_bar_bottom:'Abajo',
+    sec_tab_bar:'Barra de pestañas', lbl_tab_bar_pos:'Posición', tab_bar_top:'Arriba', tab_bar_bottom:'Abajo', tab_bar_left:'Izquierda', tab_bar_right:'Derecha',
     sec_theme:'Tema', lbl_theme:'Apariencia', theme_dark:'Oscuro', theme_light:'Claro', theme_glass:'Vidrio', theme_win7:'Windows 7', theme_xp:'Windows XP',
     sec_glass_bg:'Fondo de vidrio', desc_glass_bg:'Fondo personalizado detrás del vidrio esmerilado. Solo se muestra en el tema Vidrio.', btn_choose_bg:'Elegir imagen…', btn_remove_bg:'Quitar', lbl_bg_tint:'Teñir la imagen con el color de acento',
     sec_corner_radius:'Radio de esquinas', lbl_corner_radius:'Redondeo', corner_small:'Pequeño', corner_medium:'Medio', corner_large:'Grande', corner_round:'Redondo',
@@ -2902,8 +2940,11 @@ const LANGS={
     loading_popular_mods:'Cargando mods populares...',
     modal_share:'Compartir Perfil', modal_share_desc:'Copia este código y envíalo a alguien. Puede importarlo en su Crux Launcher.',
     modal_import:'Importar Perfil', modal_import_desc:'Pega un código de otro usuario de Crux Launcher.',
-    modal_import_norisk:'Importar perfiles de NoRisk Client', modal_import_norisk_desc:'Perfiles encontrados en NoRisk Client v3 (NoRiskClientV3). Selecciona cuáles importar.',
+    modal_import_norisk:'Importar perfiles de NoRisk Client', modal_import_norisk_desc:'Importa tus perfiles de NoRisk Client — desde el cliente instalado o desde un archivo .noriskpack exportado (cualquier nombre y ubicación).',
     nrc_scanning:'Leyendo perfiles de NoRisk Client...', nrc_none:'No se encontraron perfiles.', nrc_imported:'✓ {n} perfil(es) importado(s).',
+    btn_choose_export:'Elegir archivo de exportación…',
+    nrc_overrides_hint:'Este export contiene los archivos de juego completos (configs, mundos, packs). Los mundos y ajustes van al grupo propio de este perfil; los mods, configs y packs a la carpeta de juego compartida.',
+    nrc_overrides_done:'✓ Archivos de juego importados.',
     modal_edit_profile:'Editar Perfil',
     ws_step1:'① Tipo', ws_step2:'② Versión', ws_step3:'③ Mods', ws_step4:'④ Ajustes',
     sv_choose_type:'Elegir tipo de servidor', sv_choose_version:'Elegir versión MC',
@@ -4210,45 +4251,117 @@ document.getElementById('import-share-confirm-btn').addEventListener('click',asy
 
 // ── Import NoRisk Client profiles ──
 let nrcImportData=null;
-document.getElementById('import-norisk-btn').addEventListener('click', async ()=>{
+
+function nrcProgressHandler(_e,p){
+  const statusEl=document.getElementById('import-norisk-status');
+  const barWrap=document.getElementById('import-norisk-bar-wrap');
+  const bar=document.getElementById('import-norisk-bar');
+  if(!statusEl||!p) return;
+  statusEl.style.color='#888';
+  statusEl.textContent=(p.message||'')+(typeof p.percent==='number'?(' '+p.percent+'%'):'');
+  if(typeof p.percent==='number'){
+    if(barWrap) barWrap.style.display='block';
+    if(bar) bar.style.width=Math.max(0,Math.min(100,p.percent))+'%';
+  }
+}
+
+function renderNrcList(data){
   const statusEl=document.getElementById('import-norisk-status');
   const listEl=document.getElementById('import-norisk-list');
-  statusEl.textContent=t('nrc_scanning'); statusEl.style.color='#888';
-  listEl.innerHTML='';
-  document.getElementById('import-norisk-modal').style.display='flex';
-  let res;
-  try{ res=await ipcRenderer.invoke('import-norisk-profiles'); }
-  catch(e){ statusEl.textContent='Import failed: '+e.message; statusEl.style.color='#f44'; return; }
-  if(!res.ok){ listEl.innerHTML=''; statusEl.textContent=res.error; statusEl.style.color='#f44'; return; }
-  statusEl.textContent='';
-  if(!res.profiles.length){ listEl.innerHTML='<div class="mod-list-empty">'+escHtml(t('nrc_none'))+'</div>'; return; }
-  nrcImportData=res;
-  res.profiles.forEach((p,idx)=>{
+  const fileEl=document.getElementById('import-norisk-file');
+  const hintEl=document.getElementById('import-norisk-hint');
+  listEl.innerHTML=''; statusEl.textContent=''; statusEl.style.color='#888';
+  fileEl.textContent=data.file?('📄 '+data.file):'';
+  if(data.source==='export'&&data.hasOverrides){
+    hintEl.style.display='block'; hintEl.textContent=t('nrc_overrides_hint');
+  } else { hintEl.style.display='none'; hintEl.textContent=''; }
+  if(!data.profiles.length){ listEl.innerHTML='<div class="mod-list-empty">'+escHtml(t('nrc_none'))+'</div>'; return; }
+  data.profiles.forEach((p,idx)=>{
     const row=document.createElement('label');
     row.style.cssText='display:flex;align-items:center;gap:.6em;padding:.45em 0;border-bottom:1px solid var(--border);cursor:pointer';
     row.innerHTML=`<input type="checkbox" class="nrc-import-check" checked style="width:1.1em;height:1.1em;flex-shrink:0"><div style="flex:1;min-width:0"><div style="font-size:.85em;font-weight:600;word-break:break-word">${escHtml(p.name)}</div><div style="font-size:.7em;color:var(--text-muted)">${escHtml(p.mcVersion||'Latest')} · ${escHtml(p.modLoader||'fabric')} · ${p.mods.length} mods</div></div>`;
     row.dataset.idx=idx;
+    const nrcCb=row.querySelector('.nrc-import-check'); if(nrcCb) nrcCb.dataset.idx=idx;
     listEl.appendChild(row);
   });
-});
-document.getElementById('import-norisk-confirm-btn').addEventListener('click',()=>{
+}
+
+async function nrcOpenImport(){
   const statusEl=document.getElementById('import-norisk-status');
+  const listEl=document.getElementById('import-norisk-list');
+  document.getElementById('import-norisk-file').textContent='';
+  document.getElementById('import-norisk-hint').style.display='none';
+  statusEl.textContent=t('nrc_scanning'); statusEl.style.color='#888';
+  listEl.innerHTML='';
+  let res;
+  try{ res=await ipcRenderer.invoke('choose-norisk-export'); }
+  catch(e){ statusEl.textContent='Import failed: '+e.message; statusEl.style.color='#f44'; return; }
+  if(res&&res.ok&&!res.canceled){
+    nrcImportData={ source:'export', file:res.file, isZip:res.isZip, hasOverrides:res.hasOverrides, profiles:res.profiles };
+    renderNrcList(nrcImportData);
+    return;
+  }
+  if(res&&!res.ok&&!res.canceled){ listEl.innerHTML=''; statusEl.textContent=res.error; statusEl.style.color='#f44'; return; }
+  // Dialog cancelled → fall back to scanning the installed NoRisk Client.
+  let scan;
+  try{ scan=await ipcRenderer.invoke('import-norisk-profiles'); }
+  catch(e){ statusEl.textContent='Import failed: '+e.message; statusEl.style.color='#f44'; return; }
+  if(!scan.ok){ listEl.innerHTML=''; statusEl.textContent=scan.error; statusEl.style.color='#f44'; return; }
+  nrcImportData={ source:'scan', file:scan.file, profiles:scan.profiles };
+  renderNrcList(nrcImportData);
+}
+
+document.getElementById('import-norisk-btn').addEventListener('click', ()=>{
+  document.getElementById('import-norisk-modal').style.display='flex';
+  nrcOpenImport();
+});
+document.getElementById('import-norisk-file-btn').addEventListener('click', ()=>{ nrcOpenImport(); });
+
+document.getElementById('import-norisk-confirm-btn').addEventListener('click', async ()=>{
+  const statusEl=document.getElementById('import-norisk-status');
+  const barWrap=document.getElementById('import-norisk-bar-wrap');
+  const bar=document.getElementById('import-norisk-bar');
+  const confirmBtn=document.getElementById('import-norisk-confirm-btn');
   if(!nrcImportData){ statusEl.textContent='Nothing to import.'; statusEl.style.color='#f44'; return; }
   const checks=[...document.querySelectorAll('.nrc-import-check')];
   const selIdx=checks.filter(c=>c.checked).map(c=>parseInt(c.dataset.idx,10));
+  if(!selIdx.length){ statusEl.textContent='Select at least one profile.'; statusEl.style.color='#f44'; return; }
+
+  // Import the export's game files (overrides) once, into the first profile's group.
+  if(nrcImportData.source==='export' && nrcImportData.hasOverrides){
+    const first=nrcImportData.profiles[selIdx[0]];
+    if(!first){ statusEl.textContent='Selected profile not found.'; statusEl.style.color='#f44'; return; }
+    confirmBtn.disabled=true;
+    if(barWrap) barWrap.style.display='block';
+    if(bar) bar.style.width='0%';
+    ipcRenderer.on('norisk-import-progress', nrcProgressHandler);
+    let r;
+    try{ r=await ipcRenderer.invoke('extract-norisk-overrides',{ file:nrcImportData.file, groupName:first.group||first.name, profileName:first.name }); }
+    catch(e){ r={ ok:false, error:e.message }; }
+    ipcRenderer.removeListener('norisk-import-progress', nrcProgressHandler);
+    confirmBtn.disabled=false;
+    if(!r.ok){ statusEl.textContent='Game files import failed: '+r.error; statusEl.style.color='#f44'; return; }
+    statusEl.textContent=t('nrc_overrides_done'); statusEl.style.color='#1bd96a';
+    if(bar) bar.style.width='100%';
+  }
+
   let added=0;
   for(const idx of selIdx){
     const np=nrcImportData.profiles[idx];
     if(!np) continue;
-    const exists=profiles.some(p=>p.name===np.name&&p.mcVersion===np.mcVersion&&p.modLoader===np.modLoader);
-    if(exists) continue;
+    let nm=np.name;
+    if(profiles.some(p=>p.name===nm)){ let n=2; while(profiles.some(p=>p.name===nm+' ('+n+')')) n++; nm=nm+' ('+n+')'; np.name=nm; }
     profiles.push(np); added++;
   }
   ipcRenderer.send('save-profiles',profiles);
   renderProfileList();updateLaunchProfileSelect();
   statusEl.textContent=t('nrc_imported').replace('{n}',added);
   statusEl.style.color='#1bd96a';
-  if(added) setTimeout(()=>{document.getElementById('import-norisk-modal').style.display='none';},1500);
+  if(added) setTimeout(()=>{
+    document.getElementById('import-norisk-modal').style.display='none';
+    if(barWrap) barWrap.style.display='none';
+    if(bar) bar.style.width='0%';
+  },1800);
 });
 
 // Profile pack buttons
@@ -7185,10 +7298,12 @@ document.getElementById('use-original-launcher-toggle').addEventListener('change
   saveSettings();
 });
 
-// ── Tab bar position (top / bottom) ───────────────────────────────────────
+// ── Tab bar position (top / bottom / left / right) ────────────────────────
 function applyTabBarPosition(){
   const pos = settings.tabBarPosition || 'top';
   document.body.classList.toggle('tabs-bottom', pos === 'bottom');
+  document.body.classList.toggle('tabs-left', pos === 'left');
+  document.body.classList.toggle('tabs-right', pos === 'right');
   const sel = document.getElementById('tab-bar-position-select');
   if(sel) sel.value = pos;
 }
@@ -8477,7 +8592,7 @@ function showUpdateOverlay(info) {
     window._updatePollInterval = setInterval(async () => {
       if(!appInForeground()) return;
       try {
-        const result = await ipcRenderer.invoke('check-for-update');
+    const result = await ipcRenderer.invoke('check-for-update', { manual: !silent });
         if (result.updateAvailable && (result.downloadUrl || result.installerUrl)) {
           pendingUpdate = result;
           document.getElementById('update-wait-text').style.display = 'none';
@@ -8500,7 +8615,7 @@ document.getElementById('update-install-btn').addEventListener('click', async ()
   document.getElementById('update-error-text').style.display = 'none';
   document.getElementById('update-done-text').style.display = 'none';
   try {
-    await ipcRenderer.invoke('download-and-install-update', pendingUpdate.downloadUrl, pendingUpdate.installerUrl);
+    await ipcRenderer.invoke('download-and-install-update', pendingUpdate.downloadUrl, pendingUpdate.installerUrl, pendingUpdate.newVersion);
     document.getElementById('update-progress-wrap').style.display = 'none';
     document.getElementById('update-done-text').textContent = 'Update installed! Restarting...';
     document.getElementById('update-done-text').style.display = 'block';
