@@ -59,7 +59,7 @@ select,.btn{padding:.5em .85em;border:1px solid #2a2a2a;border-radius:var(--r);b
 .btn:hover{background:#1a1a1a;}
 .btn-primary{background:linear-gradient(90deg,var(--acc2),var(--acc));border-color:var(--acc);}
 .btn-primary:hover{filter:brightness(1.15);}
-input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:999px;background:#222;border:none;outline:none;}
+input[type=range]{appearance:none;-webkit-appearance:none;width:100%;height:5px;border-radius:999px;background:#222;border:none;outline:none;}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:1.3em;height:1.3em;border-radius:50%;background:var(--acc);border:2px solid #fff3;cursor:pointer;}
 .status-text{color:#666;font-size:.82em;margin-top:.5em;}
 
@@ -800,7 +800,7 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
     <button class="tb-btn" data-page="bugreport-page" data-i18n="tab_bugreport">Bug Report</button>
     <button class="tb-btn" data-page="account-page" id="tb-account-btn" data-i18n="tab_account">
       <canvas class="tb-head" id="tb-account-head" width="24" height="24"></canvas>
-      Acount
+      Account
     </button>
   </div>
 
@@ -965,7 +965,7 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
           <button class="btn btn-primary btn-sm" id="cape-editor-btn" style="width:auto" data-i18n="btn_open_cape_editor">Open Cape Editor</button>
           <span id="cape-custom-status" style="font-size:.78em;color:#888"></span>
           <button class="btn btn-sm" id="cape-custom-toggle" style="width:auto;display:none" data-i18n="btn_disable_cape">Disable Cape</button>
-          <button class="btn btn-sm" id="cape-custom-remove" style="width:auto;color:#f44;border-color:#f4455" data-i18n="btn_remove_custom_cape">Remove Custom Cape</button>
+          <button class="btn btn-sm" id="cape-custom-remove" style="width:auto;color:#f44;border-color:#f44555" data-i18n="btn_remove_custom_cape">Remove Custom Cape</button>
         </div>
       </div>
       <div class="settings-section" style="margin-top:1.5em">
@@ -1513,9 +1513,26 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
       </div>
     </div>
 
+    <!-- ── Account required (Microsoft) overlay ── -->
+    <div id="account-required-overlay" class="modal-overlay" style="display:none;z-index:2600">
+      <div class="modal" style="max-width:440px">
+        <div class="modal-header">
+          <h2 data-i18n="acct_required_title">Account required</h2>
+          <button class="btn modal-close" id="account-required-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <p style="color:#ccc;line-height:1.6;font-size:.9em;margin-bottom:1.2em" data-i18n="acct_required_msg">Please link your Microsoft account first before opening Bug Reports.</p>
+          <div style="display:flex;gap:.6em;justify-content:flex-end">
+            <button class="btn" id="account-required-cancel" data-i18n="acct_required_cancel">Cancel</button>
+            <button class="btn btn-primary" id="account-required-goto" data-i18n="acct_required_goto">Link account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ══ ACCOUNT ══ -->
     <div id="account-page" class="page" style="display:none">
-      <h1 data-i18n="h_account">Acount</h1>
+      <h1 data-i18n="h_account">Account</h1>
       <div class="account-panel">
         <div class="account-list" id="account-list">
           <div class="mod-list-empty" data-i18n="no_accounts">No accounts added yet.</div>
@@ -2387,11 +2404,13 @@ function renderCapePreview(url){
 const LANGS={
   en:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes',
-    tab_settings:'Settings', tab_logs:'Logs', tab_account:'Acount', tab_recent:'Recent', tab_servers:'Servers', tab_features:'Features', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
+    tab_settings:'Settings', tab_logs:'Logs', tab_account:'Account', tab_recent:'Recent', tab_servers:'Servers', tab_features:'Features', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
-    h_logs:'Logs', h_account:'Acount', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends',
+    h_logs:'Logs', h_account:'Account', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends',
+    acct_required_title:'Account required', acct_required_msg:'Please link your Microsoft account first before opening Bug Reports.', acct_required_cancel:'Cancel', acct_required_goto:'Link account',
     lbl_profile:'Profile:', lbl_version:'Version:', lbl_change_skin:'Change Skin:', lbl_actions:'Actions:', lbl_ram:'RAM:', lbl_instance:'Instance:',
-    lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod Loader', lbl_render_api:'Rendering API:', lbl_added:'Added:',    btn_launch:'▶ Launch Minecraft', btn_stop:'■ Stop', btn_stop_all:'■ Stop All',
+    lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod Loader', lbl_render_api:'Rendering API:', lbl_added:'Added:',
+    btn_launch:'▶ Launch Minecraft', btn_stop:'■ Stop', btn_stop_all:'■ Stop All',
     btn_add:'Add', btn_add_png:'📁 Add PNG to List', btn_pixel_editor:'🎨 Pixel Editor', btn_skin_list:'📋 Skin List',
     btn_apply_skin:'Apply to Skin', btn_export_png:'Export PNG', btn_import_png:'Import PNG', btn_close:'Close',
     btn_save_cape:'Save Cape', btn_open_cape_editor:'Open Cape Editor', btn_disable_cape:'Disable Cape',
@@ -2519,11 +2538,13 @@ const LANGS={
   },
   de:{
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes',
-    tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_account:'Acount', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_features:'Features', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
+    tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_account:'Account', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_features:'Features', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
-    h_logs:'Protokolle', h_account:'Acount', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde',
+    h_logs:'Protokolle', h_account:'Account', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde',
+    acct_required_title:'Account erforderlich', acct_required_msg:'Bitte verknüpfe zuerst deinen Microsoft-Account, bevor du Fehler melden kannst.', acct_required_cancel:'Abbrechen', acct_required_goto:'Account verknüpfen',
     lbl_profile:'Profil:', lbl_version:'Version:', lbl_change_skin:'Skin wechseln:', lbl_actions:'Aktionen:', lbl_ram:'RAM:', lbl_instance:'Instanz:',
-    lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod-Loader', lbl_render_api:'Rendering-API:', lbl_added:'Hinzugefügt:',    btn_launch:'▶ Minecraft starten', btn_stop:'■ Stoppen', btn_stop_all:'■ Alle stoppen',
+    lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod-Loader', lbl_render_api:'Rendering-API:', lbl_added:'Hinzugefügt:',
+    btn_launch:'▶ Minecraft starten', btn_stop:'■ Stoppen', btn_stop_all:'■ Alle stoppen',
     btn_add:'Hinzufügen', btn_add_png:'📁 PNG zur Liste hinzufügen', btn_pixel_editor:'🎨 Pixel Editor', btn_skin_list:'📋 Skin Liste',
     btn_apply_skin:'Auf Skin anwenden', btn_export_png:'PNG exportieren', btn_import_png:'PNG importieren', btn_close:'Schließen',
     btn_save_cape:'Cape speichern', btn_open_cape_editor:'Cape Editor öffnen', btn_disable_cape:'Cape deaktivieren',
@@ -2651,11 +2672,13 @@ const LANGS={
   },
   fr:{
     tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes',
-    tab_settings:'Paramètres', tab_logs:'Journaux', tab_account:'Acount', tab_recent:'Récents', tab_servers:'Serveurs', tab_features:'Fonctionnalités', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
+    tab_settings:'Paramètres', tab_logs:'Journaux', tab_account:'Account', tab_recent:'Récents', tab_servers:'Serveurs', tab_features:'Fonctionnalités', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
     h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
-    h_logs:'Journaux', h_account:'Acount', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis',
+    h_logs:'Journaux', h_account:'Account', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis',
+    acct_required_title:'Compte requis', acct_required_msg:'Veuillez d\'abord lier votre compte Microsoft avant d\'ouvrir les rapports de bug.', acct_required_cancel:'Annuler', acct_required_goto:'Lier le compte',
     lbl_profile:'Profil :', lbl_version:'Version :', lbl_change_skin:'Changer de skin :', lbl_actions:'Actions :', lbl_ram:'RAM :', lbl_instance:'Instance :',
-    lbl_launcher_ram:'RAM du Lanceur :', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de rendu :', lbl_added:'Ajouté :',    btn_launch:'▶ Lancer Minecraft', btn_stop:'■ Arrêter', btn_stop_all:'■ Tout arrêter',
+    lbl_launcher_ram:'RAM du Lanceur :', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de rendu :', lbl_added:'Ajouté :',
+    btn_launch:'▶ Lancer Minecraft', btn_stop:'■ Arrêter', btn_stop_all:'■ Tout arrêter',
     btn_add:'Ajouter', btn_add_png:'📁 Ajouter PNG à la liste', btn_pixel_editor:'🎨 Éditeur Pixel', btn_skin_list:'📋 Liste de Skins',
     btn_apply_skin:'Appliquer au Skin', btn_export_png:'Exporter PNG', btn_import_png:'Importer PNG', btn_close:'Fermer',
     btn_save_cape:'Sauvegarder Cape', btn_open_cape_editor:'Ouvrir l\'éditeur de Cape', btn_disable_cape:'Désactiver la Cape',
@@ -2781,11 +2804,13 @@ const LANGS={
   },
   es:{
     tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas',
-    tab_settings:'Ajustes', tab_logs:'Registros', tab_account:'Acount', tab_recent:'Recientes', tab_servers:'Servidores', tab_features:'Funciones', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
+    tab_settings:'Ajustes', tab_logs:'Registros', tab_account:'Account', tab_recent:'Recientes', tab_servers:'Servidores', tab_features:'Funciones', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
     h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
-    h_logs:'Registros', h_account:'Acount', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos',
+    h_logs:'Registros', h_account:'Account', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos',
+    acct_required_title:'Cuenta requerida', acct_required_msg:'Vincula primero tu cuenta de Microsoft antes de abrir los informes de error.', acct_required_cancel:'Cancelar', acct_required_goto:'Vincular cuenta',
     lbl_profile:'Perfil:', lbl_version:'Versión:', lbl_change_skin:'Cambiar Skin:', lbl_actions:'Acciones:', lbl_ram:'RAM:', lbl_instance:'Instancia:',
-    lbl_launcher_ram:'RAM del Launcher:', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de Renderizado:', lbl_added:'Añadido:',    btn_launch:'▶ Iniciar Minecraft', btn_stop:'■ Detener', btn_stop_all:'■ Detener Todo',
+    lbl_launcher_ram:'RAM del Launcher:', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de Renderizado:', lbl_added:'Añadido:',
+    btn_launch:'▶ Iniciar Minecraft', btn_stop:'■ Detener', btn_stop_all:'■ Detener Todo',
     btn_add:'Agregar', btn_add_png:'📁 Agregar PNG a la lista', btn_pixel_editor:'🎨 Editor de Píxeles', btn_skin_list:'📋 Lista de Skins',
     btn_apply_skin:'Aplicar al Skin', btn_export_png:'Exportar PNG', btn_import_png:'Importar PNG', btn_close:'Cerrar',
     btn_save_cape:'Guardar Capa', btn_open_cape_editor:'Abrir Editor de Capa', btn_disable_cape:'Desactivar Capa',
@@ -9027,14 +9052,42 @@ document.getElementById('update-later-btn').addEventListener('click', () => {
   if (overlay) overlay.style.display = 'none';
 });
 
+// Bug Reports require a linked Microsoft account
+function hasMicrosoftAccount(){
+  return Array.isArray(accounts) && accounts.some(a => a && a.type === 'Microsoft');
+}
+function showAccountRequiredOverlay(){
+  const ov = document.getElementById('account-required-overlay');
+  if (ov) ov.style.display = 'flex';
+}
+function hideAccountRequiredOverlay(){
+  const ov = document.getElementById('account-required-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
 // Block tab switching when update overlay is shown
 const origShowPage = window.showPage;
 window.showPage = function(pageId) {
   if (pendingUpdate && document.getElementById('update-overlay').style.display === 'flex') {
     return;
   }
+  if (pageId === 'bugreport-page' && !hasMicrosoftAccount()) {
+    showAccountRequiredOverlay();
+    return;
+  }
   if (origShowPage) origShowPage(pageId);
 };
+
+(function bindAccountRequiredOverlay(){
+  const closeBtn = document.getElementById('account-required-close');
+  const cancelBtn = document.getElementById('account-required-cancel');
+  const gotoBtn = document.getElementById('account-required-goto');
+  const ov = document.getElementById('account-required-overlay');
+  if (closeBtn) closeBtn.addEventListener('click', hideAccountRequiredOverlay);
+  if (cancelBtn) cancelBtn.addEventListener('click', hideAccountRequiredOverlay);
+  if (ov) ov.addEventListener('click', (e) => { if (e.target === ov) hideAccountRequiredOverlay(); });
+  if (gotoBtn) gotoBtn.addEventListener('click', () => { hideAccountRequiredOverlay(); if (origShowPage) origShowPage('account-page'); });
+})();
 
 let _updLastUpdate=0,_updPending=null;
 function _applyUpdateProgress(downloaded,total){
