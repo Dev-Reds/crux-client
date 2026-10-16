@@ -12,6 +12,11 @@
 //     GET  /v1/requests?uuid=X               -> { requests: [...], accepted: [...] }
 //     POST /v1/requests/respond              body: { fromUuid, toUuid, accept, acceptorName? }
 //     POST /v1/requests/consume              body: { uuid, fromUuid }
+//     POST /v1/logins                        body: { uuid?, username, first?, last?, logins? } -> { ok, key }
+//     GET  /v1/logins                        -> { logins: [ { uuid, username, first, last, logins } ] }
+//     POST /v1/bans                          body: { key?, uuid?, name, reason, by, start, end } -> { ok, key }
+//     GET  /v1/bans                          -> { bans: [ { key, uuid, name, reason, by, start, end } ] }
+//     POST /v1/bans/remove                   body: { key } -> { ok }
 //
 //   Friend requests are persisted to a JSON file (DATA_DIR, default ./data).
 //   On hosts with ephemeral disks (e.g. Render free tier) they survive process
@@ -38,7 +43,9 @@ const DB_FILE = path.join(DATA_DIR, 'requests.json');
 // Persisted friend-request state
 // db.requests: [{ fromUuid, fromName, toUuid, toName, message, sentAt }]   (pending)
 // db.accepted: [{ requester, acceptor, at }]   (requester had their request accepted by acceptor)
-let db = { requests: [], accepted: [] };
+// db.logins:   [{ uuid, username, first, last, logins }]   (every account that ever logged in)
+// db.bans:     [{ key, uuid, name, reason, by, start, end }]   (owner-managed bans)
+let db = { requests: [], accepted: [], logins: [], bans: [] };
 let saveTimer = null;
 
 function loadDb() {
@@ -49,6 +56,8 @@ function loadDb() {
   }
   if (!Array.isArray(db.requests)) db.requests = [];
   if (!Array.isArray(db.accepted)) db.accepted = [];
+  if (!Array.isArray(db.logins)) db.logins = [];
+  if (!Array.isArray(db.bans)) db.bans = [];
 }
 
 function persist() {
@@ -98,6 +107,14 @@ function readBody(req) {
 
 function normUuid(u) {
   return String(u || '').replace(/-/g, '').toLowerCase();
+}
+
+// Stable identity for an account: by uuid when present, otherwise by name.
+function accountKey(uuid, name) {
+  const u = normUuid(uuid);
+  if (u) return 'u:' + u;
+  const n = String(name || '').trim().toLowerCase();
+  return n ? 'n:' + n : null;
 }
 
 async function parseBody(req) {
@@ -239,6 +256,82 @@ const server = http.createServer(async (req, res) => {
     const uuid = normUuid(body.uuid);
     const fromUuid = normUuid(body.fromUuid);
     db.accepted = db.accepted.filter(a => !(a.requester === uuid && a.acceptor === fromUuid));
+    persistDebounced();
+    json(res, 200, { ok: true });
+    return;
+  }
+
+  // ── Global login registry (device-spanning account list) ───────────
+  if (p === '/v1/logins' && req.method === 'POST') {
+    const body = await parseBody(req);
+    if (!body) { json(res, 400, { error: 'bad body' }); return; }
+    const uuid = normUuid(body.uuid);
+    const username = String(body.username || body.name || '').slice(0, 64);
+    const key = accountKey(uuid, username);
+    if (!key) { json(res, 400, { error: 'uuid or username required' }); return; }
+    const t = now();
+    const inFirst = Number(body.first) || 0;
+    const inLast = Number(body.last) || 0;
+    const inLogins = Number(body.logins) || 0;
+    let e = db.logins.find(x => accountKey(x.uuid, x.username) === key);
+    if (!e) {
+      e = { uuid, username, first: inFirst || t, last: inLast || t, logins: inLogins || 1 };
+      db.logins.push(e);
+    } else {
+      if (uuid && !e.uuid) e.uuid = uuid;
+      if (username) e.username = username;
+      if (inFirst && (!e.first || inFirst < e.first)) e.first = inFirst;
+      if (inLast && inLast > (e.last || 0)) e.last = inLast;
+      if (inLogins > (e.logins || 0)) e.logins = inLogins;
+    }
+    persistDebounced();
+    json(res, 200, { ok: true, key });
+    return;
+  }
+
+  if (p === '/v1/logins' && req.method === 'GET') {
+    json(res, 200, { logins: db.logins });
+    return;
+  }
+
+  // ── Bans (owner-managed, device-spanning) ─────────────────────────
+  if (p === '/v1/bans' && req.method === 'POST') {
+    const body = await parseBody(req);
+    if (!body) { json(res, 400, { error: 'bad body' }); return; }
+    const uuid = normUuid(body.uuid);
+    const name = String(body.name || '').slice(0, 64);
+    const key = String(body.key || '') || accountKey(uuid, name);
+    if (!key || key === 'n:') { json(res, 400, { error: 'key, uuid or name required' }); return; }
+    const entry = {
+      key,
+      uuid,
+      name,
+      reason: String(body.reason || '').slice(0, 500),
+      by: String(body.by || '').slice(0, 64),
+      start: Number(body.start) || now(),
+      end: body.end ? Number(body.end) : null,
+      disabled: Array.isArray(body.disabled)
+        ? body.disabled.map(x => String(x).slice(0, 32)).slice(0, 32)
+        : undefined
+    };
+    db.bans = db.bans.filter(b => b && b.key !== key);
+    db.bans.push(entry);
+    persistDebounced();
+    json(res, 200, { ok: true, key });
+    return;
+  }
+
+  if (p === '/v1/bans' && req.method === 'GET') {
+    json(res, 200, { bans: db.bans });
+    return;
+  }
+
+  if (p === '/v1/bans/remove' && req.method === 'POST') {
+    const body = await parseBody(req);
+    if (!body) { json(res, 400, { error: 'bad body' }); return; }
+    const key = String(body.key || '');
+    if (!key) { json(res, 400, { error: 'key required' }); return; }
+    db.bans = db.bans.filter(b => b && b.key !== key);
     persistDebounced();
     json(res, 200, { ok: true });
     return;

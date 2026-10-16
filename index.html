@@ -38,6 +38,7 @@ body.light .launch-recent{border-top-color:#ddd;}
 .tb-btn:hover{background:#1a1a1a;color:#ccc;}
 .tb-btn.active{background:var(--acc);border-color:var(--acc);color:#fff;}
 .tb-btn .tb-head{width:1.2em;height:1.2em;border-radius:.15em;image-rendering:pixelated;display:none;}
+.tb-btn.tb-disabled{opacity:.4;pointer-events:none;cursor:not-allowed;}
 /* ── Tab bar position (top/bottom) ── */
 body.tabs-bottom .toolbar{order:99;border-bottom:none;border-top:1px solid #1e1e1e;}
 body.tabs-bottom #settings-fab{bottom:calc(var(--tb) + 30px);}
@@ -814,11 +815,12 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
     <button class="tb-btn" data-page="logs-page" data-i18n="tab_logs">Logs<span id="running-badge" style="display:none;margin-left:.3em;background:#1bd96a;color:#000;border-radius:999px;font-size:.7em;padding:.05em .45em;font-weight:bold"></span></button>
     <button class="tb-btn" data-page="servers-page" data-i18n="tab_servers">Servers</button>
     <button class="tb-btn" data-page="features-page" data-i18n="tab_features">Features</button>
-    <button class="tb-btn" data-page="bugreport-page" data-i18n="tab_bugreport">Bug Report</button>
+    <button class="tb-btn" data-page="bugreport-page" id="tb-bugreport-btn" data-i18n="tab_bugreport">Bug Report</button>
     <button class="tb-btn" data-page="account-page" id="tb-account-btn" data-i18n="tab_account">
       <canvas class="tb-head" id="tb-account-head" width="24" height="24"></canvas>
       Account
     </button>
+    <button class="tb-btn" data-page="owner-page" id="tb-owner-btn" style="display:none">Owner</button>
   </div>
 
   <button class="tb-btn" id="settings-fab" data-page="settings-page" data-i18n-title="tab_settings" title="Settings">
@@ -1550,6 +1552,91 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
       </div>
     </div>
 
+    <!-- ── Owner: Ban overlay ── -->
+    <div id="ban-modal" class="modal-overlay" style="display:none;z-index:2700">
+      <div class="modal" style="max-width:480px">
+        <div class="modal-header">
+          <h2>Account bannen</h2>
+          <button class="btn modal-close" id="ban-modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row" style="max-width:100%">
+            <label>Account:</label>
+            <span id="ban-account-name" style="color:#f66;font-weight:bold;align-self:center">—</span>
+          </div>
+          <div class="form-row" style="max-width:100%">
+            <label>Grund:</label>
+            <input type="text" id="ban-reason" placeholder="z.B. Cheating, Spam, Crash-Reports" autocomplete="off" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
+          </div>
+          <div class="form-row" style="max-width:100%">
+            <label>Dauer:</label>
+            <select id="ban-duration" style="background:#1a1a1a;color:#ccc;border:1px solid #333;border-radius:4px;padding:.35em .5em;font-size:.85em">
+              <option value="1">1 Stunde</option>
+              <option value="6">6 Stunden</option>
+              <option value="24" selected>24 Stunden</option>
+              <option value="72">3 Tage</option>
+              <option value="168">7 Tage</option>
+              <option value="720">30 Tage</option>
+              <option value="0">Permanent</option>
+            </select>
+          </div>
+          <div class="form-row" style="max-width:100%">
+            <label>Eigene Dauer:</label>
+            <input type="number" id="ban-custom-amount" min="1" step="1" placeholder="z.B. 45" autocomplete="off" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none;flex:0 0 6em">
+            <select id="ban-custom-unit" style="background:#1a1a1a;color:#ccc;border:1px solid #333;border-radius:4px;padding:.35em .5em;font-size:.85em">
+              <option value="min">Minuten</option>
+              <option value="h" selected>Stunden</option>
+              <option value="d">Tage</option>
+              <option value="w">Wochen</option>
+            </select>
+          </div>
+          <div class="status-text" id="ban-duration-preview" style="color:#999;min-height:1.2em"></div>
+          <div class="form-row" style="max-width:100%;align-items:flex-start">
+            <label style="padding-top:.15em">Deaktivieren:</label>
+            <div id="ban-features" style="display:flex;flex-direction:column;gap:.3em;font-size:.82em;color:#ccc;min-width:0"></div>
+          </div>
+          <div class="status-text" id="ban-error" style="color:#f88;min-height:1.2em"></div>
+          <div style="display:flex;gap:.6em;justify-content:flex-end;margin-top:.6em">
+            <button class="btn" id="ban-cancel">Abbrechen</button>
+            <button class="btn btn-primary" id="ban-confirm">Bannen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Ban notice (gebannter Account, erscheint beim App-Start) ── -->
+    <div id="ban-notice-modal" class="modal-overlay" style="display:none;z-index:2800">
+      <div class="modal" style="max-width:460px">
+        <div class="modal-header">
+          <h2 style="color:#f66">⛔ Du bist gebannt</h2>
+        </div>
+        <div class="modal-body">
+          <p style="color:#ccc;line-height:1.6;font-size:.9em;margin-bottom:.9em">
+            Dieser Account ist vom Crux Client gesperrt. Die folgenden Funktionen sind deaktiviert:
+          </p>
+          <div class="form-row" style="max-width:100%">
+            <label>Grund:</label>
+            <span id="ban-notice-reason" style="color:#f88;align-self:center;min-width:0;overflow:hidden;text-overflow:ellipsis">—</span>
+          </div>
+          <div class="form-row" style="max-width:100%">
+            <label>Gesperrt:</label>
+            <span id="ban-notice-features" style="color:#f88;align-self:center;min-width:0">—</span>
+          </div>
+          <div class="form-row" style="max-width:100%">
+            <label>Läuft aus:</label>
+            <span id="ban-notice-end" style="color:#ccc;align-self:center">—</span>
+          </div>
+          <p style="color:#999;font-size:.82em;line-height:1.5;margin:.7em 0 1em">
+            Du kannst den Bann in unserem Discord anfechten.
+          </p>
+          <div style="display:flex;gap:.6em;justify-content:flex-end;flex-wrap:wrap">
+            <button class="btn" id="ban-notice-discord">Discord — Ban anfechten</button>
+            <button class="btn btn-primary" id="ban-notice-accept">Verstanden &amp; akzeptiert</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ══ ACCOUNT ══ -->
     <div id="account-page" class="page" style="display:none">
       <h1 data-i18n="h_account">Account</h1>
@@ -1561,6 +1648,18 @@ body.glass .modal-tab.active{background:color-mix(in srgb,var(--acc) 30%,transpa
           <button class="btn btn-sm btn-ms" id="btn-add-ms" data-i18n="add_ms">+ Microsoft</button>
         </div>
       </div>
+    </div>
+
+    <!-- ══ OWNER ══ -->
+    <div id="owner-page" class="page" style="display:none">
+      <h1>Owner</h1>
+      <h2 style="margin:1.1em 0 .5em;font-size:.9em;color:#888">Minecraft Accounts — jemals eingeloggt</h2>
+      <div style="display:flex;gap:.4em;margin:.2em 0 .7em;flex-wrap:wrap">
+        <button class="btn btn-sm" id="owner-filter-all">Alle Accounts</button>
+        <button class="btn btn-sm" id="owner-filter-banned" style="border-color:#f4444455;color:#f44">Gebannt</button>
+      </div>
+      <div class="account-list" id="owner-account-list"></div>
+      <div class="mod-list-empty" id="owner-account-empty" style="display:none">Noch keine Logins aufgezeichnet.</div>
     </div>
 
     <!-- ══ BUG REPORT ══ -->
@@ -2183,6 +2282,14 @@ async function bootLauncher(){
     renderModList();
     fetchMissingModIcons();
     renderAccountList();
+    if(typeof syncLoginHistory==='function') syncLoginHistory();
+    if(typeof syncOwnerTab==='function') syncOwnerTab();
+    if(typeof applyBanState==='function') applyBanState();
+    if(typeof refreshRemote==='function'){
+      if(typeof republishAll==='function') republishAll().then(()=>refreshRemote());
+      else refreshRemote();
+      setInterval(refreshRemote, 60000);
+    }
     renderProfileList();
     updateLaunchProfileSelect();
     // Sync account skins with Mojang on every launch. If the server-side active
@@ -2263,13 +2370,15 @@ function updateStopButtons(){
   sel.style.display = hasRunning ? '' : 'none';
   stopBtn.style.display = hasRunning ? '' : 'none';
   stopAllBtn.style.display = running.length >= 2 ? '' : 'none';
-  if(!hasRunning) document.getElementById('launch-btn').disabled=false;
+  if(!hasRunning) enableLaunchBtn();
 }
 function showLauncher(){
   document.getElementById('launcher-screen').style.display='flex';
 }
 
 function showPage(id){
+  // Ban: durch den Bann gesperrte Tabs blockieren
+  try{ if(typeof banPageBlocked==='function' && banPageBlocked(id)) return; }catch(err){}
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
   const pg=document.getElementById(id); pg.classList.add('active'); pg.style.display='';
   document.querySelectorAll('.tb-btn[data-page]').forEach(b=>{
@@ -2280,6 +2389,7 @@ function showPage(id){
     } else { b.style.background=''; b.style.borderColor=''; b.style.color=''; }
   });
   if(id==='mods-page') syncModFilterToProfile();
+  if(id==='owner-page' && typeof renderOwnerAccountList==='function') renderOwnerAccountList();
   if(id==='logs-page'){ renderInstanceList(); refreshLogSelect(); updateStopButtons(); }
   if(id==='launch-page') renderRecentList();  if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
   if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); refreshChat(); }
@@ -3012,6 +3122,7 @@ function applyLanguage(lang){
   if(typeof renderFriendList==='function') renderFriendList();
   // Rebuild settings side-nav labels after translation
   buildSettingsNav();
+  if(typeof syncOwnerTab==='function') syncOwnerTab();
 }
 
 // ── Settings left-side tab navigation ────────────────────────────────────
@@ -3024,6 +3135,7 @@ function buildSettingsNav(){
   const navBtns=[...nav.children];
   const activeIdx=navBtns.findIndex(b=>b.classList.contains('active'));
   nav.innerHTML='';
+
   body.querySelectorAll('.settings-section').forEach(sec=>{
     const h2=sec.querySelector('h2');
     if(!h2) return;
@@ -3143,6 +3255,10 @@ const SHADER_PACK_SUGGESTIONS = {
 };
 
 document.getElementById('launch-btn').addEventListener('click',async()=>{
+  try{
+    const _acc=getSelectedAccount();
+    if(_acc && typeof launchBlockedByBan==='function' && launchBlockedByBan()){ applyBanState(); return; }
+  }catch(err){}
   const pid=document.getElementById('profileSelect').value;
   const profile=profiles.find(p=>p.id===pid)||profiles[0];
   let version = profile?.mcVersion || '';
@@ -3222,7 +3338,7 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
 ipcRenderer.on('no-java-found',(_,neededVersion)=>{
   document.getElementById('status').textContent=`Java ${neededVersion} required. Scanning for Java...`;
   updateStopButtons();
-  document.getElementById('launch-btn').disabled=false;
+  enableLaunchBtn();
   setTimeout(async()=>{
     await loadJava();
     if(!document.getElementById('javaSelect').value){
@@ -3235,7 +3351,7 @@ ipcRenderer.on('no-java-found',(_,neededVersion)=>{
 ipcRenderer.on('no-account-found',()=>{
   document.getElementById('status').textContent='No valid account. Please log in.';
   updateStopButtons();
-  document.getElementById('launch-btn').disabled=false;
+  enableLaunchBtn();
 });
 
 const _stoppedInstances = new Set();
@@ -3267,7 +3383,7 @@ document.getElementById('stop-all-btn').addEventListener('click',()=>{
 
 ipcRenderer.on('launch-status',(_,s)=>{ document.getElementById('status').textContent=s; });
 ipcRenderer.on('launch-error',(_,msg)=>{
-  document.getElementById('launch-btn').disabled=false;
+  enableLaunchBtn();
   document.getElementById('status').textContent='Error: '+msg;
 });
 let _lpLastUpdate=0,_lpPending=null;
@@ -3379,7 +3495,7 @@ ipcRenderer.on('instance-closed',(_,{instanceId,code})=>{
   if(instances[instanceId]){instances[instanceId].status=code===0?'closed':'crashed';}
   if(currentInstanceId===instanceId){ currentInstanceId=null; }
   updateStopButtons();
-  document.getElementById('launch-btn').disabled=false;
+  enableLaunchBtn();
   updateRunningBadge();
   renderInstanceList();
   refreshLogSelect();
@@ -4630,6 +4746,667 @@ function updateAccountTabHead(){
   const canvas=document.getElementById('tb-account-head');
   if(acc&&acc.skinUrl){ canvas.style.display='inline-block'; drawHead2D(canvas,acc.skinUrl); }
   else{ canvas.style.display='none'; }
+  if(typeof syncLoginHistory==='function') syncLoginHistory();
+  if(typeof syncOwnerTab==='function') syncOwnerTab();
+  if(typeof applyBanState==='function') applyBanState();
+}
+
+// Owner-Tab in der Toolbar — nur wenn Sams25 / CookieMurder31 ausgewählt ist
+function syncOwnerTab(){
+  const btn=document.getElementById('tb-owner-btn');
+  let owner=false;
+  try{
+    const acc=getSelectedAccount();
+    const name=acc&&(acc.name||acc.username||'');
+    if(name){ const n=String(name).trim().toLowerCase(); owner=(n==='sams25'||n==='cookiemurder31'); }
+  }catch(e){ owner=false; }
+  if(btn) btn.style.display=owner?'':'none';
+  const opg=document.getElementById('owner-page');
+  if(!owner){
+    if(opg&&opg.classList.contains('active')) showPage('launch-page');
+    return;
+  }
+  if(typeof syncLoginHistory==='function') syncLoginHistory();
+  // Offener Owner-Tab live aktualisieren
+  if(opg && opg.classList.contains('active') && typeof renderOwnerAccountList==='function'){
+    renderOwnerAccountList();
+  }
+}
+
+// ── Owner: Historie aller jemals eingeloggten Minecraft-Accounts ──
+function loginHistKey(u){ return String(u||'').replace(/-/g,'').toLowerCase(); }
+
+function histKey(uuid,name){
+  if(uuid) return 'u:'+loginHistKey(uuid);
+  return 'n:'+String(name||'').trim().toLowerCase();
+}
+function entryKey(e){ return histKey(e&&e.uuid, e&&e.name); }
+
+// ── Geräteübergreifende Synchronisation (Presence-Server) ──
+function postRemoteLogin(e){
+  if(!e||(!e.uuid&&!e.name)) return Promise.resolve();
+  try{
+    return ipcRenderer.invoke('logins-post',{
+      uuid:e.uuid||'', username:e.name||'',
+      first:e.first||0, last:e.last||0, logins:e.logins||0
+    }).then(r=>{
+      if(r&&r.ok && !e.remote){ e.remote=true; try{ saveSettings(); }catch(err){} }
+    }).catch(()=>{});
+  }catch(err){ return Promise.resolve(); }
+}
+
+function mergeRemoteLogins(list){
+  if(!Array.isArray(list)||!list.length) return false;
+  if(!Array.isArray(settings.loginHistory)) settings.loginHistory=[];
+  let changed=false;
+  list.forEach(r=>{
+    if(!r||(!r.uuid&&!r.username)) return;
+    const key=histKey(r.uuid,r.username);
+    let e=settings.loginHistory.find(x=>entryKey(x)===key);
+    if(!e){
+      settings.loginHistory.push({uuid:r.uuid||'',name:r.username||'',type:'Microsoft',skinUrl:'',first:r.first||null,last:r.last||null,logins:r.logins||0,remote:true});
+      changed=true;
+    }else{
+      if(r.uuid&&!e.uuid){ e.uuid=r.uuid; changed=true; }
+      if(r.username&&!e.name){ e.name=r.username; changed=true; }
+      if(r.first&&(!e.first||r.first<e.first)){ e.first=r.first; changed=true; }
+      if(r.last&&r.last>(e.last||0)){ e.last=r.last; changed=true; }
+      if((r.logins||0)>(e.logins||0)){ e.logins=r.logins; changed=true; }
+      if(!e.remote){ e.remote=true; changed=true; }
+    }
+  });
+  return changed;
+}
+
+async function fetchRemoteLogins(){
+  try{
+    const r=await ipcRenderer.invoke('logins-fetch');
+    if(!r||!Array.isArray(r.logins)) return;
+    const list=r.logins;
+    if(mergeRemoteLogins(list)){
+      saveSettings();
+      const opg=document.getElementById('owner-page');
+      if(opg&&opg.classList.contains('active')&&typeof renderOwnerAccountList==='function') renderOwnerAccountList();
+    }
+  }catch(err){}
+}
+
+function postRemoteBan(b){
+  if(!b) return Promise.resolve();
+  const key=banEntryKey(b);
+  if(!key||key==='n:') return Promise.resolve();
+  try{
+    return ipcRenderer.invoke('bans-post',{
+      key, uuid:b.uuid||'', name:b.name||'', reason:b.reason||'',
+      by:b.by||'', start:b.start||0, end:b.end||null,
+      disabled: Array.isArray(b.disabled)?b.disabled:undefined
+    }).then(r=>{
+      if(r&&r.ok && !b.remote){ b.remote=true; try{ saveSettings(); }catch(err){} }
+    }).catch(()=>{});
+  }catch(err){ return Promise.resolve(); }
+}
+
+function removeRemoteBan(key){
+  if(!key) return;
+  try{ ipcRenderer.invoke('bans-remove',{key}).catch(()=>{}); }catch(err){}
+}
+
+function mergeRemoteBans(list){
+  if(!Array.isArray(list)) return false;
+  if(!Array.isArray(settings.bans)) settings.bans=[];
+  let changed=false;
+  const remoteKeys=new Set();
+  list.forEach(b=>{ if(b){ const k=banEntryKey(b); if(k) remoteKeys.add(k); } });
+  // Vom Server entfernte (unbannte) Remote-Bans lokal aufräumen
+  const before=settings.bans.length;
+  settings.bans=settings.bans.filter(x=>!(x&&x.remote&&!remoteKeys.has(banEntryKey(x))));
+  if(settings.bans.length!==before) changed=true;
+  list.forEach(b=>{
+    if(!b) return;
+    const key=banEntryKey(b);
+    if(!key) return;
+    const e=settings.bans.find(x=>banEntryKey(x)===key);
+    if(!e){
+      settings.bans.push({key,uuid:b.uuid||'',name:b.name||'',reason:b.reason||'',by:b.by||'',start:b.start||0,end:b.end||null,disabled:Array.isArray(b.disabled)?b.disabled:undefined,remote:true});
+      changed=true;
+    }else{
+      if(!e.remote){ e.remote=true; changed=true; }
+      // Deaktivierungsliste vom Server übernehmen (Owner kann sie geändert haben)
+      if(Array.isArray(b.disabled)){
+        const cur=Array.isArray(e.disabled)?e.disabled.join(','):'';
+        if(cur!==b.disabled.join(',')){ e.disabled=b.disabled.slice(); changed=true; }
+      }
+    }
+  });
+  return changed;
+}
+
+async function fetchRemoteBans(){
+  try{
+    const r=await ipcRenderer.invoke('bans-fetch');
+    if(!r||!Array.isArray(r.bans)) return;
+    const list=r.bans;
+    if(mergeRemoteBans(list)){
+      saveSettings();
+      if(typeof applyBanState==='function') applyBanState();
+      const opg=document.getElementById('owner-page');
+      if(opg&&opg.classList.contains('active')&&typeof renderOwnerAccountList==='function') renderOwnerAccountList();
+    }
+  }catch(err){}
+}
+
+async function refreshRemote(){
+  // Lokal erstellte, noch nicht bestätigte Daten erneut senden (z.B. Server war offline)
+  try{
+    const pendingBans=(settings.bans||[]).filter(b=>b&&!b.remote);
+    if(pendingBans.length) await Promise.all(pendingBans.map(b=>postRemoteBan(b)));
+  }catch(err){}
+  try{
+    const pendingLogins=(settings.loginHistory||[]).filter(e=>e&&!e.remote&&(e.uuid||e.name));
+    if(pendingLogins.length) await Promise.all(pendingLogins.map(e=>postRemoteLogin(e)));
+  }catch(err){}
+  await fetchRemoteLogins();
+  await fetchRemoteBans();
+}
+
+// Beim Start ALLE lokalen Daten erneut senden. Heilt einen gewischten
+// Server-Speicher (Render Free Tier hat keine persistente Platte) selbst.
+async function republishAll(){
+  try{
+    const logins=(settings.loginHistory||[]).filter(e=>e&&(e.uuid||e.name));
+    if(logins.length) await Promise.all(logins.map(e=>postRemoteLogin(e)));
+  }catch(err){}
+  try{
+    const bans=(settings.bans||[]);
+    if(bans.length) await Promise.all(bans.map(b=>postRemoteBan(b)));
+  }catch(err){}
+}
+
+function syncLoginHistory(){
+  try{
+    if(!Array.isArray(settings.loginHistory)) settings.loginHistory=[];
+    const now=Date.now();
+    let changed=false;
+    let postTarget=null;
+    const upsert=a=>{
+      if(!a||(!a.uuid&&!a.name)) return;
+      let e=settings.loginHistory.find(x=>entryKey(x)===entryKey(a));
+      if(!e){
+        e={uuid:a.uuid||'',name:a.name||'',type:a.type||'Microsoft',skinUrl:a.skinUrl||'',first:now,last:now,logins:1};
+        settings.loginHistory.push(e); changed=true; postTarget=e;
+      }else{
+        if(a.uuid&&!e.uuid){ e.uuid=a.uuid; changed=true; }
+        if(a.name&&a.name!==e.name){ e.name=a.name; changed=true; }
+        if(a.type&&a.type!==e.type){ e.type=a.type; changed=true; }
+        if(a.skinUrl&&!e.skinUrl){ e.skinUrl=a.skinUrl; changed=true; }
+        if(!e.first){ e.first=now; changed=true; }
+        if(!e.logins){ e.logins=1; changed=true; }
+      }
+    };
+    (accounts||[]).forEach(upsert);
+    let sel=null;
+    try{ sel=(typeof getSelectedAccount==='function')?getSelectedAccount():null; }catch(err){}
+    if(sel){
+      upsert(sel);
+      const e=settings.loginHistory.find(x=>entryKey(x)===entryKey(sel));
+      if(e && now-(e.last||0)>5*60*1000){ e.last=now; e.logins=(e.logins||1)+1; changed=true; postTarget=e; }
+      else if(e && !e.remote){ postTarget=e; }
+    }
+    if(changed) saveSettings();
+    // Neu eingeloggten Account an den Server melden (geräteübergreifend)
+    if(postTarget) postRemoteLogin(postTarget);
+  }catch(err){}
+}
+
+function fmtLoginTime(ts){
+  if(!ts) return '—';
+  try{ return new Date(ts).toLocaleString(); }catch(err){ return ''; }
+}
+
+// ── Owner: Bans ──
+let _banTarget=null;
+
+function banEntryKey(b){ return b?(b.key||histKey(b.uuid,b.name)):null; }
+
+function getActiveBan(acc){
+  try{
+    if(!acc||!Array.isArray(settings.bans)) return null;
+    const k=entryKey(acc);
+    if(!k) return null;
+    const now=Date.now();
+    for(const b of settings.bans){
+      if(!b) continue;
+      if(banEntryKey(b)!==k) continue;
+      if(b.end&&b.end<=now) continue;
+      return b;
+    }
+  }catch(err){}
+  return null;
+}
+
+// ── Was ein Bann deaktivieren kann ──
+// Standard (wenn nichts gewählt wurde): Launch + Bug-Reports.
+const BAN_DEFAULT_DISABLED=['launch','bugreport'];
+const BAN_FEATURES=[
+  { key:'launch',    label:'Minecraft starten (Launch & Instanzen)' },
+  { key:'bugreport', label:'Bug-Reports' },
+  { key:'servers',   label:'Server-Tab' },
+  { key:'logs',      label:'Logs-Tab' },
+  { key:'capes',     label:'Capes-Tab' },
+  { key:'features',  label:'Features-Tab' },
+  { key:'mods',      label:'Client Options (Mods)' },
+  { key:'profiles',  label:'Profile-Tab' },
+  { key:'account',   label:'Account-Tab (Wechsel/Login)' },
+  { key:'settings',  label:'Einstellungen' },
+];
+const BAN_FEATURE_PAGE={
+  bugreport:'bugreport-page', servers:'servers-page', logs:'logs-page', capes:'cape-page',
+  features:'features-page', mods:'mods-page', profiles:'profiles-page',
+  account:'account-page', settings:'settings-page'
+};
+
+function banDisabledList(ban){
+  if(!ban) return [];
+  if(Array.isArray(ban.disabled) && ban.disabled.length) return ban.disabled.slice();
+  return BAN_DEFAULT_DISABLED.slice();
+}
+
+function banFeatureTargets(key){
+  const out=[];
+  if(key==='launch'){ const lb=document.getElementById('launch-btn'); if(lb) out.push(lb); return out; }
+  const page=BAN_FEATURE_PAGE[key];
+  if(!page) return out;
+  document.querySelectorAll('.tb-btn[data-page="'+page+'"]').forEach(el=>out.push(el));
+  const fab=document.querySelector('#settings-fab');
+  if(key==='settings' && fab) out.push(fab);
+  return out;
+}
+
+// Ist die Aktion "Minecraft starten" durch den aktiven Bann gesperrt?
+function launchBlockedByBan(){
+  const ban=selectedBan();
+  if(!ban) return false;
+  return banDisabledList(ban).includes('launch');
+}
+
+function banPageBlocked(pageId){
+  const ban=selectedBan();
+  if(!ban) return false;
+  const disabled=banDisabledList(ban);
+  for(const f of BAN_FEATURES){
+    if(BAN_FEATURE_PAGE[f.key]===pageId) return disabled.includes(f.key);
+  }
+  return false;
+}
+
+function banDurationHours(){
+  const amtEl=document.getElementById('ban-custom-amount');
+  const unitEl=document.getElementById('ban-custom-unit');
+  const raw=amtEl?String(amtEl.value||'').trim():'';
+  if(raw!==''){
+    const amt=parseFloat(raw);
+    if(isNaN(amt)||amt<=0) return null;
+    const u=(unitEl&&unitEl.value)||'h';
+    const mult=u==='min'?(1/60):u==='d'?24:u==='w'?168:1;
+    return amt*mult;
+  }
+  const h=parseInt((document.getElementById('ban-duration')||{}).value,10);
+  return isNaN(h)?24:h;
+}
+
+function updateBanDurationPreview(){
+  const el=document.getElementById('ban-duration-preview');
+  if(!el) return;
+  const h=banDurationHours();
+  if(h===null){
+    el.textContent='Bitte eine Zahl größer 0 eingeben (oder das Preset oben lassen).';
+    el.style.color='#f88';
+    return;
+  }
+  el.style.color='#999';
+  if(!(h>0)){ el.textContent='Bannt permanent.'; return; }
+  el.textContent='Bannt bis '+fmtLoginTime(Date.now()+h*3600*1000);
+}
+
+function renderBanFeatureChoices(){
+  const box=document.getElementById('ban-features');
+  if(!box||box.dataset.built) return;
+  box.innerHTML='';
+  BAN_FEATURES.forEach(f=>{
+    const id='ban-feat-'+f.key;
+    const lab=document.createElement('label');
+    lab.style.cssText='display:flex;align-items:center;gap:.45em;cursor:pointer;user-select:none';
+    const cb=document.createElement('input');
+    cb.type='checkbox'; cb.id=id; cb.value=f.key;
+    cb.style.cssText='accent-color:#f44;width:1em;height:1em';
+    const sp=document.createElement('span');
+    sp.textContent=f.label;
+    lab.appendChild(cb); lab.appendChild(sp);
+    box.appendChild(lab);
+  });
+  box.dataset.built='1';
+}
+
+function setBanFeatureChoices(list){
+  const keys=(Array.isArray(list)&&list.length)?list:BAN_DEFAULT_DISABLED;
+  BAN_FEATURES.forEach(f=>{
+    const cb=document.getElementById('ban-feat-'+f.key);
+    if(cb) cb.checked=keys.includes(f.key);
+  });
+}
+
+function selectedBanFeatureKeys(){
+  const keys=[];
+  BAN_FEATURES.forEach(f=>{
+    const cb=document.getElementById('ban-feat-'+f.key);
+    if(cb&&cb.checked) keys.push(f.key);
+  });
+  return keys;
+}
+
+function openBanModal(e){
+  _banTarget=e;
+  const ov=document.getElementById('ban-modal');
+  if(!ov) return;
+  const nm=document.getElementById('ban-account-name');
+  if(nm) nm.textContent=e&&e.name||'?';
+  const r=document.getElementById('ban-reason'); if(r) r.value='';
+  const d=document.getElementById('ban-duration'); if(d) d.value='24';
+  const ca=document.getElementById('ban-custom-amount'); if(ca) ca.value='';
+  const cu=document.getElementById('ban-custom-unit'); if(cu) cu.value='h';
+  const err=document.getElementById('ban-error'); if(err) err.textContent='';
+  // Vorhandenen Bann vorbelegen (falls Account schon gebannt ist)
+  let existing=null;
+  try{ existing=e?getActiveBan(e):null; }catch(err2){}
+  renderBanFeatureChoices();
+  setBanFeatureChoices(existing?banDisabledList(existing):BAN_DEFAULT_DISABLED);
+  updateBanDurationPreview();
+  ov.style.display='flex';
+  if(r) setTimeout(()=>r.focus(),50);
+}
+
+function closeBanModal(){
+  const ov=document.getElementById('ban-modal');
+  if(ov) ov.style.display='none';
+  _banTarget=null;
+}
+
+function confirmBan(){
+  if(!_banTarget) return;
+  const reasonEl=document.getElementById('ban-reason');
+  const err=document.getElementById('ban-error');
+  const reason=(reasonEl&&reasonEl.value||'').trim();
+  if(!reason){ if(err) err.textContent='Grund ist erforderlich.'; if(reasonEl) reasonEl.focus(); return; }
+  const dur=banDurationHours();
+  if(dur===null){ if(err) err.textContent='Ungültige eigene Dauer — Zahl größer 0 eingeben.'; const ca=document.getElementById('ban-custom-amount'); if(ca) ca.focus(); return; }
+  const now=Date.now();
+  let by='';
+  try{ const a=getSelectedAccount(); by=(a&&(a.name||a.username))||''; }catch(e){}
+  const disabled=selectedBanFeatureKeys();
+  if(!disabled.length){ if(err) err.textContent='Mindestens eine Funktion zum Deaktivieren wählen.'; return; }
+  const entry={ key:entryKey(_banTarget), uuid:_banTarget.uuid||'', name:_banTarget.name||'', reason, by, start:now, end: dur>0 ? now+dur*3600*1000 : null, disabled, remote:false };
+  if(!Array.isArray(settings.bans)) settings.bans=[];
+  settings.bans=settings.bans.filter(b=>banEntryKey(b)!==entry.key);
+  settings.bans.push(entry);
+  saveSettings();
+  if(typeof postRemoteBan==='function') postRemoteBan(entry);
+  closeBanModal();
+  renderOwnerAccountList();
+  applyBanState();
+}
+
+function unbanAccount(acc){
+  if(!Array.isArray(settings.bans)) return;
+  const k=entryKey(typeof acc==='string'?{uuid:acc}:acc);
+  settings.bans=settings.bans.filter(b=>banEntryKey(b)!==k);
+  saveSettings();
+  if(typeof removeRemoteBan==='function') removeRemoteBan(k);
+  renderOwnerAccountList();
+  applyBanState();
+}
+
+// Discord-Einladung für Bann-Appeals
+const BAN_APPEAL_DISCORD='https://discord.gg/dd5R3nDQc';
+var _banNoticeAcceptedKey=null;
+
+function selectedBan(){
+  try{ const acc=getSelectedAccount(); return acc?getActiveBan(acc):null; }catch(err){ return null; }
+}
+
+function launchAllowed(){
+  return !launchBlockedByBan();
+}
+
+function enableLaunchBtn(){
+  const lb=document.getElementById('launch-btn');
+  if(lb && launchAllowed()) lb.disabled=false;
+  if(lb && !launchAllowed()) lb.disabled=true;
+}
+
+function banNoticeKey(ban){
+  return ban?((banEntryKey(ban)||'')+'|'+(ban.start||0)):null;
+}
+
+function showBanNotice(ban){
+  const ov=document.getElementById('ban-notice-modal');
+  if(!ov||!ban) return;
+  const r=document.getElementById('ban-notice-reason');
+  if(r){ r.textContent=ban.reason||'—'; r.title=ban.reason||''; }
+  const e=document.getElementById('ban-notice-end');
+  if(e) e.textContent=ban.end?fmtLoginTime(ban.end):'Permanent';
+  // Liste der gesperrten Funktionen
+  const fl=document.getElementById('ban-notice-features');
+  if(fl){
+    const names=banDisabledList(ban).map(k=>{ const f=BAN_FEATURES.find(x=>x.key===k); return f?f.label:k; });
+    fl.textContent=names.length?names.join(', '):'—';
+    fl.title=fl.textContent;
+  }
+  ov.style.display='flex';
+}
+
+function applyBanState(){
+  const ban=selectedBan();
+  const disabled=ban?new Set(banDisabledList(ban)):new Set();
+  const txt=ban?('Gebannt: '+ban.reason+(ban.end?' · bis '+fmtLoginTime(ban.end):' · permanent')):'';
+
+  // Alle Funktionen zurücksetzen und die gewählten sperren
+  BAN_FEATURES.forEach(f=>{
+    const off=disabled.has(f.key);
+    banFeatureTargets(f.key).forEach(el=>el.classList.toggle('tb-disabled',off));
+  });
+  // Launch-Knopf: echtes disabled-Attribut (blockt auch programmatische Klicks)
+  const lb=document.getElementById('launch-btn');
+  if(lb){ lb.disabled=disabled.has('launch'); lb.title=disabled.has('launch')?txt:''; }
+  if(ban){ const st=document.getElementById('status'); if(st) st.textContent=txt; }
+
+  // Wenn aktuell eine gesperrte Seite offen ist -> weg navigieren
+  const active=document.querySelector('.page.active');
+  if(active && banPageBlocked(active.id)){
+    let target='launch-page';
+    for(const p of ['launch-page','mods-page','profiles-page','cape-page','logs-page','servers-page','features-page','account-page']){
+      if(!banPageBlocked(p)){ target=p; break; }
+    }
+    showPage(target);
+  }
+
+  // Ban-Overlay: erscheint für jeden (neuen) Bann, bis akzeptiert
+  const key=banNoticeKey(ban);
+  if(ban && _banNoticeAcceptedKey!==key){
+    const ov=document.getElementById('ban-notice-modal');
+    if(ov && ov.style.display!=='flex') showBanNotice(ban);
+  }
+  if(!ban && _banNoticeAcceptedKey){
+    _banNoticeAcceptedKey=null;
+    const ov=document.getElementById('ban-notice-modal');
+    if(ov && ov.style.display==='flex') ov.style.display='none';
+  }
+}
+
+(function bindBanNoticeUI(){
+  const acc=document.getElementById('ban-notice-accept');
+  const d=document.getElementById('ban-notice-discord');
+  if(acc) acc.addEventListener('click',()=>{
+    _banNoticeAcceptedKey=banNoticeKey(selectedBan());
+    const ov=document.getElementById('ban-notice-modal');
+    if(ov) ov.style.display='none';
+  });
+  if(d) d.addEventListener('click',()=>{
+    try{ shell.openExternal(BAN_APPEAL_DISCORD); }catch(err){}
+  });
+})();
+
+(function bindBanUI(){
+  const c=document.getElementById('ban-confirm');
+  const x=document.getElementById('ban-modal-close');
+  const y=document.getElementById('ban-cancel');
+  const r=document.getElementById('ban-reason');
+  const d=document.getElementById('ban-duration');
+  const ca=document.getElementById('ban-custom-amount');
+  const cu=document.getElementById('ban-custom-unit');
+  if(c) c.addEventListener('click',confirmBan);
+  if(x) x.addEventListener('click',closeBanModal);
+  if(y) y.addEventListener('click',closeBanModal);
+  if(r) r.addEventListener('keydown',ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); confirmBan(); } });
+  if(d) d.addEventListener('change',updateBanDurationPreview);
+  if(ca) ca.addEventListener('input',updateBanDurationPreview);
+  if(cu) cu.addEventListener('change',updateBanDurationPreview);
+  renderBanFeatureChoices();
+})();
+
+// Hauptprozess hat einen Launch trotz Bann verhindert -> Overlay zeigen
+try{
+  ipcRenderer.on('launch-blocked', ()=>{
+    try{ applyBanState(); }catch(err){}
+    try{
+      const ban=selectedBan();
+      if(ban){ const ov=document.getElementById('ban-notice-modal'); if(ov) showBanNotice(ban); }
+    }catch(err){}
+  });
+}catch(err){}
+
+// ── Owner: Liste filtern (Alle / Gebannt) ──
+let _ownerFilter='all';
+
+function updateOwnerFilterBtns(){
+  const all=document.getElementById('owner-filter-all');
+  const ban=document.getElementById('owner-filter-banned');
+  let acc='#7c6cf0';
+  try{ acc=getComputedStyle(document.documentElement).getPropertyValue('--acc').trim()||acc; }catch(err){}
+  if(all){
+    const on=_ownerFilter==='all';
+    all.style.background=on?acc:'';
+    all.style.borderColor=on?acc:'';
+    all.style.color=on?'#fff':'';
+  }
+  if(ban){
+    const on=_ownerFilter==='banned';
+    let n=0;
+    try{ n=(settings.loginHistory||[]).filter(x=>getActiveBan(x)).length; }catch(err){}
+    ban.textContent='Gebannt ('+n+')';
+    ban.style.background=on?'#f44':'';
+    ban.style.borderColor=on?'#f44':'#f4444455';
+    ban.style.color=on?'#fff':'#f44';
+  }
+}
+
+function setOwnerFilter(f){
+  _ownerFilter=(f==='banned')?'banned':'all';
+  updateOwnerFilterBtns();
+  renderOwnerAccountList();
+}
+
+(function bindOwnerFilterUI(){
+  const all=document.getElementById('owner-filter-all');
+  const ban=document.getElementById('owner-filter-banned');
+  if(all) all.addEventListener('click',()=>setOwnerFilter('all'));
+  if(ban) ban.addEventListener('click',()=>setOwnerFilter('banned'));
+})();
+
+function renderOwnerAccountList(){
+  const el=document.getElementById('owner-account-list');
+  const empty=document.getElementById('owner-account-empty');
+  if(!el) return;
+  syncLoginHistory();
+  updateOwnerFilterBtns();
+  let list=(settings.loginHistory||[]).slice().sort((a,b)=>(b.last||0)-(a.last||0));
+  if(_ownerFilter==='banned') list=list.filter(x=>getActiveBan(x));
+  el.innerHTML='';
+  if(empty) empty.textContent=(_ownerFilter==='banned')?'Keine gebannten Accounts.':'Noch keine Logins aufgezeichnet.';
+  if(!list.length){
+    el.style.display='none';
+    if(empty) empty.style.display='block';
+    return;
+  }
+  el.style.display='';
+  if(empty) empty.style.display='none';
+  list.forEach(e=>{
+    const ban=getActiveBan(e);
+    const item=document.createElement('div');
+    item.className='account-item';
+    item.style.cursor='default';
+    if(ban){ item.style.borderColor='#f4444466'; }
+    const info=document.createElement('span');
+    info.style.cssText='display:flex;flex-direction:column;min-width:0';
+    const nm=document.createElement('span');
+    nm.className='account-name';
+    nm.textContent=e.name||'?';
+    if(ban) nm.style.color='#f66';
+    const meta=document.createElement('span');
+    meta.style.cssText='font-size:.68em;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+    meta.textContent=(e.last||e.first)
+      ? ('zuletzt: '+fmtLoginTime(e.last)+' · erstmals: '+fmtLoginTime(e.first)+(e.remote?' · anderes Gerät':''))
+      : 'noch nie auf diesem Gerät eingeloggt';
+    if(ban){
+      meta.style.color='#f88';
+      const dis=banDisabledList(ban).map(k=>{ const f=BAN_FEATURES.find(x=>x.key===k); return f?f.label.split(' (')[0]:k; }).join(', ');
+      meta.textContent='GEBANNT '+(ban.end?('bis '+fmtLoginTime(ban.end)):'(permanent)')+' · Grund: '+ban.reason+(dis?' · Gesperrt: '+dis:'');
+      meta.title=meta.textContent;
+    }
+    info.appendChild(nm); info.appendChild(meta);
+    const type=document.createElement('span');
+    type.className='account-type';
+    type.style.marginLeft='auto';
+    type.textContent=e.type||'Microsoft';
+    const uuid=document.createElement('span');
+    uuid.style.cssText='font-size:.65em;color:#555;max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    uuid.textContent=e.uuid?loginHistKey(e.uuid).slice(0,8):'—';
+    uuid.title=e.uuid||'';
+    const banBtn=document.createElement('button');
+    banBtn.className='btn btn-sm';
+    banBtn.style.cssText='margin-left:.5em;flex:0 0 auto;border-color:#f4444444;color:#f44';
+    banBtn.textContent='Ban';
+    banBtn.title='Account bannen';
+    banBtn.addEventListener('click',ev=>{ ev.stopPropagation(); openBanModal(e); });
+    item.appendChild(info); item.appendChild(type); item.appendChild(uuid); item.appendChild(banBtn);
+    if(ban){
+      const unbanBtn=document.createElement('button');
+      unbanBtn.className='btn btn-sm';
+      unbanBtn.style.cssText='margin-left:.35em;flex:0 0 auto;border-color:#1bd96a66;color:#1bd96a';
+      unbanBtn.textContent='Unban';
+      unbanBtn.title='Ban aufheben';
+      unbanBtn.addEventListener('click',ev=>{ ev.stopPropagation();       unbanAccount(e);
+    });
+      item.appendChild(unbanBtn);
+    }
+    // Kopf
+    const cv=document.createElement('canvas');
+    cv.className='account-head-sm'; cv.width=32; cv.height=32;
+    item.insertBefore(cv,info);
+    if(e.skinUrl && typeof drawHead2D==='function'){
+      try{ drawHead2D(cv,e.skinUrl); }catch(err){ cv.style.display='none'; }
+    }else if(e.uuid){
+      cv.style.display='none';
+      const im=new Image();
+      im.crossOrigin='anonymous';
+      im.src='https://crafatar.com/avatars/'+loginHistKey(e.uuid)+'?size=32&overlay';
+      im.style.cssText='width:32px;height:32px;image-rendering:pixelated;border-radius:.15em';
+      im.onload=()=>{ if(cv.parentNode) cv.parentNode.insertBefore(im,cv); };
+      im.onerror=()=>{};
+    }else{
+      cv.style.display='none';
+    }
+    el.appendChild(item);
+  });
 }
 
 function updateSkinDisplay(){
@@ -9393,5 +10170,6 @@ ipcRenderer.on('update-log', (_, msg) => updateLog('[main] ' + msg));
   },400);
 })();
 </script>
-</body>
+
+      </body>
 </html>

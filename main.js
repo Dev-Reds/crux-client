@@ -77,7 +77,7 @@ app.setPath('cache', path.join(base,'Cache'));
 
 // Default presence server so the Friends tab works out of the box.
 // Points to the Render Blueprint service defined in render.yaml (see server/README.md).
-const DEFAULT_PRESENCE_SERVER = "";
+const DEFAULT_PRESENCE_SERVER = "https://crux-presence.onrender.com";
 
 // Default chat server so the Chat tab works out of the box.
 // Points to the Deno Deploy app (server/chat-server.ts, see server/README.md).
@@ -255,7 +255,8 @@ const saveSettings = async (data) => {
       'openLogsAfterLaunch','closeLauncherWhilePlaying','useOriginalLauncher',
       'clientResourcePacks','autoUseResourcePacks',
       'presenceServer','bugreportWebhook','chatServer',
-      'useCruxClientMod','tabBarPosition','cornerRadius','glassBgImage'
+      'useCruxClientMod','tabBarPosition','cornerRadius','glassBgImage',
+      'glassBgPreset','glassBgTint',      'loginHistory','bans'
     ];
     const clean = {};
     for (const k of Object.keys(existing)) { if (KNOWN_KEYS.includes(k)) clean[k] = existing[k]; }
@@ -1490,6 +1491,92 @@ ipcMain.handle('presence-requests-consume', async (e, data) => {
   } catch { return { ok: false }; }
 });
 
+// ── Global login registry + bans (device-spanning, via presence server) ─────
+async function loginServerUrl() {
+  const s = await load(P.settings, {});
+  const v = String(s.presenceServer || '').trim().replace(/\/+$/, '');
+  return v || DEFAULT_PRESENCE_SERVER;
+}
+
+ipcMain.handle('logins-post', async (e, data) => {
+  try {
+    const srv = await loginServerUrl();
+    if (!srv) return { ok: false, error: 'no-server' };
+    const res = await genericHttp(srv + '/v1/logins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uuid: normUuidArg(data && data.uuid),
+        username: String((data && (data.username || data.name)) || ''),
+        first: Number((data && data.first) || 0) || undefined,
+        last: Number((data && data.last) || 0) || undefined,
+        logins: Number((data && data.logins) || 0) || undefined
+      })
+    });
+    if (res.status !== 200) return { ok: false, error: 'http' };
+    try { return JSON.parse(res.data); } catch { return { ok: false, error: 'http' }; }
+  } catch { return { ok: false, error: 'network' }; }
+});
+
+ipcMain.handle('logins-fetch', async () => {
+  try {
+    const srv = await loginServerUrl();
+    if (!srv) return null;
+    const res = await genericHttp(srv + '/v1/logins', {});
+    if (res.status !== 200) return null;
+    try { const j = JSON.parse(res.data); return Array.isArray(j.logins) ? j : null; }
+    catch { return null; }
+  } catch { return null; }
+});
+
+ipcMain.handle('bans-post', async (e, data) => {
+  try {
+    const srv = await loginServerUrl();
+    if (!srv) return { ok: false, error: 'no-server' };
+    const res = await genericHttp(srv + '/v1/bans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        key: String((data && data.key) || ''),
+        uuid: normUuidArg(data && data.uuid),
+        name: String((data && data.name) || ''),
+        reason: String((data && data.reason) || ''),
+        by: String((data && data.by) || ''),
+        start: Number((data && data.start) || 0) || undefined,
+        end: data && data.end ? Number(data.end) : null,
+        disabled: Array.isArray(data && data.disabled) ? data.disabled : undefined
+      })
+    });
+    if (res.status !== 200) return { ok: false, error: 'http' };
+    try { return JSON.parse(res.data); } catch { return { ok: false, error: 'http' }; }
+  } catch { return { ok: false, error: 'network' }; }
+});
+
+ipcMain.handle('bans-remove', async (e, data) => {
+  try {
+    const srv = await loginServerUrl();
+    if (!srv) return { ok: false, error: 'no-server' };
+    const res = await genericHttp(srv + '/v1/bans/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: String((data && data.key) || '') })
+    });
+    if (res.status !== 200) return { ok: false, error: 'http' };
+    return { ok: true };
+  } catch { return { ok: false, error: 'network' }; }
+});
+
+ipcMain.handle('bans-fetch', async () => {
+  try {
+    const srv = await loginServerUrl();
+    if (!srv) return null;
+    const res = await genericHttp(srv + '/v1/bans', {});
+    if (res.status !== 200) return null;
+    try { const j = JSON.parse(res.data); return Array.isArray(j.bans) ? j : null; }
+    catch { return null; }
+  } catch { return null; }
+});
+
 // ── Chat (friends messaging) ────────────────────────────────────────────────
 async function chatServerUrl() {
   const s = await load(P.settings, {});
@@ -2258,6 +2345,35 @@ async function launchBedrock(aumid, send, instanceId) {
 // ── Launch ─────────────────────────────────────────────────────────────────────
 ipcMain.on('launch-minecraft', async (event, data) => {
   lastLaunchData = data;
+
+  // ── Ban-Schranke: Start über JEDEN Weg (Profil, Instanz, Welt, Server) verhindern ──
+  try {
+    const s = await load(P.settings, {});
+    const bans = Array.isArray(s.bans) ? s.bans : [];
+    const rawUuid = String((data && data.uuid) || '').replace(/-/g, '').toLowerCase();
+    const rawName = String((data && (data.playerName || data.name)) || '').trim().toLowerCase();
+    const uk = rawUuid ? 'u:' + rawUuid : null;
+    const nk = rawName ? 'n:' + rawName : null;
+    const now = Date.now();
+    const hit = bans.find(b => {
+      if (!b) return false;
+      const bk = b.key || (b.uuid ? 'u:' + String(b.uuid).replace(/-/g, '').toLowerCase()
+                                 : (b.name ? 'n:' + String(b.name).trim().toLowerCase() : null));
+      if (!bk) return false;
+      if (uk && bk === uk) return !b.end || b.end > now;
+      if (nk && bk === nk) return !b.end || b.end > now;
+      return false;
+    });
+    if (hit) {
+      const disabled = (Array.isArray(hit.disabled) && hit.disabled.length) ? hit.disabled : ['launch', 'bugreport'];
+      if (disabled.includes('launch')) {
+        console.log('[Crux] Launch blocked: account is banned (' + (hit.reason || '') + ')');
+        try { mainWindow.webContents.send('launch-blocked', { reason: hit.reason || '', end: hit.end || null }); } catch {}
+        return;
+      }
+    }
+  } catch (e) { /* bei Fehler nicht blockieren */ }
+
   const { version, javaPath, ram, ramUnit, profileMods, clientMods, clientResourcePacks, profileResourcePacks, useClientMods, useClientRPs, accessToken, uuid, playerName: rawPlayerName, modLoader, useOriginalLauncher, profileId, profileName, mrpackMods, mrpackRPs, renderApi, useCruxClientMod } = data;
 
   // Valid Minecraft username (no spaces / invalid chars)
