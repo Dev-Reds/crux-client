@@ -722,6 +722,23 @@ ipcMain.handle('profile-download-offline', async (event, payload) => {
   }
 });
 
+ipcMain.handle('copy-mod-to-profile', async (event, { profileId, sourcePath, fileName }) => { console.log("[COPY-MOD] profileId:", profileId, "sourcePath:", sourcePath, "fileName:", fileName);
+  try {
+    if (!profileId || !sourcePath || !fs.existsSync(sourcePath)) {
+      return { ok:false, error:'Invalid parameters or source file not found.' };
+    }
+    const gameDir = instanceDir(profileId);
+    const modsDir = path.join(gameDir, 'mods');
+    await fs.promises.mkdir(modsDir, { recursive:true });
+    const destName = fileName || path.basename(sourcePath);
+    const destPath = path.join(modsDir, destName);
+    await fs.promises.copyFile(sourcePath, destPath);
+    return { ok:true, destPath };
+  } catch (e) {
+    return { ok:false, error: e.message };
+  }
+});
+
 // ── NoRisk Client import: installed client (v3 norisk_versions.json / legacy
 //    profiles.json) + exported .noriskpack files (ZIP with profile.json + overrides/) ──
 const NRC_VALID_LOADERS = ['vanilla','fabric','forge','quilt','neoforge','bedrock'];
@@ -2564,10 +2581,20 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     if (needed < 17) {
       // Fallback for versions not in manifest (snapshots, etc.)
       const verParts = version.split('.');
+      const major = parseInt(verParts[0]) || 0;
       const minor = parseInt(verParts[1]) || 0;
-      if (minor >= 22) needed = 25;
-      else if (minor >= 21) needed = 21;
-      else if (minor >= 17) needed = 17;
+      
+      // New versioning scheme: 26.x = 1.21.x, 27.x = 1.22.x, etc.
+      // These all need Java 21+
+      if (major >= 26) {
+        needed = 21;
+      } else if (major >= 22) {
+        needed = 25;
+      } else if (major >= 21) {
+        needed = 21;
+      } else if (minor >= 17) {
+        needed = 17;
+      }
     }
 
     // NeoForge/Forge need exactly Java 21 — Java 24+ breaks their module system

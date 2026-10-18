@@ -266,7 +266,7 @@ body.light .btn-curseforge{background:#fff5f0;color:#a83500;border-color:#f16422
 .mod-list-empty{padding:2em;text-align:center;color:#444;font-size:.82em;}
 .mod-item{display:flex;align-items:center;gap:.7em;padding:.6em .9em;border-bottom:1px solid #141414;font-size:.82em;}
 .mod-item:last-child{border-bottom:none;}
-.mod-list.drop-active, #client-rp-list.drop-active, .pack-list.drop-active{outline:2px dashed var(--acc);outline-offset:2px;background:color-mix(in srgb,var(--acc) 8%,transparent);}
+.mod-list.drop-active, #client-rp-list.drop-active, .pack-list.drop-active, #profile-split-left.drop-active{outline:2px dashed var(--acc);outline-offset:2px;background:color-mix(in srgb,var(--acc) 8%,transparent);}
 #client-rp-list{transition:outline-color .15s,background .15s;}
 .pack-list{transition:outline-color .15s,background .15s;}
 .mod-icon{width:2.2em;height:2.2em;border-radius:.25em;background:#222;object-fit:cover;flex-shrink:0;}
@@ -503,7 +503,7 @@ body.glass #stop-bar span{color:var(--gs-mut) !important;}
 body.glass #skin-url-input, body.glass , body.glass #bugreport-webhook-input, body.glass #bugreport-title, body.glass #bugreport-desc{background:var(--gs-wh)!important;color:var(--gs-tx)!important;border-color:var(--gs-bd2)!important;}
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   CUSTOM LIST SURFACES â€” every list container adapts to the theme
+   CUSTOM LIST SURFACES — every list container adapts to the theme
    via the --ls-* variables (set on :root / body.light / body.glass).
    Hardcoded dark/light colors are neutralized with
    !important so all lists stay consistent in every theme.
@@ -661,7 +661,7 @@ body.light .feature-card{background:#fff;border-color:#ddd;}
 body.light .feature-card p{color:#666;}
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   CUSTOM DROPDOWN â€” replaces native <select> so it matches every theme
+   CUSTOM DROPDOWN — replaces native <select> so it matches every theme
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .cdrop{position:relative;display:inline-block;vertical-align:middle;max-width:100%;}
 .cdrop select{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;border:none;background:transparent;appearance:none;-webkit-appearance:none;color:transparent;border-radius:0;padding:0;margin:0;font:inherit;}
@@ -709,7 +709,7 @@ body.light .cdrop-opt.disabled{color:#999 !important;}
 body.light .cdrop-trigger::after{color:#666 !important;}
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   GLASS TRANSPARENCY â€” MUST STAY LAST
+   GLASS TRANSPARENCY — MUST STAY LAST
    The body.light overrides below the glass section (e.g.
    body.light .logs-container / .feature-card / .profile-split)
    come later in the stylesheet and would win by source order, so
@@ -978,7 +978,7 @@ body.glass #update-overlay.update-themed #update-bugreport-btn{color:#d33 !impor
             </label>
           </div>
         </div>
-        <p style="color:#555;font-size:.75em;margin-bottom:.7em" data-i18n="desc_rp_auto">When enabled, adds <strong style="color:#ccc">Open Loader</strong> to your client mods â€” it automatically loads all resource packs listed below without touching in-game settings.</p>
+        <p style="color:#555;font-size:.75em;margin-bottom:.7em" data-i18n="desc_rp_auto">When enabled, adds <strong style="color:#ccc">Open Loader</strong> to your client mods — it automatically loads all resource packs listed below without touching in-game settings.</p>
         <div id="client-rp-list" style="display:flex;flex-wrap:wrap;gap:.35em;min-height:1.5em"></div>
       </div>
     </div>
@@ -1164,7 +1164,7 @@ body.glass #update-overlay.update-themed #update-bugreport-btn{color:#d33 !impor
         <div class="form-row" style="max-width:100%">
           <label data-i18n="lbl_bugreport_webhook">Bug report webhook URL (Discord or compatible)</label>
           <input type="text" id="bugreport-webhook-input" placeholder="https://discord.com/api/webhooks/..." style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
-          <div class="status-text" data-i18n="desc_bugreport_webhook">Bug reports are sent here directly â€” no GitHub account needed.</div>
+          <div class="status-text" data-i18n="desc_bugreport_webhook">Bug reports are sent here directly — no GitHub account needed.</div>
         </div>
       </div>
 
@@ -1258,47 +1258,47 @@ body.glass #update-overlay.update-themed #update-bugreport-btn{color:#d33 !impor
           <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc" data-i18n="sv_choose_type">Choose Server Type</h3>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(10em,1fr));gap:.5em" id="server-type-grid">
             <div class="server-type-card" data-type="vanilla">
-              <div style="font-size:1.4em">ðŸŸ«</div>
+              <div style="font-size:1.4em">🏛️</div>
               <div style="font-weight:bold;font-size:.9em">Vanilla</div>
               <div style="font-size:.65em;color:#666" data-i18n="sv_type_vanilla">Standard Minecraft</div>
             </div>
             <div class="server-type-card" data-type="paper">
-              <div style="font-size:1.4em">ðŸ“„</div>
+              <div style="font-size:1.4em">📄</div>
               <div style="font-weight:bold;font-size:.9em">Paper</div>
               <div style="font-size:.65em;color:#666" data-i18n="sv_type_paper">Optimized + Plugins</div>
             </div>
             <div class="server-type-card" data-type="spigot">
-              <div style="font-size:1.4em">ðŸªµ</div>
+              <div style="font-size:1.4em">⚡</div>
               <div style="font-weight:bold;font-size:.9em">Spigot</div>
               <div style="font-size:.65em;color:#666" data-i18n="sv_type_spigot">Plugins + Performance</div>
             </div>
             <div class="server-type-card" data-type="purpur">
-              <div style="font-size:1.4em">ðŸŸ£</div>
+              <div style="font-size:1.4em">💜</div>
               <div style="font-weight:bold;font-size:.9em">Purpur</div>
               <div style="font-size:.65em;color:#666" data-i18n="sv_type_purpur">Paper fork + Extra options</div>
             </div>
             <div class="server-type-card" data-type="fabric">
-              <div style="font-size:1.4em">ðŸ§µ</div>
+              <div style="font-size:1.4em">🧶</div>
               <div style="font-weight:bold;font-size:.9em">Fabric</div>
               <div style="font-size:.65em;color:#666" data-i18n="sv_type_fabric">Mod loader server</div>
             </div>
             <div class="server-type-card" data-type="quilt">
-              <div style="font-size:1.4em">ðŸª¡</div>
+              <div style="font-size:1.4em">🧵</div>
               <div style="font-weight:bold;font-size:.9em">Quilt</div>
               <div style="font-size:.65em;color:#666" data-i18n="sv_type_quilt">Fabric fork mod loader</div>
             </div>
             <div class="server-type-card" data-type="forge">
-              <div style="font-size:1.4em">â¬›</div>
+              <div style="font-size:1.4em">⚙️</div>
               <div style="font-weight:bold;font-size:.9em">Forge</div>
               <div style="font-size:.65em;color:#666" data-i18n="sv_type_forge">Classic mod loader</div>
             </div>
             <div class="server-type-card" data-type="neoforge">
-              <div style="font-size:1.4em">ðŸ”¶</div>
+              <div style="font-size:1.4em">🔧</div>
               <div style="font-weight:bold;font-size:.9em">NeoForge</div>
               <div style="font-size:.65em;color:#666" data-i18n="sv_type_neoforge">Forge fork for modern MC</div>
             </div>
             <div class="server-type-card" data-type="modpack">
-              <div style="font-size:1.4em">ðŸ“¦</div>
+              <div style="font-size:1.4em">📦</div>
               <div style="font-weight:bold;font-size:.9em">Modpack</div>
               <div style="font-size:.65em;color:#666" data-i18n="sv_type_modpack">Modpack server + Loader</div>
             </div>
@@ -1573,7 +1573,7 @@ body.glass #update-overlay.update-themed #update-bugreport-btn{color:#d33 !impor
     <div id="playit-modal" class="modal-overlay" style="display:none;z-index:2300">
       <div class="modal" style="max-width:560px">
         <div class="modal-header">
-          <h2><span style="color:#7c6cf0">playit.gg</span> â€” <span id="playit-server-name"></span></h2>
+          <h2><span style="color:#7c6cf0">playit.gg</span> — <span id="playit-server-name"></span></h2>
           <button class="btn modal-close" id="playit-modal-close">✕</button>
         </div>
         <div class="modal-body" id="playit-modal-body"></div>
@@ -1607,7 +1607,7 @@ body.glass #update-overlay.update-themed #update-bugreport-btn{color:#d33 !impor
         <div class="modal-body">
           <div class="form-row" style="max-width:100%">
             <label>Account:</label>
-            <span id="ban-account-name" style="color:#f66;font-weight:bold;align-self:center">â€”</span>
+            <span id="ban-account-name" style="color:#f66;font-weight:bold;align-self:center">—</span>
           </div>
           <div class="form-row" style="max-width:100%">
             <label>Grund:</label>
@@ -1653,7 +1653,7 @@ body.glass #update-overlay.update-themed #update-bugreport-btn{color:#d33 !impor
     <div id="ban-notice-modal" class="modal-overlay" style="display:none;z-index:2800">
       <div class="modal" style="max-width:460px">
         <div class="modal-header">
-          <h2 style="color:#f66">â›” Du bist gebannt</h2>
+          <h2 style="color:#f66">⚠ Du bist gebannt</h2>
         </div>
         <div class="modal-body">
           <p style="color:#ccc;line-height:1.6;font-size:.9em;margin-bottom:.9em">
@@ -1661,21 +1661,21 @@ body.glass #update-overlay.update-themed #update-bugreport-btn{color:#d33 !impor
           </p>
           <div class="form-row" style="max-width:100%">
             <label>Grund:</label>
-            <span id="ban-notice-reason" style="color:#f88;align-self:center;min-width:0;overflow:hidden;text-overflow:ellipsis">â€”</span>
+            <span id="ban-notice-reason" style="color:#f88;align-self:center;min-width:0;overflow:hidden;text-overflow:ellipsis">—</span>
           </div>
           <div class="form-row" style="max-width:100%">
             <label>Gesperrt:</label>
-            <span id="ban-notice-features" style="color:#f88;align-self:center;min-width:0">â€”</span>
+            <span id="ban-notice-features" style="color:#f88;align-self:center;min-width:0">—</span>
           </div>
           <div class="form-row" style="max-width:100%">
-            <label>LÃ¤uft aus:</label>
-            <span id="ban-notice-end" style="color:#ccc;align-self:center">â€”</span>
+            <label>Läuft aus:</label>
+            <span id="ban-notice-end" style="color:#ccc;align-self:center">—</span>
           </div>
           <p style="color:#999;font-size:.82em;line-height:1.5;margin:.7em 0 1em">
             Du kannst den Bann in unserem Discord anfechten.
           </p>
           <div style="display:flex;gap:.6em;justify-content:flex-end;flex-wrap:wrap">
-            <button class="btn" id="ban-notice-discord">Discord â€” Ban anfechten</button>
+            <button class="btn" id="ban-notice-discord">Discord — Ban anfechten</button>
             <button class="btn btn-primary" id="ban-notice-accept">Verstanden &amp; akzeptiert</button>
           </div>
         </div>
@@ -1700,8 +1700,7 @@ body.glass #update-overlay.update-themed #update-bugreport-btn{color:#d33 !impor
       <h1>Owner</h1>
       <h2 style="margin:1.1em 0 .5em;font-size:.9em;color:#888">Minecraft Accounts — jemals eingeloggt</h2>
       <div style="display:flex;gap:.4em;margin:.2em 0 .5em;flex-wrap:wrap">
-        <button class="btn btn-sm" id="owner-filter-all">Alle Accounts</button>
-        <button class="btn btn-sm" id="owner-filter-remote" style="border-color:#3a8ee655;color:#3a8ee6">Andere Geräte</button>
+        <button class="btn btn-sm" id="owner-filter-active" style="border-color:#1bd96a55;color:#1bd96a">Aktiv</button>
         <button class="btn btn-sm" id="owner-filter-banned" style="border-color:#f4444455;color:#f44">Gebannt</button>
       </div>
       <input id="owner-search" type="text" placeholder="Spielername oder UUID suchen…"
@@ -1831,7 +1830,7 @@ body.glass #update-overlay.update-themed #update-bugreport-btn{color:#d33 !impor
       <button class="btn modal-close" onclick="document.getElementById('import-norisk-modal').style.display='none'">✕</button>
     </div>
     <div style="padding:1rem">
-      <p style="color:#888;font-size:.82em;margin-bottom:.6em" data-i18n="modal_import_norisk_desc">Import your NoRisk Client profiles â€” from the installed client or from an exported .noriskpack file (any name, any location).</p>
+      <p style="color:#888;font-size:.82em;margin-bottom:.6em" data-i18n="modal_import_norisk_desc">Import your NoRisk Client profiles — from the installed client or from an exported .noriskpack file (any name, any location).</p>
       <div id="import-norisk-file" style="font-size:.75em;color:#6cf;margin-bottom:.5em;word-break:break-all"></div>
       <div id="import-norisk-hint" style="font-size:.72em;color:#c98;margin-bottom:.5em;display:none"></div>
       <div id="import-norisk-list" style="max-height:40vh;overflow-y:auto"></div>
@@ -1906,8 +1905,8 @@ body.glass #update-overlay.update-themed #update-bugreport-btn{color:#d33 !impor
             </div>
           </div>
           <div class="profile-split" id="profile-split">
-            <div class="profile-split-pane profile-split-left" id="profile-split-left">
-              <div class="pack-list" id="profile-mods-list" data-drop-target="mods"></div>
+            <div class="profile-split-pane profile-split-left" id="profile-split-left" data-drop-target="mods">
+              <div class="pack-list" id="profile-mods-list"></div>
             </div>
             <div class="profile-split-divider" id="profile-split-divider" title="Drag to resize"><div></div></div>
             <div class="profile-split-pane profile-split-right" id="profile-split-right">
@@ -1968,7 +1967,7 @@ body.glass #update-overlay.update-themed #update-bugreport-btn{color:#d33 !impor
         <div style="flex:1"></div>
         <span id="offline-cap-indicator" style="font-size:.72em;color:#888;display:flex;align-items:center;gap:.35em;white-space:nowrap;max-width:45%" title="Whether every mod for this profile is already cached">
           <span id="offline-cap-dot" style="width:.6em;height:.6em;border-radius:50%;background:#888;display:inline-block;flex-shrink:0"></span>
-          <span id="offline-cap-text" style="overflow:hidden;text-overflow:ellipsis">â€”</span>
+          <span id="offline-cap-text" style="overflow:hidden;text-overflow:ellipsis">—</span>
         </span>
       </div>
     </div>
@@ -2023,7 +2022,7 @@ body.glass #update-overlay.update-themed #update-bugreport-btn{color:#d33 !impor
       </div>
       <div class="skin-editor-3d-wrap" id="skin-ed-3d-wrap"></div>
     </div>
-    <div class="skin-editor-body-labels" id="skin-ed-body-labels">Inner Layer â€” Head(8,8) Â· Body(20,20) Â· Right Arm(44,20) Â· Left Arm(36,52) Â· Right Leg(4,20) Â· Left Leg(20,52) â€” drag to rotate 3D preview</div>
+    <div class="skin-editor-body-labels" id="skin-ed-body-labels">Inner Layer — Head(8,8) Â· Body(20,20) Â· Right Arm(44,20) Â· Left Arm(36,52) Â· Right Leg(4,20) Â· Left Leg(20,52) — drag to rotate 3D preview</div>
     <div class="skin-editor-actions">
       <button class="btn btn-sm btn-primary" id="skin-ed-apply" data-i18n="btn_apply_skin">Apply to Skin</button>
       <button class="btn btn-sm" id="skin-ed-export" data-i18n="btn_export_png">Export PNG</button>
@@ -2275,7 +2274,7 @@ async function bootUpdateWindow(){
 }
 
 function prepareUpdateWindow(){
-  // Bug-Report/GitHub ergeben hier keinen Sinn â€” "Later" schliesst nur das Fenster,
+  // Bug-Report/GitHub ergeben hier keinen Sinn — "Later" schliesst nur das Fenster,
   // der Launcher erscheint darunter.
   try { document.getElementById('update-github-btn').style.display='none'; } catch {}
   try { document.getElementById('update-bugreport-btn').style.display='none'; } catch {}
@@ -2300,7 +2299,7 @@ async function bootLauncher(){
     // Always bind toolbar first so UI is immediately interactive
     bindToolbar();
 
-    // Show the launcher instantly â€” data loads in the background below
+    // Show the launcher instantly — data loads in the background below
     document.getElementById('launcher-screen').style.display='flex';
     showPage('launch-page');
 
@@ -2678,9 +2677,9 @@ const LANGS={
     btn_use_crux_mod:'Use Crux Client Features',
     btn_use_client_mods:'Use Client Mods (from Client Options tab)',
     btn_use_client_rps:'Use Client Resource Packs (from Client Options tab)',
-    btn_import_modpack_modrinth:'ðŸ“¦ Modrinth', btn_import_modpack_curseforge:'ðŸ“¦ CurseForge',
+    btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
     btn_import_share:'📋 Import Share Code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Share',
-    btn_stop_server:'â–  Stop Server', btn_op_player:'OP Player', btn_whitelist:'Whitelist', btn_backup_world:'Backup World',
+    btn_stop_server:'■ Stop Server', btn_op_player:'OP Player', btn_whitelist:'Whitelist', btn_backup_world:'Backup World',
     btn_new_server:'+ New Server', server_count:'servers',
     btn_microsoft:'Microsoft',
     skin_editor_title:'Skin Pixel Editor', skin_editor_size:'64Ã—64',
@@ -2689,7 +2688,7 @@ const LANGS={
     skin_template_toggle:'Show Template',
     mc_capes:'Minecraft Capes', custom_cape:'Custom Cape',
     auto_use:'Auto-use',
-    desc_rp_auto:'When enabled, adds Open Loader to your client mods â€” it automatically loads all resource packs listed below without touching in-game settings.',
+    desc_rp_auto:'When enabled, adds Open Loader to your client mods — it automatically loads all resource packs listed below without touching in-game settings.',
     rp_input_placeholder:'Resource pack name or URL...',
     btn_add_rp:'+ Add', client_rp_title:'Client Resource Packs',
     desc_client_rp:'Client resource packs are applied to all profiles.',
@@ -2713,7 +2712,7 @@ const LANGS={
     lbl_chat_server:'Chat server URL (friend messaging)', desc_chat_server:'Leave empty to disable. Deploy server/chat-server.ts on Deno Deploy (free, always-on).',
     chat_no_server:'No chat server configured. Set the URL in Settings â†’ Friends & Bug Reports.', chat_select:'Select a friend to start chatting.', chat_send:'Send', ph_chat:'Type a message...',
     lbl_bugreport_webhook:'Bug report webhook URL (Discord or compatible)',
-    desc_bugreport_webhook:'Bug reports are sent here directly â€” no GitHub account needed.',
+    desc_bugreport_webhook:'Bug reports are sent here directly — no GitHub account needed.',
     ph_friend_add:'Send friend request by Minecraft username',
     add_friend:'+ Send Request',
     friends_empty:'No friends yet. Send a friend request by username above.',
@@ -2734,7 +2733,7 @@ const LANGS={
     loading_popular_mods:'Loading popular mods...',
     modal_share:'Share Profile', modal_share_desc:'Copy this code and send it to someone. They can import it in their Crux Launcher.',
     modal_import:'Import Profile', modal_import_desc:'Paste a share code from another Crux Launcher user.',
-    modal_import_norisk:'Import NoRisk Client Profiles', modal_import_norisk_desc:'Import your NoRisk Client profiles â€” from the installed client or from an exported .noriskpack file (any name, any location).',
+    modal_import_norisk:'Import NoRisk Client Profiles', modal_import_norisk_desc:'Import your NoRisk Client profiles — from the installed client or from an exported .noriskpack file (any name, any location).',
     nrc_scanning:'Reading NoRisk Client profiles...', nrc_none:'No profiles found.', nrc_imported:'âœ“ {n} profile(s) imported.',
     btn_choose_export:'Choose export fileâ€¦',
     nrc_overrides_hint:'This export contains full game files (configs, worlds, packs). They are stored in this profile\'s own game folder.',
@@ -2815,9 +2814,9 @@ const LANGS={
     btn_use_crux_mod:'Crux Client Features verwenden',
     btn_use_client_mods:'Client Mods verwenden (aus Client Options Tab)',
     btn_use_client_rps:'Client Ressourcenpakete verwenden (aus Client Options Tab)',
-    btn_import_modpack_modrinth:'ðŸ“¦ Modrinth', btn_import_modpack_curseforge:'ðŸ“¦ CurseForge',
+    btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
     btn_import_share:'📋 Import-Code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Teilen',
-    btn_stop_server:'â–  Server stoppen', btn_op_player:'OP Spieler', btn_whitelist:'Whitelist', btn_backup_world:'Welt sichern',
+    btn_stop_server:'■ Server stoppen', btn_op_player:'OP Spieler', btn_whitelist:'Whitelist', btn_backup_world:'Welt sichern',
     btn_new_server:'+ Neuer Server', server_count:'Server',
     btn_microsoft:'Microsoft',
     skin_editor_title:'Skin Pixel Editor', skin_editor_size:'64Ã—64',
@@ -2826,7 +2825,7 @@ const LANGS={
     skin_template_toggle:'Vorlage anzeigen',
     mc_capes:'Minecraft Capes', custom_cape:'Custom Cape',
     auto_use:'Automatisch',
-    desc_rp_auto:'Wenn aktiviert, fÃ¼gt Open Loader zu deinen Client Mods hinzu â€” lÃ¤dt automatisch alle unten aufgelisteten Ressourcenpakete ohne Ã„nderung der Spieleinstellungen.',
+    desc_rp_auto:'Wenn aktiviert, fügt Open Loader zu deinen Client Mods hinzu — lädt automatisch alle unten aufgelisteten Ressourcenpakete ohne Änderung der Spieleinstellungen.',
     rp_input_placeholder:'Ressourcenpaket Name oder URL...',
     btn_add_rp:'+ HinzufÃ¼gen', client_rp_title:'Client Ressourcenpakete',
     desc_client_rp:'Client Ressourcenpakete werden auf alle Profile angewendet.',
@@ -2850,7 +2849,7 @@ const LANGS={
     lbl_chat_server:'Chat-Server-URL (Freunde-Nachrichten)', desc_chat_server:'Leer lassen zum Deaktivieren. Deploye server/chat-server.ts auf Deno Deploy (kostenlos, always-on).',
     chat_no_server:'Kein Chat-Server konfiguriert. Setze die URL unter Einstellungen â†’ Freunde & Bug-Reports.', chat_select:'WÃ¤hle einen Freund, um zu chatten.', chat_send:'Senden', ph_chat:'Nachricht eingeben...',
     lbl_bugreport_webhook:'Bug-Report-Webhook-URL (Discord oder kompatibel)',
-    desc_bugreport_webhook:'Bug-Reports werden hierhin gesendet â€” ganz ohne GitHub-Account.',
+    desc_bugreport_webhook:'Bug-Reports werden hierhin gesendet — ganz ohne GitHub-Account.',
     ph_friend_add:'Freundschaftsanfrage per Minecraft-Benutzername senden',
     add_friend:'+ Anfrage senden',
     friends_empty:'Noch keine Freunde. Sende oben eine Anfrage per Benutzername.',
@@ -2926,7 +2925,7 @@ const LANGS={
     no_mods:'Aucun mod installÃ©.', no_profiles:'Aucun profil.', no_accounts:'Aucun compte.', no_instances:'Aucune instance.',
     no_custom_capes:'Aucune cape custom sauvegardÃ©e.', no_servers:'Aucun serveur crÃ©Ã©. Cliquez sur "+ Nouveau Serveur" pour commencer.', skin_list_empty:'Aucun skin sauvegardÃ©.',
     add_ms:'+ Microsoft', add_offline:'+ Hors ligne',
-    ver_latest:'â€” DerniÃ¨re version â€”', ver_latest_snap:'â€” Dernier instantanÃ© â€”', ver_latest_prerelease:'â€” DerniÃ¨re prÃ©version â€”', ver_releases:'Versions', ver_snapshots:'InstantanÃ©s', ver_other:'Autres',
+    ver_latest:'— DerniÃ¨re version —', ver_latest_snap:'— Dernier instantanÃ© —', ver_latest_prerelease:'— DerniÃ¨re prÃ©version —', ver_releases:'Versions', ver_snapshots:'InstantanÃ©s', ver_other:'Autres',
     profile_name:'Nom :', profile_version:'Version Minecraft :', profile_section:'Section :', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Packs de ressources', profile_shaderpacks:'Packs de shaders',
     lbl_group:'Groupe de rÃ©glages (touches & paramÃ¨tres) :', desc_group:'Les profils du mÃªme groupe partagent les mÃªmes rÃ©glages Minecraft (touches, vidÃ©o, ...).',
@@ -2985,7 +2984,7 @@ const LANGS={
     lbl_chat_server:'URL du serveur de discussion (messages entre amis)', desc_chat_server:'Laisser vide pour dÃ©sactiver. DÃ©ployez server/chat-server.ts sur Deno Deploy (gratuit, toujours actif).',
     chat_no_server:'Aucun serveur de discussion configurÃ©. DÃ©finissez l\'URL dans ParamÃ¨tres â†’ Amis & Bug Reports.', chat_select:'SÃ©lectionnez un ami pour discuter.', chat_send:'Envoyer', ph_chat:'Ã‰crivez un message...',
     lbl_bugreport_webhook:'URL du webhook de bug report (Discord ou compatible)',
-    desc_bugreport_webhook:'Les rapports de bug sont envoyÃ©s ici directement â€” aucun compte GitHub requis.',
+    desc_bugreport_webhook:'Les rapports de bug sont envoyÃ©s ici directement — aucun compte GitHub requis.',
     ph_friend_add:'Envoyer une demande d\'ami par nom d\'utilisateur Minecraft',
     add_friend:'+ Envoyer la demande',
     friends_empty:'Aucun ami pour l\'instant. Envoyez une demande d\'ami avec le nom d\'utilisateur ci-dessus.',
@@ -3006,7 +3005,7 @@ const LANGS={
     loading_popular_mods:'Chargement des mods populaires...',
     modal_share:'Partager le Profil', modal_share_desc:'Copiez ce code et envoyez-le Ã  quelqu\'un. Il peut l\'importer dans son Crux Launcher.',
     modal_import:'Importer le Profil', modal_import_desc:'Collez un code de partage d\'un autre utilisateur Crux Launcher.',
-    modal_import_norisk:'Importer les profils NoRisk Client', modal_import_norisk_desc:'Importez vos profils NoRisk Client â€” depuis le client installÃ© ou depuis un fichier .noriskpack exportÃ© (nom et emplacement libres).',
+    modal_import_norisk:'Importer les profils NoRisk Client', modal_import_norisk_desc:'Importez vos profils NoRisk Client — depuis le client installÃ© ou depuis un fichier .noriskpack exportÃ© (nom et emplacement libres).',
     nrc_scanning:'Lecture des profils NoRisk Client...', nrc_none:'Aucun profil trouvÃ©.', nrc_imported:'âœ“ {n} profil(s) importÃ©(s).',
     btn_choose_export:'Choisir un fichier d\'exportâ€¦',
     nrc_overrides_hint:'Cet export contient les fichiers de jeu complets (configs, mondes, packs). Ils sont stockÃ©s dans le dossier de jeu propre Ã  ce profil.',
@@ -3061,7 +3060,7 @@ const LANGS={
     no_mods:'Sin mods instalados.', no_profiles:'Sin perfiles.', no_accounts:'Sin cuentas.', no_instances:'Sin instancias.',
     no_custom_capes:'No hay capas personalizadas guardadas.', no_servers:'No hay servidores creados. Haz clic en "+ Nuevo Servidor" para empezar.', skin_list_empty:'No hay skins guardados.',
     add_ms:'+ Microsoft', add_offline:'+ Sin conexiÃ³n',
-    ver_latest:'â€” Ãšltima versiÃ³n â€”', ver_latest_snap:'â€” Ãšltimo instantÃ¡neo â€”', ver_latest_prerelease:'â€” Ãšltima versiÃ³n preliminar â€”', ver_releases:'Versiones', ver_snapshots:'InstantÃ¡neas', ver_other:'Otras',
+    ver_latest:'— Ãšltima versiÃ³n —', ver_latest_snap:'— Ãšltimo instantÃ¡neo —', ver_latest_prerelease:'— Ãšltima versiÃ³n preliminar —', ver_releases:'Versiones', ver_snapshots:'InstantÃ¡neas', ver_other:'Otras',
     profile_name:'Nombre:', profile_version:'VersiÃ³n de Minecraft:', profile_section:'SecciÃ³n:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Paquetes de recursos', profile_shaderpacks:'Paquetes de shaders',
     lbl_group:'Grupo de ajustes (teclas y ajustes):', desc_group:'Los perfiles del mismo grupo comparten los mismos ajustes de Minecraft (teclas, vÃ­deo, ...).',
@@ -3136,7 +3135,7 @@ const LANGS={
     loading_popular_mods:'Cargando mods populares...',
     modal_share:'Compartir Perfil', modal_share_desc:'Copia este cÃ³digo y envÃ­alo a alguien. Puede importarlo en su Crux Launcher.',
     modal_import:'Importar Perfil', modal_import_desc:'Pega un cÃ³digo de otro usuario de Crux Launcher.',
-    modal_import_norisk:'Importar perfiles de NoRisk Client', modal_import_norisk_desc:'Importa tus perfiles de NoRisk Client â€” desde el cliente instalado o desde un archivo .noriskpack exportado (cualquier nombre y ubicaciÃ³n).',
+    modal_import_norisk:'Importar perfiles de NoRisk Client', modal_import_norisk_desc:'Importa tus perfiles de NoRisk Client — desde el cliente instalado o desde un archivo .noriskpack exportado (cualquier nombre y ubicaciÃ³n).',
     nrc_scanning:'Leyendo perfiles de NoRisk Client...', nrc_none:'No se encontraron perfiles.', nrc_imported:'âœ“ {n} perfil(es) importado(s).',
     btn_choose_export:'Elegir archivo de exportaciÃ³nâ€¦',
     nrc_overrides_hint:'Este export contiene los archivos de juego completos (configs, mundos, packs). Se guardan en la carpeta de juego propia de este perfil.',
@@ -3280,7 +3279,7 @@ ipcRenderer.on('token-refreshed',(_,{uuid, accessToken, refreshToken, clientToke
 // Main process auto-scans Java after window loads and sends result here
 ipcRenderer.on('java-scan-result',(_,javas)=>{
   populateJava(javas);
-  document.getElementById('status').textContent = javas.length ? 'Ready.' : 'No Java found â€” go to Settings â†’ Rescan Java.';
+  document.getElementById('status').textContent = javas.length ? 'Ready.' : 'No Java found — go to Settings â†’ Rescan Java.';
 });
 
 function populateJava(javas){
@@ -3299,7 +3298,7 @@ async function loadVersions(){
   try {
     mcVersionList=await ipcRenderer.invoke('get-versions');
     const ps=document.getElementById('profile-version-select');
-    ps.innerHTML='<option value="">â€” Latest Release â€”</option>';
+    ps.innerHTML='<option value="">— Latest Release —</option>';
 
     const releases  = mcVersionList.filter(v=>v.type==='release');
     const snapshots = mcVersionList.filter(v=>v.type==='snapshot');
@@ -3422,7 +3421,7 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
   pendingLaunchWorld=null;
 });
 
-// No Java found â€” auto-scan
+// No Java found — auto-scan
 ipcRenderer.on('no-java-found',(_,neededVersion)=>{
   document.getElementById('status').textContent=`Java ${neededVersion} required. Scanning for Java...`;
   updateStopButtons();
@@ -3629,7 +3628,7 @@ function updateRunningBadge(){
 }
 
 function renderInstanceList(){
-  // Nur noch die Auswahlliste im Logs-Tab â€” die Instanz-Karten wurden entfernt.
+  // Nur noch die Auswahlliste im Logs-Tab — die Instanz-Karten wurden entfernt.
   refreshLogSelect();
 }
 
@@ -3718,7 +3717,7 @@ document.getElementById('profileSelect').addEventListener('change',()=>{ updateV
 function updateVersionDisplay(){
   const p=profiles.find(x=>x.id===document.getElementById('profileSelect').value);
   document.getElementById('profile-version-display').textContent=p?(p.mcVersion||'Latest'):'';
-  document.getElementById('skin-version-display').textContent=p?(p.mcVersion||'Latest'):'â€”';
+  document.getElementById('skin-version-display').textContent=p?(p.mcVersion||'Latest'):'—';
 }
 
 document.getElementById('new-profile-btn').addEventListener('click',()=>{
@@ -3888,9 +3887,9 @@ function renderRecentList(){
   if(!total){ el.innerHTML='<div class="mod-list-empty">No recent activity yet.</div>'; return; }
 
   const categories=[
-    { type:'server', title:'Servers', icon:'ðŸŒ', emptyMsg:'No servers joined yet.' },
-    { type:'instance', title:'Instances', icon:'ðŸ“¦', emptyMsg:'No instances launched yet.' },
-    { type:'world', title:'Worlds', icon:'ðŸŒ', emptyMsg:'No worlds played yet.' },
+    { type:'server', title:'Servers', icon:'🌐', emptyMsg:'No servers joined yet.' },
+    { type:'instance', title:'Instances', icon:'📦', emptyMsg:'No instances launched yet.' },
+    { type:'world', title:'Worlds', icon:'🌍', emptyMsg:'No worlds played yet.' },
   ];
   const MAX_PER_CAT=6;
 
@@ -4188,7 +4187,7 @@ function openProfileModal(profileId){
   const isBedrockProfile=ml==='bedrock';
   if(isBedrockProfile){
     // Bedrock is version-less: only "Latest" and "Latest Pre-release" are selectable.
-    // NOTE: no return here â€” the rest of the function (pack lists, modal display) must still run.
+    // NOTE: no return here — the rest of the function (pack lists, modal display) must still run.
     sel.innerHTML=`<option value="">${t('ver_latest')}</option><option value="__latest_prerelease__">${t('ver_latest_prerelease')}</option>`;
     sel.value = (p.mcVersion==='__latest_prerelease__') ? '__latest_prerelease__' : '';
   } else {
@@ -4226,7 +4225,7 @@ function openProfileModal(profileId){
   renderPackTags('profile-datapacks','datapacks');
   renderPackTags('profile-resourcepacks','resourcePacks');
   renderPackTags('profile-shaderpacks','shaderPacks');
-  // Vanilla kann keine Mods â€” dann mit Datapacks oeffnen statt mit dem (unsichtbaren) Mods-Tab
+  // Vanilla kann keine Mods — dann mit Datapacks oeffnen statt mit dem (unsichtbaren) Mods-Tab
   const modsBtn=document.querySelector('#profile-sec-bar .profile-sec-btn[data-section="mods"]');
   const defaultSection=(modsBtn&&modsBtn.style.display!=='none')?'mods':'datapacks';
   document.querySelectorAll('.profile-sec-btn').forEach(b=>b.classList.toggle('active', b.dataset.section===defaultSection));
@@ -4247,7 +4246,7 @@ function setProfileSection(section){
   if(!isBedrock) document.querySelectorAll('.profile-section').forEach(s=>{ s.style.display=''; });
   if(split&&left&&divider&&right){
     if(section==='mods'){
-      // Mods full width â€” right side (Datapacks) hidden
+      // Mods full width — right side (Datapacks) hidden
       left.style.display='';
       left.style.flex='1 1 100%';
       divider.style.display='none';
@@ -4273,7 +4272,7 @@ function setProfileSection(section){
 }
 document.querySelectorAll('.profile-sec-btn').forEach(b=>b.addEventListener('click',()=>setProfileSection(b.dataset.section)));
 
-// Profiles auto-save on every change â€” no Save button needed.
+// Profiles auto-save on every change — no Save button needed.
 function saveProfileEdits(){
   const idx=profiles.findIndex(p=>p.id===editingProfileId); if(idx<0)return;
   const curP=profiles[idx];
@@ -4327,7 +4326,7 @@ async function refreshOfflineCapability(){
   const txt=document.getElementById('offline-cap-text');
   if(!dot||!txt)return;
   const p=profiles.find(x=>x.id===editingProfileId);
-  if(!p){ dot.style.background='#888'; txt.textContent='â€”'; return; }
+  if(!p){ dot.style.background='#888'; txt.textContent='—'; return; }
   dot.style.background='#888'; txt.textContent='checkingâ€¦';
   try{
     const res=await ipcRenderer.invoke('profile-offline-check', { ...p, clientMods: installedMods });
@@ -4651,7 +4650,7 @@ function renderProfilePackList(containerId, key, isMods=false){
       if(i===activeItems.length && disabledItems.length) item.classList.add('mod-list-sep');
       const op=mod.disabled?'opacity:0.45':'';
       const versionDisplay=mod.mcVersion==='all'?'All versions':`MC ${mod.mcVersion||'?'}`;
-      const modVer=mod.version&&mod.version!=='latest'?` Â· ${mod.version}`:'';
+      const modVer=mod.version&&mod.version!=='latest'?` · ${mod.version}`:'';
       const lbc={forge:['#f16422','#f1642255'],neoforge:['#ff8800','#ff880055'],quilt:['#cc5599','#cc559955']};
       const cc=lbc[mod.loader]||['#1bd96a','#1bd96a44'];
       const loaderBadge=mod.loader?`<span style="font-size:.7em;padding:.1em .35em;border-radius:999px;border:1px solid ${cc[1]};color:${cc[0]};margin-left:.3em">${mod.loader==='any'?'Any':mod.loader}</span>`:'';
@@ -4659,7 +4658,7 @@ function renderProfilePackList(containerId, key, isMods=false){
         ${mod.iconUrl?`<img class="mod-icon" src="${mod.iconUrl}" style="${op}">`:'<div class="mod-icon" style="'+op+'"></div>'}
         <div class="mod-info" style="${op}">
           <div class="mod-name">${mod.name||mod}${loaderBadge}${mod.disabled?'<span style="color:#555;font-weight:normal;font-size:.76em"> (disabled)</span>':''}</div>
-          <div class="mod-meta">${versionDisplay}${modVer} Â· ${mod.source||'Modrinth'}</div>
+          <div class="mod-meta">${versionDisplay}${modVer} · ${mod.source||'Modrinth'}</div>
         </div>
         <div class="mod-btns">
           <select class="btn mod-ver-select" data-i="${mod._idx}" style="width:auto;max-width:11em;padding:.22em .4em;font-size:.68em;color:#aaa" title="Mod version"><option value="">${mod.version&&mod.version!=='latest'?mod.version:'Versionâ€¦'}</option></select>
@@ -4712,7 +4711,7 @@ function renderProfilePackList(containerId, key, isMods=false){
       if(key==='resourcePacks'){
         verSel=`<select class="pack-ver-select" data-i="${i}" title="Minecraft version"><option value="all">All</option><option value="${(profileMC||'').replace(/"/g,'&quot;')}">${profileMC||'All'}</option></select>`;
       }
-      tag.innerHTML=`<label class="mod-switch" style="align-self:center" title="${isDisabled?'Enable':'Disable'}"><input type="checkbox" class="pack-toggle" data-i="${i}" ${isDisabled?'':'checked'}><span class="slider"></span></label> ${name} ${verSel} <span class="rt" data-i="${i}">âœ•</span>`;
+      tag.innerHTML=`<label class="mod-switch" style="align-self:center" title="${isDisabled?'Enable':'Disable'}"><input type="checkbox" class="pack-toggle" data-i="${i}" ${isDisabled?'':'checked'}><span class="slider"></span></label> ${name} ${verSel} <span class="rt" data-i="${i}">✕</span>`;
       const vs=tag.querySelector('.pack-ver-select');
       if(vs) vs.value = isObj ? (item.mcVersion||'all') : 'all';
       if(vs) vs.addEventListener('change',()=>{
@@ -4765,7 +4764,7 @@ window.addProfileMod=()=>{
 // â”€â”€ Drag & drop into the profile editor (mods / datapacks / resource / shader) â”€â”€
 function wireProfileDropZones(){
   const zones=[
-    { id:'profile-mods-list',      key:'mods' },
+    { id:'profile-split-left',     key:'mods' },
     { id:'profile-datapacks',      key:'datapacks' },
     { id:'profile-resourcepacks',  key:'resourcePacks' },
     { id:'profile-shaderpacks',    key:'shaderPacks' }
@@ -4777,25 +4776,28 @@ document.addEventListener('drop',e=>e.preventDefault());
 zones.forEach(({id,key})=>{
     const el=document.getElementById(id);
     if(!el) return;
-    el.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('drop-active'); });
-    el.addEventListener('dragleave',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.remove('drop-active'); });
-    el.addEventListener('drop',e=>{
+    el.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('drop-active'); console.log("DRAGOVER", id); });
+    el.addEventListener('dragleave',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.remove('drop-active'); console.log("DRAGLEAVE", id); });
+    el.addEventListener('drop',async e=>{ console.log("DROP", id, key, "editingProfileId:", editingProfileId, "files:", e.dataTransfer?.files);
       e.preventDefault(); e.stopPropagation(); el.classList.remove('drop-active');
       const files=[...(e.dataTransfer?.files||[])];
       if(!files.length) return;
       if(key==='mods'){
         const edProfile=profiles.find(p=>p.id===editingProfileId);
-        files.filter(f=>/\.jar$/i.test(f.name)).forEach(f=>{
+        for (const f of files.filter(f=>/\.jar$/i.test(f.name))) {
           const base=f.path.split(/[\\/]/).pop()||f.path;
+          const destName = base.replace(/\s+/g,'_');
+          const res = await ipcRenderer.invoke('copy-mod-to-profile', { profileId: editingProfileId, sourcePath: f.path, fileName: destName });
+          if (!res.ok) continue;
           editingPackData.mods.push({
             name:base.replace(/\.jar$/i,'').replace(/_/g,' '),
-            fileName:base.replace(/\s+/g,'_'),
+            fileName:destName,
             version:'latest', mcVersion:edProfile?.mcVersion||'latest',
             source:'Local', iconUrl:'', modrinthId:null, curseforgeId:null,
             downloadAllVersions:false, disabled:false,
-            loader:edProfile?.modLoader||'fabric', diskPath:f.path
+            loader:edProfile?.modLoader||'fabric', diskPath:res.destPath
           });
-        });
+        }
         renderProfilePackList('profile-mods-list','mods',true);
       } else {
         files.filter(f=>/\.(zip|mcpack)$/i.test(f.name)).forEach(f=>{
@@ -4880,10 +4882,10 @@ function renderAccountList(){
   sorted.forEach(acc=>{
     const item=document.createElement('div');
     item.className='account-item'+(acc.id===settings.selectedAccount?' sel':'');
-    item.innerHTML=`<canvas class="account-head-sm" width="32" height="32"></canvas><span class="account-name">${acc.name}</span><span class="account-type">${acc.type}</span><button class="btn account-del" data-id="${acc.id}">âœ•</button>`;
+    item.innerHTML=`<canvas class="account-head-sm" width="32" height="32"></canvas><span class="account-name">${acc.name}</span><span class="account-type">${acc.type}</span><button class="btn account-del" data-id="${acc.id}">✕</button>`;
     item.addEventListener('click',e=>{ if(e.target.classList.contains('account-del'))return; settings.selectedAccount=acc.id; saveSettings(); renderAccountList(); updateSkinDisplay(); updateAccountTabHead(); });
     item.querySelector('.account-del').addEventListener('click',()=>{ accounts=accounts.filter(a=>a.id!==acc.id); if(settings.selectedAccount===acc.id)settings.selectedAccount=accounts[0]?.id||null; ipcRenderer.send('save-accounts',accounts); saveSettings(); renderAccountList(); updateSkinDisplay(); updateAccountTabHead(); });
-    drawHead2D(item.querySelector('canvas'),acc.skinUrl);
+    drawHead2D(item.querySelector('canvas'),acc.skinUrl,acc.uuid);
     el.appendChild(item);
   });
   updateAccountTabHead();
@@ -4892,14 +4894,14 @@ function renderAccountList(){
 function updateAccountTabHead(){
   const acc=getSelectedAccount();
   const canvas=document.getElementById('tb-account-head');
-  if(acc&&acc.skinUrl){ canvas.style.display='inline-block'; drawHead2D(canvas,acc.skinUrl); }
+  if(acc&&acc.skinUrl){ canvas.style.display='inline-block'; drawHead2D(canvas,acc.skinUrl,acc.uuid); }
   else{ canvas.style.display='none'; }
   if(typeof syncLoginHistory==='function') syncLoginHistory();
   if(typeof syncOwnerTab==='function') syncOwnerTab();
   if(typeof applyBanState==='function') applyBanState();
 }
 
-// Owner-Tab in der Toolbar â€” nur wenn Sams25 / CookieMurder31 ausgewÃ¤hlt ist
+// Owner-Tab in der Toolbar — nur wenn Sams25 / CookieMurder31 ausgewÃ¤hlt ist
 function syncOwnerTab(){
   const btn=document.getElementById('tb-owner-btn');
   let owner=false;
@@ -5166,7 +5168,7 @@ function syncLoginHistory(){
 }
 
 function fmtLoginTime(ts){
-  if(!ts) return 'â€”';
+  if(!ts) return '—';
   try{ return new Date(ts).toLocaleString(); }catch(err){ return ''; }
 }
 
@@ -5345,7 +5347,7 @@ function confirmBan(){
   const reason=(reasonEl&&reasonEl.value||'').trim();
   if(!reason){ if(err) err.textContent='Grund ist erforderlich.'; if(reasonEl) reasonEl.focus(); return; }
   const dur=banDurationHours();
-  if(dur===null){ if(err) err.textContent='UngÃ¼ltige eigene Dauer â€” Zahl grÃ¶ÃŸer 0 eingeben.'; const ca=document.getElementById('ban-custom-amount'); if(ca) ca.focus(); return; }
+  if(dur===null){ if(err) err.textContent='UngÃ¼ltige eigene Dauer — Zahl grÃ¶ÃŸer 0 eingeben.'; const ca=document.getElementById('ban-custom-amount'); if(ca) ca.focus(); return; }
   const now=Date.now();
   let by='';
   try{ const a=getSelectedAccount(); by=(a&&(a.name||a.username))||''; }catch(e){}
@@ -5398,14 +5400,14 @@ function showBanNotice(ban){
   const ov=document.getElementById('ban-notice-modal');
   if(!ov||!ban) return;
   const r=document.getElementById('ban-notice-reason');
-  if(r){ r.textContent=ban.reason||'â€”'; r.title=ban.reason||''; }
+  if(r){ r.textContent=ban.reason||'—'; r.title=ban.reason||''; }
   const e=document.getElementById('ban-notice-end');
   if(e) e.textContent=ban.end?fmtLoginTime(ban.end):'Permanent';
   // Liste der gesperrten Funktionen
   const fl=document.getElementById('ban-notice-features');
   if(fl){
     const names=banDisabledList(ban).map(k=>{ const f=BAN_FEATURES.find(x=>x.key===k); return f?f.label:k; });
-    fl.textContent=names.length?names.join(', '):'â€”';
+    fl.textContent=names.length?names.join(', '):'—';
     fl.title=fl.textContent;
   }
   ov.style.display='flex';
@@ -5496,25 +5498,15 @@ let _ownerFilter='all';
 let _ownerSearch='';
 
 function updateOwnerFilterBtns(){
-  const all=document.getElementById('owner-filter-all');
-  const rem=document.getElementById('owner-filter-remote');
+  const active=document.getElementById('owner-filter-active');
   const ban=document.getElementById('owner-filter-banned');
   let acc='#7c6cf0';
   try{ acc=getComputedStyle(document.documentElement).getPropertyValue('--acc').trim()||acc; }catch(err){}
-  if(all){
-    const on=_ownerFilter==='all';
-    all.style.background=on?acc:'';
-    all.style.borderColor=on?acc:'';
-    all.style.color=on?'#fff':'';
-  }
-  if(rem){
-    const on=_ownerFilter==='remote';
-    let n=0;
-    try{ n=(settings.loginHistory||[]).filter(x=>accountOnOtherDevice(x)).length; }catch(err){}
-    rem.textContent='Andere Geräte ('+n+')';
-    rem.style.background=on?'#3a8ee6':'';
-    rem.style.borderColor=on?'#3a8ee6':'#3a8ee655';
-    rem.style.color=on?'#fff':'#3a8ee6';
+  if(active){
+    const on=_ownerFilter==='active';
+    active.style.background=on?acc:'';
+    active.style.borderColor=on?acc:'';
+    active.style.color=on?'#fff':'';
   }
   if(ban){
     const on=_ownerFilter==='banned';
@@ -5528,17 +5520,15 @@ function updateOwnerFilterBtns(){
 }
 
 function setOwnerFilter(f){
-  _ownerFilter=(f==='banned')?'banned':((f==='remote')?'remote':'all');
+  _ownerFilter=(f==='banned')?'banned':'active';
   updateOwnerFilterBtns();
   renderOwnerAccountList();
 }
 
 (function bindOwnerFilterUI(){
-  const all=document.getElementById('owner-filter-all');
-  const rem=document.getElementById('owner-filter-remote');
+  const active=document.getElementById('owner-filter-active');
   const ban=document.getElementById('owner-filter-banned');
-  if(all) all.addEventListener('click',()=>setOwnerFilter('all'));
-  if(rem) rem.addEventListener('click',()=>setOwnerFilter('remote'));
+  if(active) active.addEventListener('click',()=>setOwnerFilter('active'));
   if(ban) ban.addEventListener('click',()=>setOwnerFilter('banned'));
   const search=document.getElementById('owner-search');
   if(search) search.addEventListener('input',()=>{ _ownerSearch=search.value||''; renderOwnerAccountList(); });
@@ -5552,7 +5542,6 @@ function renderOwnerAccountList(){
   updateOwnerFilterBtns();
   let list=(settings.loginHistory||[]).slice().sort((a,b)=>(b.last||0)-(a.last||0));
   if(_ownerFilter==='banned') list=list.filter(x=>getActiveBan(x));
-  else if(_ownerFilter==='remote') list=list.filter(x=>accountOnOtherDevice(x));
   const q=String(_ownerSearch||'').trim().toLowerCase();
   if(q){
     const qn=q.replace(/[^a-z0-9]/g,'');
@@ -5564,7 +5553,7 @@ function renderOwnerAccountList(){
   }
   el.innerHTML='';
   if(empty) empty.textContent=q?'Kein Account gefunden.'
-    :((_ownerFilter==='banned')?'Keine gebannten Accounts.':((_ownerFilter==='remote')?'Keine Accounts auf anderen GerÃ¤ten.':'Noch keine Logins aufgezeichnet.'));
+    :((_ownerFilter==='banned')?'Keine gebannten Accounts.':'Noch keine Logins aufgezeichnet.');
   if(!list.length){
     el.style.display='none';
     if(empty) empty.style.display='block';
@@ -5598,29 +5587,13 @@ function renderOwnerAccountList(){
       meta.title=meta.textContent;
     }
     info.appendChild(nm); info.appendChild(meta);
-    // Geräte-Chips: auf welchen Maschinen dieser Account eingeloggt war
-    const devs=accountDeviceList(e);
-    if(devs.length){
-      const dl=document.createElement('span');
-      dl.style.cssText='display:flex;gap:.35em;flex-wrap:wrap;margin-top:.2em';
-      devs.forEach(d=>{
-        const chip=document.createElement('span');
-        chip.style.cssText='font-size:.62em;padding:.12em .5em;border-radius:.5em;'
-          +'border:1px solid '+(d.isLocal?'#1bd96a66':'#ffffff22')+';'
-          +'color:'+(d.isLocal?'#1bd96a':'#999')+';white-space:nowrap';
-        chip.textContent=(d.isLocal?'Dieses Gerät':(d.name||d.id.slice(0,8)))+(d.last?(' · '+timeAgo(d.last)):'');
-        chip.title=(d.name||d.id)+' · zuletzt: '+fmtLoginTime(d.last)+(d.isLocal?' (dieses Gerät)':'');
-        dl.appendChild(chip);
-      });
-      info.appendChild(dl);
-    }
     const type=document.createElement('span');
     type.className='account-type';
     type.style.marginLeft='auto';
     type.textContent=e.type||'Microsoft';
     const uuid=document.createElement('span');
     uuid.style.cssText='font-size:.65em;color:#555;max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-    uuid.textContent=e.uuid?loginHistKey(e.uuid).slice(0,8):'â€”';
+    uuid.textContent=e.uuid?loginHistKey(e.uuid).slice(0,8):'—';
     uuid.title=e.uuid||'';
     const banBtn=document.createElement('button');
     banBtn.className='btn btn-sm';
@@ -5635,16 +5608,15 @@ function renderOwnerAccountList(){
       unbanBtn.style.cssText='margin-left:.35em;flex:0 0 auto;border-color:#1bd96a66;color:#1bd96a';
       unbanBtn.textContent='Unban';
       unbanBtn.title='Ban aufheben';
-      unbanBtn.addEventListener('click',ev=>{ ev.stopPropagation();       unbanAccount(e);
-    });
+      unbanBtn.addEventListener('click',ev=>{ ev.stopPropagation(); unbanAccount(e); });
       item.appendChild(unbanBtn);
     }
     // Kopf
     const cv=document.createElement('canvas');
     cv.className='account-head-sm'; cv.width=32; cv.height=32;
     item.insertBefore(cv,info);
-    if(e.skinUrl && typeof drawHead2D==='function'){
-      try{ drawHead2D(cv,e.skinUrl); }catch(err){ cv.style.display='none'; }
+    if(typeof drawHead2D==='function'){
+      drawHead2D(cv,e.skinUrl,e.uuid);
     }else if(e.uuid){
       cv.style.display='none';
       const im=new Image();
@@ -5681,13 +5653,24 @@ function updateSkinDisplay(){
   }
 }
 
-function drawHead2D(canvas,skinUrl){
+function drawHead2D(canvas,skinUrl,fallbackUuid){
   const ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.fillStyle='#555'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  if(!skinUrl)return;
+  if(!skinUrl){
+    if(fallbackUuid) loadCrafatarHead(canvas,fallbackUuid);
+    return;
+  }
   const img=new Image(); img.crossOrigin='anonymous';
   img.onload=()=>{ ctx.imageSmoothingEnabled=false; ctx.drawImage(img,8,8,8,8,0,0,canvas.width,canvas.height); ctx.drawImage(img,40,8,8,8,0,0,canvas.width,canvas.height); };
+  img.onerror=()=>{ if(fallbackUuid) loadCrafatarHead(canvas,fallbackUuid); };
   img.src=skinUrl;
+}
+
+function loadCrafatarHead(canvas,uuid){
+  const ctx=canvas.getContext('2d');
+  const im=new Image(); im.crossOrigin='anonymous';
+  im.onload=()=>{ ctx.imageSmoothingEnabled=false; ctx.drawImage(im,0,0,canvas.width,canvas.height); };
+  im.src='https://crafatar.com/avatars/'+loginHistKey(uuid)+'?size='+canvas.width+'&overlay';
 }
 
 // Microsoft login
@@ -5810,7 +5793,7 @@ function makeSkinCapeSolid(tex,W,H){
     const pos=[],uvs=[],idx=[];
     for(let j=0;j<=segH;j++)for(let i=0;i<=segW;i++){
       const fu=i/segW, fv=j/segH, p=place(fu,fv);
-      // bend() only offsets z â€” push all THREE components, not one scalar
+      // bend() only offsets z — push all THREE components, not one scalar
       pos.push(p[0],p[1],bend(p[0],p[1],p[2]));
       uvs.push(rect.u0+(rect.u1-rect.u0)*(p[3]?1-fu:fu), rect.vT+(rect.vB-rect.vT)*fv);
     }
@@ -5917,32 +5900,32 @@ function buildSkinMesh(tex){
   const isSlim=skinModel==='slim';
   const armW=isSlim?3:4;
   const armX=isSlim?5.5:6;
-  // HEAD â€” centered at Y=22px (5.5 units), flush against body top
+  // HEAD — centered at Y=22px (5.5 units), flush against body top
   const hg=new THREE.Group(); hg.position.set(0,U*22,0);
   hg.add(skinBox(U*8,U*8,U*8,0,0,0,tex,uv(8,8,8,8),uv(24,8,8,8),uv(8,0,8,8),uv(16,0,8,8),uv(16,8,8,8),uv(0,8,8,8)));
   if(tex){{const ov=skinBox(U*9,U*9,U*9,0,0,0,tex,uv(40,8,8,8),uv(56,8,8,8),uv(40,0,8,8),uv(48,0,8,8),uv(48,8,8,8),uv(32,8,8,8));ov.renderOrder=1;hg.add(ov);}}
   skinMeshGroup.add(hg);
-  // BODY â€” centered at Y=12px (3 units)
+  // BODY — centered at Y=12px (3 units)
   skinMeshGroup.add(skinBox(U*8,U*12,U*4,0,U*12,0,tex,uv(20,20,8,12),uv(32,20,8,12),uv(20,16,8,4),uv(28,16,8,4),uv(28,20,4,12),uv(16,20,4,12)));
   // JACKET (body outer layer)
   if(tex){{const j=skinBox(U*8.5,U*12.5,U*4.5,0,U*12,0,tex,uv(20,36,8,12),uv(32,36,8,12),uv(20,32,8,4),uv(28,32,8,4),uv(28,36,4,12),uv(16,36,4,12));j.renderOrder=1;skinMeshGroup.add(j);}}
-  // RIGHT ARM â€” centered at Y=12px (3 units), X=-armX (character's right is -X)
+  // RIGHT ARM — centered at Y=12px (3 units), X=-armX (character's right is -X)
   skinMeshGroup.add(skinBox(U*armW,U*12,U*4,-U*armX,U*12,0,tex,uv(44,20,armW,12),uv(44+armW+4,20,armW,12),uv(44,16,armW,4),uv(44+armW,16,armW,4),uv(44-4,20,armW,12),uv(44+armW,20,armW,12)));
   // RIGHT SLEEVE (right arm outer layer)
   if(tex){{const s=skinBox(U*(armW+.5),U*12.5,U*4.5,-U*armX,U*12,0,tex,uv(44,36,armW,12),uv(44+armW+4,36,armW,12),uv(44,32,armW,4),uv(44+armW,32,armW,4),uv(44-4,36,armW,12),uv(44+armW,36,armW,12));s.renderOrder=1;skinMeshGroup.add(s);}}
-  // LEFT ARM â€” centered at Y=12px (3 units), X=+armX
+  // LEFT ARM — centered at Y=12px (3 units), X=+armX
   skinMeshGroup.add(skinBox(U*armW,U*12,U*4,U*armX,U*12,0,tex,uv(36,52,armW,12),uv(36+armW+4,52,armW,12),uv(36,48,armW,4),uv(36+armW,48,armW,4),uv(36+armW,52,armW,12),uv(36-4,52,armW,12)));
   // LEFT SLEEVE (left arm outer layer)
   if(tex){{const s=skinBox(U*(armW+.5),U*12.5,U*4.5,U*armX,U*12,0,tex,uv(52,52,armW,12),uv(52+armW+4,52,armW,12),uv(52,48,armW,4),uv(52+armW,48,armW,4),uv(52+armW,52,armW,12),uv(52-4,52,armW,12));s.renderOrder=1;skinMeshGroup.add(s);}}
-  // RIGHT LEG â€” centered at Y=0px (0 units), X=-2px (-0.5 units)
+  // RIGHT LEG — centered at Y=0px (0 units), X=-2px (-0.5 units)
   skinMeshGroup.add(skinBox(U*4,U*12,U*4,-U*2,0,0,tex,uv(4,20,4,12),uv(12,20,4,12),uv(4,16,4,4),uv(8,16,4,4),uv(0,20,4,12),uv(8,20,4,12)));
   // RIGHT PANTS (right leg outer layer)
   if(tex){{const p=skinBox(U*4.5,U*12.5,U*4.5,-U*2,0,0,tex,uv(4,36,4,12),uv(12,36,4,12),uv(4,32,4,4),uv(8,32,4,4),uv(0,36,4,12),uv(8,36,4,12));p.renderOrder=1;skinMeshGroup.add(p);}}
-  // LEFT LEG â€” centered at Y=0px (0 units), X=+2px (0.5 units)
+  // LEFT LEG — centered at Y=0px (0 units), X=+2px (0.5 units)
   skinMeshGroup.add(skinBox(U*4,U*12,U*4,U*2,0,0,tex,uv(20,52,4,12),uv(28,52,4,12),uv(20,48,4,4),uv(24,48,4,4),uv(24,52,4,12),uv(16,52,4,12)));
   // LEFT PANTS (left leg outer layer)
   if(tex){{const p=skinBox(U*4.5,U*12.5,U*4.5,U*2,0,0,tex,uv(4,52,4,12),uv(12,52,4,12),uv(4,48,4,4),uv(8,48,4,4),uv(8,52,4,12),uv(0,52,4,12));p.renderOrder=1;skinMeshGroup.add(p);}}
-  // CAPE â€” hanging off the back, only if an equipped cape texture loaded
+  // CAPE — hanging off the back, only if an equipped cape texture loaded
   if(skinCapeTexture) skinMeshGroup.add(makeSkinCape(skinCapeTexture,skinCapeSolid,skinCapeW,skinCapeH));
   // Center the whole model vertically (body center at origin)
   skinMeshGroup.position.set(0,-U*12,0);
@@ -6038,7 +6021,7 @@ function renderCape3D(targetCanvas,capeUrl){
     try{
       const scene=new THREE.Scene();
       const camera=new THREE.PerspectiveCamera(30,W/H,0.1,100);
-      // A cape strip is 10x16px â€” keep that ratio or the pixels get stretched
+      // A cape strip is 10x16px — keep that ratio or the pixels get stretched
       const CW=2.0,CH=CW*16/10;
       // frame the cape so it fits both axes without distorting it
       const tanV=Math.tan(THREE.MathUtils.degToRad(15));
@@ -6550,7 +6533,7 @@ async function showModpackVersionPicker(projectId, projectName) {
   const listEl = document.getElementById('modpack-version-list');
   const titleEl = document.getElementById('modpack-version-title');
   const modal = document.getElementById('modpack-version-modal');
-  titleEl.textContent = `Choose Version â€” ${projectName}`;
+  titleEl.textContent = `Choose Version — ${projectName}`;
   listEl.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)">Loading versions...</div>';
   modal.style.display = 'flex';
 
@@ -6681,7 +6664,7 @@ function renderClientRPList(){
     tag.className = 'pack-tag';
     let label = typeof rp === 'object' ? rp.name : rp;
     if (typeof rp === 'string' && rp.startsWith('file://')) label = rp.slice(7).split(/[\\/]/).pop() || label;
-    tag.innerHTML = `${label} <span class="rt" style="cursor:pointer;color:#555;margin-left:.3em" data-i="${i}">âœ•</span>`;
+    tag.innerHTML = `${label} <span class="rt" style="cursor:pointer;color:#555;margin-left:.3em" data-i="${i}">✕</span>`;
     tag.querySelector('.rt').addEventListener('click', () => {
       clientResourcePacks.splice(i, 1);
       settings.clientResourcePacks = clientResourcePacks;
@@ -6772,7 +6755,7 @@ function wireDropZone(id, type){
 wireDropZone('mod-list','mod');
 wireDropZone('client-rp-list','rp');
 
-// "ðŸ“ From file" â€” add a local mod / pack via a file picker (works offline)
+// "ðŸ“ From file" — add a local mod / pack via a file picker (works offline)
 document.getElementById('mod-offline-btn')?.addEventListener('click', () => {
   const isPackContext = profileModMode && profilePackMode && profilePackMode!=='mods' && profilePackMode!=='modpack';
   const isRP = profilePackMode==='clientRP' || isPackContext;
@@ -6992,7 +6975,7 @@ function renderModList() {
     item.className = 'mod-item';
     const op = mod.disabled ? 'opacity:0.45' : '';
     const versionDisplay = mod.mcVersion === 'all' ? 'All versions' : `MC ${mod.mcVersion}`;
-    const modVer = mod.version && mod.version !== 'latest' ? ` Â· ${mod.version}` : '';
+    const modVer = mod.version && mod.version !== 'latest' ? ` · ${mod.version}` : '';
     const typeLabel = '';
     const loaderBadgeColors = { forge:['#f16422','#f1642255'], neoforge:['#ff8800','#ff880055'], quilt:['#cc5599','#cc559955'] };
     const lbc = loaderBadgeColors[mod.loader] || ['#1bd96a','#1bd96a44'];
@@ -7001,7 +6984,7 @@ function renderModList() {
       ${mod.iconUrl ? `<img class="mod-icon" src="${mod.iconUrl}" style="${op}">` : `<div class="mod-icon" style="${op}"></div>`}
       <div class="mod-info" style="${op}">
         <div class="mod-name">${mod.name}${typeLabel}${loaderBadge}${mod.disabled?'<span style="color:#555;font-weight:normal;font-size:.76em"> (disabled)</span>':''}${mod.autoInstalled?'<span style="color:var(--acc);font-weight:normal;font-size:.76em"> (auto)</span>':''}</div>
-        <div class="mod-meta">${versionDisplay}${modVer} Â· ${mod.source || 'Client Mod'}</div>
+        <div class="mod-meta">${versionDisplay}${modVer} · ${mod.source || 'Client Mod'}</div>
       </div>
       <div class="mod-btns">
         <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-idx="${realIdx}" ${mod.disabled?'':'checked'}><span class="slider"></span></label>
@@ -7558,9 +7541,9 @@ function drawSteveSkin(c){
     const labelsEl = document.getElementById('skin-ed-body-labels');
     if(labelsEl){
       if(skinEdLayer==='outer'){
-        labelsEl.textContent='Outer Layer â€” Hat(40,0) Â· Jacket(20,36) Â· R.Sleeve(44,36) Â· L.Sleeve(36,36) Â· R.Pants(4,36) Â· L.Pants(20,36) â€” drag to rotate 3D preview';
+        labelsEl.textContent='Outer Layer — Hat(40,0) Â· Jacket(20,36) Â· R.Sleeve(44,36) Â· L.Sleeve(36,36) Â· R.Pants(4,36) Â· L.Pants(20,36) — drag to rotate 3D preview';
       } else {
-        labelsEl.textContent='Inner Layer â€” Head(8,8) Â· Body(20,20) Â· Right Arm(44,20) Â· Left Arm(36,52) Â· Right Leg(4,20) Â· Left Leg(20,52) â€” drag to rotate 3D preview';
+        labelsEl.textContent='Inner Layer — Head(8,8) Â· Body(20,20) Â· Right Arm(44,20) Â· Left Arm(36,52) Â· Right Leg(4,20) Â· Left Leg(20,52) — drag to rotate 3D preview';
       }
     }
   }
@@ -7571,12 +7554,12 @@ function drawSteveSkin(c){
   });
   updateLayerToggle();
 
-  // Skin model (Classic/Slim) toggle â€” persists per skin/account
+  // Skin model (Classic/Slim) toggle — persists per skin/account
   const modelToggle = document.getElementById('skin-ed-model-toggle');
   function updateModelToggle(){
     if(!modelToggle)return;
     modelToggle.textContent = skinModel==='slim' ? 'ðŸ§ Slim' : 'ðŸ§ Classic';
-    modelToggle.title = skinModel==='slim' ? 'Current: Slim (schmale Arme) â€” klicken fÃ¼r Classic' : 'Current: Classic (breite Arme) â€” klicken fÃ¼r Slim';
+    modelToggle.title = skinModel==='slim' ? 'Current: Slim (schmale Arme) — klicken fÃ¼r Classic' : 'Current: Classic (breite Arme) — klicken fÃ¼r Slim';
   }
   if(modelToggle) modelToggle.addEventListener('click',()=>{
     skinModel = skinModel==='slim' ? 'classic' : 'slim';
@@ -7606,7 +7589,7 @@ function drawSteveSkin(c){
     // The actual pixel data is always in ctx, template is cosmetic
   }
 
-  // Open editor â€” load currently selected skin into the canvas
+  // Open editor — load currently selected skin into the canvas
   function drawEditorImage(src){
     ctx.clearRect(0,0,64,64);
     if(!src){ drawSteveSkin(ctx); if(ed3dTex)ed3dTex.needsUpdate=true; return; }
@@ -7807,7 +7790,7 @@ function drawSteveSkin(c){
   }
   setCapeCanvasSize();
 
-  // Cape template overlay â€” loaded from cape_template.png (512x256), drawn over
+  // Cape template overlay — loaded from cape_template.png (512x256), drawn over
   // the grid, toggleable via the toolbar button, purely visual, never saved.
   // Baked-in text is overpainted with the region color; labels are drawn as a
   // separate crisp overlay on top (not part of the template, not in the 3D).
@@ -8180,12 +8163,12 @@ function initCapeEditor3D(){
         const rightSide=new THREE.Mesh(new THREE.PlaneGeometry(ED_DEPTH,ED_H),new THREE.MeshLambertMaterial({map:capeEdRightTex,side:THREE.DoubleSide}));
         rightSide.rotation.y=-Math.PI/2;rightSide.position.x=ED_HALF;rightSide.userData={face:'rightSide'};
         capeEd3dGroup.add(rightSide);
-        // Top face â€” paints the TOP strip (row 0, x=1-10)
+        // Top face — paints the TOP strip (row 0, x=1-10)
         capeEdTopTex=cropEditorRow(0,1,10);
         const top=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_DEPTH),new THREE.MeshLambertMaterial({map:capeEdTopTex,side:THREE.DoubleSide}));
         top.rotation.x=-Math.PI/2;top.position.y=ED_H/2;top.userData={uvRow:0,uvX0:1};
         capeEd3dGroup.add(top);
-        // Bottom face â€” paints the BOTTOM strip (row 0, x=12-21)
+        // Bottom face — paints the BOTTOM strip (row 0, x=12-21)
         capeEdBottomTex=cropEditorRow(0,12,10);
         const bottom=new THREE.Mesh(new THREE.PlaneGeometry(ED_W,ED_DEPTH),new THREE.MeshLambertMaterial({map:capeEdBottomTex,side:THREE.DoubleSide}));
         bottom.rotation.x=Math.PI/2;bottom.position.y=-ED_H/2;bottom.userData={uvRow:0,uvX0:12};
@@ -8672,7 +8655,7 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
       const item = document.createElement('div');
       item.className = 'server-item' + (s.id === selectedServerId ? ' sel' : '');
       item.dataset.id = s.id;
-      const typeIcons = { vanilla:'ðŸŸ«', paper:'ðŸ“„', spigot:'ðŸªµ', purpur:'ðŸŸ£', fabric:'ðŸ§µ', quilt:'ðŸª¡', forge:'â¬›', neoforge:'ðŸ”¶', modpack:'ðŸ“¦' };
+      const typeIcons = { vanilla:'🏛️', paper:'📄', spigot:'⚡', purpur:'💜', fabric:'🧶', quilt:'🧵', forge:'⚙️', neoforge:'🔧', modpack:'📦' };
       const localAddr = `${s.address || 'localhost'}:${s.port || 25565}`;
       const playitAddr = s.playitAddress || playitAddrForServer(s);
       let lanAddr = '';
@@ -8908,12 +8891,12 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
     playitRender(`
       <div style="font-size:.85em;color:#aaa;margin-bottom:.8em">Agent downloaded. Now link it to your playit.gg account so you get a free public address for your server.</div>
       <div style="padding:.7em .9em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);margin-bottom:.7em">
-        <div style="font-size:.72em;color:#888;margin-bottom:.35em">Step 1 â€” Open the claim link</div>
+        <div style="font-size:.72em;color:#888;margin-bottom:.35em">Step 1 — Open the claim link</div>
         <a href="#" id="playit-claim-link" style="color:#7c6cf0;font-size:.82em;word-break:break-all">${escHtml(claim.url)}</a>
         <div style="margin-top:.5em"><button id="playit-claim-open" class="btn btn-sm btn-primary" style="width:auto;padding:.3em .8em;font-size:.78em">Open claim page</button></div>
       </div>
       <div style="padding:.7em .9em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r)">
-        <div style="font-size:.72em;color:#888;margin-bottom:.35em">Step 2 â€” Approve the program on the page</div>
+        <div style="font-size:.72em;color:#888;margin-bottom:.35em">Step 2 — Approve the program on the page</div>
         <div id="playit-claim-state" style="font-size:.8em;color:#f5a623">Waiting for you to approveâ€¦</div>
       </div>
     `);
@@ -9469,7 +9452,7 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
     list.forEach(p => {
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:.2em .4em';
-      row.innerHTML = `<span>${escHtml(p)}</span><button class="btn btn-sm" style="width:auto;padding:.1em .5em;color:#f44">âœ•</button>`;
+      row.innerHTML = `<span>${escHtml(p)}</span><button class="btn btn-sm" style="width:auto;padding:.1em .5em;color:#f44">✕</button>`;
       row.querySelector('button').addEventListener('click', () => {
         ipcRenderer.invoke('remove-server-whitelist', { serverId: selectedServerId, player: p }).then(loadWhitelist);
       });
@@ -9577,7 +9560,7 @@ async function checkForUpdates(silent) {
   console.log('[Crux] checkForUpdates called, silent:', silent);
   _updateIsManual = !silent;
   if (DEV_BUILD) {
-    updateLog('Dev build â€” update detection disabled.');
+    updateLog('Dev build — update detection disabled.');
     if (!silent && btn) { btn.textContent = 'Updates disabled (dev build)'; btn.disabled = true; }
     return;
   }
@@ -9595,9 +9578,9 @@ async function checkForUpdates(silent) {
       // Beim Start automatisch updaten: sobald ein herunterladbares Update vorliegt,
       // wird der Download/Install-Lauf ohne Klick gestartet (small delay, damit das
       // Overlay zuerst gerendert wird). Nur installierte Builds (main.js meldet
-      // installed:true) â€” im Quellbaum wÃ¼rde das Ã¼ber unsere Quelldateien schreiben.
+      // installed:true) — im Quellbaum wÃ¼rde das Ã¼ber unsere Quelldateien schreiben.
       if (silent && result.installed && (result.downloadUrl || result.installerUrl)) {
-        updateLog('Auto-update on launch â€” starting download/install without confirmation.');
+        updateLog('Auto-update on launch — starting download/install without confirmation.');
         setTimeout(() => { startUpdateInstall(); }, 600);
       }
     } else {
@@ -9809,7 +9792,7 @@ function renderFriendList(){
     const delBtn=document.createElement('button');
     delBtn.className='btn';
     delBtn.style.cssText='border-color:#f4444444;color:#f44';
-    delBtn.textContent='âœ•';
+    delBtn.textContent='✕';
     delBtn.title=t('btn_delete');
     delBtn.addEventListener('click',()=>{
       friends=friends.filter(x=>x.uuid!==f.uuid);
@@ -10216,14 +10199,14 @@ document.getElementById('update-github-btn').addEventListener('click', () => {
 });
 
 document.getElementById('update-bugreport-btn').addEventListener('click', () => {
-  if (_updateInstalling) return;   // Download lÃ¤uft â€” Overlay nicht verstecken
+  if (_updateInstalling) return;   // Download lÃ¤uft — Overlay nicht verstecken
   if (window.showPage) window.showPage('bugreport-page');
   const ov = document.getElementById('update-overlay');
   if (ov) ov.style.display = 'none';
 });
 
 document.getElementById('update-later-btn').addEventListener('click', () => {
-  if (_updateInstalling) return;   // Download/Install lÃ¤uft â€” Abbruch hier wÃ¤re nur scheinbar
+  if (_updateInstalling) return;   // Download/Install lÃ¤uft — Abbruch hier wÃ¤re nur scheinbar
   // Update-Fenster: schliessen und den Launcher darunter zeigen.
   if (UPDATE_WINDOW_MODE) { try { ipcRenderer.invoke('update-window-skip'); } catch {} return; }
   pendingUpdate = null;
