@@ -5,15 +5,15 @@
 // relays friend requests between launchers. No external packages required.
 //
 //   API:
-//     GET  /v1/health                        -> { ok:true }
+//     GET  /v1/health                        -> { ok:true, build }
 //     POST /v1/status                        body: { uuid, username, online, inGame, server?, instanceName? }
 //     GET  /v1/status?friends=uuid1,uuid2    -> { friends: { uuid: { username, online, inGame, server, instanceName, lastSeen } } }
 //     POST /v1/requests                      body: { fromUuid, fromName, toUuid, toName, message? } -> { ok, status }
 //     GET  /v1/requests?uuid=X               -> { requests: [...], accepted: [...] }
 //     POST /v1/requests/respond              body: { fromUuid, toUuid, accept, acceptorName? }
 //     POST /v1/requests/consume              body: { uuid, fromUuid }
-//     POST /v1/logins                        body: { uuid?, username, first?, last?, logins? } -> { ok, key }
-//     GET  /v1/logins                        -> { logins: [ { uuid, username, first, last, logins } ] }
+//     POST /v1/logins                        body: { uuid?, username, first?, last?, logins?, deviceId?, deviceName? } -> { ok, key }
+//     GET  /v1/logins                        -> { logins: [ { uuid, username, first, last, logins, devices } ] }
 //     POST /v1/bans                          body: { key?, uuid?, name, reason, by, start, end } -> { ok, key }
 //     GET  /v1/bans                          -> { bans: [ { key, uuid, name, reason, by, start, end } ] }
 //     POST /v1/bans/remove                   body: { key } -> { ok }
@@ -34,6 +34,10 @@ const path = require('path');
 const PORT = process.env.PORT || 8787;
 const OFFLINE_AFTER_MS = 90000; // no heartbeat for 90s -> shown offline
 
+// Bumped whenever the deployed API changes; exposed via /v1/health so the
+// launcher (and deploy checks) can verify which build is live.
+const BUILD = 'logins-devices-2';
+
 // uuid (no dashes, lower case) -> presence state
 const presences = new Map();
 
@@ -43,7 +47,7 @@ const DB_FILE = path.join(DATA_DIR, 'requests.json');
 // Persisted friend-request state
 // db.requests: [{ fromUuid, fromName, toUuid, toName, message, sentAt }]   (pending)
 // db.accepted: [{ requester, acceptor, at }]   (requester had their request accepted by acceptor)
-// db.logins:   [{ uuid, username, first, last, logins }]   (every account that ever logged in)
+// db.logins:   [{ uuid, username, first, last, logins, devices:{ [deviceId]: { name, first, last } } }]   (every account that ever logged in)
 // db.bans:     [{ key, uuid, name, reason, by, start, end }]   (owner-managed bans)
 let db = { requests: [], accepted: [], logins: [], bans: [] };
 let saveTimer = null;
@@ -134,7 +138,7 @@ const server = http.createServer(async (req, res) => {
   const p = url.pathname;
 
   if (p === '/v1/health' && req.method === 'GET') {
-    json(res, 200, { ok: true, time: now(), count: presences.size });
+    json(res, 200, { ok: true, time: now(), count: presences.size, build: BUILD });
     return;
   }
 
@@ -273,9 +277,11 @@ const server = http.createServer(async (req, res) => {
     const inFirst = Number(body.first) || 0;
     const inLast = Number(body.last) || 0;
     const inLogins = Number(body.logins) || 0;
+    const deviceId = String(body.deviceId || '').slice(0, 64);
+    const deviceName = String(body.deviceName || '').slice(0, 64);
     let e = db.logins.find(x => accountKey(x.uuid, x.username) === key);
     if (!e) {
-      e = { uuid, username, first: inFirst || t, last: inLast || t, logins: inLogins || 1 };
+      e = { uuid, username, first: inFirst || t, last: inLast || t, logins: inLogins || 1, devices: {} };
       db.logins.push(e);
     } else {
       if (uuid && !e.uuid) e.uuid = uuid;
@@ -283,6 +289,15 @@ const server = http.createServer(async (req, res) => {
       if (inFirst && (!e.first || inFirst < e.first)) e.first = inFirst;
       if (inLast && inLast > (e.last || 0)) e.last = inLast;
       if (inLogins > (e.logins || 0)) e.logins = inLogins;
+    }
+    // Per-device footprint: which machines ever logged in this account
+    if (deviceId) {
+      if (!e.devices || typeof e.devices !== 'object') e.devices = {};
+      const d = e.devices[deviceId] || (e.devices[deviceId] = { name: deviceName, first: inFirst || t, last: 0 });
+      if (deviceName) d.name = deviceName;
+      const dLast = inLast || t;
+      if (dLast > (d.last || 0)) d.last = dLast;
+      if (inFirst && (!d.first || inFirst < d.first)) d.first = inFirst;
     }
     persistDebounced();
     json(res, 200, { ok: true, key });

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
+﻿const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
 const https = require('https');
 const http  = require('http');
 const { exec, execSync, spawn, execFile } = require('child_process');
@@ -10,6 +10,11 @@ const crypto = require('crypto');
 
 let mainWindow;
 let authWindow = null;
+// Zweites Fenster, das vor dem Launcher-Start ein gefundenes Update anzeigt.
+let updateWindow = null;
+// Solange das Update-Fenster läuft, bleibt das (versteckt erzeugte) Launcher-
+// Fenster unsichtbar. Erst "Later" oder ein Fehler zeigt es.
+let suppressMainWindowShow = false;
 
 // ── AppUserModelID (needed for proper taskbar pinning / grouping) ───────────
 try { app.setAppUserModelId('com.cruxclient.launcher'); } catch {}
@@ -71,9 +76,18 @@ const P = {
   mc:   path.join(base,'minecraft'),
   servers: path.join(base,'servers'),
   groups: path.join(base,'groups'),
+  instances: path.join(base,'instances'),
 };
 app.setPath('userData', base);
 app.setPath('cache', path.join(base,'Cache'));
+
+// ── Per-profile game directories ──────────────────────────────────────────────
+// Every profile launches with its OWN game dir (worlds, mods, config, packs,
+// options.txt), while libraries/assets/versions stay shared under P.mc.
+function instanceDir(profileId){
+  const id = sanitizeFileName(String(profileId || 'default')) || 'default';
+  return path.join(P.instances, id);
+}
 
 // Default presence server so the Friends tab works out of the box.
 // Points to the Render Blueprint service defined in render.yaml (see server/README.md).
@@ -128,6 +142,50 @@ function createWindow() {
     }
   });
 }
+
+function showMainWindow() {
+  suppressMainWindowShow = false;
+  try {
+    if (mainWindow && !mainWindow.isDestroyed()) { mainWindow.show(); mainWindow.focus(); }
+  } catch {}
+}
+
+function createUpdateWindow(info) {
+  try {
+    console.log('[Crux] createUpdateWindow called');
+    updateWindow = new BrowserWindow({
+      width: 620, height: 480, minWidth: 480, minHeight: 380,
+      resizable: true, closable: false, minimizable: true,
+      autoHideMenuBar: true,
+      icon: path.join(__dirname, 'icons', 'icon.ico'),
+      show: false,
+      title: 'Crux Client — Update',
+      webPreferences: { nodeIntegration: true, contextIsolation: false, devTools: false }
+    });
+    updateWindow.setMenu(null);
+    updateWindow.loadFile('index.html', { query: { updatewin: '1' } });
+    updateWindow.once('ready-to-show', () => {
+      if (updateWindow && !updateWindow.isDestroyed()) { updateWindow.show(); updateWindow.focus(); }
+    });
+    updateWindow.webContents.on('did-finish-load', () => {
+      try { updateWindow.webContents.send('update-info', info); } catch {}
+    });
+    updateWindow.on('closed', () => {
+      updateWindow = null;
+      if (!isQuitting) showMainWindow();
+    });
+  } catch (e) {
+    updateLog('Failed to create update window: ' + (e && e.message));
+    showMainWindow();
+  }
+}
+
+function sendToWindows(...args) {
+  for (const w of [mainWindow, updateWindow]) {
+    try { if (w && !w.isDestroyed()) w.webContents.send(...args); } catch {}
+  }
+}
+
 app.whenReady().then(async () => {
   console.log('[Crux] app.whenReady');
   logDebug('app.whenReady');
@@ -203,7 +261,10 @@ app.whenReady().then(async () => {
   // Tell any leftover update-progress window that the client is up and running
   writeUpdateProgress('done', 100);
 
+  const preUpdate = await preLaunchUpdateCheck();
+  if (preUpdate) suppressMainWindowShow = true;
   createWindow();
+  if (preUpdate) createUpdateWindow(preUpdate);
   startServiceMonitor();
   // Auto-scan Java in background after window loads
   mainWindow.webContents.on('did-finish-load', async () => {
@@ -256,13 +317,39 @@ const saveSettings = async (data) => {
       'clientResourcePacks','autoUseResourcePacks',
       'presenceServer','bugreportWebhook','chatServer',
       'useCruxClientMod','tabBarPosition','cornerRadius','glassBgImage',
-      'glassBgPreset','glassBgTint',      'loginHistory','bans'
+      'glassBgPreset','glassBgTint',      'loginHistory','bans',
+      'deviceId','deviceName'
     ];
     const clean = {};
     for (const k of Object.keys(existing)) { if (KNOWN_KEYS.includes(k)) clean[k] = existing[k]; }
     await fs.promises.writeFile(P.settings, JSON.stringify(clean,null,2));
   } catch {}
 };
+
+// ── Device identity (cross-device owner tab) ────────────────────────────────
+// Stable per-installation ID + human-readable machine name. Written once,
+// kept by the settings whitelist above, sent with every login post so the
+// presence server can build the per-account devices map.
+const DEVICE_ID_FILE = path.join(base, '.device-id');
+function ensureDeviceIdentity() {
+  return (async () => {
+    try {
+      const s = await load(P.settings, {});
+      if (s && s.deviceId) {
+        if (!s.deviceName) { s.deviceName = os.hostname() || 'Unknown PC'; await saveSettings(s); }
+        return;
+      }
+      let id = '';
+      try { id = fs.readFileSync(DEVICE_ID_FILE, 'utf8').trim(); } catch {}
+      if (!/^[A-Za-z0-9_-]{8,64}$/.test(id)) {
+        id = crypto.randomBytes(16).toString('hex');
+        try { fs.writeFileSync(DEVICE_ID_FILE, id, 'utf8'); } catch {}
+      }
+      const data = Object.assign({}, s, { deviceId: id, deviceName: os.hostname() || 'Unknown PC' });
+      await saveSettings(data);
+    } catch {}
+  })();
+}
 
 // Default glass background images bundled in icons/ (selectable in settings)
 let _glassDefaultBgs = null;
@@ -320,6 +407,7 @@ async function ensureDefaultServers() {
 
 ipcMain.handle('load-settings',          async () => {
   await ensureDefaultServers();
+  await ensureDeviceIdentity();
   return load(P.settings, {});
 });
 ipcMain.handle('load-accounts',          async () => load(P.accounts, []));
@@ -341,7 +429,7 @@ ipcMain.on('save-profiles',          async (e,d) => save(P.profiles, d));
 ipcMain.handle('profile-offline-check', async (event, profile) => {
   try {
     if (!profile) return { ok:true, total:0, missing:0 };
-    const modsDir = path.join(P.mc, 'mods');
+    const modsDir = path.join(instanceDir(profile.id), 'mods');
     const files = fs.existsSync(modsDir) ? fs.readdirSync(modsDir) : [];
     const version = profile.mcVersion || '';
     const modLoader = profile.modLoader || 'fabric';
@@ -397,7 +485,7 @@ function resolveConcreteVersion(mcVersion) {
 
 // Deploy ALL mods the profile would deploy at launch (client + profile + mrpack + fabric deps)
 async function downloadProfileMods(profile, clientMods, version, modLoader, sendProgress) {
-  const modsDir = path.join(P.mc, 'mods');
+  const modsDir = path.join(instanceDir(profile.id), 'mods');
   await fs.promises.mkdir(modsDir, { recursive: true });
   const existingFiles = fs.existsSync(modsDir) ? fs.readdirSync(modsDir) : [];
 
@@ -433,13 +521,10 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
   }
 
 // Crux Client Features jar (only if the per-profile toggle is on and an asset exists)
-  if (profile.useCruxMod !== false && (modLoader === 'fabric' || modLoader === 'quilt')) {
+  if (profile.useCruxMod === true && (modLoader === 'fabric' || modLoader === 'quilt')) {
     try {
-      const cruxJar = await ensureCruxClientMod(version, sendProgress, 'offline');
-      if (cruxJar) {
-        const dest = path.join(modsDir, `crux-client-features-${version}.jar`);
-        if (!fs.existsSync(dest)) await fs.promises.copyFile(cruxJar, dest);
-      }
+      const crux = await ensureCruxClientMod(version, sendProgress, 'offline');
+      if (crux) await deployCruxMod(modsDir, crux);
     } catch {}
   }
 
@@ -708,7 +793,7 @@ function nrcConvertProfile(np){
     datapacks: [],
     resourcePacks: [],
     shaderPacks: [],
-    useCruxMod: true,
+    useCruxMod: false,
     useClientMods: true,
     useClientRPs: true,
     isNrcImported: true,
@@ -775,7 +860,10 @@ function nrcReadZipProfile(zipPath){
   });
 }
 
-// Stream every overrides/* entry from a NoRisk ZIP into destRoot (skipping nothing).
+// Stream every overrides/* entry from a NoRisk ZIP into destRoot.
+// Skips overrides/mods: NoRisk's mods are converted into the profile's mod list
+// (and downloaded by Crux), so extracting the jars too would duplicate them.
+const NRC_OVERRIDES_SKIP = new Set(['mods']);
 function nrcExtractOverrides(zipPath, destRoot, onBytes){
   return new Promise((resolve, reject) => {
     if (!yauzl) return reject(new Error('yauzl module not available'));
@@ -788,6 +876,8 @@ function nrcExtractOverrides(zipPath, destRoot, onBytes){
         if (!name.startsWith(NRC_OVERRIDES_PREFIX) || name.endsWith('/')) return next();
         const rel = name.slice(NRC_OVERRIDES_PREFIX.length);
         if (!rel) return next();
+        const top = rel.split('/')[0].toLowerCase();
+        if (NRC_OVERRIDES_SKIP.has(top)) { if (onBytes) onBytes(entry.uncompressedSize || 0); return next(); }
         const dest = path.join(destRoot, rel);
         fs.promises.mkdir(path.dirname(dest), { recursive:true }).then(() => {
           zip.openReadStream(entry, (e, rs) => {
@@ -874,15 +964,14 @@ ipcMain.handle('choose-norisk-export', async () => {
   } catch (e) { return { ok:false, error: e.message }; }
 });
 
-// Extract the export's overrides/ game files into the (shared) Minecraft folder,
-// then move worlds/settings into the profile's own settings group.
+// Extract the export's overrides/ game files straight into the imported
+// profile's own game directory (worlds, configs, packs, mods).
 ipcMain.handle('extract-norisk-overrides', async (e, opts = {}) => {
-  const { file, groupName, profileName } = opts;
+  const { file, profileId, profileName } = opts;
   try {
     if (!file || !fs.existsSync(file)) return { ok:false, error:'Export file not found.' };
-    const group = String(groupName || profileName || 'NoRisk').trim() || 'NoRisk';
-    const gDir = path.join(P.groups, groupDirName(group));
-    await fs.promises.mkdir(P.mc, { recursive:true });
+    const gameDir = instanceDir(profileId || profileName || 'NoRisk');
+    await fs.promises.mkdir(gameDir, { recursive:true });
 
     const notify = (payload) => { try { mainWindow.webContents.send('norisk-import-progress', payload); } catch {} };
 
@@ -891,56 +980,16 @@ ipcMain.handle('extract-norisk-overrides', async (e, opts = {}) => {
     const total = scan.overrideBytes || 1;
     let doneBytes = 0, lastPct = -1;
 
-    // Preserve the currently active profile's saves/settings before we merge.
-    let cur;
-    try {
-      cur = getCurrentGroup();
-      const curOpts = path.join(P.mc, 'options.txt');
-      const curGFile = path.join(P.groups, groupDirName(cur), 'options.txt');
-      if (fs.existsSync(curOpts) && !fs.existsSync(curGFile)) {
-        await fs.promises.mkdir(path.dirname(curGFile), { recursive:true });
-        await fs.promises.copyFile(curOpts, curGFile);
-      }
-      await stashGameDataToGroup(cur);
-    } catch {}
-
     notify({ message:'Importing game files…', percent:0, phase:'extract' });
-    const res = await nrcExtractOverrides(file, P.mc, (bytes) => {
+    const res = await nrcExtractOverrides(file, gameDir, (bytes) => {
       doneBytes += bytes;
       const pct = Math.min(99, Math.round(doneBytes / total * 100));
       if (pct !== lastPct) { lastPct = pct; notify({ message:'Importing game files…', percent:pct, phase:'extract' }); }
     });
 
-    // Move the imported worlds + settings into the profile's own group.
-    await fs.promises.mkdir(gDir, { recursive:true });
-    const mcSaves = path.join(P.mc, 'saves');
-    const gSaves = path.join(gDir, 'saves');
-    if (fs.existsSync(mcSaves)) {
-      await fs.promises.mkdir(gSaves, { recursive:true });
-      for (const en of await fs.promises.readdir(mcSaves)) {
-        const src = path.join(mcSaves, en), dst = path.join(gSaves, en);
-        try { await fs.promises.rm(dst, { recursive:true, force:true }); } catch {}
-        try { await fs.promises.rename(src, dst); }
-        catch { try { await fs.promises.cp(src, dst, { recursive:true }); await fs.promises.rm(src, { recursive:true, force:true }); } catch {} }
-      }
-    }
-    const moveIntoGroup = async (name) => {
-      const src = path.join(P.mc, name);
-      if (!fs.existsSync(src)) return;
-      const dst = path.join(gDir, name);
-      try { await fs.promises.rename(src, dst); }
-      catch { try { await fs.promises.copyFile(src, dst); } catch {} }
-    };
-    await moveIntoGroup('options.txt');
-    await moveIntoGroup('servers.dat');
-
-    // Restore the previously-active group's own data so P.mc stays consistent
-    // with current-group.json (the imported profile's data now lives in its group).
-    try { if (cur) await restoreGameDataToMc(cur); } catch {}
-
     notify({ message:'Game files imported.', percent:100, phase:'done' });
-    logDebug(`[NRC] Imported overrides from ${file} into group "${group}" (${res.extracted} files, ${res.errors} errors)`);
-    return { ok:true, group, extracted:res.extracted, errors:res.errors, totalBytes:scan.overrideBytes, hasOverrides:scan.hasOverrides };
+    logDebug(`[NRC] Imported overrides from ${file} into instance "${gameDir}" (${res.extracted} files, ${res.errors} errors)`);
+    return { ok:true, gameDir, extracted:res.extracted, errors:res.errors, totalBytes:scan.overrideBytes, hasOverrides:scan.hasOverrides };
   } catch (err) { return { ok:false, error: err.message }; }
 });
 ipcMain.on('save-launched-versions', async (e,d) => save(P.launched, d));
@@ -965,25 +1014,25 @@ function groupDirName(group){
 function groupOptionsPath(group){
   return path.join(P.groups, groupDirName(group), 'options.txt');
 }
-async function applyGroupSettings(group){
+async function applyGroupSettings(group, gameDir){
   try{
     await fs.promises.mkdir(P.groups, { recursive: true });
     const gFile = groupOptionsPath(group);
-    const mcOptions = path.join(P.mc, 'options.txt');
+    const mcOptions = path.join(gameDir || P.mc, 'options.txt');
     if (fs.existsSync(gFile)) {
       await fs.promises.mkdir(path.dirname(mcOptions), { recursive: true });
       await fs.promises.copyFile(gFile, mcOptions);
-      logDebug(`[GROUP] Applied settings of group "${group}" to Minecraft`);
+      logDebug(`[GROUP] Applied settings of group "${group}" to ${gameDir || P.mc}`);
     } else if (fs.existsSync(mcOptions)) {
       await fs.promises.mkdir(path.dirname(gFile), { recursive: true });
       await fs.promises.copyFile(mcOptions, gFile);
-      logDebug(`[GROUP] Seeded group "${group}" from current settings`);
+      logDebug(`[GROUP] Seeded group "${group}" from ${gameDir || P.mc}`);
     }
   } catch(e){ logDebug('[GROUP] apply failed: ' + e.message); }
 }
-async function syncGroupSettings(group){
+async function syncGroupSettings(group, gameDir){
   try{
-    const mcOptions = path.join(P.mc, 'options.txt');
+    const mcOptions = path.join(gameDir || P.mc, 'options.txt');
     if (!fs.existsSync(mcOptions)) return;
     const gFile = groupOptionsPath(group);
     await fs.promises.mkdir(path.dirname(gFile), { recursive: true });
@@ -1025,8 +1074,8 @@ function readLevelNameFromDat(datFile){
   } catch { return null; }
 }
 // "Weltname" -> Save-Ordner (fuer --quickPlaySingleplayer aus Recent > Welten)
-function resolveSaveFolder(worldName){
-  const savesDir = path.join(P.mc, 'saves');
+function resolveSaveFolder(worldName, gameDir){
+  const savesDir = path.join(gameDir || P.mc, 'saves');
   if (!worldName || !fs.existsSync(savesDir)) return null;
   let dirs = [];
   try { dirs = fs.readdirSync(savesDir).filter(d => fs.existsSync(path.join(savesDir, d, 'level.dat'))); } catch { return null; }
@@ -1065,9 +1114,9 @@ function mcVersionAtLeast(v, major, minor){
 // Das ist der Fallback fuer Minecraft < 1.20 und Bedrock: dort gibt es kein --quickPlaySingleplayer,
 // also wird die Welt wenigstens als "zuletzt gespielt" markiert (1 Klick noetig).
 // TAG_Long hat immer 8 Byte Payload -> Laenge bleibt gleich, alle NBT-Offsets bleiben gueltig.
-function markSaveAsLastPlayed(folder){
+function markSaveAsLastPlayed(folder, gameDir){
   try {
-    const file = path.join(P.mc, 'saves', folder, 'level.dat');
+    const file = path.join(gameDir || P.mc, 'saves', folder, 'level.dat');
     if (!fs.existsSync(file)) return false;
     const zlib = require('zlib');
     let buf = fs.readFileSync(file);
@@ -1082,10 +1131,10 @@ function markSaveAsLastPlayed(folder){
     return true;
   } catch { return false; }
 }
-function worldJoinArgs(data, log){
+function worldJoinArgs(data, log, gameDir){
   const out = [];
   if (!data.worldFolder) return out;
-  const folder = resolveSaveFolder(data.worldFolder);
+  const folder = resolveSaveFolder(data.worldFolder, gameDir);
   if (!folder) {
     log(`[LAUNCH] Welt "${data.worldFolder}" nicht unter saves gefunden — starte ohne Welt-Join`);
     return out;
@@ -1097,7 +1146,7 @@ function worldJoinArgs(data, log){
     return out;
   }
   // Fallback: Welt als zuletzt gespielt markieren, damit sie in der Liste oben steht
-  if (markSaveAsLastPlayed(folder)) {
+  if (markSaveAsLastPlayed(folder, gameDir)) {
     log(`[LAUNCH] ${data.modLoader === 'bedrock' ? 'Bedrock' : 'Minecraft ' + data.version} kann die Welt nicht direkt oeffnen — Welt "${folder}" als "zuletzt gespielt" markiert (Singleplayer -> 1. Klick)`);
   } else {
     log(`[LAUNCH] ${data.modLoader === 'bedrock' ? 'Bedrock' : 'Minecraft ' + data.version} kann die Welt nicht direkt oeffnen — starte normal (Singleplayer -> "${folder}")`);
@@ -1207,16 +1256,14 @@ ipcMain.handle('scan-mc-settings', async () => {
   return results;
 });
 
-// Copy a launcher's options.txt into a profile group (and the active .minecraft)
+// Copy a launcher's options.txt into a profile settings group. It is applied
+// to a profile's instance game dir at launch (when the profile sets the group).
 ipcMain.handle('import-mc-settings', async (e, { group, sourcePath }) => {
   if (!sourcePath || !fs.existsSync(sourcePath)) throw new Error('Source file not found');
   const g = String(group || 'default').trim() || 'default';
   const gFile = groupOptionsPath(g);
   await fs.promises.mkdir(path.dirname(gFile), { recursive: true });
   await fs.promises.copyFile(sourcePath, gFile);
-  const mcOptions = path.join(P.mc, 'options.txt');
-  await fs.promises.mkdir(path.dirname(mcOptions), { recursive: true });
-  await fs.promises.copyFile(sourcePath, mcOptions);
   logDebug(`[GROUP] Imported settings from ${sourcePath} into group "${g}"`);
   return { group: g, copiedTo: gFile };
 });
@@ -1228,7 +1275,7 @@ ipcMain.on('save-skin-list', async (e, data) => save(skinListPath, data));
 
 // ── Custom Cape ────────────────────────────────────────────────────────────────
 const customCapePath = path.join(base, 'custom-cape.png');
-const customCapeRpDir = path.join(P.mc, 'resourcepacks');
+const customCapeZipPath = path.join(base, 'custom-cape.zip');
 const customCapeRpName = 'Crux-Custom-Cape.zip';
 
 ipcMain.handle('save-custom-cape', async (e, dataUrl) => {
@@ -1252,8 +1299,7 @@ ipcMain.handle('load-custom-cape', async () => {
 ipcMain.handle('remove-custom-cape', async () => {
   try {
     if (fs.existsSync(customCapePath)) await fs.promises.unlink(customCapePath);
-    const rpZip = path.join(customCapeRpDir, customCapeRpName);
-    if (fs.existsSync(rpZip)) await fs.promises.unlink(rpZip);
+    if (fs.existsSync(customCapeZipPath)) await fs.promises.unlink(customCapeZipPath);
     return { success: true };
   } catch { return { success: false }; }
 });
@@ -1274,6 +1320,8 @@ ipcMain.handle('get-custom-cape-state', async () => {
   } catch { return { disabled: false }; }
 });
 
+// Build the cape resource pack zip once, into the launcher data folder. It is
+// copied into each instance's resourcepacks/ dir at launch.
 async function buildCustomCapeResourcePack(capeBuf) {
   const JSZip = getJszip();
   const zip = new JSZip();
@@ -1281,22 +1329,24 @@ async function buildCustomCapeResourcePack(capeBuf) {
   zip.file('pack.mcmeta', packMeta);
   zip.file('assets/minecraft/textures/entity/cape.png', capeBuf);
   const zipBuf = await zip.generateAsync({ type:'nodebuffer', compression:'DEFLATE' });
-  await fs.promises.mkdir(customCapeRpDir, { recursive: true });
-  await fs.promises.writeFile(path.join(customCapeRpDir, customCapeRpName), zipBuf);
+  await fs.promises.writeFile(customCapeZipPath, zipBuf);
 }
 
-// Auto-deploy custom cape resource pack on launch (called from launch-minecraft handler)
-async function deployCustomCapeRp(optionsPath) {
+// Auto-deploy custom cape resource pack into the instance's game dir on launch.
+async function deployCustomCapeRp(optionsPath, gameDir) {
   if (!fs.existsSync(customCapePath)) return false;
   const s = await load(P.settings, {});
+  const rpDir = path.join(gameDir || P.mc, 'resourcepacks');
+  const rpZip = path.join(rpDir, customCapeRpName);
 
   let options = '';
   try { options = await fs.promises.readFile(optionsPath, 'utf8'); } catch {}
 
   const rpEntry = `"file/${customCapeRpName}"`;
 
-  // If disabled, remove cape from options.txt if present
+  // If disabled, remove cape from options.txt (and the pack) if present
   if (s.customCapeDisabled) {
+    try { if (fs.existsSync(rpZip)) await fs.promises.unlink(rpZip); } catch {}
     if (options.includes(customCapeRpName)) {
       options = options.replace(new RegExp(`,?\\s*\\??"file/${customCapeRpName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"\\?`,'g'), '');
       // Clean up empty array edge cases
@@ -1305,11 +1355,12 @@ async function deployCustomCapeRp(optionsPath) {
     }
     return false;
   }
-  const rpZip = path.join(customCapeRpDir, customCapeRpName);
-  if (!fs.existsSync(rpZip)) {
-    try { const buf = await fs.promises.readFile(customCapePath); await buildCustomCapeResourcePack(buf); }
-    catch { return false; }
-  }
+
+  try {
+    if (!fs.existsSync(customCapeZipPath)) await buildCustomCapeResourcePack(await fs.promises.readFile(customCapePath));
+    await fs.promises.mkdir(rpDir, { recursive: true });
+    await fs.promises.copyFile(customCapeZipPath, rpZip);
+  } catch { return false; }
   if (!fs.existsSync(rpZip)) return false;
 
   if (!options.includes(customCapeRpName)) {
@@ -1510,7 +1561,9 @@ ipcMain.handle('logins-post', async (e, data) => {
         username: String((data && (data.username || data.name)) || ''),
         first: Number((data && data.first) || 0) || undefined,
         last: Number((data && data.last) || 0) || undefined,
-        logins: Number((data && data.logins) || 0) || undefined
+        logins: Number((data && data.logins) || 0) || undefined,
+        deviceId: String((data && data.deviceId) || '').slice(0, 64) || undefined,
+        deviceName: String((data && data.deviceName) || '').slice(0, 64) || undefined
       })
     });
     if (res.status !== 200) return { ok: false, error: 'http' };
@@ -1688,28 +1741,32 @@ async function collectBugReportContext(report) {
     lines.push(log.split('\n').slice(-200).join('\n'));
   } catch {}
   if (report.includeLogs) {
+    const seenDirs = new Set();
     for (const inst of Object.values(instances)) {
       lines.push('');
       lines.push('--- Instance log: ' + inst.id + ' (' + (inst.status || '?') + ') ---');
       lines.push((inst.logs || []).slice(-300).join('\n'));
-    }
-    const latest = path.join(P.mc, 'logs', 'latest.log');
-    try {
-      const content = await fs.promises.readFile(latest, 'utf8');
-      lines.push('');
-      lines.push('--- Minecraft latest.log (last 200 lines) ---');
-      lines.push(content.split('\n').slice(-200).join('\n'));
-    } catch {}
-    try {
-      const crashDir = path.join(P.mc, 'crash-reports');
-      const files = fs.readdirSync(crashDir).filter(f => f.endsWith('.txt')).sort();
-      if (files.length) {
-        const f = files[files.length - 1];
+      const gDir = inst.gameDir || P.mc;
+      if (seenDirs.has(gDir)) continue;
+      seenDirs.add(gDir);
+      const latest = path.join(gDir, 'logs', 'latest.log');
+      try {
+        const content = await fs.promises.readFile(latest, 'utf8');
         lines.push('');
-        lines.push('--- Latest crash report: ' + f + ' (first 120 lines) ---');
-        lines.push((await fs.promises.readFile(path.join(crashDir, f), 'utf8')).split('\n').slice(0, 120).join('\n'));
-      }
-    } catch {}
+        lines.push('--- Minecraft latest.log (' + gDir + ', last 200 lines) ---');
+        lines.push(content.split('\n').slice(-200).join('\n'));
+      } catch {}
+      try {
+        const crashDir = path.join(gDir, 'crash-reports');
+        const files = fs.readdirSync(crashDir).filter(f => f.endsWith('.txt')).sort();
+        if (files.length) {
+          const f = files[files.length - 1];
+          lines.push('');
+          lines.push('--- Latest crash report: ' + f + ' (first 120 lines) ---');
+          lines.push((await fs.promises.readFile(path.join(crashDir, f), 'utf8')).split('\n').slice(0, 120).join('\n'));
+        }
+      } catch {}
+    }
   }
   return lines.join('\n');
 }
@@ -1869,16 +1926,18 @@ async function findInstalledJavas(cb) {
   return found;
 }
 
-// ── Crux Client Mod (download from GitHub for the launched version) ──────────
+// ── Crux Client Mod (download from GitHub on EVERY start) ────────────────────
+// Asset-Namensschema ist immer "cruxclient-<version>.jar". Es wird bei jedem
+// Start frisch von der neuesten Release geladen (kein Cache-Treffer).
 const CRUX_MOD_REPO = 'Dev-Reds/crux-client-mod';
+const CRUX_JAR_RE = /^cruxclient-.*\.jar$/i;
+const CRUX_LEGACY_RE = /^crux-client-features-.*\.jar$/i;
 
 async function ensureCruxClientMod(mcVersion, send, instanceId) {
-  const cacheDir = path.join(P.clientMods, 'cruxclient', mcVersion);
-  const cacheJar = path.join(cacheDir, `crux-client-features-${mcVersion}.jar`);
+  const cacheDir = path.join(P.clientMods, 'cruxclient');
   await fs.promises.mkdir(cacheDir, { recursive: true });
-  if (fs.existsSync(cacheJar)) return cacheJar;
 
-  send('instance-log', { instanceId, line:`[CRUX-MOD] Looking for Crux Client Features for MC ${mcVersion} on GitHub...` });
+  send('instance-log', { instanceId, line:`[CRUX-MOD] Fetching newest Crux Client mod from ${CRUX_MOD_REPO}...` });
   let release;
   try {
     release = await fetchJsonHttps(`https://api.github.com/repos/${CRUX_MOD_REPO}/releases/latest`);
@@ -1887,24 +1946,80 @@ async function ensureCruxClientMod(mcVersion, send, instanceId) {
     return null;
   }
 
-  const asset = (release && release.assets || []).find(a => a.name === `crux-client-features-${mcVersion}.jar`);
-  if (!asset) {
-    send('instance-log', { instanceId, line:`[CRUX-MOD] No asset "crux-client-features-${mcVersion}.jar" in the newest release of ${CRUX_MOD_REPO}.` });
-    send('instance-log', { instanceId, line:`[CRUX-MOD] Please name the mod jar "crux-client-features-${mcVersion}.jar" and upload it to the newest release.` });
+  const assets = ((release && release.assets) || []).filter(a => CRUX_JAR_RE.test(a.name));
+  if (!assets.length) {
+    send('instance-log', { instanceId, line:`[CRUX-MOD] No "cruxclient-<version>.jar" asset in the newest release (${release && release.tag_name}).` });
     send('instance-log', { instanceId, line:'[CRUX-MOD] Starting WITHOUT the Crux Client Features mod.' });
     return null;
   }
+  // Es wird KEIN Fallback auf andere Versionen gemacht: die Mod muss exakt
+  // "cruxclient-<mcVersion>.jar" heißen, sonst wird sie nicht geladen.
+  const asset = assets.find(a => a.name === `cruxclient-${mcVersion}.jar`);
+  if (!asset) {
+    send('instance-log', { instanceId, line:`[CRUX-MOD] No "cruxclient-${mcVersion}.jar" in ${release.tag_name} — no Crux Client Features for MC ${mcVersion}.` });
+    send('instance-log', { instanceId, line:'[CRUX-MOD] Starting WITHOUT the Crux Client Features mod.' });
+    return null;
+  }
+  const cacheJar = path.join(cacheDir, asset.name);
 
-  send('instance-log', { instanceId, line:`[CRUX-MOD] Downloading Crux Client Features ${mcVersion}...` });
+  send('instance-log', { instanceId, line:`[CRUX-MOD] Downloading ${asset.name} (${release.tag_name})...` });
   try {
+    await fs.promises.rm(cacheJar, { force: true }); // immer frisch
     await downloadFile(asset.browser_download_url, cacheJar);
-    send('instance-log', { instanceId, line:`[CRUX-MOD] Downloaded & cached: ${cacheJar}` });
-    return cacheJar;
+    // Alte Crux-Jars im Cache entfernen
+    try {
+      for (const f of fs.readdirSync(cacheDir)) {
+        if (f !== asset.name && (CRUX_JAR_RE.test(f) || CRUX_LEGACY_RE.test(f))) {
+          try { fs.unlinkSync(path.join(cacheDir, f)); } catch {}
+        }
+      }
+    } catch {}
+    send('instance-log', { instanceId, line:`[CRUX-MOD] Downloaded fresh: ${asset.name}` });
+    return { path: cacheJar, name: asset.name };
   } catch (e) {
     send('instance-log', { instanceId, line:`[CRUX-MOD] Download failed (${e.message}) — starting without Crux Client Features.` });
     return null;
   }
 }
+
+// Kopiert die frisch geladene Crux-Mod in den Mods-Ordner und entfernt alle
+// anderen cruxclient-*.jar (sowie alte crux-client-features-*.jar), damit nur
+// die passende Version aktiv bleibt.
+async function deployCruxMod(modsDir, crux) {
+  if (!crux || !crux.path) return false;
+  const dest = path.join(modsDir, crux.name);
+  try { await fs.promises.copyFile(crux.path, dest); } catch { return false; }
+  try {
+    for (const f of fs.readdirSync(modsDir)) {
+      if (f === crux.name) continue;
+      if (CRUX_JAR_RE.test(f) || CRUX_LEGACY_RE.test(f)) {
+        try { fs.unlinkSync(path.join(modsDir, f)); } catch {}
+      }
+    }
+  } catch {}
+  return true;
+}
+
+// Fragt die neueste GitHub-Release ab und meldet, ob es eine Mod-JAR für die
+// angefragte MC-Version gibt. `unknown:true` bedeutet: Abfrage fehlgeschlagen
+// (z.B. offline) — der Renderer lässt den Schalter dann unangetastet.
+ipcMain.handle('crux-mod-available', async (e, mcVersion) => {
+  const version = String(mcVersion || '');
+  if (!version || version.startsWith('__')) return { unknown: true, reason: 'version' };
+  let release;
+  try {
+    release = await fetchJsonHttps(`https://api.github.com/repos/${CRUX_MOD_REPO}/releases/latest`);
+  } catch (err) {
+    return { unknown: true, error: err.message };
+  }
+  const names = ((release && release.assets) || []).filter(a => CRUX_JAR_RE.test(a.name)).map(a => a.name);
+  return {
+    available: names.includes(`cruxclient-${version}.jar`),
+    tag: release && release.tag_name,
+    name: `cruxclient-${version}.jar`,
+    versions: names
+  };
+});
 
 async function getJavaVersion(p) {
   try {
@@ -2390,7 +2505,9 @@ ipcMain.on('launch-minecraft', async (event, data) => {
   }
 
   const instanceId = `inst_${++instanceCounter}`;
-  instances[instanceId] = { id:instanceId, version, startTime:Date.now(), logs:[], crashed:false, process:null, sessionRetried:false };
+  const gameDir = instanceDir(profileId);
+  try { await fs.promises.mkdir(gameDir, { recursive: true }); } catch {}
+  instances[instanceId] = { id:instanceId, version, profileId, gameDir, startTime:Date.now(), logs:[], crashed:false, process:null, sessionRetried:false };
   mainWindow.webContents.send('instance-started', { id:instanceId, version, profileId, profileName, startTime:instances[instanceId].startTime, serverAddress: data.serverAddress||null, serverPort: data.serverPort||null, serverName: data.serverName||null });
 
   const send = (ch,...a) => { try { if (ch === 'launch-progress' && a[0] && a[0].instanceId && stoppedInstances.has(a[0].instanceId)) return; mainWindow.webContents.send(ch,...a); } catch {} };
@@ -2989,25 +3106,23 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       }
     }
 
-    // ── Profile settings group ────────────────────────────────────────────────
-    // Profiles with the same group name share the same Minecraft settings
-    // (options.txt: keybinds, video settings, ...). Apply the group's settings
-    // BEFORE resource pack deployment touches options.txt.
-    let settingsGroup = 'default';
+    // ── Profile settings group (optional shared keybinds/settings) ────────────
+    // Every profile has its own game dir. Only when a profile sets an explicit
+    // group name, the group's options.txt is seeded into (and synced back from)
+    // the instance so those profiles share keybinds/video settings.
+    let settingsGroup = '';
     try {
       const profs = await load(P.profiles, []);
       const prof = profs.find(p => p.id === data.profileId);
-      if (prof && prof.group) settingsGroup = String(prof.group).trim() || 'default';
+      if (prof && prof.group && String(prof.group).trim()) settingsGroup = String(prof.group).trim();
     } catch {}
-    await applyGroupSettings(settingsGroup);
-    // Switch worlds + server list (saves, servers.dat) to this group's data
-    await swapGameDataToGroup(settingsGroup);
-    send('instance-log', { instanceId, line: `[GROUP] Settings group: "${settingsGroup}"` });
+    if (settingsGroup) await applyGroupSettings(settingsGroup, gameDir);
+    send('instance-log', { instanceId, line: settingsGroup ? `[GROUP] Shared settings group: "${settingsGroup}"` : `[INSTANCE] Eigener Spielordner: ${gameDir}` });
 
     // ── Deploy mrpack mods (modpack overrides) ────────────────────────────────
     if (mrpackMods && mrpackMods.length) {
       send('launch-progress', { instanceId, percent:22, message:`Deploying ${mrpackMods.length} modpack mods...` });
-      const modsDir = path.join(P.mc, 'mods');
+      const modsDir = path.join(gameDir, 'mods');
       await fs.promises.mkdir(modsDir, { recursive: true });
       let deployed = 0;
       for (const mod of mrpackMods) {
@@ -3041,7 +3156,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     if (modLoader === 'fabric' || modLoader === 'forge' || modLoader === 'quilt' || modLoader === 'neoforge') {
       send('launch-progress', { instanceId, percent:22, message:'Preparing mods...' });
 
-      const modsDir = path.join(P.mc, 'mods');
+      const modsDir = path.join(gameDir, 'mods');
       await fs.promises.mkdir(modsDir, { recursive: true });
 
       const clientModsRaw  = (data.useClientMods !== false) ? (data.clientMods || []) : [];
@@ -3194,15 +3309,14 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         }
       }
 
-      // ── Deploy Crux Client mod (downloaded from GitHub for the launched version) ─
+      // ── Deploy Crux Client mod (fresh from GitHub on every start) ─────────────
       if (useCruxClientMod && (modLoader === 'fabric' || modLoader === 'quilt')) {
         clearTimeout(safetyTimer);
-        const cruxJar = await ensureCruxClientMod(version, send, instanceId);
+        const crux = await ensureCruxClientMod(version, send, instanceId);
         safetyTimer = setTimeout(fireSafetyTimeout, 5 * 60 * 1000);
-        if (cruxJar) {
-          const dest = path.join(modsDir, `crux-client-features-${version}.jar`);
-          if (!fs.existsSync(dest)) await fs.promises.copyFile(cruxJar, dest);
-          send('instance-log', { instanceId, line:`[CRUX-MOD] Deployed Crux Client Features (MC ${version}) to mods folder.` });
+        if (crux) {
+          await deployCruxMod(modsDir, crux);
+          send('instance-log', { instanceId, line:`[CRUX-MOD] Deployed Crux Client Features (${crux.name}) to mods folder.` });
         }
       }
 
@@ -3282,7 +3396,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     // ── Deploy mrpack resource packs ──────────────────────────────────────────
     let mrpackDeployedNames = [];
     if (mrpackRPs && mrpackRPs.length) {
-      const rpDir = path.join(P.mc, 'resourcepacks');
+      const rpDir = path.join(gameDir, 'resourcepacks');
       await fs.promises.mkdir(rpDir, { recursive: true });
       for (const rp of mrpackRPs) {
         try {
@@ -3317,7 +3431,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     // Reset ALL resource packs first, then the launcher re-enables the needed ones.
     // This prevents leftover packs from other profiles/groups staying enabled in-game.
     {
-      const optionsPath = path.join(P.mc, 'options.txt');
+      const optionsPath = path.join(gameDir, 'options.txt');
       let options = '';
       if (fs.existsSync(optionsPath)) options = await fs.promises.readFile(optionsPath, 'utf8');
       if (options.match(/^resourcePacks:/m)) {
@@ -3335,7 +3449,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     }
 
     if (rpList.length || mrpackDeployedNames.length) {
-      const rpDir = path.join(P.mc, 'resourcepacks');
+      const rpDir = path.join(gameDir, 'resourcepacks');
       await fs.promises.mkdir(rpDir, { recursive: true });
 
       const deployedRpNames = [];
@@ -3393,7 +3507,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       }
 
       if (deployedRpNames.length || mrpackDeployedNames.length) {
-        const optionsPath = path.join(P.mc, 'options.txt');
+        const optionsPath = path.join(gameDir, 'options.txt');
         let options = '';
         if (fs.existsSync(optionsPath)) options = await fs.promises.readFile(optionsPath, 'utf8');
 
@@ -3428,7 +3542,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
 
     // ── Deploy custom cape resource pack ──────────────────────────────────────
     try {
-      const capeRpDeployed = await deployCustomCapeRp(path.join(P.mc, 'options.txt'));
+      const capeRpDeployed = await deployCustomCapeRp(path.join(gameDir, 'options.txt'), gameDir);
       if (capeRpDeployed) {
         send('instance-log', { instanceId, line: '[Cape] Custom cape resource pack deployed.' });
         send('launch-progress', { instanceId, percent:51, message:'Custom cape resource pack activated.' });
@@ -3547,7 +3661,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         };
         // Deploy mods to official launcher's mods dir (so mods load without gameDir override)
         const officialModsDir = path.join(defaultMcDir, 'mods');
-        const coreModsDir = path.join(P.mc, 'mods');
+        const coreModsDir = path.join(gameDir, 'mods');
         const deployedMods = [];
         if (fs.existsSync(coreModsDir)) {
           try {
@@ -3679,7 +3793,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         .replace(/\$\{classpath_separator\}/g, sep)
         .replace(/\$\{version_name\}/g, versionName)
         .replace(/\$\{assets_directory\}/g, path.join(P.mc, 'assets'))
-        .replace(/\$\{game_directory\}/g, P.mc)
+        .replace(/\$\{game_directory\}/g, gameDir)
         .replace(/\$\{version_type\}/g, 'release');
 
       // Build classpath from libraries — but EXCLUDE jars already on the module path (-p)
@@ -3808,7 +3922,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           .replace(/\$\{user_properties\}/g, '{}')
           .replace(/\$\{user_type\}/g, 'msa')
           .replace(/\$\{version_name\}/g, version)
-          .replace(/\$\{game_directory\}/g, P.mc)
+          .replace(/\$\{game_directory\}/g, gameDir)
           .replace(/\$\{assets_directory\}/g, path.join(P.mc, 'assets'))
           .replace(/\$\{asset_index\}/g, verJson.assetIndex?.id || version);
       }
@@ -3818,7 +3932,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       if (!gameArgs.includes(gameUuid)) gameArgs.push('--uuid', gameUuid);
       if (!gameArgs.includes(playerName)) gameArgs.push('--username', playerName);
       if (!gameArgs.some(a => a === '--version')) gameArgs.push('--version', version);
-      if (!gameArgs.some(a => a === '--gameDir' || a === '-d')) gameArgs.push('--gameDir', P.mc);
+      if (!gameArgs.some(a => a === '--gameDir' || a === '-d')) gameArgs.push('--gameDir', gameDir);
       if (!gameArgs.some(a => a === '--assetsDir')) gameArgs.push('--assetsDir', path.join(P.mc, 'assets'));
 
       // Direct server connect from Recent
@@ -3828,7 +3942,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       }
 
       // Direkter Welt-Join aus Recent > Welten
-      gameArgs.push(...worldJoinArgs(data, line => send('instance-log', { instanceId, line })));
+      gameArgs.push(...worldJoinArgs(data, line => send('instance-log', { instanceId, line }), gameDir));
 
       // Crux Client custom arg — placed AFTER -cp but before mainClass
       // forge.eagerDisplay=false disables NeoForge EarlyDisplay entirely
@@ -3853,7 +3967,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           const mesaDir = path.dirname(mesaGL);
           jvmArgs.push(`-Dorg.lwjgl.opengl.libpath=${mesaDir}`);
           jvmArgs.push('-Dorg.lwjgl.opengl.libname=opengl32');
-          installMesaToGameDir(mesaGL, P.mc);
+          installMesaToGameDir(mesaGL, gameDir);
           // Preload Mesa via Java agent (runs in premain BEFORE any Minecraft code)
           const agentJar = await ensureMesaAgent(mesaGL, resolvedJava);
           if (agentJar) {
@@ -3897,7 +4011,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           }
 
           // Also patch fml.toml as backup
-          const fmlTomlPath = path.join(P.mc, 'config', 'fml.toml');
+          const fmlTomlPath = path.join(gameDir, 'config', 'fml.toml');
           try {
             let fmlToml = await fs.promises.readFile(fmlTomlPath, 'utf8');
             fmlToml = fmlToml.replace(/^earlyWindowControl\s*=\s*true/gm, 'earlyWindowControl = false');
@@ -3911,7 +4025,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
 
           if (stoppedInstances.has(instanceId)) {
             try { if (earlyDisplayDisabled && fs.existsSync(earlyDisplayDisabled)) fs.renameSync(earlyDisplayDisabled, earlyDisplayJar); } catch {}
-            cleanupMesaFromGameDir(P.mc);
+            cleanupMesaFromGameDir(gameDir);
             return { code: 0, modCrash: false };
           }
 
@@ -3922,7 +4036,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           const allArgs = [...jvmArgs, mainClass, ...gameArgs];
           send('instance-log', { instanceId, line: `[NEOFORGE] Args: ${allArgs.slice(0, 10).join(' ')}...` });
 
-          const spawnOpts = { cwd: P.mc, detached: false, stdio: ['ignore', 'pipe', 'pipe'] };
+          const spawnOpts = { cwd: gameDir, detached: false, stdio: ['ignore', 'pipe', 'pipe'] };
           if (mesaActive) {
             spawnOpts.env = { ...process.env, GALLIUM_DRIVER: 'zink' };
             send('instance-log', { instanceId, line: `[LAUNCH] GALLIUM_DRIVER=zink (OpenGL→Vulkan via Zink)` });
@@ -3959,7 +4073,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
                     fs.renameSync(earlyDisplayDisabled, earlyDisplayJar);
                   }
                 } catch {}
-                cleanupMesaFromGameDir(P.mc);
+                cleanupMesaFromGameDir(gameDir);
                 if (gpuDriverCrash) {
                 send('launch-error', 'GPU-Treiber-Problem: atio6axx.dll crasht bei OpenGL. Bitte aktualisiere deinen AMD Radeon Treiber auf Version 26.6.4 oder neuer: https://www.amd.com/en/support/download/drivers.html');
                 try {
@@ -3979,7 +4093,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             });
             proc.on('error', (err) => {
               try { if (earlyDisplayDisabled && fs.existsSync(earlyDisplayDisabled)) fs.renameSync(earlyDisplayDisabled, earlyDisplayJar); } catch {}
-              cleanupMesaFromGameDir(P.mc);
+              cleanupMesaFromGameDir(gameDir);
               send('instance-log', { instanceId, line:`[LAUNCH ERROR] ${err.message}` });
               resolve({ code: -1, modCrash: false });
             });
@@ -4005,7 +4119,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           const mclcMesaDir = path.dirname(mclcMesaGL);
           mclcCustomArgs.push(`-Dorg.lwjgl.opengl.libpath=${mclcMesaDir}`);
           mclcCustomArgs.push('-Dorg.lwjgl.opengl.libname=opengl32');
-          installMesaToGameDir(mclcMesaGL, P.mc);
+          installMesaToGameDir(mclcMesaGL, gameDir);
           const agentJar = await ensureMesaAgent(mclcMesaGL, resolvedJava);
           if (agentJar) {
             mclcCustomArgs.unshift(`-javaagent:${agentJar}=${mclcMesaGL}`);
@@ -4028,7 +4142,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         send('instance-log', { instanceId, line: `[LAUNCH] Direct connect: ${data.serverAddress}:${data.serverPort || 25565}` });
       }
       // Direkter Welt-Join aus Recent > Welten
-      const mclcWorldArgs = worldJoinArgs(data, line => send('instance-log', { instanceId, line }));
+      const mclcWorldArgs = worldJoinArgs(data, line => send('instance-log', { instanceId, line }), gameDir);
       if (mclcWorldArgs.length) {
         if (!mclcVersionObj.arguments) mclcVersionObj.arguments = {};
         if (!mclcVersionObj.arguments.game) mclcVersionObj.arguments.game = [];
@@ -4047,6 +4161,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           customArgs: mclcCustomArgs,
           overrides: { 
             detached: false,
+            gameDirectory: gameDir,
             ...(mclcMesaGL ? { env: { ...process.env, GALLIUM_DRIVER: 'zink' } } : {}),
           },
         };
@@ -4085,21 +4200,21 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           }
         });
         launcher.on('error', err => {
-          cleanupMesaFromGameDir(P.mc);
+          cleanupMesaFromGameDir(gameDir);
           const msg = err.message || String(err);
           instances[instanceId].logs.push('[ERROR] ' + msg);
           send('instance-log', { instanceId, line:'[ERROR] '+msg });
           send('launch-progress', { instanceId, percent:0, message:'', done:true });
         });
         launcher.on('close', (code) => {
-          cleanupMesaFromGameDir(P.mc);
+          cleanupMesaFromGameDir(gameDir);
           resolve({ code, modCrash });
         });
 
         launcher.launch(launchOpts).then(proc => {
           if (proc) instances[instanceId].process = proc;
         }).catch(err => {
-          cleanupMesaFromGameDir(P.mc);
+          cleanupMesaFromGameDir(gameDir);
           send('instance-log', { instanceId, line:`[LAUNCH ERROR] ${err.message}` });
           resolve({ code: -1, modCrash: false });
         });
@@ -4113,7 +4228,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     clearTimeout(safetyTimer);
 
     // Save the group's settings back after the game wrote options.txt on exit
-    await syncGroupSettings(settingsGroup);
+    if (settingsGroup) await syncGroupSettings(settingsGroup, gameDir);
 
     send('instance-log', { instanceId, line:`--- Process exited (code ${mclcResult.code}) ---` });
     send('launch-progress', { instanceId, percent:0, message:'', done:true });
@@ -4243,7 +4358,10 @@ function setUpdateState(patch) {
 }
 
 ipcMain.handle('check-for-update', async (e, opts) => {
-  const manual = !!(opts && opts.manual);
+  return fetchUpdateInfo(!!(opts && opts.manual));
+});
+
+async function fetchUpdateInfo(manual) {
   if (IS_DEV_BUILD) {
     updateLog('Dev build — update detection disabled.');
     return { updateAvailable: false, devBuild: true, currentVersion: CURRENT_VERSION };
@@ -4296,7 +4414,31 @@ ipcMain.handle('check-for-update', async (e, opts) => {
     updateLog(`ERROR: ${e.message}`);
     return { updateAvailable: false, error: e.message };
   }
-});
+}
+
+function withTimeout(promise, ms) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('timeout')), ms);
+    promise.then(v => { clearTimeout(t); resolve(v); },
+                 e => { clearTimeout(t); reject(e); });
+  });
+}
+
+async function preLaunchUpdateCheck() {
+  if (IS_DEV_BUILD) return null;
+  if (process.env.CRUX_NO_AUTO_UPDATE === '1') return null;
+  try {
+    const info = await withTimeout(fetchUpdateInfo(false), 15000);
+    if (!info || !info.updateAvailable) return null;
+    if (!info.installed) return null;
+    if (!info.downloadUrl && !info.installerUrl) return null;
+    updateLog(`Pre-launch update check: v${info.newVersion} verfügbar - öffne Update-Fenster.`);
+    return info;
+  } catch (e) {
+    updateLog('Pre-launch update check failed: ' + (e && e.message));
+    return null;
+  }
+}
 
 // ── Update progress window (separate process, survives the launcher quitting) ──
 const UPDATE_PROGRESS_FILE = path.join(os.tmpdir(), 'crux-update-progress.json');
@@ -4369,7 +4511,7 @@ function restoreUserDataAfterUpdate() {
 ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUrl, newVersion) => {
   if (IS_DEV_BUILD) throw new Error('Updates are disabled in dev builds');
   const isAsar = __dirname.endsWith('app.asar') || process.env.APPIMAGE;
-  const send = (...a) => { try { mainWindow.webContents.send(...a); } catch {} };
+  const send = (...a) => sendToWindows(...a);
 
   if (isAsar) {
     // Installed version: download installer, create batch script that waits for app to close, then run installer
@@ -4491,6 +4633,12 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
     app.relaunch();
     app.quit();
   }
+});
+
+ipcMain.handle('update-window-skip', () => {
+  try { if (updateWindow && !updateWindow.isDestroyed()) updateWindow.close(); } catch {}
+  showMainWindow();
+  return { ok: true };
 });
 
 // ── Uninstall ─────────────────────────────────────────────────────────────────
@@ -4902,8 +5050,8 @@ ipcMain.handle('get-server-status', (event, serverId) => {
 });
 
 // Weltname -> Save-Ordner (Recent > Welten: damit "--quickPlaySingleplayer" greift)
-ipcMain.handle('resolve-save-folder', (event, worldName) => {
-  try { return resolveSaveFolder(worldName); } catch { return null; }
+ipcMain.handle('resolve-save-folder', (event, worldName, profileId) => {
+  try { return resolveSaveFolder(worldName, profileId ? instanceDir(profileId) : undefined); } catch { return null; }
 });
 
 // ── Server Whitelist IPC ────────────────────────────────────────────────────────
