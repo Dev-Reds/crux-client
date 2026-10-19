@@ -26,8 +26,10 @@ jobs:
       - run: npx electron-builder --win --publish=never
       - uses: actions/upload-artifact@v4
         with:
-          name: Crux-Client-Windows-Installer
-          path: installer/*.exe
+          name: Crux-Client-Windows
+          path: |
+            installer/Crux-Client-Installer.exe
+            installer/Crux-Client-Portable-x64.zip
 
   build-linux:
     runs-on: ubuntu-latest
@@ -41,7 +43,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Crux-Client-Linux
-          path: installer/Crux-Client-Linux-x64.*
+          path: |
+            installer/Crux-Client-Linux-x64.AppImage
+            installer/Crux-Client-Linux-x64.deb
+            installer/Crux-Client-Linux-x64.rpm
+            installer/Crux-Client-Linux-x64.zip
+            installer/Crux-Client-Linux-x64.tar.gz
 
   build-macos:
     runs-on: macos-latest
@@ -55,7 +62,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Crux-Client-Mac
-          path: installer/Crux-Client-Mac-x64.*
+          path: |
+            installer/Crux-Client-Mac-x64.dmg
+            installer/Crux-Client-Mac-x64.zip
 
   create-release-zip:
     needs: [build-windows, build-linux, build-macos]
@@ -72,6 +81,9 @@ jobs:
           mv *.zip release/ 2>/dev/null || true
           mv *.tar.gz release/ 2>/dev/null || true
           mv *.dmg release/ 2>/dev/null || true
+          mv *.AppImage release/ 2>/dev/null || true
+          mv *.deb release/ 2>/dev/null || true
+          mv *.rpm release/ 2>/dev/null || true
           cd release
           zip -9 -r ../Crux-Client-Installer-All.zip ./*
       - uses: actions/upload-artifact@v4
@@ -91,7 +103,7 @@ jobs:
           name: Crux-Client-Installer-All
       - uses: actions/download-artifact@v4
         with:
-          name: Crux-Client-Windows-Installer
+          name: Crux-Client-Windows
       - uses: actions/download-artifact@v4
         with:
           name: Crux-Client-Linux
@@ -107,6 +119,9 @@ jobs:
             *.zip
             *.tar.gz
             *.dmg
+            *.AppImage
+            *.deb
+            *.rpm
           fail_on_unmatched_files: false
 
   upload-to-website-nuxt:
@@ -125,7 +140,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           TAG="${{ inputs.release-tag }}"
-          for f in *.exe *.zip *.tar.gz *.dmg; do
+          for f in *.exe *.zip *.tar.gz *.dmg *.AppImage *.deb *.rpm; do
             [ -f "$f" ] && gh release upload "$TAG" "$f" --clobber -R "${{ inputs.upload-to }}" || true
           done
 
