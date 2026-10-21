@@ -38,7 +38,6 @@
 
   <div id="main-col">
   <div id="stop-bar">
-    <span data-i18n="lbl_actions">Actions:</span>
     <select id="stop-instance-select" style="display:none;background:#1a1a1a;color:#ccc;border:1px solid #333;border-radius:4px;padding:.25em .4em;font-size:.78em;max-width:220px"></select>
     <button class="btn" id="stop-btn" style="width:auto;padding:.35em .7em;font-size:.78em;border-color:#f4444444;color:#f44;display:none;white-space:nowrap" title="Stop selected instance" data-i18n="btn_stop">■ Stop</button>
     <button class="btn" id="stop-all-btn" style="width:auto;padding:.35em .7em;font-size:.78em;border-color:#f4444444;color:#f44;display:none;white-space:nowrap" title="Stop all running instances" data-i18n="btn_stop_all">■ Stop All</button>
@@ -54,11 +53,7 @@
         <div class="launch-left">
           <h1 class="launch-title" data-i18n="h_launch">Launch</h1>
           <div class="launch-hero">
-            <span class="launch-hero__label">Crux Client</span>
-            <div class="form-row launch-hero__row">
-              <label data-i18n="lbl_profile">Profile:</label>
-              <select id="profileSelect"></select>
-            </div>
+            <select id="profileSelect" class="state-select" aria-hidden="true" tabindex="-1"></select>
             <div class="launch-hero__version">
               <span data-i18n="lbl_version">Version:</span>
               <b id="profile-version-display">—</b>
@@ -69,17 +64,6 @@
               <div class="lp-bg"><div class="lp-fill" id="lp-fill"></div></div>
               <div class="lp-label" id="lp-label"></div>
             </div>
-          </div>
-
-          <div class="launch-recent">
-            <div class="launch-recent__head">
-              <h2 data-i18n="h_recent">Recent Played</h2>
-              <div class="launch-recent__tools">
-                <button class="btn btn-sm btn-danger" id="recent-clear-btn" data-i18n="btn_clear_history">Clear History</button>
-                <span class="launch-recent__count" id="recent-count"></span>
-              </div>
-            </div>
-            <div id="recent-sections"></div>
           </div>
         </div>
         <div class="launch-right">
@@ -116,7 +100,6 @@
           </section>
 
           <div class="skin-panel">
-            <div class="skin-change-label" data-i18n="lbl_change_skin">Change Skin:</div>
             <div class="skin-panel__row">
               <input type="text" id="skin-url-input" placeholder="Skin URL...">
               <button class="btn btn-sm btn-primary" id="skin-url-apply-btn" data-i18n="btn_add">Add</button>
@@ -270,143 +253,174 @@
         <nav class="settings-nav" id="settings-nav"></nav>
         <div class="settings-body">
       <select id="javaSelect" style="display:none"><option></option></select>
-      <div class="settings-section">
-        <h2 data-i18n="sec_ram">RAM for Minecraft</h2>
-        <div class="form-row form-row--wide">
-          <div class="setting-row">
-            <label><span data-i18n="lbl_ram">RAM:</span> <span id="ramValue">1</span> <span id="ramUnitLabel">GB</span></label>
-            <button class="btn btn-sm btn-ghost" id="ram-unit-btn">Switch to MB</button>
+      <section class="settings-group" id="setgrp-performance">
+        <h2 class="settings-group__title" data-i18n="grp_performance">Performance</h2>
+        <div class="settings-grid">
+        <div class="settings-section">
+          <h2 data-i18n="sec_ram">RAM for Minecraft</h2>
+          <div class="form-row form-row--wide">
+            <div class="setting-row">
+              <label><span data-i18n="lbl_ram">RAM:</span> <span id="ramValue">1</span> <span id="ramUnitLabel">GB</span></label>
+              <button class="btn btn-sm btn-ghost" id="ram-unit-btn">Switch to MB</button>
+            </div>
+            <input type="range" id="ramSlider" min="1" max="8" step="1" value="1">
           </div>
-          <input type="range" id="ramSlider" min="1" max="8" step="1" value="1">
         </div>
-      </div>
-      <div class="settings-section">
-        <h2 data-i18n="sec_ram_launcher">RAM for Crux Client</h2>
-        <div class="form-row form-row--wide">
-          <div class="setting-row">
-            <label><span data-i18n="lbl_launcher_ram">Launcher RAM:</span> <span id="launcherRamValue">1</span> GB</label>
+        <div class="settings-section">
+          <h2 data-i18n="sec_ram_launcher">RAM for Crux Client</h2>
+          <div class="form-row form-row--wide">
+            <div class="setting-row">
+              <label><span data-i18n="lbl_launcher_ram">Launcher RAM:</span> <span id="launcherRamValue">1</span> GB</label>
+            </div>
+            <input type="range" id="launcherRamSlider" min="1" max="8" step="1" value="1">
+            <div class="status-text" data-i18n="desc_ram_launcher">Controls how much memory the launcher itself uses. Requires restart.</div>
           </div>
-          <input type="range" id="launcherRamSlider" min="1" max="8" step="1" value="1">
-          <div class="status-text" data-i18n="desc_ram_launcher">Controls how much memory the launcher itself uses. Requires restart.</div>
         </div>
-      </div>
-      <div class="settings-section">
-        <h2 data-i18n="sec_lang">Language</h2>
-        <div class="form-row form-row--narrow">
-          <select id="lang-select">
-            <option value="en">English</option>
-            <option value="de">Deutsch</option>
-            <option value="fr">Français</option>
-            <option value="es">Español</option>
-            <option value="it">Italiano</option>
-            <option value="pt">Português</option>
-            <option value="nl">Nederlands</option>
-            <option value="pl">Polski</option>
-            <option value="ru">Русский</option>
-            <option value="ja">日本語</option>
-            <option value="zh">中文</option>
-            <option value="ko">한국어</option>
-          </select>
         </div>
-      </div>
-      <div class="settings-section">
-        <h2 data-i18n="sec_color">Active Tab Color (17 colors)</h2>
-        <div class="color-grid" id="color-grid"></div>
-      </div>
-      <div class="settings-section">
-        <h2 data-i18n="sec_theme">Theme</h2>
-        <div class="form-row form-row--narrow">
-          <label data-i18n="lbl_theme">Appearance</label>
-          <select id="theme-select">
-            <option value="dark" data-i18n="theme_dark">Dark</option>
-            <option value="light" data-i18n="theme_light">Light</option>
-            <option value="glass" data-i18n="theme_glass">Glass</option>
-          </select>
+      </section>
+      <section class="settings-group" id="setgrp-appearance">
+        <h2 class="settings-group__title" data-i18n="grp_appearance">Appearance</h2>
+        <div class="settings-grid">
+        <div class="settings-section">
+          <h2 data-i18n="sec_theme">Theme</h2>
+          <div class="form-row form-row--narrow">
+            <label class="sr-only" data-i18n="lbl_theme">Appearance</label>
+            <select id="theme-select">
+              <option value="dark" data-i18n="theme_dark">Dark</option>
+              <option value="light" data-i18n="theme_light">Light</option>
+              <option value="glass" data-i18n="theme_glass">Glass</option>
+            </select>
+          </div>
         </div>
-      </div>
-      <div class="settings-section" id="glass-bg-section" style="display:none">
-        <h2 data-i18n="sec_glass_bg">Glass Background</h2>
-        <p class="hint" data-i18n="desc_glass_bg">Custom background behind the frosted glass. Only shown in the Glass theme.</p>
-        <div id="glass-bg-presets" class="preset-row" style="display:none"></div>
-        <label class="switch-label" style="margin-bottom:.6em">
-          <label class="mod-switch"><input type="checkbox" id="glass-bg-tint-input" checked><span class="slider"></span></label>
-          <span data-i18n="lbl_bg_tint">Tint image with accent colour</span>
-        </label>
-        <div class="bg-preview-row">
-          <img id="glass-bg-preview" class="bg-preview" alt="">
-          <label class="btn btn-ghost" style="cursor:pointer;margin:0">
-            <span data-i18n="btn_choose_bg">Choose Imageâ€¦</span>
-            <input type="file" id="glass-bg-file-input" accept="image/*" hidden>
+        <div class="settings-section">
+          <h2 data-i18n="sec_color">Active Tab Color (17 colors)</h2>
+          <div class="color-grid" id="color-grid"></div>
+        </div>
+        <div class="settings-section" id="glass-bg-section" style="display:none">
+          <h2 data-i18n="sec_glass_bg">Glass Background</h2>
+          <p class="hint" data-i18n="desc_glass_bg">Custom background behind the frosted glass. Only shown in the Glass theme.</p>
+          <div id="glass-bg-presets" class="preset-row" style="display:none"></div>
+          <label class="switch-label" style="margin-bottom:.6em">
+            <label class="mod-switch"><input type="checkbox" id="glass-bg-tint-input" checked><span class="slider"></span></label>
+            <span data-i18n="lbl_bg_tint">Tint image with accent colour</span>
           </label>
-          <button class="btn" id="glass-bg-remove-btn" style="margin:0;display:none" data-i18n="btn_remove_bg">Remove</button>
+          <div class="bg-preview-row">
+            <img id="glass-bg-preview" class="bg-preview" alt="">
+            <label class="btn btn-ghost" style="cursor:pointer;margin:0">
+              <span data-i18n="btn_choose_bg">Choose Imageâ€¦</span>
+              <input type="file" id="glass-bg-file-input" accept="image/*" hidden>
+            </label>
+            <button class="btn" id="glass-bg-remove-btn" style="margin:0;display:none" data-i18n="btn_remove_bg">Remove</button>
+          </div>
         </div>
-      </div>
-      <div class="settings-section">
-        <h2 data-i18n="sec_corner_radius">Corner Radius</h2>
-        <div class="form-row form-row--narrow">
-          <label data-i18n="lbl_corner_radius">Roundness: <span id="corner-radius-val" class="accent-text">8px</span></label>
-          <input type="range" id="corner-radius-slider" min="0" max="24" step="1" value="8">
+        <div class="settings-section">
+          <h2 data-i18n="sec_corner_radius">Corner Radius</h2>
+          <div class="form-row form-row--narrow">
+            <label data-i18n="lbl_corner_radius">Roundness: <span id="corner-radius-val" class="accent-text">8px</span></label>
+            <input type="range" id="corner-radius-slider" min="0" max="24" step="1" value="8">
+          </div>
         </div>
-      </div>
-      <div class="settings-section">
-        <h2 data-i18n="sec_launch_mode">Launch Mode</h2>
-        <label class="switch-label">
-          <label class="mod-switch"><input type="checkbox" id="use-original-launcher-toggle"><span class="slider"></span></label>
-          <span data-i18n="launch_via_launcher">Launch via original Minecraft Launcher</span>
-        </label>
-        <p class="hint" data-i18n="desc_launch_mode_detail">Opens the official Minecraft Launcher (Java Edition) instead of launching directly.</p>
-      </div>
-      <div class="settings-section">
-        <h2 data-i18n="sec_tab_bar">Tab Bar</h2>
-        <div class="form-row form-row--narrow">
-          <label data-i18n="lbl_tab_bar_pos">Position</label>
-          <select id="tab-bar-position-select">
-            <option value="top" data-i18n="tab_bar_top">Top</option>
-            <option value="bottom" data-i18n="tab_bar_bottom">Bottom</option>
-            <option value="left" data-i18n="tab_bar_left">Left</option>
-            <option value="right" data-i18n="tab_bar_right">Right</option>
-          </select>
+        <div class="settings-section">
+          <h2 data-i18n="sec_tab_bar">Tab Bar</h2>
+          <div class="form-row form-row--narrow">
+            <label data-i18n="lbl_tab_bar_pos">Position</label>
+            <select id="tab-bar-position-select">
+              <option value="top" data-i18n="tab_bar_top">Top</option>
+              <option value="bottom" data-i18n="tab_bar_bottom">Bottom</option>
+              <option value="left" data-i18n="tab_bar_left">Left</option>
+              <option value="right" data-i18n="tab_bar_right">Right</option>
+            </select>
+          </div>
         </div>
-      </div>
-      <div class="settings-section">
-        <h2 data-i18n="sec_after_launch">After Launch</h2>
-        <label class="switch-label">
-          <label class="mod-switch"><input type="checkbox" id="open-logs-toggle"><span class="slider"></span></label>
-          <span data-i18n="after_launch_logs">Open logs after launch</span>
-        </label>
-        <label class="switch-label" style="margin-top:.4em">
-          <label class="mod-switch"><input type="checkbox" id="close-launcher-toggle"><span class="slider"></span></label>
-          <span data-i18n="after_launch_close">Close launcher while playing</span>
-        </label>
-      </div>
-
-      <div class="settings-section">
-        <h2 data-i18n="sec_social">Friends &amp; Bug Reports</h2>
-        <div class="form-row form-row--wide">
-          <label data-i18n="lbl_bugreport_webhook">Bug report webhook URL (Discord or compatible)</label>
-          <input type="text" id="bugreport-webhook-input" placeholder="https://discord.com/api/webhooks/..." style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
-          <div class="status-text" data-i18n="desc_bugreport_webhook">Bug reports are sent here directly — no GitHub account needed.</div>
         </div>
-      </div>
-
-      <div class="settings-section">
-        <h2 data-i18n="sec_reset">Reset</h2>
-        <button class="btn btn-danger" id="reset-all-btn" data-i18n="btn_reset">Reset Launcher</button>
-        <p class="hint" data-i18n="desc_reset">Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.</p>
-      </div>
-
-      <div class="settings-section">
-        <h2 data-i18n="sec_updates">Updates</h2>
-        <button class="btn" id="check-update-btn" data-i18n="btn_check_update">Check for Updates</button>
-        <p class="hint"><span data-i18n="desc_current_version">Current version:</span> <span id="current-version-label">1.0.0</span></p>
-        <div id="update-debug" style="margin-top:.5em;padding:.5em;background:#0a0a0a;border:1px solid #222;border-radius:var(--r);font-family:monospace;font-size:.72em;color:#888;max-height:120px;overflow-y:auto;display:none"></div>
-      </div>
-
-      <div class="settings-section settings-section--danger">
-        <h2 class="danger-text" data-i18n="sec_uninstall">Uninstall</h2>
-        <button class="btn btn-danger" id="uninstall-btn" data-i18n="btn_uninstall">Uninstall Crux Client</button>
-        <p class="hint" data-i18n="desc_uninstall">Removes the launcher and all its data from your system.</p>
-      </div>
+      </section>
+      <section class="settings-group" id="setgrp-language">
+        <h2 class="settings-group__title" data-i18n="grp_language">Language</h2>
+        <div class="settings-grid">
+        <div class="settings-section">
+          <h2 data-i18n="sec_lang">Language</h2>
+          <div class="form-row form-row--narrow">
+            <select id="lang-select">
+              <option value="en">English</option>
+              <option value="de">Deutsch</option>
+              <option value="fr">Français</option>
+              <option value="es">Español</option>
+              <option value="it">Italiano</option>
+              <option value="pt">Português</option>
+              <option value="nl">Nederlands</option>
+              <option value="pl">Polski</option>
+              <option value="ru">Русский</option>
+              <option value="ja">日本語</option>
+              <option value="zh">中文</option>
+              <option value="ko">한국어</option>
+            </select>
+          </div>
+        </div>
+        </div>
+      </section>
+      <section class="settings-group" id="setgrp-behaviour">
+        <h2 class="settings-group__title" data-i18n="grp_behaviour">Behaviour</h2>
+        <div class="settings-grid">
+        <div class="settings-section">
+          <h2 data-i18n="sec_launch_mode">Launch Mode</h2>
+          <label class="switch-label">
+            <label class="mod-switch"><input type="checkbox" id="use-original-launcher-toggle"><span class="slider"></span></label>
+            <span data-i18n="launch_via_launcher">Launch via original Minecraft Launcher</span>
+          </label>
+          <p class="hint" data-i18n="desc_launch_mode_detail">Opens the official Minecraft Launcher (Java Edition) instead of launching directly.</p>
+        </div>
+        <div class="settings-section">
+          <h2 data-i18n="sec_after_launch">After Launch</h2>
+          <label class="switch-label">
+            <label class="mod-switch"><input type="checkbox" id="open-logs-toggle"><span class="slider"></span></label>
+            <span data-i18n="after_launch_logs">Open logs after launch</span>
+          </label>
+          <label class="switch-label" style="margin-top:.4em">
+            <label class="mod-switch"><input type="checkbox" id="close-launcher-toggle"><span class="slider"></span></label>
+            <span data-i18n="after_launch_close">Close launcher while playing</span>
+          </label>
+        </div>
+        </div>
+      </section>
+      <section class="settings-group" id="setgrp-social">
+        <h2 class="settings-group__title" data-i18n="grp_social">Social</h2>
+        <div class="settings-grid">
+        <div class="settings-section">
+          <h2 data-i18n="sec_social">Friends &amp; Bug Reports</h2>
+          <div class="form-row form-row--wide">
+            <label data-i18n="lbl_bugreport_webhook">Bug report webhook URL (Discord or compatible)</label>
+            <input type="text" id="bugreport-webhook-input" placeholder="https://discord.com/api/webhooks/..." style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
+            <div class="status-text" data-i18n="desc_bugreport_webhook">Bug reports are sent here directly — no GitHub account needed.</div>
+          </div>
+        </div>
+        </div>
+      </section>
+      <section class="settings-group" id="setgrp-updates">
+        <h2 class="settings-group__title" data-i18n="grp_updates">Updates</h2>
+        <div class="settings-grid">
+        <div class="settings-section">
+          <h2 data-i18n="sec_updates">Updates</h2>
+          <button class="btn" id="check-update-btn" data-i18n="btn_check_update">Check for Updates</button>
+          <p class="hint"><span data-i18n="desc_current_version">Current version:</span> <span id="current-version-label">1.0.0</span></p>
+          <div id="update-debug" style="margin-top:.5em;padding:.5em;background:#0a0a0a;border:1px solid #222;border-radius:var(--r);font-family:monospace;font-size:.72em;color:#888;max-height:120px;overflow-y:auto;display:none"></div>
+        </div>
+        </div>
+      </section>
+      <section class="settings-group" id="setgrp-maintenance">
+        <h2 class="settings-group__title" data-i18n="grp_maintenance">Maintenance</h2>
+        <div class="settings-grid">
+        <div class="settings-section">
+          <h2 data-i18n="sec_reset">Reset</h2>
+          <button class="btn btn-danger" id="reset-all-btn" data-i18n="btn_reset">Reset Launcher</button>
+          <p class="hint" data-i18n="desc_reset">Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.</p>
+        </div>
+        <div class="settings-section settings-section--danger">
+          <h2 class="danger-text" data-i18n="sec_uninstall">Uninstall</h2>
+          <button class="btn btn-danger" id="uninstall-btn" data-i18n="btn_uninstall">Uninstall Crux Client</button>
+          <p class="hint" data-i18n="desc_uninstall">Removes the launcher and all its data from your system.</p>
+        </div>
+        </div>
+      </section>
         </div>
       </div>
     </div>
@@ -456,6 +470,19 @@
         <div class="lp-label" id="lp-label-logs"></div>
       </div>
       <div class="logs-container" id="logs-container"></div>
+
+      <section class="card card--spaced">
+        <header class="card__head">
+          <h2 data-i18n="h_recent">Recent Played</h2>
+          <div class="card__actions">
+            <span class="hint" id="recent-count"></span>
+            <button class="btn btn-sm btn-danger" id="recent-clear-btn" data-i18n="btn_clear_history">Clear History</button>
+          </div>
+        </header>
+        <div class="card__body">
+          <div id="recent-sections"></div>
+        </div>
+      </section>
     </div>
 
     <!-- ── SERVERS ── -->
@@ -1719,7 +1746,7 @@ function showPage(id){
   if(id==='mods-page') syncModFilterToProfile();
   if(id==='owner-page' && typeof renderOwnerAccountList==='function') renderOwnerAccountList();
   if(id==='logs-page'){ renderInstanceList(); refreshLogSelect(); updateStopButtons(); }
-  if(id==='launch-page') renderRecentList();  if(id==='cape-page'){loadMCCapes();}
+  if(id==='logs-page') renderRecentList();  if(id==='cape-page'){loadMCCapes();}
   if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); refreshChat(); }
   if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); }
 }
@@ -1871,7 +1898,7 @@ const LANGS={
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes', btn_manage:'Manage', btn_all:'All', rail_running:'Running',
     tab_settings:'Settings', tab_logs:'Logs', tab_account:'Account', tab_recent:'Recent', tab_servers:'Servers', tab_features:'Features', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
-  sub_mods:'Mods that run with every Minecraft version', sub_profiles:'Your versions, mod loaders and mod lists',
+  sub_mods:'Mods that run with every Minecraft version', grp_performance:'Performance', grp_appearance:'Appearance', sub_settings:'RAM, appearance, language and updates', grp_language:'Language', grp_behaviour:'Behaviour', grp_social:'Social', grp_updates:'Updates', grp_maintenance:'Maintenance', sub_profiles:'Your versions, mod loaders and mod lists',
   sub_cape:'Minecraft capes and your own designs', sub_servers:'Run your own server and share it with friends',
   sub_features:'Everything Crux Client can do', sub_logs:'Live output of your running instances',
   sub_account:'Your Microsoft and offline accounts', sub_bugreport:'Send a report with your logs',
@@ -2012,7 +2039,7 @@ const LANGS={
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes', btn_manage:'Verwalten', btn_all:'Alle', rail_running:'Läuft',
     tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_account:'Account', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_features:'Features', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
-  sub_mods:'Mods, die mit jeder Minecraft-Version laufen', sub_profiles:'Deine Versionen, Mod-Loader und Mod-Listen',
+  sub_mods:'Mods, die mit jeder Minecraft-Version laufen', grp_performance:'Leistung', grp_appearance:'Darstellung', sub_settings:'RAM, Darstellung, Sprache und Updates', grp_language:'Sprache', grp_behaviour:'Verhalten', grp_social:'Soziales', grp_updates:'Updates', grp_maintenance:'Wartung', sub_profiles:'Deine Versionen, Mod-Loader und Mod-Listen',
   sub_cape:'Minecraft-Capes und eigene Designs', sub_servers:'Eigenen Server starten und mit Freunden teilen',
   sub_features:'Alles, was Crux Client kann', sub_logs:'Live-Ausgabe deiner laufenden Instanzen',
   sub_account:'Deine Microsoft- und Offline-Konten', sub_bugreport:'Fehlerbericht mit deinen Logs senden',
@@ -2153,7 +2180,7 @@ const LANGS={
     tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes', btn_manage:'Gerer', btn_all:'Tous', rail_running:'En cours',
     tab_settings:'Paramètres', tab_logs:'Journaux', tab_account:'Account', tab_recent:'Récents', tab_servers:'Serveurs', tab_features:'Fonctionnalités', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
     h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
-  sub_mods:'Des mods qui fonctionnent avec chaque version de Minecraft', sub_profiles:'Tes versions, chargeurs de mods et listes',
+  sub_mods:'Des mods qui fonctionnent avec chaque version de Minecraft', grp_performance:'Performance', grp_appearance:'Apparence', sub_settings:'RAM, apparence, langue et mises à jour', grp_language:'Langue', grp_behaviour:'Comportement', grp_social:'Social', grp_updates:'Mises à jour', grp_maintenance:'Maintenance', sub_profiles:'Tes versions, chargeurs de mods et listes',
   sub_cape:'Capes Minecraft et tes créations', sub_servers:'Lance ton propre serveur et partage-le',
   sub_features:'Tout ce que Crux Client sait faire', sub_logs:'Sortie en direct de tes instances',
   sub_account:'Tes comptes Microsoft et hors ligne', sub_bugreport:'Envoyer un rapport avec tes logs',
@@ -2292,7 +2319,7 @@ const LANGS={
     tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas', btn_manage:'Gestionar', btn_all:'Todos', rail_running:'En ejecución',
     tab_settings:'Ajustes', tab_logs:'Registros', tab_account:'Account', tab_recent:'Recientes', tab_servers:'Servidores', tab_features:'Funciones', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
     h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
-  sub_mods:'Mods que funcionan con cada versión de Minecraft', sub_profiles:'Tus versiones, cargadores de mods y listas',
+  sub_mods:'Mods que funcionan con cada versión de Minecraft', grp_performance:'Rendimiento', grp_appearance:'Apariencia', sub_settings:'RAM, apariencia, idioma y actualizaciones', grp_language:'Idioma', grp_behaviour:'Comportamiento', grp_social:'Social', grp_updates:'Actualizaciones', grp_maintenance:'Mantenimiento', sub_profiles:'Tus versiones, cargadores de mods y listas',
   sub_cape:'Capas de Minecraft y tus diseños', sub_servers:'Ejecuta tu propio servidor y compártelo',
   sub_features:'Todo lo que Crux Client puede hacer', sub_logs:'Salida en vivo de tus instancias',
   sub_account:'Tus cuentas de Microsoft y sin conexión', sub_bugreport:'Envía un informe con tus registros',
@@ -2480,8 +2507,9 @@ function buildSettingsNav(){
   const activeIdx=navBtns.findIndex(b=>b.classList.contains('active'));
   nav.innerHTML='';
 
-  body.querySelectorAll('.settings-section').forEach(sec=>{
-    const h2=sec.querySelector('h2');
+  // Eine Nav-Eintrag-Gruppe pro settings-group (nicht pro Einzelabschnitt)
+  body.querySelectorAll('.settings-group').forEach(grp=>{
+    const h2=grp.querySelector('.settings-group__title');
     if(!h2) return;
     const btn=document.createElement('button');
     btn.type='button';
@@ -2489,7 +2517,7 @@ function buildSettingsNav(){
     btn.textContent=label;
     btn.title=label;
     btn.addEventListener('click',()=>{
-      sec.scrollIntoView({behavior:'smooth',block:'start'});
+      grp.scrollIntoView({behavior:'smooth',block:'start'});
       [...nav.children].forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
     });
@@ -2510,7 +2538,7 @@ function buildSettingsNav(){
     if(btns.length===0) return;
     const offset=page.getBoundingClientRect().top + 12;
     let idx=0;
-    body.querySelectorAll('.settings-section').forEach((s,i)=>{
+    body.querySelectorAll('.settings-group').forEach((s,i)=>{
       if(s.getBoundingClientRect().top - offset <= 0) idx=i;
     });
     btns.forEach((b,i)=>b.classList.toggle('active',i===idx));
@@ -9644,9 +9672,12 @@ ipcRenderer.on('update-log', (_, msg) => updateLog('[main] ' + msg));
     menu.style.left=Math.max(8,ml)+'px';
     menu.style.visibility='visible';
   }
-  function convert(sel){
-    if(sel.__cdrop) return; sel.__cdrop=true;
-    sel.classList.add('cdrop-sel');
+function convert(sel){
+  if(sel.__cdrop) return; sel.__cdrop=true;
+  // state-select: reiner Zustandsspeicher (z. B. Profil auf der Startseite).
+  // Wird NICHT in ein sichtbares Dropdown umgewandelt.
+  if(sel.classList.contains('state-select')) return;
+  sel.classList.add('cdrop-sel');
     const wrap=document.createElement('div');
     wrap.className='cdrop';
     const trig=document.createElement('button');
