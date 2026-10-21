@@ -544,6 +544,36 @@ body.tabs-left .pages, body.tabs-right .pages { order: 0; }
 }
 .custom-cape-row .hint { margin: 0; }
 
+/* Sub-Sektion innerhalb einer Card (z. B. eigene Capes unter den MC-Capes) */
+.sub-section { margin-top: var(--sp-4); padding-top: var(--sp-3); border-top: 1px solid var(--border); }
+.sub-section__title {
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: var(--sp-3);
+}
+
+/* Kacheln fuer selbst erstellte Capes */
+.cape-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .4rem;
+  padding: .5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: border-color .16s ease, transform .16s ease, background .16s ease;
+}
+.cape-tile:hover { border-color: var(--acc); background: var(--surface-3); transform: translateY(-2px); }
+.cape-tile__thumb { width: 100%; image-rendering: pixelated; border-radius: var(--r-sm); background: var(--surface-sunken); display: block; }
+.cape-tile__label { font-size: var(--fs-xs); color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cape-tile__actions { display: flex; gap: .25rem; justify-content: center; }
+.cape-tile__actions .btn { width: auto; padding: .18rem .5rem; font-size: var(--fs-xs); }
+
 /* Server-Listen-Elemente */
 .server-item__icon { font-size: 1.3rem; flex-shrink: 0; }
 .server-item__addrs { display: flex; align-items: center; gap: .5rem; margin-top: .2rem; flex-wrap: wrap; }

@@ -229,6 +229,13 @@
           <p id="capes-empty" class="hint" style="display:none" data-i18n="capes_empty">No capes found.</p>
           <p id="capes-status" class="hint"></p>
 
+          <!-- Selbst erstellte Capes (unterhalb der Minecraft-Capes) -->
+          <div class="sub-section">
+            <h3 class="sub-section__title" data-i18n="h_custom_cape_list">Custom Capes</h3>
+            <div id="custom-cape-list-container" class="tile-grid tile-grid--sm"></div>
+            <p id="custom-cape-list-empty" class="hint" style="display:none" data-i18n="no_custom_capes">No custom capes saved yet.</p>
+          </div>
+
           <!-- Eigenes Custom Cape: Status + Aktionen -->
           <div class="custom-cape-row">
             <span id="cape-custom-status" class="hint"></span>
@@ -1746,7 +1753,7 @@ function showPage(id){
   if(id==='mods-page') syncModFilterToProfile();
   if(id==='owner-page' && typeof renderOwnerAccountList==='function') renderOwnerAccountList();
   if(id==='logs-page'){ renderInstanceList(); refreshLogSelect(); updateStopButtons(); }
-  if(id==='logs-page') renderRecentList();  if(id==='cape-page'){loadMCCapes();}
+  if(id==='logs-page') renderRecentList();  if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
   if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); refreshChat(); }
   if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); }
 }
@@ -1932,7 +1939,7 @@ const LANGS={
     clear_logs:'Clear',
     sec_mc_capes:'Minecraft Capes', desc_mc_capes:'Load your capes from your Minecraft account. Select a cape to switch.',
     sec_custom_cape:'Custom Cape', desc_custom_cape:'Design your own cape. It will be loaded as a resource pack every time you launch.',
-    h_custom_cape_list:'Custom Cape List', desc_custom_cape_list:'Your saved custom capes. Click a cape to equip it.',
+    h_custom_cape_list:'Custom Capes', desc_custom_cape_list:'Your saved custom capes. Click a cape to equip it.',
     capes_loading:'Loading capes...', capes_empty:'No capes found.',
     sec_ram_launcher:'RAM for Crux Client', desc_ram_launcher:'Controls how much memory the launcher itself uses. Requires restart.',
     sec_launch_mode:'Launch Mode', desc_launch_mode:'Launch via original Minecraft Launcher',
@@ -2073,7 +2080,7 @@ const LANGS={
     clear_logs:'Leeren',
     sec_mc_capes:'Minecraft Capes', desc_mc_capes:'Lade deine Capes von deinem Minecraft-Konto. Wähle ein Cape zum Wechseln.',
     sec_custom_cape:'Custom Cape', desc_custom_cape:'Gestalte dein eigenes Cape. Es wird als Ressourcenpaket bei jedem Start geladen.',
-    h_custom_cape_list:'Custom Cape Liste', desc_custom_cape_list:'Deine gespeicherten Custom Capes. Klicke auf ein Cape, um es anzulegen.',
+    h_custom_cape_list:'Eigene Capes', desc_custom_cape_list:'Deine gespeicherten Custom Capes. Klicke auf ein Cape, um es anzulegen.',
     capes_loading:'Capes werden geladen...', capes_empty:'Keine Capes gefunden.',
     sec_ram_launcher:'RAM für Crux Client', desc_ram_launcher:'Steuert, wie viel Speicher der Launcher selbst nutzt. Start erfordert Neustart.',
     sec_launch_mode:'Startmodus', desc_launch_mode:'Íber den offiziellen Minecraft Launcher starten',
@@ -2214,7 +2221,7 @@ const LANGS={
     clear_logs:'Effacer',
     sec_mc_capes:'Capes Minecraft', desc_mc_capes:'Chargez vos capes depuis votre compte Minecraft. Sélectionnez une cape pour la changer.',
     sec_custom_cape:'Cape Custom', desc_custom_cape:'Créez votre propre cape. Elle sera chargée comme pack de ressources à chaque lancement.',
-    h_custom_cape_list:'Liste de Capes Custom', desc_custom_cape_list:'Vos capes custom sauvegardées. Cliquez sur une cape pour l\'équiper.',
+    h_custom_cape_list:'Capes personnalisées', desc_custom_cape_list:'Vos capes custom sauvegardées. Cliquez sur une cape pour l\'équiper.',
     capes_loading:'Chargement des capes...', capes_empty:'Aucune cape trouvée.',
     sec_ram_launcher:'RAM pour Crux Client', desc_ram_launcher:'Contrôle la mémoire utilisée par le launcher. Nécessite un redémarrage.',
     sec_launch_mode:'Mode de lancement', desc_launch_mode:'Lancer via le lanceur Minecraft original',
@@ -2353,7 +2360,7 @@ const LANGS={
     clear_logs:'Limpiar',
     sec_mc_capes:'Capas de Minecraft', desc_mc_capes:'Carga tus capas desde tu cuenta de Minecraft. Selecciona una capa para cambiar.',
     sec_custom_cape:'Capa personalizada', desc_custom_cape:'Diseña tu propia capa. Se cargará como paquete de recursos cada vez que inicies.',
-    h_custom_cape_list:'Lista de Capas Personalizadas', desc_custom_cape_list:'Tus capas personalizadas guardadas. Haz clic en una capa para equiparla.',
+    h_custom_cape_list:'Capas personalizadas', desc_custom_cape_list:'Tus capas personalizadas guardadas. Haz clic en una capa para equiparla.',
     capes_loading:'Cargando capas...', capes_empty:'No se encontraron capas.',
     sec_ram_launcher:'RAM para Crux Client', desc_ram_launcher:'Controla cuánta memoria usa el launcher. Requiere reinicio.',
     sec_launch_mode:'Modo de lanzamiento', desc_launch_mode:'Iniciar a través del Minecraft Launcher original',
@@ -3472,6 +3479,65 @@ document.getElementById('capes-remove-btn').addEventListener('click',async()=>{
     else document.getElementById('capes-status').textContent='Failed to remove cape';
   } catch(e){ document.getElementById('capes-status').textContent='Error: '+e.message; }
 });
+
+// ─── CUSTOM CAPE LIST (selbst erstellte Capes) ───
+let customCapeList = [];
+async function loadCustomCapeList() {
+  try { customCapeList = await ipcRenderer.invoke('load-custom-cape-list'); if (!Array.isArray(customCapeList)) customCapeList = []; } catch (e) { customCapeList = []; }
+}
+function saveCustomCapeList() { ipcRenderer.send('save-custom-cape-list', customCapeList); }
+loadCustomCapeList();
+
+function renderCustomCapeList() {
+  const container = document.getElementById('custom-cape-list-container');
+  const emptyEl = document.getElementById('custom-cape-list-empty');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!customCapeList.length) { if (emptyEl) emptyEl.style.display = ''; return; }
+  if (emptyEl) emptyEl.style.display = 'none';
+  customCapeList.forEach((cape, idx) => {
+    const card = document.createElement('div');
+    card.className = 'cape-tile';
+    const thumb = document.createElement('canvas');
+    thumb.width = 88; thumb.height = 68;
+    thumb.className = 'cape-tile__thumb';
+    if (cape.dataUrl) { try { renderCape3D(thumb, cape.dataUrl); } catch (e) {} }
+    const label = document.createElement('div');
+    label.className = 'cape-tile__label';
+    label.textContent = cape.name || 'Cape ' + (idx + 1);
+    const btns = document.createElement('div');
+    btns.className = 'cape-tile__actions';
+    const equipBtn = document.createElement('button');
+    equipBtn.className = 'btn btn-sm btn-primary';
+    equipBtn.textContent = 'Use';
+    equipBtn.addEventListener('click', (e) => { e.stopPropagation(); useCustomCape(cape); });
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-sm btn-danger';
+    delBtn.textContent = '\u2715';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      customCapeList.splice(idx, 1);
+      saveCustomCapeList();
+      renderCustomCapeList();
+    });
+    btns.appendChild(equipBtn); btns.appendChild(delBtn);
+    card.appendChild(thumb); card.appendChild(label); card.appendChild(btns);
+    card.addEventListener('click', () => useCustomCape(cape));
+    container.appendChild(card);
+  });
+}
+
+async function useCustomCape(cape) {
+  if (!cape || !cape.dataUrl) return;
+  const result = await ipcRenderer.invoke('save-custom-cape', cape.dataUrl);
+  if (result && result.success) {
+    const st = document.getElementById('cape-custom-status');
+    if (st) { st.textContent = 'Equipped: ' + (cape.name || 'Custom Cape'); st.style.color = 'var(--ok)'; }
+    const tg = document.getElementById('cape-custom-toggle');
+    if (tg) tg.style.display = '';
+    loadSkinCape();
+  }
+}
 
 function openProfileModal(profileId){
   editingProfileId=profileId;
@@ -7344,11 +7410,17 @@ tag('BACK', 6, 8, '#9fb6ff');
   document.getElementById('cape-ed-close').addEventListener('click',()=>overlay.classList.remove('open'));
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.classList.remove('open');});
 
-  document.getElementById('cape-ed-save').addEventListener('click',async()=>{
-    const dataUrl=canvas.toDataURL('image/png');
-    const result=await ipcRenderer.invoke('save-custom-cape',dataUrl);
-    if(result?.success){
-      document.getElementById('cape-custom-status').textContent='Custom cape saved!';
+document.getElementById('cape-ed-save').addEventListener('click',async()=>{
+  const dataUrl=canvas.toDataURL('image/png');
+  const result=await ipcRenderer.invoke('save-custom-cape',dataUrl);
+  if(result?.success){
+    // Selbst erstelltes Cape zusaetzlich in der Liste ablegen
+    try {
+      customCapeList.push({ name: 'Cape ' + (customCapeList.length + 1), dataUrl, addedAt: Date.now() });
+      saveCustomCapeList();
+      renderCustomCapeList();
+    } catch (e) {}
+    document.getElementById('cape-custom-status').textContent='Custom cape saved!';
       document.getElementById('cape-custom-status').style.color='#1bd96a';
       document.getElementById('cape-custom-toggle').style.display='';
       updateToggleBtn(false);
