@@ -135,66 +135,83 @@
       </div>
     </div>
 
-    <!-- ── CLIENT-MODS ── -->
+    <!-- ─── CLIENT-MODS ─── -->
     <div id="mods-page" class="page">
-      <div class="mods-header">
-        <h1 data-i18n="h_mods">Client Options</h1>
-        <div class="mods-actions">
-          <button class="btn btn-sm btn-modrinth" id="btn-modrinth-global">+</button>
+      <header class="page-head">
+        <div class="page-head__main">
+          <h1 data-i18n="h_mods">Client Options</h1>
+          <p class="page-head__sub" data-i18n="sub_mods">Mods that run with every Minecraft version</p>
         </div>
+        <div class="page-head__actions">
+          <button class="btn btn-primary" id="btn-modrinth-global">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span data-i18n="btn_add">Add</span>
+          </button>
+        </div>
+      </header>
 
-      </div>
-      <div style="display:flex;gap:.4em;margin-bottom:.6em;flex-wrap:wrap">
+      <div class="chip-row" role="tablist">
         <button class="btn btn-sm mod-filter-btn active" data-filter="all" id="filter-all" data-i18n="filter_all">All</button>
-        <button class="btn btn-sm mod-filter-btn" data-filter="fabric" id="filter-fabric" style="border-color:#1bd96a55;color:#1bd96a">Fabric</button>
-        <button class="btn btn-sm mod-filter-btn" data-filter="quilt" id="filter-quilt" style="border-color:#cc559955;color:#cc5599">Quilt</button>
-        <button class="btn btn-sm mod-filter-btn" data-filter="forge" id="filter-forge" style="border-color:#f1642255;color:#f16422">Forge</button>
-        <button class="btn btn-sm mod-filter-btn" data-filter="neoforge" id="filter-neoforge" style="border-color:#ff880055;color:#ff8800">NeoForge</button>
+        <button class="btn btn-sm mod-filter-btn mod-filter-btn--fabric" data-filter="fabric" id="filter-fabric">Fabric</button>
+        <button class="btn btn-sm mod-filter-btn mod-filter-btn--quilt" data-filter="quilt" id="filter-quilt">Quilt</button>
+        <button class="btn btn-sm mod-filter-btn mod-filter-btn--forge" data-filter="forge" id="filter-forge">Forge</button>
+        <button class="btn btn-sm mod-filter-btn mod-filter-btn--neoforge" data-filter="neoforge" id="filter-neoforge">NeoForge</button>
         <button class="btn btn-sm mod-filter-btn" data-filter="disabled" id="filter-disabled" data-i18n="filter_disabled">Disabled</button>
       </div>
+
       <div class="mod-list" id="mod-list">
         <div class="mod-list-empty" id="mod-list-empty" data-i18n="no_mods_installed">No mods installed yet.</div>
       </div>
 
-      <!-- â”€â”€ Resource Packs Section â”€â”€ -->
-      <div style="margin-top:1.4em;border-top:1px solid #1e1e1e;padding-top:1em">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6em;flex-wrap:wrap;gap:.4em">
-          <h2 style="font-size:.95em;margin:0;color:#ccc" data-i18n="client_rp_title">Client Resource Packs</h2>
-          <div style="display:flex;gap:.4em;align-items:center">
+      <!-- Resource Packs -->
+      <section class="card card--spaced">
+        <header class="card__head">
+          <h2 data-i18n="client_rp_title">Client Resource Packs</h2>
+          <div class="card__actions">
             <button class="btn btn-sm btn-modrinth" id="btn-rp-modrinth-global">+</button>
-            <label style="display:flex;align-items:center;gap:.5em;cursor:pointer;font-size:.82em;color:#ccc;user-select:none">
+            <label class="switch-label">
               <span data-i18n="auto_use">Auto-use</span>
-              <div id="auto-rp-toggle" style="width:2.4em;height:1.3em;border-radius:999px;background:#333;border:1px solid #444;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
-                <div id="auto-rp-knob" style="position:absolute;top:.15em;left:.15em;width:.95em;height:.95em;border-radius:50%;background:#888;transition:left .2s,background .2s"></div>
-              </div>
+              <span class="switch-track" id="auto-rp-toggle"><span class="switch-knob" id="auto-rp-knob"></span></span>
             </label>
           </div>
+        </header>
+        <div class="card__body">
+          <p class="hint" data-i18n="desc_rp_auto">When enabled, adds <strong>Open Loader</strong> to your client mods — it automatically loads all resource packs listed below without touching in-game settings.</p>
+          <div id="client-rp-list" class="tag-row"></div>
         </div>
-        <p style="color:#555;font-size:.75em;margin-bottom:.7em" data-i18n="desc_rp_auto">When enabled, adds <strong style="color:#ccc">Open Loader</strong> to your client mods — it automatically loads all resource packs listed below without touching in-game settings.</p>
-        <div id="client-rp-list" style="display:flex;flex-wrap:wrap;gap:.35em;min-height:1.5em"></div>
-      </div>
+      </section>
     </div>
 
 
 
     <!-- ── PROFILES ── -->
     <div id="profiles-page" class="page">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8em;flex-wrap:wrap;gap:.4em">
-        <h1 style="margin:0" data-i18n="h_profiles">Profiles</h1>
-        <div style="display:flex;gap:.4em">
-          <div style="position:relative">
-            <button class="btn btn-sm btn-primary" id="import-btn" style="color:#000">Import ▾</button>
-            <div id="import-dropdown" style="display:none;position:absolute;right:0;top:calc(100% + .35em);background:#1a1a1a;border:1px solid #2f2f2f;border-radius:.6em;padding:.35em;min-width:14em;z-index:1200;box-shadow:0 8px 24px rgba(0,0,0,.5)">
-              <button class="btn btn-sm btn-modrinth" id="import-modpack-modrinth-btn" style="width:100%;text-align:left" data-i18n="btn_import_modpack_modrinth">📦 Modrinth Modpack</button>
-              <button class="btn btn-sm btn-curseforge" id="import-modpack-curseforge-btn" style="width:100%;text-align:left" data-i18n="btn_import_modpack_curseforge">📦 CurseForge Modpack</button>
-              <button class="btn btn-sm" id="import-share-btn" style="width:100%;text-align:left;color:#1bd96a" data-i18n="btn_import_share">📋 Import Share Code</button>
-              <button class="btn btn-sm" id="import-norisk-btn" style="width:100%;text-align:left;color:#e63c8a" data-i18n="btn_import_norisk">⬛ NoRisk Client</button>
+      <header class="page-head">
+        <div class="page-head__main">
+          <h1 data-i18n="h_profiles">Profiles</h1>
+          <p class="page-head__sub" data-i18n="sub_profiles">Your versions, mod loaders and mod lists</p>
+        </div>
+        <div class="page-head__actions">
+          <div class="menu-wrap">
+            <button class="btn" id="import-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16"/></svg>
+              <span data-i18n="btn_import">Import</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div id="import-dropdown" class="menu">
+              <button class="btn menu-item btn-modrinth" id="import-modpack-modrinth-btn" data-i18n="btn_import_modpack_modrinth">Modrinth Modpack</button>
+              <button class="btn menu-item btn-curseforge" id="import-modpack-curseforge-btn" data-i18n="btn_import_modpack_curseforge">CurseForge Modpack</button>
+              <button class="btn menu-item" id="import-share-btn" data-i18n="btn_import_share">Import Share Code</button>
+              <button class="btn menu-item" id="import-norisk-btn" data-i18n="btn_import_norisk">NoRisk Client</button>
             </div>
           </div>
-          <button class="btn btn-sm btn-primary" id="new-profile-btn" data-i18n="new_profile">+ New Profile</button>
+          <button class="btn btn-primary" id="new-profile-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span data-i18n="new_profile">New Profile</span>
+          </button>
         </div>
-      </div>
-      <div id="modpack-progress" style="display:none;width:100%;max-width:30em;margin-bottom:.8em">
+      </header>
+      <div id="modpack-progress" class="progress-card" style="display:none;max-width:30em;margin-bottom:.8em">
         <div class="lp-bg"><div class="lp-fill" id="modpack-progress-fill"></div></div>
         <div class="lp-label" id="modpack-progress-label"></div>
       </div>
@@ -203,59 +220,84 @@
 
     <!-- ── CAPE & COSMETICS ── -->
     <div id="cape-page" class="page" style="display:none">
-      <h1 data-i18n="h_cape">Capes</h1>
-      <div class="settings-section">
-        <h2 data-i18n="sec_mc_capes">Minecraft Capes</h2>
-        <p style="color:#666;font-size:.82em;margin-bottom:.8em" data-i18n="desc_mc_capes">Load your capes from your Minecraft account. Select a cape to switch.</p>
-        <div id="capes-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(10em,1fr));gap:.5em;min-height:5em"></div>
-        <p id="capes-loading" style="color:#888;font-size:.82em" data-i18n="capes_loading">Loading capes...</p>
-        <p id="capes-empty" style="color:#555;font-size:.82em;display:none" data-i18n="capes_empty">No capes found.</p>
-        <p id="capes-status" style="font-size:.82em;color:#888;margin-top:.4em"></p>
-        <div style="display:flex;gap:.4em;margin-top:.5em">
-          <button class="btn btn-primary btn-sm" id="capes-refresh-btn" style="width:auto" data-i18n="btn_refresh">Refresh</button>
-          <button class="btn btn-sm" id="capes-remove-btn" style="width:auto" data-i18n="btn_remove_cape">Remove Cape</button>
+      <header class="page-head">
+        <div class="page-head__main">
+          <h1 data-i18n="h_cape">Capes</h1>
+          <p class="page-head__sub" data-i18n="sub_cape">Minecraft capes and your own designs</p>
         </div>
-      </div>
-      <div class="settings-section" style="margin-top:1.5em">
-        <h2 data-i18n="sec_custom_cape">Custom Cape</h2>
-        <p style="color:#666;font-size:.82em;margin-bottom:.8em" data-i18n="desc_custom_cape">Design your own cape. It will be loaded as a resource pack every time you launch.</p>
-        <div style="display:flex;gap:.4em;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-primary btn-sm" id="cape-editor-btn" style="width:auto" data-i18n="btn_open_cape_editor">Open Cape Editor</button>
-          <span id="cape-custom-status" style="font-size:.78em;color:#888"></span>
-          <button class="btn btn-sm" id="cape-custom-toggle" style="width:auto;display:none" data-i18n="btn_disable_cape">Disable Cape</button>
-          <button class="btn btn-sm" id="cape-custom-remove" style="width:auto;color:#f44;border-color:#f44555" data-i18n="btn_remove_custom_cape">Remove Custom Cape</button>
+      </header>
+
+      <section class="card">
+        <header class="card__head">
+          <h2 data-i18n="sec_mc_capes">Minecraft Capes</h2>
+          <div class="card__actions">
+            <button class="btn btn-sm" id="capes-refresh-btn" data-i18n="btn_refresh">Refresh</button>
+            <button class="btn btn-sm btn-danger" id="capes-remove-btn" data-i18n="btn_remove_cape">Remove Cape</button>
+          </div>
+        </header>
+        <div class="card__body">
+          <p class="hint" data-i18n="desc_mc_capes">Load your capes from your Minecraft account. Select a cape to switch.</p>
+          <div id="capes-container" class="tile-grid"></div>
+          <p id="capes-loading" class="hint" data-i18n="capes_loading">Loading capes...</p>
+          <p id="capes-empty" class="hint" style="display:none" data-i18n="capes_empty">No capes found.</p>
+          <p id="capes-status" class="hint"></p>
         </div>
-      </div>
-      <div class="settings-section" style="margin-top:1.5em">
-        <h2 data-i18n="h_custom_cape_list">Custom Cape List</h2>
-        <p style="color:#666;font-size:.82em;margin-bottom:.8em" data-i18n="desc_custom_cape_list">Your saved custom capes. Click a cape to equip it.</p>
-        <div id="custom-cape-list-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(8em,1fr));gap:.5em;min-height:3em"></div>
-        <p id="custom-cape-list-empty" style="color:#555;font-size:.82em;display:none" data-i18n="no_custom_capes">No custom capes saved yet.</p>
-      </div>
+      </section>
+
+      <section class="card card--spaced">
+        <header class="card__head">
+          <h2 data-i18n="sec_custom_cape">Custom Cape</h2>
+          <div class="card__actions">
+            <span id="cape-custom-status" class="hint"></span>
+            <button class="btn btn-sm" id="cape-custom-toggle" style="display:none" data-i18n="btn_disable_cape">Disable Cape</button>
+            <button class="btn btn-sm btn-danger" id="cape-custom-remove" data-i18n="btn_remove_custom_cape">Remove Custom Cape</button>
+          </div>
+        </header>
+        <div class="card__body">
+          <p class="hint" data-i18n="desc_custom_cape">Design your own cape. It will be loaded as a resource pack every time you launch.</p>
+          <button class="btn btn-primary" id="cape-editor-btn" data-i18n="btn_open_cape_editor">Open Cape Editor</button>
+        </div>
+      </section>
+
+      <section class="card card--spaced">
+        <header class="card__head">
+          <h2 data-i18n="h_custom_cape_list">Custom Cape List</h2>
+        </header>
+        <div class="card__body">
+          <p class="hint" data-i18n="desc_custom_cape_list">Your saved custom capes. Click a cape to equip it.</p>
+          <div id="custom-cape-list-container" class="tile-grid tile-grid--sm"></div>
+          <p id="custom-cape-list-empty" class="hint" style="display:none" data-i18n="no_custom_capes">No custom capes saved yet.</p>
+        </div>
+      </section>
     </div>
 
     <!-- ── SETTINGS ── -->
     <div id="settings-page" class="page">
-      <h1 data-i18n="h_settings">Settings</h1>
+      <header class="page-head">
+        <div class="page-head__main">
+          <h1 data-i18n="h_settings">Settings</h1>
+          <p class="page-head__sub" data-i18n="sub_settings">RAM, appearance, language and updates</p>
+        </div>
+      </header>
       <div class="settings-layout">
         <nav class="settings-nav" id="settings-nav"></nav>
         <div class="settings-body">
       <select id="javaSelect" style="display:none"><option></option></select>
       <div class="settings-section">
         <h2 data-i18n="sec_ram">RAM for Minecraft</h2>
-        <div class="form-row" style="max-width:100%">
-          <div style="display:flex;align-items:center;gap:.6em;margin-bottom:.4em">
-            <label style="margin:0"><span data-i18n="lbl_ram">RAM:</span> <span id="ramValue">1</span> <span id="ramUnitLabel">GB</span></label>
-            <button class="btn btn-sm" id="ram-unit-btn" style="width:auto;padding:.2em .6em;font-size:.72em">Switch to MB</button>
+        <div class="form-row form-row--wide">
+          <div class="setting-row">
+            <label><span data-i18n="lbl_ram">RAM:</span> <span id="ramValue">1</span> <span id="ramUnitLabel">GB</span></label>
+            <button class="btn btn-sm btn-ghost" id="ram-unit-btn">Switch to MB</button>
           </div>
           <input type="range" id="ramSlider" min="1" max="8" step="1" value="1">
         </div>
       </div>
       <div class="settings-section">
         <h2 data-i18n="sec_ram_launcher">RAM for Crux Client</h2>
-        <div class="form-row" style="max-width:100%">
-          <div style="display:flex;align-items:center;gap:.6em;margin-bottom:.4em">
-            <label style="margin:0"><span data-i18n="lbl_launcher_ram">Launcher RAM:</span> <span id="launcherRamValue">1</span> GB</label>
+        <div class="form-row form-row--wide">
+          <div class="setting-row">
+            <label><span data-i18n="lbl_launcher_ram">Launcher RAM:</span> <span id="launcherRamValue">1</span> GB</label>
           </div>
           <input type="range" id="launcherRamSlider" min="1" max="8" step="1" value="1">
           <div class="status-text" data-i18n="desc_ram_launcher">Controls how much memory the launcher itself uses. Requires restart.</div>
@@ -263,7 +305,7 @@
       </div>
       <div class="settings-section">
         <h2 data-i18n="sec_lang">Language</h2>
-        <div class="form-row" style="max-width:20em">
+        <div class="form-row form-row--narrow">
           <select id="lang-select">
             <option value="en">English</option>
             <option value="de">Deutsch</option>
@@ -273,10 +315,10 @@
             <option value="pt">Português</option>
             <option value="nl">Nederlands</option>
             <option value="pl">Polski</option>
-            <option value="ru">Ð ÑƒÑÑÐºÐ¸Ð¹</option>
-            <option value="ja">日捬語</option>
+            <option value="ru">Русский</option>
+            <option value="ja">日本語</option>
             <option value="zh">中文</option>
-            <option value="ko">핍국어</option>
+            <option value="ko">한국어</option>
           </select>
         </div>
       </div>
@@ -286,7 +328,7 @@
       </div>
       <div class="settings-section">
         <h2 data-i18n="sec_theme">Theme</h2>
-        <div class="form-row" style="max-width:20em">
+        <div class="form-row form-row--narrow">
           <label data-i18n="lbl_theme">Appearance</label>
           <select id="theme-select">
             <option value="dark" data-i18n="theme_dark">Dark</option>
@@ -297,15 +339,15 @@
       </div>
       <div class="settings-section" id="glass-bg-section" style="display:none">
         <h2 data-i18n="sec_glass_bg">Glass Background</h2>
-        <p style="color:#555;font-size:.76em;margin-top:.2em;margin-bottom:.6em" data-i18n="desc_glass_bg">Custom background behind the frosted glass. Only shown in the Glass theme.</p>
-        <div id="glass-bg-presets" style="display:none;flex-wrap:wrap;gap:.5em;margin-bottom:.7em"></div>
-        <label style="display:flex;align-items:center;gap:.5em;cursor:pointer;font-size:.82em;color:#ccc;margin-bottom:.6em">
+        <p class="hint" data-i18n="desc_glass_bg">Custom background behind the frosted glass. Only shown in the Glass theme.</p>
+        <div id="glass-bg-presets" class="preset-row" style="display:none"></div>
+        <label class="switch-label" style="margin-bottom:.6em">
           <label class="mod-switch"><input type="checkbox" id="glass-bg-tint-input" checked><span class="slider"></span></label>
           <span data-i18n="lbl_bg_tint">Tint image with accent colour</span>
         </label>
-        <div style="display:flex;align-items:center;gap:.8em;flex-wrap:wrap">
-          <img id="glass-bg-preview" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid #444;display:none">
-          <label class="btn" style="cursor:pointer;margin:0">
+        <div class="bg-preview-row">
+          <img id="glass-bg-preview" class="bg-preview" alt="">
+          <label class="btn btn-ghost" style="cursor:pointer;margin:0">
             <span data-i18n="btn_choose_bg">Choose Imageâ€¦</span>
             <input type="file" id="glass-bg-file-input" accept="image/*" hidden>
           </label>
@@ -314,22 +356,22 @@
       </div>
       <div class="settings-section">
         <h2 data-i18n="sec_corner_radius">Corner Radius</h2>
-        <div class="form-row" style="max-width:20em">
-          <label data-i18n="lbl_corner_radius">Roundness: <span id="corner-radius-val" style="color:var(--acc)">8px</span></label>
+        <div class="form-row form-row--narrow">
+          <label data-i18n="lbl_corner_radius">Roundness: <span id="corner-radius-val" class="accent-text">8px</span></label>
           <input type="range" id="corner-radius-slider" min="0" max="24" step="1" value="8">
         </div>
       </div>
       <div class="settings-section">
         <h2 data-i18n="sec_launch_mode">Launch Mode</h2>
-        <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc">
+        <label class="switch-label">
           <label class="mod-switch"><input type="checkbox" id="use-original-launcher-toggle"><span class="slider"></span></label>
           <span data-i18n="launch_via_launcher">Launch via original Minecraft Launcher</span>
         </label>
-        <p style="color:#555;font-size:.76em;margin-top:.3em" data-i18n="desc_launch_mode_detail">Opens the official Minecraft Launcher (Java Edition) instead of launching directly.</p>
+        <p class="hint" data-i18n="desc_launch_mode_detail">Opens the official Minecraft Launcher (Java Edition) instead of launching directly.</p>
       </div>
       <div class="settings-section">
         <h2 data-i18n="sec_tab_bar">Tab Bar</h2>
-        <div class="form-row" style="max-width:20em">
+        <div class="form-row form-row--narrow">
           <label data-i18n="lbl_tab_bar_pos">Position</label>
           <select id="tab-bar-position-select">
             <option value="top" data-i18n="tab_bar_top">Top</option>
@@ -341,11 +383,11 @@
       </div>
       <div class="settings-section">
         <h2 data-i18n="sec_after_launch">After Launch</h2>
-        <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc">
+        <label class="switch-label">
           <label class="mod-switch"><input type="checkbox" id="open-logs-toggle"><span class="slider"></span></label>
           <span data-i18n="after_launch_logs">Open logs after launch</span>
         </label>
-        <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc;margin-top:.4em">
+        <label class="switch-label" style="margin-top:.4em">
           <label class="mod-switch"><input type="checkbox" id="close-launcher-toggle"><span class="slider"></span></label>
           <span data-i18n="after_launch_close">Close launcher while playing</span>
         </label>
@@ -353,7 +395,7 @@
 
       <div class="settings-section">
         <h2 data-i18n="sec_social">Friends &amp; Bug Reports</h2>
-        <div class="form-row" style="max-width:100%">
+        <div class="form-row form-row--wide">
           <label data-i18n="lbl_bugreport_webhook">Bug report webhook URL (Discord or compatible)</label>
           <input type="text" id="bugreport-webhook-input" placeholder="https://discord.com/api/webhooks/..." style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
           <div class="status-text" data-i18n="desc_bugreport_webhook">Bug reports are sent here directly — no GitHub account needed.</div>
@@ -362,21 +404,21 @@
 
       <div class="settings-section">
         <h2 data-i18n="sec_reset">Reset</h2>
-        <button class="btn" id="reset-all-btn" style="border-color:#f4444444;color:#f44" data-i18n="btn_reset">Reset Launcher</button>
-        <p style="color:#555;font-size:.76em;margin-top:.3em" data-i18n="desc_reset">Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.</p>
+        <button class="btn btn-danger" id="reset-all-btn" data-i18n="btn_reset">Reset Launcher</button>
+        <p class="hint" data-i18n="desc_reset">Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.</p>
       </div>
 
       <div class="settings-section">
         <h2 data-i18n="sec_updates">Updates</h2>
         <button class="btn" id="check-update-btn" data-i18n="btn_check_update">Check for Updates</button>
-        <p style="color:#555;font-size:.76em;margin-top:.3em"><span data-i18n="desc_current_version">Current version:</span> <span id="current-version-label">1.0.0</span></p>
+        <p class="hint"><span data-i18n="desc_current_version">Current version:</span> <span id="current-version-label">1.0.0</span></p>
         <div id="update-debug" style="margin-top:.5em;padding:.5em;background:#0a0a0a;border:1px solid #222;border-radius:var(--r);font-family:monospace;font-size:.72em;color:#888;max-height:120px;overflow-y:auto;display:none"></div>
       </div>
 
-      <div class="settings-section" style="border-top:1px solid #333;padding-top:1em">
-        <h2 style="color:#f88" data-i18n="sec_uninstall">Uninstall</h2>
-        <button class="btn" id="uninstall-btn" style="border-color:#f4444444;color:#f44" data-i18n="btn_uninstall">Uninstall Crux Client</button>
-        <p style="color:#555;font-size:.76em;margin-top:.3em" data-i18n="desc_uninstall">Removes the launcher and all its data from your system.</p>
+      <div class="settings-section settings-section--danger">
+        <h2 class="danger-text" data-i18n="sec_uninstall">Uninstall</h2>
+        <button class="btn btn-danger" id="uninstall-btn" data-i18n="btn_uninstall">Uninstall Crux Client</button>
+        <p class="hint" data-i18n="desc_uninstall">Removes the launcher and all its data from your system.</p>
       </div>
         </div>
       </div>
@@ -384,7 +426,12 @@
 
     <!-- ─── FEATURES ─── -->
     <div id="features-page" class="page" style="display:none">
-      <h1 style="margin:0 0 .5em" data-i18n="tab_features">Features</h1>
+      <header class="page-head">
+        <div class="page-head__main">
+          <h1 data-i18n="tab_features">Features</h1>
+          <p class="page-head__sub" data-i18n="sub_features">Everything Crux Client can do</p>
+        </div>
+      </header>
       <div class="feature-grid">
         <div class="feature-card"><h3>🚀 Launch Anything</h3><p>Play any Minecraft version with Fabric, Forge, Quilt or NeoForge — one-click launch from the launcher.</p></div>
         <div class="feature-card"><h3>📴 Works Offline</h3><p>Install mods from your local .jar files and launch with cached mods even when you have no internet connection.</p></div>
@@ -402,17 +449,20 @@
 
     <!-- ── LOGS ── -->
     <div id="logs-page" class="page" style="display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5em;flex-wrap:wrap;gap:.4em">
-        <h1 style="margin:0" data-i18n="h_logs">Logs</h1>
-        <div style="display:flex;gap:.4em">
+      <header class="page-head">
+        <div class="page-head__main">
+          <h1 data-i18n="h_logs">Logs</h1>
+          <p class="page-head__sub" data-i18n="sub_logs">Live output of your running instances</p>
+        </div>
+        <div class="page-head__actions">
           <button class="btn btn-sm" id="copy-logs-btn" data-i18n="btn_copy">📋 Copy</button>
           <button class="btn btn-sm" id="clear-logs-btn" data-i18n="clear_logs">Clear</button>
-          <button class="btn btn-sm" id="autoscroll-btn" style="border-color:#7ec8e344;color:#7ec8e3" title="Auto-scroll to bottom">📒 Auto-scroll</button>
+          <button class="btn btn-sm btn-info" id="autoscroll-btn" title="Auto-scroll to bottom">📒 Auto-scroll</button>
         </div>
-      </div>
+      </header>
       <div class="log-select-row">
         <label data-i18n="lbl_instance">Instance:</label>
-        <select id="log-instance-select" style="width:auto;min-width:16em;padding:.3em .6em;font-size:.78em"></select>
+        <select id="log-instance-select" class="select-inline"></select>
       </div>
       <div class="lp-wrap" id="lp-wrap-logs" style="margin-bottom:.4em">
         <div class="lp-bg"><div class="lp-fill" id="lp-fill-logs"></div></div>
@@ -423,12 +473,20 @@
 
     <!-- ── SERVERS ── -->
     <div id="servers-page" class="page" style="display:none">
-      <h1 data-i18n="h_servers">Servers</h1>
-      <div style="display:flex;align-items:center;gap:.5em;margin-bottom:1em">
-        <button class="btn btn-primary btn-sm" id="server-create-btn" style="width:auto;padding:.4em 1em" data-i18n="btn_new_server">+ New Server</button>
-        <span style="font-size:.75em;color:#555" id="server-count-label">0 / 5 servers</span>
-        <span style="font-size:.75em;color:#555;margin-left:auto" id="server-running-label"></span>
-      </div>
+      <header class="page-head">
+        <div class="page-head__main">
+          <h1 data-i18n="h_servers">Servers</h1>
+          <p class="page-head__sub" data-i18n="sub_servers">Run your own server and share it with friends</p>
+        </div>
+        <div class="page-head__actions">
+          <span class="hint" id="server-count-label">0 / 5 servers</span>
+          <span class="hint" id="server-running-label"></span>
+          <button class="btn btn-primary" id="server-create-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span data-i18n="btn_new_server">New Server</span>
+          </button>
+        </div>
+      </header>
 
       <!-- Server list -->
       <div class="server-list" id="server-list">
@@ -436,131 +494,129 @@
       </div>
 
       <!-- Server wizard (hidden by default) -->
-      <div id="server-editor" style="display:none;margin-bottom:1.5em;padding:1em;background:#111;border:1px solid #2a2a2a;border-radius:var(--r);">
+      <div id="server-editor" class="card card--spaced" style="display:none">
         <!-- Step indicator -->
-        <div id="server-wizard-steps" style="display:flex;gap:.5em;margin-bottom:1em;font-size:.75em;color:#555">
-          <span id="ws-step1" style="color:var(--acc)" data-i18n="ws_step1">① Type</span>
-          <span id="ws-step2" data-i18n="ws_step2">② Version</span>
-          <span id="ws-step3" data-i18n="ws_step3">③ Mods</span>
-          <span id="ws-step4" data-i18n="ws_step4">④ Settings</span>
+        <div id="server-wizard-steps" class="step-row">
+          <span id="ws-step1" class="step-chip is-active" data-i18n="ws_step1">Type</span>
+          <span id="ws-step2" class="step-chip" data-i18n="ws_step2">Version</span>
+          <span id="ws-step3" class="step-chip" data-i18n="ws_step3">Mods</span>
+          <span id="ws-step4" class="step-chip" data-i18n="ws_step4">Settings</span>
         </div>
 
         <!-- STEP 1: Server Type -->
         <div id="server-step-type" class="server-wizard-step">
-          <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc" data-i18n="sv_choose_type">Choose Server Type</h3>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(10em,1fr));gap:.5em" id="server-type-grid">
+          <h3 class="card__title" data-i18n="sv_choose_type">Choose Server Type</h3>
+          <div class="tile-grid" id="server-type-grid">
             <div class="server-type-card" data-type="vanilla">
-              <div style="font-size:1.4em">🏛️</div>
-              <div style="font-weight:bold;font-size:.9em">Vanilla</div>
-              <div style="font-size:.65em;color:#666" data-i18n="sv_type_vanilla">Standard Minecraft</div>
+              <div class="server-type-card__icon">🏗️</div>
+              <div class="server-type-card__name">Vanilla</div>
+              <div class="server-type-card__desc" data-i18n="sv_type_vanilla"></div>
             </div>
             <div class="server-type-card" data-type="paper">
-              <div style="font-size:1.4em">📄</div>
-              <div style="font-weight:bold;font-size:.9em">Paper</div>
-              <div style="font-size:.65em;color:#666" data-i18n="sv_type_paper">Optimized + Plugins</div>
+              <div class="server-type-card__icon">📦</div>
+              <div class="server-type-card__name">Paper</div>
+              <div class="server-type-card__desc" data-i18n="sv_type_paper"></div>
             </div>
             <div class="server-type-card" data-type="spigot">
-              <div style="font-size:1.4em">⚡</div>
-              <div style="font-weight:bold;font-size:.9em">Spigot</div>
-              <div style="font-size:.65em;color:#666" data-i18n="sv_type_spigot">Plugins + Performance</div>
+              <div class="server-type-card__icon">⚡</div>
+              <div class="server-type-card__name">Spigot</div>
+              <div class="server-type-card__desc" data-i18n="sv_type_spigot"></div>
             </div>
             <div class="server-type-card" data-type="purpur">
-              <div style="font-size:1.4em">💜</div>
-              <div style="font-weight:bold;font-size:.9em">Purpur</div>
-              <div style="font-size:.65em;color:#666" data-i18n="sv_type_purpur">Paper fork + Extra options</div>
+              <div class="server-type-card__icon">🚀</div>
+              <div class="server-type-card__name">Purpur</div>
+              <div class="server-type-card__desc" data-i18n="sv_type_purpur"></div>
             </div>
             <div class="server-type-card" data-type="fabric">
-              <div style="font-size:1.4em">🧶</div>
-              <div style="font-weight:bold;font-size:.9em">Fabric</div>
-              <div style="font-size:.65em;color:#666" data-i18n="sv_type_fabric">Mod loader server</div>
+              <div class="server-type-card__icon">🧵</div>
+              <div class="server-type-card__name">Fabric</div>
+              <div class="server-type-card__desc" data-i18n="sv_type_fabric"></div>
             </div>
             <div class="server-type-card" data-type="quilt">
-              <div style="font-size:1.4em">🧵</div>
-              <div style="font-weight:bold;font-size:.9em">Quilt</div>
-              <div style="font-size:.65em;color:#666" data-i18n="sv_type_quilt">Fabric fork mod loader</div>
+              <div class="server-type-card__icon">🧡</div>
+              <div class="server-type-card__name">Quilt</div>
+              <div class="server-type-card__desc" data-i18n="sv_type_quilt"></div>
             </div>
             <div class="server-type-card" data-type="forge">
-              <div style="font-size:1.4em">⚙️</div>
-              <div style="font-weight:bold;font-size:.9em">Forge</div>
-              <div style="font-size:.65em;color:#666" data-i18n="sv_type_forge">Classic mod loader</div>
+              <div class="server-type-card__icon">⚡️</div>
+              <div class="server-type-card__name">Forge</div>
+              <div class="server-type-card__desc" data-i18n="sv_type_forge"></div>
             </div>
             <div class="server-type-card" data-type="neoforge">
-              <div style="font-size:1.4em">🔧</div>
-              <div style="font-weight:bold;font-size:.9em">NeoForge</div>
-              <div style="font-size:.65em;color:#666" data-i18n="sv_type_neoforge">Forge fork for modern MC</div>
+              <div class="server-type-card__icon">🔧</div>
+              <div class="server-type-card__name">NeoForge</div>
+              <div class="server-type-card__desc" data-i18n="sv_type_neoforge"></div>
             </div>
             <div class="server-type-card" data-type="modpack">
-              <div style="font-size:1.4em">📦</div>
-              <div style="font-weight:bold;font-size:.9em">Modpack</div>
-              <div style="font-size:.65em;color:#666" data-i18n="sv_type_modpack">Modpack server + Loader</div>
+              <div class="server-type-card__icon">📦</div>
+              <div class="server-type-card__name">Modpack</div>
+              <div class="server-type-card__desc" data-i18n="sv_type_modpack"></div>
             </div>
           </div>
-          <div style="display:flex;gap:.4em;margin-top:.8em">
-            <button class="btn btn-sm" id="server-cancel-btn" style="width:auto;padding:.4em 1em" data-i18n="btn_cancel">Cancel</button>
+          <div class="wizard-actions">
+            <button class="btn" id="server-cancel-btn" data-i18n="btn_cancel">Cancel</button>
           </div>
         </div>
 
         <!-- STEP 2: MC Version -->
         <div id="server-step-version" class="server-wizard-step" style="display:none">
-          <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc" data-i18n="sv_choose_version">Choose MC Version</h3>
-          <div class="form-row" style="max-width:20em">
-            <select id="server-version-select" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em"></select>
+          <h3 class="card__title" data-i18n="sv_choose_version">Choose MC Version</h3>
+          <div class="form-row form-row--narrow">
+            <select id="server-version-select"></select>
           </div>
-          <div id="server-modloader-row" class="form-row" style="max-width:20em;margin-top:.5em;display:none">
+          <div id="server-modloader-row" class="form-row form-row--narrow" style="margin-top:.5em;display:none">
             <label data-i18n="lbl_mod_loader">Mod Loader</label>
-            <select id="server-modloader-select" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em">
+            <select id="server-modloader-select">
               <option value="fabric">Fabric</option>
               <option value="forge">Forge</option>
               <option value="quilt">Quilt</option>
               <option value="neoforge">NeoForge</option>
             </select>
           </div>
-          <div style="display:flex;gap:.4em;margin-top:.8em">
-            <button class="btn btn-primary btn-sm" id="server-next-btn" style="width:auto;padding:.4em 1em" data-i18n="btn_next">Next →</button>
-            <button class="btn btn-sm" id="server-back-btn" style="width:auto;padding:.4em 1em" data-i18n="btn_back">â† Back</button>
+          <div class="wizard-actions">
+            <button class="btn btn-primary" id="server-next-btn" data-i18n="btn_next">Next</button>
+            <button class="btn" id="server-back-btn" data-i18n="btn_back">Back</button>
           </div>
         </div>
 
         <!-- STEP 3: Mods/Plugins (skipped for vanilla) -->
         <div id="server-step-mods" class="server-wizard-step" style="display:none">
-          <h3 style="margin:0 0 .3em;font-size:1em;color:#ccc" id="server-mods-title" data-i18n="sv_add_mods">Add Mods</h3>
-          <div style="font-size:.72em;color:#555;margin-bottom:.6em" id="server-mods-desc" data-i18n="sv_add_mods_desc">Search and add mods for your server.</div>
+          <h3 class="card__title" id="server-mods-title" data-i18n="sv_add_mods">Add Mods</h3>
+          <p class="hint" id="server-mods-desc" data-i18n="sv_add_mods_desc">Search and add mods</p>
           <div style="margin-bottom:.6em">
-            <input type="text" id="server-mod-search" placeholder="Search mods..." style="width:100%;padding:.35em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+            <input type="text" id="server-mod-search" class="search-field" placeholder="Search mods...">
           </div>
-          <div id="server-mod-results" style="max-height:15em;overflow-y:auto;margin-bottom:.5em"></div>
-          <div style="font-size:.75em;color:#555;margin-bottom:.3em" data-i18n="lbl_added">Added:</div>
-          <div id="server-mod-added" style="display:flex;flex-wrap:wrap;gap:.3em;margin-bottom:.6em;min-height:1.5em"></div>
-          <div style="display:flex;gap:.4em">
-            <button class="btn btn-primary btn-sm" id="server-next-btn2" style="width:auto;padding:.4em 1em" data-i18n="btn_next">Next →</button>
-            <button class="btn btn-sm" id="server-back-btn2" style="width:auto;padding:.4em 1em" data-i18n="btn_back">â† Back</button>
-            <button class="btn btn-sm" id="server-skip-mods" style="width:auto;padding:.4em 1em;margin-left:auto" data-i18n="btn_skip">Skip</button>
+          <div id="server-mod-results" class="result-scroll"></div>
+          <div class="hint" data-i18n="lbl_added">Added:</div>
+          <div id="server-mod-added" class="tag-row" style="margin-bottom:.6em"></div>
+          <div class="wizard-actions">
+            <button class="btn btn-primary" id="server-next-btn2" data-i18n="btn_next">Next</button>
+            <button class="btn" id="server-back-btn2" data-i18n="btn_back">Back</button>
+            <button class="btn btn-ghost" id="server-skip-mods" style="margin-left:auto" data-i18n="btn_skip">Skip</button>
           </div>
         </div>
-
-        <!-- STEP 4: Settings -->
         <div id="server-step-settings" class="server-wizard-step" style="display:none">
-          <h3 style="margin:0 0 .8em;font-size:1em;color:#ccc" data-i18n="sv_settings">Server Settings</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6em;max-width:30em">
+          <h3 class="card__title" data-i18n="sv_settings">Server Settings</h3>
+          <div class="form-grid">
             <div class="form-row">
               <label data-i18n="sv_name">Server Name</label>
-              <input type="text" id="server-name-input" placeholder="My Server" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+              <input type="text" id="server-name-input" placeholder="My Server">
             </div>
             <div class="form-row">
               <label data-i18n="sv_address">Address</label>
-              <input type="text" id="server-address-input" value="localhost" placeholder="localhost" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+              <input type="text" id="server-address-input" value="localhost" placeholder="localhost">
             </div>
             <div class="form-row">
               <label data-i18n="sv_port">Port</label>
-              <input type="number" id="server-port-input" value="25565" min="1" max="65535" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+              <input type="number" id="server-port-input" value="25565" min="1" max="65535">
             </div>
             <div class="form-row">
               <label data-i18n="sv_ram">RAM (GB)</label>
-              <input type="number" id="server-ram-input" value="2" min="1" max="8" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+              <input type="number" id="server-ram-input" value="2" min="1" max="8">
             </div>
             <div class="form-row">
               <label data-i18n="sv_max_players">Max Players</label>
-              <input type="number" id="server-maxplayers-input" value="20" min="1" max="100" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+              <input type="number" id="server-maxplayers-input" value="20" min="1" max="100">
             </div>
             <div class="form-row">
               <label data-i18n="sv_gamemode">Gamemode</label>
@@ -582,31 +638,27 @@
             </div>
             <div class="form-row">
               <label data-i18n="sv_motd">MOTD</label>
-              <input type="text" id="server-motd-input" value="Crux Server" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+              <input type="text" id="server-motd-input" value="Crux Server">
             </div>
               <div class="form-row">
-              <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                <label class="mod-switch"><input type="checkbox" id="server-online-mode" checked><span class="slider"></span></label> <span data-i18n="sv_online_mode">Online Mode</span>
+              <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-online-mode" checked><span class="slider"></span></span> <span data-i18n="sv_online_mode">Online Mode</span>
               </label>
             </div>
             <div class="form-row">
-              <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                <label class="mod-switch"><input type="checkbox" id="server-pvp" checked><span class="slider"></span></label> <span data-i18n="sv_pvp">PvP</span>
+              <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-pvp" checked><span class="slider"></span></span> <span data-i18n="sv_pvp">PvP</span>
               </label>
             </div>
             <div class="form-row">
-              <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                <label class="mod-switch"><input type="checkbox" id="server-cmdblocks" checked><span class="slider"></span></label> <span data-i18n="sv_command_blocks">Command Blocks</span>
+              <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-cmdblocks" checked><span class="slider"></span></span> <span data-i18n="sv_command_blocks">Command Blocks</span>
               </label>
             </div>
             <div class="form-row">
-              <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                <label class="mod-switch"><input type="checkbox" id="server-whitelist"><span class="slider"></span></label> <span data-i18n="sv_whitelist">Whitelist</span>
+              <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-whitelist"><span class="slider"></span></span> <span data-i18n="sv_whitelist">Whitelist</span>
               </label>
             </div>
             <div class="form-row">
               <label data-i18n="sv_rp_url">Resource Pack URL</label>
-              <input type="text" id="server-rp-url" placeholder="" style="padding:.4em .6em;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;font-size:.85em;outline:none">
+              <input type="text" id="server-rp-url" placeholder="">
             </div>
             <div class="form-row">
               <label data-i18n="sv_rp_upload">Resource Pack Upload (.zip)</label>
@@ -621,48 +673,39 @@
           <div id="server-advanced-settings" style="display:none;margin-top:.6em">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6em;max-width:40em">
               <div class="form-row">
-                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <label class="mod-switch"><input type="checkbox" id="server-allow-flight"><span class="slider"></span></label> <span data-i18n="sv_allow_flight">Allow Flight</span>
+                <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-allow-flight"><span class="slider"></span></span> <span data-i18n="sv_allow_flight">Allow Flight</span>
                 </label>
               </div>
               <div class="form-row">
-                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <label class="mod-switch"><input type="checkbox" id="server-spawn-animals" checked><span class="slider"></span></label> <span data-i18n="sv_spawn_animals">Spawn Animals</span>
+                <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-spawn-animals" checked><span class="slider"></span></span> <span data-i18n="sv_spawn_animals">Spawn Animals</span>
                 </label>
               </div>
               <div class="form-row">
-                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <label class="mod-switch"><input type="checkbox" id="server-spawn-monsters" checked><span class="slider"></span></label> <span data-i18n="sv_spawn_monsters">Spawn Monsters</span>
+                <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-spawn-monsters" checked><span class="slider"></span></span> <span data-i18n="sv_spawn_monsters">Spawn Monsters</span>
                 </label>
               </div>
               <div class="form-row">
-                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <label class="mod-switch"><input type="checkbox" id="server-spawn-npcs" checked><span class="slider"></span></label> <span data-i18n="sv_spawn_npcs">Spawn NPCs</span>
+                <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-spawn-npcs" checked><span class="slider"></span></span> <span data-i18n="sv_spawn_npcs">Spawn NPCs</span>
                 </label>
               </div>
               <div class="form-row">
-                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <label class="mod-switch"><input type="checkbox" id="server-allow-nether" checked><span class="slider"></span></label> <span data-i18n="sv_allow_nether">Allow Nether</span>
+                <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-allow-nether" checked><span class="slider"></span></span> <span data-i18n="sv_allow_nether">Allow Nether</span>
                 </label>
               </div>
               <div class="form-row">
-                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <label class="mod-switch"><input type="checkbox" id="server-force-gamemode"><span class="slider"></span></label> <span data-i18n="sv_force_gamemode">Force Gamemode</span>
+                <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-force-gamemode"><span class="slider"></span></span> <span data-i18n="sv_force_gamemode">Force Gamemode</span>
                 </label>
               </div>
               <div class="form-row">
-                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <label class="mod-switch"><input type="checkbox" id="server-prevent-proxy"><span class="slider"></span></label> <span data-i18n="sv_prevent_proxy">Prevent Proxy</span>
+                <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-prevent-proxy"><span class="slider"></span></span> <span data-i18n="sv_prevent_proxy">Prevent Proxy</span>
                 </label>
               </div>
               <div class="form-row">
-                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <label class="mod-switch"><input type="checkbox" id="server-sync-chunks" checked><span class="slider"></span></label> <span data-i18n="sv_sync_chunks">Sync Chunk Writes</span>
+                <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-sync-chunks" checked><span class="slider"></span></span> <span data-i18n="sv_sync_chunks">Sync Chunk Writes</span>
                 </label>
               </div>
               <div class="form-row">
-                <label style="display:flex;align-items:center;gap:.5em;cursor:pointer">
-                  <label class="mod-switch"><input type="checkbox" id="server-hide-players"><span class="slider"></span></label> <span data-i18n="sv_hide_players">Hide Online Players</span>
+                <label class="switch-label"><span class="mod-switch"><input type="checkbox" id="server-hide-players"><span class="slider"></span></span> <span data-i18n="sv_hide_players">Hide Online Players</span>
                 </label>
               </div>
               <div class="form-row">
@@ -797,15 +840,15 @@
           <button class="btn modal-close" id="ban-modal-close">✕</button>
         </div>
         <div class="modal-body">
-          <div class="form-row" style="max-width:100%">
+          <div class="form-row form-row--wide">
             <label>Account:</label>
             <span id="ban-account-name" style="color:#f66;font-weight:bold;align-self:center">—</span>
           </div>
-          <div class="form-row" style="max-width:100%">
+          <div class="form-row form-row--wide">
             <label>Grund:</label>
             <input type="text" id="ban-reason" placeholder="z.B. Cheating, Spam, Crash-Reports" autocomplete="off" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
           </div>
-          <div class="form-row" style="max-width:100%">
+          <div class="form-row form-row--wide">
             <label>Dauer:</label>
             <select id="ban-duration" style="background:#1a1a1a;color:#ccc;border:1px solid #333;border-radius:4px;padding:.35em .5em;font-size:.85em">
               <option value="1">1 Stunde</option>
@@ -817,7 +860,7 @@
               <option value="0">Permanent</option>
             </select>
           </div>
-          <div class="form-row" style="max-width:100%">
+          <div class="form-row form-row--wide">
             <label>Eigene Dauer:</label>
             <input type="number" id="ban-custom-amount" min="1" step="1" placeholder="z.B. 45" autocomplete="off" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none;flex:0 0 6em">
             <select id="ban-custom-unit" style="background:#1a1a1a;color:#ccc;border:1px solid #333;border-radius:4px;padding:.35em .5em;font-size:.85em">
@@ -851,15 +894,15 @@
           <p style="color:#ccc;line-height:1.6;font-size:.9em;margin-bottom:.9em">
             Dieser Account ist vom Crux Client gesperrt. Die folgenden Funktionen sind deaktiviert:
           </p>
-          <div class="form-row" style="max-width:100%">
+          <div class="form-row form-row--wide">
             <label>Grund:</label>
             <span id="ban-notice-reason" style="color:#f88;align-self:center;min-width:0;overflow:hidden;text-overflow:ellipsis">—</span>
           </div>
-          <div class="form-row" style="max-width:100%">
+          <div class="form-row form-row--wide">
             <label>Gesperrt:</label>
             <span id="ban-notice-features" style="color:#f88;align-self:center;min-width:0">—</span>
           </div>
-          <div class="form-row" style="max-width:100%">
+          <div class="form-row form-row--wide">
             <label>Läuft aus:</label>
             <span id="ban-notice-end" style="color:#ccc;align-self:center">—</span>
           </div>
@@ -876,35 +919,47 @@
 
     <!-- ── ACCOUNT ── -->
     <div id="account-page" class="page" style="display:none">
-      <h1 data-i18n="h_account">Account</h1>
+      <header class="page-head">
+        <div class="page-head__main">
+          <h1 data-i18n="h_account">Account</h1>
+          <p class="page-head__sub" data-i18n="sub_account">Your Microsoft and offline accounts</p>
+        </div>
+        <div class="page-head__actions">
+          <button class="btn btn-ms" id="btn-add-ms" data-i18n="add_ms">+ Microsoft</button>
+        </div>
+      </header>
       <div class="account-panel">
         <div class="account-list" id="account-list">
           <div class="mod-list-empty" data-i18n="no_accounts">No accounts added yet.</div>
-        </div>
-        <div class="account-add-btns">
-          <button class="btn btn-sm btn-ms" id="btn-add-ms" data-i18n="add_ms">+ Microsoft</button>
         </div>
       </div>
     </div>
 
     <!-- ── OWNER ── -->
     <div id="owner-page" class="page" style="display:none">
-      <h1>Owner</h1>
-      <h2 style="margin:1.1em 0 .5em;font-size:.9em;color:#888">Minecraft Accounts — jemals eingeloggt</h2>
-      <div style="display:flex;gap:.4em;margin:.2em 0 .5em;flex-wrap:wrap">
-        <button class="btn btn-sm" id="owner-filter-active" style="border-color:#1bd96a55;color:#1bd96a">Aktiv</button>
-        <button class="btn btn-sm" id="owner-filter-banned" style="border-color:#f4444455;color:#f44">Gebannt</button>
+      <header class="page-head">
+        <div class="page-head__main">
+          <h1>Owner</h1>
+          <p class="page-head__sub">Minecraft Accounts - jemals eingeloggt</p>
+        </div>
+      </header>
+      <div class="chip-row">
+        <button class="btn btn-sm chip--ok" id="owner-filter-active">Aktiv</button>
+        <button class="btn btn-sm chip--danger" id="owner-filter-banned">Gebannt</button>
       </div>
-      <input id="owner-search" type="text" placeholder="Spielername oder UUID suchen…"
-        style="width:100%;box-sizing:border-box;padding:.5em .7em;margin:0 0 .7em;border-radius:.4em;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.25);color:inherit;font-size:.85em;outline:none">
+      <input id="owner-search" type="text" class="search-field" placeholder="Spielername oder UUID suchen.">
       <div class="account-list" id="owner-account-list"></div>
       <div class="mod-list-empty" id="owner-account-empty" style="display:none">Noch keine Logins aufgezeichnet.</div>
     </div>
 
     <!-- ── BUG REPORT ── -->
     <div id="bugreport-page" class="page" style="display:none">
-      <h1 data-i18n="h_bugreport">Bug Report</h1>
-      <p style="color:#aaa;margin-bottom:1.2em;line-height:1.6;font-size:.85em" data-i18n="bugreport_desc">Found a bug? Report it. Attach launcher files and game logs.</p>
+      <header class="page-head">
+        <div class="page-head__main">
+          <h1 data-i18n="h_bugreport">Bug Report</h1>
+          <p class="page-head__sub" data-i18n="bugreport_desc">Found a bug? Report it. Attach launcher files and logs.</p>
+        </div>
+      </header>
       <div class="form-row">
         <label data-i18n="bugreport_category">Category</label>
         <select id="bugreport-category">
@@ -919,17 +974,17 @@
       </div>
       <div class="form-row">
         <label data-i18n="bugreport_title">Title</label>
-        <input type="text" id="bugreport-title" placeholder="Short summary of the problem" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;outline:none">
+        <input type="text" id="bugreport-title" placeholder="Short summary of the problem">
       </div>
       <div class="form-row">
         <label data-i18n="bugreport_desc_label">Description</label>
-        <textarea id="bugreport-desc" rows="6" placeholder="What happened? What did you expect?" style="background:#111;border:1px solid #2a2a2a;border-radius:var(--r);color:#fff;padding:.5em .8em;font-size:.85em;font-family:inherit;resize:vertical;outline:none"></textarea>
+        <textarea id="bugreport-desc" rows="6" placeholder="What happened? What did you expect?"></textarea>
       </div>
-      <label style="display:flex;align-items:center;gap:.6em;cursor:pointer;font-size:.85em;color:#ccc;margin-bottom:1em">
-        <label class="mod-switch"><input type="checkbox" id="bugreport-include-logs" checked><span class="slider"></span></label>
+      <label class="switch-label" style="margin-bottom:1em">
+        <span class="mod-switch"><input type="checkbox" id="bugreport-include-logs" checked><span class="slider"></span></span>
         <span data-i18n="bugreport_include_logs">Attach launcher &amp; game logs (recommended)</span>
       </label>
-      <button class="btn btn-primary" id="bugreport-send-btn" style="font-size:1em;padding:.6em 1.5em" data-i18n="btn_report_send">📧 Send Report</button>
+      <button class="btn btn-primary" id="bugreport-send-btn" data-i18n="btn_report_send">Send Report</button>
       <p class="status-text" id="bugreport-status" style="min-height:1.2em"></p>
     </div>
 
@@ -1044,11 +1099,11 @@
       <button class="btn modal-close" id="profile-modal-close">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-row" style="max-width:100%">
+      <div class="form-row form-row--wide">
         <label>Name:</label>
         <input type="text" class="pack-input" id="profile-name-input" placeholder="My Profile">
       </div>
-      <div class="form-row" style="max-width:100%">
+      <div class="form-row form-row--wide">
         <label data-i18n="lbl_group">Settings Group (keybinds &amp; settings):</label>
         <div style="display:flex;gap:.4em;align-items:center;width:100%">
           <input type="text" class="pack-input" id="profile-group-input" placeholder="default">
@@ -1056,11 +1111,11 @@
         </div>
         <div class="status-text" data-i18n="desc_group">Profiles in the same group share the same Minecraft settings (keybinds, video settings, â€¦).</div>
       </div>
-      <div class="form-row" style="max-width:100%">
+      <div class="form-row form-row--wide">
         <label>Minecraft Version:</label>
         <select id="profile-version-select" style="padding:.5em .85em;border:1px solid #2a2a2a;border-radius:var(--r);background:#111;color:#fff;font-size:.85em;width:100%"></select>
       </div>
-      <div class="form-row" style="max-width:100%">
+      <div class="form-row form-row--wide">
         <label data-i18n="lbl_mod_loader">Mod Loader:</label>
         <div class="modloader-row">
           <label class="modloader-pick"><input type="radio" name="modLoader" value="fabric" id="ml-fabric" checked> Fabric</label>
@@ -1071,7 +1126,7 @@
           <label class="modloader-pick"><input type="radio" name="modLoader" value="bedrock" id="ml-bedrock"> Bedrock</label>
         </div>
       </div>
-      <div class="form-row" style="max-width:100%">
+      <div class="form-row form-row--wide">
         <label data-i18n="lbl_render_api">Rendering API:</label>
         <select id="profile-render-api" style="padding:.5em .85em;border:1px solid #2a2a2a;border-radius:var(--r);background:#111;color:#fff;font-size:.85em;width:100%">
           <option value="opengl">OpenGL (Standard)</option>
@@ -1079,7 +1134,7 @@
         </select>
       </div>
       <!-- Section switcher: mini tab bar (like the main tab bar) to jump directly to Mods/Datapacks/Resource Packs/Shaders -->
-      <div class="form-row" style="max-width:100%">
+      <div class="form-row form-row--wide">
         <div class="profile-sec-bar" id="profile-sec-bar">
           <button class="profile-sec-btn active" data-section="mods">Mods</button>
           <button class="profile-sec-btn" data-section="datapacks">Datapacks</button>
@@ -1829,6 +1884,10 @@ const LANGS={
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes', btn_manage:'Manage', btn_all:'All', rail_running:'Running',
     tab_settings:'Settings', tab_logs:'Logs', tab_account:'Account', tab_recent:'Recent', tab_servers:'Servers', tab_features:'Features', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
+  sub_mods:'Mods that run with every Minecraft version', sub_profiles:'Your versions, mod loaders and mod lists',
+  sub_cape:'Minecraft capes and your own designs', sub_servers:'Run your own server and share it with friends',
+  sub_features:'Everything Crux Client can do', sub_logs:'Live output of your running instances',
+  sub_account:'Your Microsoft and offline accounts', sub_bugreport:'Send a report with your logs',
     h_logs:'Logs', h_account:'Account', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends',
     acct_required_title:'Account required', acct_required_msg:'Please link your Microsoft account first before opening Bug Reports.', acct_required_cancel:'Cancel', acct_required_goto:'Link account',
     lbl_profile:'Profile:', lbl_version:'Version:', lbl_change_skin:'Change Skin:', lbl_actions:'Actions:', lbl_ram:'RAM:', lbl_instance:'Instance:',
@@ -1966,6 +2025,10 @@ const LANGS={
     tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes', btn_manage:'Verwalten', btn_all:'Alle', rail_running:'Läuft',
     tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_account:'Account', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_features:'Features', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
+  sub_mods:'Mods, die mit jeder Minecraft-Version laufen', sub_profiles:'Deine Versionen, Mod-Loader und Mod-Listen',
+  sub_cape:'Minecraft-Capes und eigene Designs', sub_servers:'Eigenen Server starten und mit Freunden teilen',
+  sub_features:'Alles, was Crux Client kann', sub_logs:'Live-Ausgabe deiner laufenden Instanzen',
+  sub_account:'Deine Microsoft- und Offline-Konten', sub_bugreport:'Fehlerbericht mit deinen Logs senden',
     h_logs:'Protokolle', h_account:'Account', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde',
     acct_required_title:'Account erforderlich', acct_required_msg:'Bitte verknüpfe zuerst deinen Microsoft-Account, bevor du Fehler melden kannst.', acct_required_cancel:'Abbrechen', acct_required_goto:'Account verknüpfen',
     lbl_profile:'Profil:', lbl_version:'Version:', lbl_change_skin:'Skin wechseln:', lbl_actions:'Aktionen:', lbl_ram:'RAM:', lbl_instance:'Instanz:',
@@ -2103,6 +2166,10 @@ const LANGS={
     tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes', btn_manage:'Gerer', btn_all:'Tous', rail_running:'En cours',
     tab_settings:'Paramètres', tab_logs:'Journaux', tab_account:'Account', tab_recent:'Récents', tab_servers:'Serveurs', tab_features:'Fonctionnalités', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
     h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
+  sub_mods:'Des mods qui fonctionnent avec chaque version de Minecraft', sub_profiles:'Tes versions, chargeurs de mods et listes',
+  sub_cape:'Capes Minecraft et tes créations', sub_servers:'Lance ton propre serveur et partage-le',
+  sub_features:'Tout ce que Crux Client sait faire', sub_logs:'Sortie en direct de tes instances',
+  sub_account:'Tes comptes Microsoft et hors ligne', sub_bugreport:'Envoyer un rapport avec tes logs',
     h_logs:'Journaux', h_account:'Account', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis',
     acct_required_title:'Compte requis', acct_required_msg:'Veuillez d\'abord lier votre compte Microsoft avant d\'ouvrir les rapports de bug.', acct_required_cancel:'Annuler', acct_required_goto:'Lier le compte',
     lbl_profile:'Profil :', lbl_version:'Version :', lbl_change_skin:'Changer de skin :', lbl_actions:'Actions :', lbl_ram:'RAM :', lbl_instance:'Instance :',
@@ -2238,6 +2305,10 @@ const LANGS={
     tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas', btn_manage:'Gestionar', btn_all:'Todos', rail_running:'En ejecución',
     tab_settings:'Ajustes', tab_logs:'Registros', tab_account:'Account', tab_recent:'Recientes', tab_servers:'Servidores', tab_features:'Funciones', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
     h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
+  sub_mods:'Mods que funcionan con cada versión de Minecraft', sub_profiles:'Tus versiones, cargadores de mods y listas',
+  sub_cape:'Capas de Minecraft y tus diseños', sub_servers:'Ejecuta tu propio servidor y compártelo',
+  sub_features:'Todo lo que Crux Client puede hacer', sub_logs:'Salida en vivo de tus instancias',
+  sub_account:'Tus cuentas de Microsoft y sin conexión', sub_bugreport:'Envía un informe con tus registros',
     h_logs:'Registros', h_account:'Account', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos',
     acct_required_title:'Cuenta requerida', acct_required_msg:'Vincula primero tu cuenta de Microsoft antes de abrir los informes de error.', acct_required_cancel:'Cancelar', acct_required_goto:'Vincular cuenta',
     lbl_profile:'Perfil:', lbl_version:'Versión:', lbl_change_skin:'Cambiar Skin:', lbl_actions:'Acciones:', lbl_ram:'RAM:', lbl_instance:'Instancia:',
@@ -3959,7 +4030,7 @@ function renderProfilePackList(containerId, key, isMods=false){
         </div>
         <div class="mod-btns">
           <select class="btn mod-ver-select" data-i="${mod._idx}" style="width:auto;max-width:11em;padding:.22em .4em;font-size:.68em;color:#aaa" title="Mod version"><option value="">${mod.version&&mod.version!=='latest'?mod.version:'Versionâ€¦'}</option></select>
-          <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-i="${mod._idx}" ${mod.disabled?'':'checked'}><span class="slider"></span></label>
+          <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-i="${mod._idx}" ${mod.disabled?'':'checked'}><span class="slider"></span></span>
           <button class="btn mod-btn mod-remove" data-i="${mod._idx}">Remove</button>
         </div>`;
       return item;
@@ -4008,7 +4079,7 @@ function renderProfilePackList(containerId, key, isMods=false){
       if(key==='resourcePacks'){
         verSel=`<select class="pack-ver-select" data-i="${i}" title="Minecraft version"><option value="all">All</option><option value="${(profileMC||'').replace(/"/g,'&quot;')}">${profileMC||'All'}</option></select>`;
       }
-      tag.innerHTML=`<label class="mod-switch" style="align-self:center" title="${isDisabled?'Enable':'Disable'}"><input type="checkbox" class="pack-toggle" data-i="${i}" ${isDisabled?'':'checked'}><span class="slider"></span></label> ${name} ${verSel} <span class="rt" data-i="${i}">✕</span>`;
+      tag.innerHTML=`<label class="mod-switch" style="align-self:center" title="${isDisabled?'Enable':'Disable'}"><input type="checkbox" class="pack-toggle" data-i="${i}" ${isDisabled?'':'checked'}><span class="slider"></span></span> ${name} ${verSel} <span class="rt" data-i="${i}">✕</span>`;
       const vs=tag.querySelector('.pack-ver-select');
       if(vs) vs.value = isObj ? (item.mcVersion||'all') : 'all';
       if(vs) vs.addEventListener('change',()=>{
@@ -5943,13 +6014,11 @@ function renderClientRPToggle(){
   const knob   = document.getElementById('auto-rp-knob');
   if(!toggle||!knob) return;
   if(autoUseResourcePacks){
-    toggle.style.background = 'var(--acc)';
+    toggle.classList.add('is-on');
     knob.style.left = 'calc(100% - 1.1em)';
-    knob.style.background = '#fff';
   } else {
-    toggle.style.background = '#333';
+    toggle.classList.remove('is-on');
     knob.style.left = '.15em';
-    knob.style.background = '#888';
   }
 }
 
@@ -6285,7 +6354,7 @@ function renderModList() {
         <div class="mod-meta">${versionDisplay}${modVer} · ${mod.source || 'Client Mod'}</div>
       </div>
       <div class="mod-btns">
-        <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-idx="${realIdx}" ${mod.disabled?'':'checked'}><span class="slider"></span></label>
+        <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-idx="${realIdx}" ${mod.disabled?'':'checked'}><span class="slider"></span></span>
         <button class="btn mod-btn mod-remove" data-idx="${realIdx}">Remove</button>
       </div>`;
     return item;
@@ -8436,10 +8505,12 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
     // Update step indicator
     const steps = ['type','version','mods','settings'];
     const idx = steps.indexOf(step);
-    for(let i = 0; i < 4; i++){
-      const el = document.getElementById('ws-step'+(i+1));
-      el.style.color = i <= idx ? 'var(--acc)' : '#555';
-    }
+for(let i = 0; i < 4; i++){
+  const el = document.getElementById('ws-step'+(i+1));
+  if(!el) continue;
+  el.classList.toggle('is-active', i === idx);
+  el.classList.toggle('is-done', i < idx);
+}
 
     // Update mods step title
     if(step === 'mods'){
