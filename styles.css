@@ -65,8 +65,10 @@
   --acc-glow: color-mix(in srgb, var(--acc) 42%, transparent);
 
   /* Typografie */
-  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --mono: "JetBrains Mono", "Cascadia Code", Consolas, "SF Mono", monospace;
+  /* Hoehe der Toolbar (Tab-Leiste) */
+  --tb: 6.2vh;
+
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;  --mono: "JetBrains Mono", "Cascadia Code", Consolas, "SF Mono", monospace;
   --fs-xs: .72rem;
   --fs-sm: .8rem;
   --fs-md: .88rem;
@@ -119,7 +121,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html {
-  font-size: clamp(14px, .42vw + 9.8px, 18px);
+  font-size: clamp(15px, .5vw + 10.6px, 20px);
   scroll-behavior: smooth;
 }
 
@@ -270,8 +272,8 @@ body:not(.glass)::after {
   position: fixed;
   right: 22px;
   bottom: 22px;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   flex: none;
   border-radius: var(--r-pill);
   padding: 0;
@@ -328,7 +330,7 @@ body.tabs-left .pages, body.tabs-right .pages { order: 0; }
   animation: pageIn .22s ease both;
 }
 .page.active { display: block; }
-.page > * { max-width: 1080px; }
+.page > * { max-width: 1160px; }
 @keyframes pageIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 .page h1 { font-size: 1.5rem; font-weight: 750; letter-spacing: -.025em; margin-bottom: .35em; }
@@ -612,7 +614,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 .launch-left h1 { font-size: 1.75rem; margin-bottom: 0; }
 .launch-right {
-  width: clamp(300px, 30vw, 420px);
+  width: clamp(320px, 32vw, 460px);
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -802,7 +804,7 @@ input[type=range]::-webkit-slider-thumb {
 /* Skin-Preview */
 .skin3d-wrap {
   width: 100%;
-  max-width: 230px;
+  max-width: 250px;
   aspect-ratio: .9;
   background: radial-gradient(circle at 50% 30%, #1b2231 0%, #0b0e14 70%);
   border: 1px solid var(--border);
@@ -1046,7 +1048,7 @@ input[type=range]::-webkit-slider-thumb {
   padding: var(--sp-4) var(--sp-5);
 }
 /* Content-Seiten (nicht Settings) duerfen die volle Breite nutzen */
-#cape-page .settings-section, #features-page .settings-section { max-width: 1080px; }
+#cape-page .settings-section, #features-page .settings-section { max-width: 1160px; }
 .settings-section h2 {
   font-size: var(--fs-xs);
   text-transform: uppercase;
@@ -1060,7 +1062,7 @@ input[type=range]::-webkit-slider-thumb {
 .color-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: .45rem; max-width: 24rem; }
 .corner-grid { display: flex; gap: .6rem; flex-wrap: wrap; }
 .corner-preview { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--sp-4); }
-.gbg-preset { width: 74px; height: 48px; border-radius: var(--r-sm); overflow: hidden; padding: 0; cursor: pointer; border: 2px solid transparent; transition: transform .15s, border-color .15s; background: var(--surface-2); }
+.gbg-preset { width: 84px; height: 56px; border-radius: var(--r-sm); overflow: hidden; padding: 0; cursor: pointer; border: 2px solid transparent; transition: transform .15s, border-color .15s; background: var(--surface-2); }
 .gbg-preset img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .gbg-preset:hover { transform: translateY(-2px); border-color: var(--acc); }
 .gbg-preset.sel { border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-softer); }
@@ -1379,7 +1381,17 @@ body.glass .launch-right { background: var(--gs-list); border-left-color: var(--
 body.glass .skin3d-wrap { background: var(--gs-list); }
 body.glass .btn { background: var(--gs-panel) !important; color: var(--gs-tx) !important; border-color: var(--gs-bd) !important; backdrop-filter: var(--gs-blur); -webkit-backdrop-filter: var(--gs-blur); }
 body.glass .btn:hover { background: rgba(255, 255, 255, .5) !important; }
-body.glass .btn-primary, body.glass .mod-install-btn, body.glass .profile-sec-btn.active, body.glass .modal-tab.active { color: #fff !important; }
+/* Primary-Buttons behalten auch im Glass-Theme ihren Verlauf */
+body.glass .btn-primary,
+body.glass .mod-install-btn {
+  background: linear-gradient(135deg, var(--acc-light), var(--acc)) !important;
+  border-color: transparent !important;
+  color: var(--acc-on) !important;
+  box-shadow: 0 10px 30px -12px var(--acc-glow) !important;
+}
+body.glass .btn-primary:hover, body.glass .mod-install-btn:hover { background: linear-gradient(135deg, var(--acc-light), var(--acc)) !important; }
+body.glass .profile-sec-btn.active, body.glass .modal-tab.active { color: var(--acc-on) !important; }
+body.glass .btn-primary, body.glass .mod-install-btn { color: var(--acc-on) !important; }
 body.glass .btn-modrinth { background: color-mix(in srgb, var(--modrinth) 16%, transparent) !important; border-color: color-mix(in srgb, var(--modrinth) 40%, transparent) !important; color: #0d7a3d !important; }
 body.glass .btn-curseforge { background: color-mix(in srgb, var(--curseforge) 16%, transparent) !important; border-color: color-mix(in srgb, var(--curseforge) 40%, transparent) !important; color: #a83500 !important; }
 body.glass .btn-dlall.on { color: #0d7a3d !important; border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
