@@ -101,21 +101,31 @@
 
 
 
-          <div class="skin-panel">
-            <div class="skin-panel__row">
-              <input type="text" id="skin-url-input" placeholder="Skin URL...">
-              <button class="btn btn-sm btn-primary" id="skin-url-apply-btn" data-i18n="btn_add">Add</button>
+          <!-- Skin-Werkzeuge (ausklappbar) -->
+          <section class="rail-card rail-card--fold" id="rail-skin">
+            <header class="rail-card__head">
+              <span class="rail-card__title" data-i18n="lbl_change_skin">Change Skin</span>
+              <button class="rail-card__toggle" id="rail-skin-toggle" type="button"
+                      aria-expanded="false" aria-controls="rail-skin-body" title="Skin-Editor">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+            </header>
+            <div class="rail-card__body" id="rail-skin-body" hidden>
+              <div class="skin-panel__row">
+                <input type="text" id="skin-url-input" placeholder="Skin URL...">
+                <button class="btn btn-sm btn-primary" id="skin-url-apply-btn" data-i18n="btn_add">Add</button>
+              </div>
+              <label class="btn btn-sm skin-file-btn" data-i18n="btn_add_png">
+                📁 Add PNG to List
+                <input type="file" id="skin-file-input" accept="image/png" style="display:none">
+              </label>
+              <div id="skin-upload-status" class="skin-panel__status"></div>
+              <div class="skin-panel__row skin-panel__row--split">
+                <button class="btn btn-sm" id="skin-editor-btn" data-i18n="btn_pixel_editor">🎨 Pixel Editor</button>
+                <button class="btn btn-sm btn-primary" id="skin-list-btn" data-i18n="btn_skin_list">📋 Skin List</button>
+              </div>
             </div>
-            <label class="btn skin-file-btn" data-i18n="btn_add_png">
-              📁 Add PNG to List
-              <input type="file" id="skin-file-input" accept="image/png" style="display:none">
-            </label>
-            <div id="skin-upload-status" class="skin-panel__status"></div>
-            <div class="skin-panel__row skin-panel__row--split">
-              <button class="btn btn-sm" id="skin-editor-btn" data-i18n="btn_pixel_editor">🎨 Pixel Editor</button>
-              <button class="btn btn-sm btn-primary" id="skin-list-btn" data-i18n="btn_skin_list">📋 Skin List</button>
-            </div>
-          </div>
+          </section>
         </div>
       </div>
     </div>
@@ -1913,7 +1923,7 @@ const LANGS={
   sub_account:'Your Microsoft and offline accounts', sub_bugreport:'Send a report with your logs',
     h_logs:'Logs', h_account:'Account', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends',
     acct_required_title:'Account required', acct_required_msg:'Please link your Microsoft account first before opening Bug Reports.', acct_required_cancel:'Cancel', acct_required_goto:'Link account',
-    lbl_profile:'Profile:', lbl_version:'Version:', lbl_change_skin:'Change Skin:', lbl_actions:'Actions:', lbl_ram:'RAM:', lbl_instance:'Instance:',
+    lbl_profile:'Profile:', lbl_version:'Version:', lbl_change_skin:'Change Skin', lbl_actions:'Actions:', lbl_ram:'RAM:', lbl_instance:'Instance:',
     lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod Loader', lbl_render_api:'Rendering API:', lbl_added:'Added:',
     btn_launch:'▶ Launch Minecraft', btn_stop:'■ Stop', btn_stop_all:'■ Stop All',
     btn_add:'Add', btn_add_png:'📁 Add PNG to List', btn_pixel_editor:'🎨 Pixel Editor', btn_skin_list:'📋 Skin List',
@@ -2054,7 +2064,7 @@ const LANGS={
   sub_account:'Deine Microsoft- und Offline-Konten', sub_bugreport:'Fehlerbericht mit deinen Logs senden',
     h_logs:'Protokolle', h_account:'Account', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde',
     acct_required_title:'Account erforderlich', acct_required_msg:'Bitte verknüpfe zuerst deinen Microsoft-Account, bevor du Fehler melden kannst.', acct_required_cancel:'Abbrechen', acct_required_goto:'Account verknüpfen',
-    lbl_profile:'Profil:', lbl_version:'Version:', lbl_change_skin:'Skin wechseln:', lbl_actions:'Aktionen:', lbl_ram:'RAM:', lbl_instance:'Instanz:',
+    lbl_profile:'Profil:', lbl_version:'Version:', lbl_change_skin:'Skin wechseln', lbl_actions:'Aktionen:', lbl_ram:'RAM:', lbl_instance:'Instanz:',
     lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod-Loader', lbl_render_api:'Rendering-API:', lbl_added:'Hinzugefügt:',
     btn_launch:'▶ Minecraft starten', btn_stop:'■ Stoppen', btn_stop_all:'■ Alle stoppen',
     btn_add:'Hinzufügen', btn_add_png:'📁 PNG zur Liste hinzufügen', btn_pixel_editor:'🎨 Pixel Editor', btn_skin_list:'📋 Skin Liste',
@@ -2195,7 +2205,7 @@ const LANGS={
   sub_account:'Tes comptes Microsoft et hors ligne', sub_bugreport:'Envoyer un rapport avec tes logs',
     h_logs:'Journaux', h_account:'Account', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis',
     acct_required_title:'Compte requis', acct_required_msg:'Veuillez d\'abord lier votre compte Microsoft avant d\'ouvrir les rapports de bug.', acct_required_cancel:'Annuler', acct_required_goto:'Lier le compte',
-    lbl_profile:'Profil :', lbl_version:'Version :', lbl_change_skin:'Changer de skin :', lbl_actions:'Actions :', lbl_ram:'RAM :', lbl_instance:'Instance :',
+    lbl_profile:'Profil :', lbl_version:'Version :', lbl_change_skin:'Changer de skin', lbl_actions:'Actions :', lbl_ram:'RAM :', lbl_instance:'Instance :',
     lbl_launcher_ram:'RAM du Lanceur :', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de rendu :', lbl_added:'Ajouté :',
     btn_launch:'▶ Lancer Minecraft', btn_stop:'■ Arrêter', btn_stop_all:'■ Tout arrêter',
     btn_add:'Ajouter', btn_add_png:'ðŸ“ Ajouter PNG à la liste', btn_pixel_editor:'ðŸŽ¨ Éditeur Pixel', btn_skin_list:'ðŸ“‹ Liste de Skins',
@@ -2334,7 +2344,7 @@ const LANGS={
   sub_account:'Tus cuentas de Microsoft y sin conexión', sub_bugreport:'Envía un informe con tus registros',
     h_logs:'Registros', h_account:'Account', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos',
     acct_required_title:'Cuenta requerida', acct_required_msg:'Vincula primero tu cuenta de Microsoft antes de abrir los informes de error.', acct_required_cancel:'Cancelar', acct_required_goto:'Vincular cuenta',
-    lbl_profile:'Perfil:', lbl_version:'Versión:', lbl_change_skin:'Cambiar Skin:', lbl_actions:'Acciones:', lbl_ram:'RAM:', lbl_instance:'Instancia:',
+    lbl_profile:'Perfil:', lbl_version:'Versión:', lbl_change_skin:'Cambiar Skin', lbl_actions:'Acciones:', lbl_ram:'RAM:', lbl_instance:'Instancia:',
     lbl_launcher_ram:'RAM del Launcher:', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de Renderizado:', lbl_added:'Añadido:',
     btn_launch:'▶ Iniciar Minecraft', btn_stop:'■ Detener', btn_stop_all:'■ Detener Todo',
     btn_add:'Agregar', btn_add_png:'ðŸ“ Agregar PNG a la lista', btn_pixel_editor:'ðŸŽ¨ Editor de Píxeles', btn_skin_list:'ðŸ“‹ Lista de Skins',
@@ -3018,17 +3028,23 @@ function updateVersionDisplay(){
 // ── Launch-Rail: Konto, Profile und laufende Instanzen ─────────────────
 // Fuellt die rechte Spalte der Startseite, damit dort kein leerer Raum bleibt.
 function renderLaunchRail(){
-  // --- Konto ---
+  // --- Konto: alle Accounts zum Wechseln + Hinzufuegen ---
   const accBox = document.getElementById('rail-account-body');
   if (accBox){
     accBox.innerHTML = '';
-    const acc = getSelectedAccount();
-    if (acc){
-      const row = document.createElement('div');
-      row.className = 'rail-account';
+    if (!accounts.length){
+      const empty = document.createElement('div');
+      empty.className = 'rail-empty';
+      empty.textContent = t('no_accounts');
+      accBox.appendChild(empty);
+    }
+    accounts.forEach(acc => {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'rail-account' + (acc.id === settings.selectedAccount ? ' is-active' : '');
       const cv = document.createElement('canvas');
       cv.className = 'account-head-sm';
-      cv.width = 40; cv.height = 40;
+      cv.width = 32; cv.height = 32;
       const meta = document.createElement('div');
       meta.className = 'rail-account__meta';
       const nm = document.createElement('div');
@@ -3039,14 +3055,25 @@ function renderLaunchRail(){
       ty.textContent = acc.type || 'Account';
       meta.appendChild(nm); meta.appendChild(ty);
       row.appendChild(cv); row.appendChild(meta);
+      row.addEventListener('click', () => {
+        if (acc.id === settings.selectedAccount) return;
+        settings.selectedAccount = acc.id;
+        saveSettings();
+        updateAccountTabHead();
+        loadSkinCape();
+        updateSkinDisplay();
+        renderLaunchRail();
+        renderAccountList();
+      });
       accBox.appendChild(row);
       if (acc.skinUrl){ try { drawHead2D(cv, acc.skinUrl, acc.uuid); } catch(e){} }
-    } else {
-      const empty = document.createElement('div');
-      empty.className = 'rail-empty';
-      empty.textContent = t('no_accounts');
-      accBox.appendChild(empty);
-    }
+    });
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'btn btn-sm btn-ms rail-add';
+    add.textContent = t('add_ms');
+    add.addEventListener('click', () => loginMicrosoft(add));
+    accBox.appendChild(add);
   }
 
   // --- Profile (Schnellstart) ---
@@ -3109,6 +3136,17 @@ function renderLaunchRail(){
 }
 
 document.getElementById('rail-account-btn')?.addEventListener('click', () => showPage('account-page'));
+
+// Skin-Card aus-/einklappen
+document.getElementById('rail-skin-toggle')?.addEventListener('click', () => {
+  const body = document.getElementById('rail-skin-body');
+  const btn = document.getElementById('rail-skin-toggle');
+  if (!body) return;
+  const open = body.hasAttribute('hidden');
+  if (open) body.removeAttribute('hidden'); else body.setAttribute('hidden','');
+  btn.setAttribute('aria-expanded', String(open));
+  btn.classList.toggle('is-open', open);
+});
 document.getElementById('rail-profiles-btn')?.addEventListener('click', () => showPage('profiles-page'));
 
 
@@ -5054,8 +5092,8 @@ function loadCrafatarHead(canvas,uuid){
 }
 
 // Microsoft login
-document.getElementById('btn-add-ms').addEventListener('click',async()=>{
-  const btn=document.getElementById('btn-add-ms');
+async function loginMicrosoft(btn){
+  btn=btn||document.getElementById('btn-add-ms');
   btn.textContent='Opening login...'; btn.disabled=true;
   document.getElementById('status').textContent='Opening Microsoft login...';
   try {
@@ -5076,7 +5114,8 @@ document.getElementById('btn-add-ms').addEventListener('click',async()=>{
     document.getElementById('status').textContent='Login error: '+e.message;
   }
   btn.textContent='+ Microsoft'; btn.disabled=false;
-});
+}
+document.getElementById('btn-add-ms').addEventListener('click',()=>loginMicrosoft(document.getElementById('btn-add-ms')));
 
 function getSelectedAccount(){ return accounts.find(a=>a.id===settings.selectedAccount)||accounts[0]||null; }
 

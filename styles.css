@@ -1072,12 +1072,49 @@ input[type=range]::-webkit-slider-thumb {
   color: var(--muted);
 }
 .rail-card__action { width: auto; padding: .22rem .55rem; font-size: var(--fs-xs); }
+.rail-card__toggle {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: transform .2s ease, color .16s ease, background .16s ease, border-color .16s ease;
+}
+.rail-card__toggle svg { width: 15px; height: 15px; transform: rotate(-90deg); transition: transform .2s ease; }
+.rail-card__toggle:hover { color: var(--text); background: var(--surface-3); border-color: var(--border-strong); }
+.rail-card__toggle.is-open svg { transform: rotate(0deg); }
+.rail-card__body { display: flex; flex-direction: column; gap: .5rem; }
+.rail-card__body[hidden] { display: none; }
 .rail-body { display: flex; flex-direction: column; gap: .4rem; }
 .rail-empty { color: var(--muted-2); font-size: var(--fs-xs); padding: .3rem 0; }
-.rail-account { display: flex; align-items: center; gap: .6rem; }
-.rail-account .account-head-sm { width: 2.4rem; height: 2.4rem; }
+.rail-add { width: 100%; margin-top: .2rem; }
+
+/* Account-Zeilen in der Rail: anklicken = wechseln */
+.rail-account {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  width: 100%;
+  padding: .4rem .5rem;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-2);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.rail-account:hover { background: rgba(255, 255, 255, .07); color: var(--text); }
+.rail-account.is-active { background: var(--acc-soft); border-color: var(--acc-line); color: var(--text); }
+.rail-account .account-head-sm { width: 2rem; height: 2rem; flex: none; }
 .rail-account__meta { min-width: 0; }
-.rail-account__name { font-weight: 700; font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail-account__name { font-weight: 650; font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rail-account__type { color: var(--muted); font-size: var(--fs-xs); }
 .rail-list { display: flex; flex-direction: column; gap: .2rem; }
 .rail-item {
