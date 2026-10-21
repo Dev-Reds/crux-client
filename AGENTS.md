@@ -1,5 +1,84 @@
 # AGENTS.md — Crux Launcher
 
+## UI: Design-System `styles.css` (Stand 2026-10-21)
+
+Der Renderer hat **keinen** Inline-`<style>`-Block mehr. Das komplette Design
+liegt in **`styles.css`** (Repo-Root), eingebunden in `index.html` mit
+`<link rel="stylesheet" href="styles.css">`.
+
+- **`package.json` `build.files` MUSS `styles.css` enthalten** — sonst ist der
+  gepackte Build ungestyllt (die Datei liegt im asar, nicht im Renderer-Bundle).
+- Aufbau von `styles.css` (in dieser Reihenfolge):
+  1. Tokens · 2. Reset · 3. App-Shell · 4. Typografie · 5. Buttons · 6. Formulare
+  7. Flächen · 8. Launch · 9. Listen · 10. Settings · 11. Modals/Dropdown
+  12. Toasts/Badges · 13. Skin-Editor · 14. Update-Overlay
+  15. **Light-Theme** · 16. **Glass-Theme** · 17. Responsive
+
+### Vertrag JS ↔ CSS (nicht umbenennen!)
+
+| Variable | Wer setzt sie | Bedeutung |
+|---|---|---|
+| `--acc` / `--acc2` | `applyAccent()` | Akzentfarbe + 70%-Variante |
+| `--r` | `applyCornerRadius()` | Eckenradius in px (0–24, Settings) |
+| `--ls-*` | Custom-Dropdown | Listen-/Select-Farben (Dropdown-Code greift darauf zu) |
+| `--gs-*` | `setGlassTone(dark)` | Glass-Ton (hell/Standard bzw. dunkel für dunkle Bilder) |
+| `--gs-scrim` | `setGlassTone(dark)` | Verdunkelung **über** dem Hintergrundbild, damit Text lesbar bleibt |
+
+`setGlassTone()` setzt inzwischen den **kompletten** Ton-Satz
+(`--gs-wh/--gs-wh2/--gs-list/--gs-panel/--gs-bd/--gs-bd2/--gs-scrim`).
+Neue Glass-Flächen MUSSEN `var(--gs-panel)` bzw. `var(--gs-list)` verwenden —
+keine festen `rgba(255,255,255,…)`-Werte, sonst brechen helle Bilder.
+
+### Glass-Theme-Regeln (gelten weiterhin)
+
+- Der **Glass-Block steht am Ende** der Datei. `body.glass *` hat ein
+  `color: var(--gs-tx) !important`-Sicherheitsnetz für hart kodierte Farben aus
+  JS-Markup — neue Regeln für Textfarbe müssen **vor** diesem Netz stehen.
+- `body.glass::before` = Hintergrundbild (`--gs-frame`), `body.glass::after` =
+  Scrim (`--gs-scrim`). Reihenfolge zwingend: Bild zuerst, Scrim darüber.
+
+### Typografie
+
+`html { font-size: clamp(14px, .42vw + 9.8px, 18px) }` — die alte Basis
+`body{font-size:2vw}` (bei 1200 px = 24 px!) ist weg. **Keine px-Festwerte für
+Größen**, sondern `rem` (Basis) bzw. `em` innerhalb von Komponenten.
+
+### Screenshots prüfen (Headless)
+
+Temporäre Harness-Datei **im Repo-Root** (bei `loadFile('index.html')` zählt
+`process.cwd()`, nicht der Skriptort), `process.env.APPDATA` auf einen Temp-Ordner
+setzen, dann `require('./main.js')`. Danach per
+`win.webContents.executeJavaScript(...)` Seiten wechseln und
+`win.webContents.capturePage()`.
+
+- **Wichtig:** `capturePage()` liefert im Headless-Modus manchmal einen
+  **veralteten Frame**, wenn gerade nichts animiert wird. Vor dem Capture
+  `win.webContents.setBackgroundThrottling(false)` setzen, ein
+  `void document.body.offsetHeight` erzwingen und ~600 ms warten.
+- Die 3D-Skin-Seite animiert von selbst — dort ist der Frame aktuell.
+- `origShowPage(id)` statt `showPage(id)`: `showPage` ist durch einen
+  Monkey-Patch blockiert, wenn kein MS-Account existiert.
+
+### Mojibake in `index.html`
+
+Die Datei war historisch **doppelt UTF-8-kodiert** (sichtbar als `â€™`, `â€¢`,
+`æ—¥`). wurde das repariert: Runs von cp1252-Sonderzeichen werden als
+cp1252-Bytes gelesen und als UTF-8 dekodiert — **nur** wenn das Ergebnis
+gültiges UTF-8 **ohne** U+FFFD ist. Bei neuen Texten einfach echte UTF-8
+schreiben (Editor/Write-Tool), kein doppeltes Encoding.
+
+## IPC: Cape-Liste war tot (2026-10-21)
+
+Der Renderer rief `load-custom-cape-list` / `save-custom-cape-list` auf, in
+`main.js` gab es **keine Handler** → "No handler registered" im Log und die
+Custom-Cape-Liste wurde nie gespeichert (jeder Start war leer).
+
+- `main.js`: `custom-cape-list.json` in `base`, Item-Format `{ name, dataUrl }`
+- `load-custom-cape-list` → `load(customCapeListPath, [])`
+- `save-custom-cape-list` → `save(customCapeListPath, data)`
+- Tote Kanäle in `main.js` ohne Renderer-Gegenstück: `scan-java`,
+  `get-instance-logs`, `get-instances`, `playit-log`
+
 ## Mesa3D / AMD GPU Crash Fix
 
 ### Problem

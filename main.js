@@ -1337,6 +1337,18 @@ ipcMain.handle('get-custom-cape-state', async () => {
   } catch { return { disabled: false }; }
 });
 
+// Custom-Cape-Liste (Renderer: load-custom-cape-list / save-custom-cape-list).
+// Ohne diese Handler wurde die Liste nie persistiert — der Renderer rief
+// 'load-custom-cape-list' ins Leere und bekam "No handler registered".
+const customCapeListPath = path.join(base, 'custom-cape-list.json');
+ipcMain.handle('load-custom-cape-list', async () => {
+  const list = await load(customCapeListPath, []);
+  return Array.isArray(list) ? list : [];
+});
+ipcMain.on('save-custom-cape-list', async (e, data) => {
+  await save(customCapeListPath, Array.isArray(data) ? data : []);
+});
+
 // Build the cape resource pack zip once, into the launcher data folder. It is
 // copied into each instance's resourcepacks/ dir at launch.
 async function buildCustomCapeResourcePack(capeBuf) {

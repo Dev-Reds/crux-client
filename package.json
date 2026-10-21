@@ -42,6 +42,7 @@
                   "files":  [
                                 "main.js",
                                 "index.html",
+                                "styles.css",
                                 "package.json",
                                 "update-window.ps1",
                                 "node_modules/**/*",
