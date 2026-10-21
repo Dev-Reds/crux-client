@@ -6,6 +6,39 @@ Der Renderer hat **keinen** Inline-`<style>`-Block mehr. Das komplette Design
 liegt in **`styles.css`** (Repo-Root), eingebunden in `index.html` mit
 `<link rel="stylesheet" href="styles.css">`.
 
+### Farbwelt = Website (cruxclient.net)
+
+Launcher und Website sind **bewusst dasselbe Design**. Bei Änderungen an einer
+Seite muss die andere nachgezogen werden. Die verbindlichen Werte (live auf
+cruxclient.net per `getComputedStyle` verifiziert):
+
+| Token | Wert | Website-Variable |
+|---|---|---|
+| Hintergrund | `#0a0910` | `--bg` |
+| Fläche | `#14121e` | `--surface` |
+| Fläche erhöht | `#1b1827` | `--surface-2` |
+| Linie | `rgba(255,255,255,.09)` | `--line` |
+| Linie stark | `rgba(255,255,255,.18)` | `--line-strong` |
+| Text | `#eceaf5` | `--text` |
+| Muted | `#9b94af` | `--muted` |
+| Akzent | `#a06cff` | `--accent` |
+| Akzent hell | `#c9a6ff` | `--accent-2` |
+| Radius | `16px` / `24px` | `--radius` / `--radius-lg` |
+| Schatten | `0 24px 60px -20px rgba(0,0,0,.85)` | `--shadow` |
+| Font | `"Inter", system-ui, …` | `--font` |
+
+- **Primary-Button** = `linear-gradient(135deg, var(--acc-light), var(--acc))`
+  mit **dunklem** Text (`--acc-on`), plus Glow-Shadow — identisch zur Website.
+- **Eyebrows** (z. B. „LAUNCH") = uppercase, Weight 800, `letter-spacing .16em`,
+  Farbe `--acc`.
+- Überschriften: Weight 800, `letter-spacing -.025em`, `line-height 1.12`.
+- Der Akzent ist weiterhin **umstellbar** (17 Farben in den Einstellungen).
+  Index 0 ist das Website-Lila `#a06cff` und der Default.
+  `applyAccent()` setzt `--acc-on` (Text auf Akzentflächen) je nach Helligkeit
+  der Farbe — helle Farben (Index 0, 4–7, 16) brauchen dunklen Text.
+  **Achtung:** Beim Einfügen einer Farbe an Position 0 verschieben sich die
+  gespeicherten `settings.accentIdx` — dafür gibt es die Migration im Boot-Code.
+
 - **`package.json` `build.files` MUSS `styles.css` enthalten** — sonst ist der
   gepackte Build ungestyllt (die Datei liegt im asar, nicht im Renderer-Bundle).
 - Aufbau von `styles.css` (in dieser Reihenfolge):

@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="./Crux-Client.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <title>Crux Client</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>window.JSZip=null;</script>
@@ -250,7 +253,7 @@
         </div>
       </div>
       <div class="settings-section">
-        <h2 data-i18n="sec_color">Active Tab Color (16 colors)</h2>
+        <h2 data-i18n="sec_color">Active Tab Color (17 colors)</h2>
         <div class="color-grid" id="color-grid"></div>
       </div>
       <div class="settings-section">
@@ -1337,7 +1340,7 @@ window.addEventListener('unhandledrejection', (e) => { rlog(`UNHANDLED PROMISE: 
 let settings={}, accounts=[], profiles=[], installedMods=[], launchedVersions=[], mcVersionList=[], recentHistory=[];
 let currentSource='modrinth', profileModMode=false, profilePackMode=null;
 let editingProfileId=null, editingPackData={};
-let currentAccentIdx=5;
+let currentAccentIdx=0;   // 0 = Website-Lila (#a06cff)
 let searchDebounce=null, modSearchOffset=0, modSearchQuery='', isLoadingMods=false;
 let modSearchSeq=0;
 let instances={}, selectedInstanceId=null, autoScrollLogs=true;
@@ -1380,19 +1383,21 @@ window.addEventListener('visibilitychange',()=>{
 // ────────────────────────────────────────
 // ACCENTS
 // ────────────────────────────────────────
-const ACCENTS=['#e74c3c','#e67e22','#f39c12','#f1c40f','#2ecc71','#1abc9c','#00bcd4','#3498db','#2980b9','#5c6bc0','#9b59b6','#e91e63','#ff5722','#607d8b','#795548','#ffffff'];
-const ACCENT_CSS=['#e74c3c','#e67e22','#f39c12','#f1c40f','#2ecc71','#1abc9c','#00bcd4','#3498db','#2980b9','#5c6bc0','#9b59b6','#e91e63','#ff5722','#607d8b','#795548','#ffffff'];
+const ACCENTS=['#a06cff','#e74c3c','#e67e22','#f39c12','#f1c40f','#2ecc71','#1abc9c','#00bcd4','#3498db','#2980b9','#5c6bc0','#9b59b6','#e91e63','#ff5722','#607d8b','#795548','#ffffff'];
+const ACCENT_CSS=ACCENTS;
+// Indizes der hellen Akzente — darauf kommt dunkler Text statt weiss
+const ACCENT_LIGHT=[0,4,5,6,7,16];
 
 function applyAccent(idx){
   const col=ACCENTS[idx];
   document.documentElement.style.setProperty('--acc', col);
   document.documentElement.style.setProperty('--acc2', col+'bb');
-  const lightText=[3,4,5,6,15].includes(idx);
+  const lightText=ACCENT_LIGHT.includes(idx);
+  // Textfarbe auf Akzent-Flaechen (Buttons, Chips) — wie auf der Website
+  document.documentElement.style.setProperty('--acc-on', lightText ? '#150a2a' : '#ffffff');
   document.querySelectorAll('.tb-btn[data-page]').forEach(b=>{
-    if(b.classList.contains('active')){
-      b.style.background=col; b.style.borderColor=col;
-      b.style.color=lightText?'#111':'#fff';
-} else { b.style.background=''; b.style.borderColor=''; b.style.color=''; }
+    // Der aktive Tab wird komplett per CSS gestylt (siehe styles.css)
+    b.style.background=''; b.style.borderColor=''; b.style.color='';
   });
   // Akzentfarbe gewechselt -> Default-Hintergrundbild sofort neu faerben
   try { if (typeof applyGlassBg === 'function' && !settings.glassBgImage && settings.glassBgTint !== false) applyGlassBg(); } catch (e) {}
@@ -1402,7 +1407,7 @@ function buildColorGrid(){
   ACCENTS.forEach((c,i)=>{
     const b=document.createElement('button'); b.className='color-btn'+(i===currentAccentIdx?' sel':'');
     b.style.background=c;
-    if(i===15) b.style.border='2px solid #444'; // white needs a border
+    if(i===16) b.style.border='2px solid #444'; // white needs a border
     b.addEventListener('click',()=>{ currentAccentIdx=i; applyAccent(i); buildColorGrid(); settings.accentIdx=i; saveSettings(); });
     g.appendChild(b);
   });
@@ -1428,8 +1433,7 @@ async function bootUpdateWindow(){
     try { glassDefaultBgs = (await ipcRenderer.invoke('get-default-glass-bgs')) || []; } catch {}
     try { applyGlassBg(); } catch {}
     try { applyAccent(currentAccentIdx); } catch {}
-  } catch(e){ console.error('[Crux] Update-window theme error:', e); }
-  try { document.getElementById('launcher-screen').style.display='none'; } catch {}
+  } catch(e){ console.error('[Crux] Update-window theme error:', e); }  try { document.getElementById('launcher-screen').style.display='none'; } catch {}
   try { document.getElementById('update-overlay').classList.add('update-themed'); } catch {}
   prepareUpdateWindow();
 }
@@ -1507,7 +1511,12 @@ async function bootLauncher(){
     if(settings.theme==='light') applyTheme(true);
     else if(settings.theme==='glass' || !settings.theme) applyTheme('glass');
     else applyTheme(false);
-    if(typeof settings.accentIdx==='number'){currentAccentIdx=settings.accentIdx;}
+    if(typeof settings.accentIdx==='number'){
+      // Migration: das Website-Lila (#a06cff) wurde an Index 0 eingefuegt,
+      // die alten Indizes verschieben sich dadurch um 1.
+      currentAccentIdx = settings.accentIdx > 0 ? settings.accentIdx + 1 : settings.accentIdx;
+      if (currentAccentIdx >= ACCENTS.length) currentAccentIdx = 0;
+    }
     applyLanguage(settings.lang || 'en');
     applyCornerRadius();
     updateGlassBgSection();
@@ -1806,7 +1815,7 @@ const LANGS={
     btn_copy:'📋 Copy', btn_clear:'Clear', btn_clear_history:'Clear History',
     btn_copy_code:'📋 Copy Code', btn_import_profile:'Import Profile',
     status_ready:'Ready.', status_loading:'Loading versions...',
-    sec_java:'Java Installation', sec_ram:'RAM for Minecraft', sec_lang:'Language', sec_color:'Active Tab Color (16 colors)',
+    sec_java:'Java Installation', sec_ram:'RAM for Minecraft', sec_lang:'Language', sec_color:'Active Tab Color (17 colors)',
     btn_rescan:'↻ Rescan Java', btn_dl21:'Download Java 21', btn_dl17:'Download Java 17',
     new_profile:'+ New Profile', edit:'Edit', save:'Save', delete:'Delete',
     no_mods:'No mods installed yet.', no_profiles:'No profiles yet.', no_accounts:'No accounts added yet.', no_instances:'No instances launched yet.',
@@ -1943,7 +1952,7 @@ const LANGS={
     btn_copy:'📋 Kopieren', btn_clear:'Leeren', btn_clear_history:'Verlauf löschen',
     btn_copy_code:'📋 Code kopieren', btn_import_profile:'Profil importieren',
     status_ready:'Bereit.', status_loading:'Versionen laden...',
-    sec_java:'Java-Installation', sec_ram:'RAM für Minecraft', sec_lang:'Sprache', sec_color:'Tab-Farbe (16 Farben)',
+    sec_java:'Java-Installation', sec_ram:'RAM für Minecraft', sec_lang:'Sprache', sec_color:'Tab-Farbe (17 Farben)',
     btn_rescan:'↻ Java scannen', btn_dl21:'Java 21 herunterladen', btn_dl17:'Java 17 herunterladen',
     new_profile:'+ Neues Profil', edit:'Bearbeiten', save:'Speichern', delete:'Löschen',
     no_mods:'Keine Mods installiert.', no_profiles:'Keine Profile vorhanden.', no_accounts:'Keine Konten vorhanden.', no_instances:'Keine Instanzen gestartet.',
