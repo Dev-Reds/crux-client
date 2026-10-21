@@ -88,6 +88,33 @@
           </div>
           <div class="skin-name-display" id="skin-name-display">No account</div>
           <div class="skin-version-display" id="skin-version-display">—</div>
+
+          <!-- Konto-Karte -->
+          <section class="rail-card" id="rail-account">
+            <header class="rail-card__head">
+              <span class="rail-card__title" data-i18n="tab_account">Account</span>
+              <button class="btn btn-sm btn-ghost rail-card__action" id="rail-account-btn" data-i18n="btn_manage">Manage</button>
+            </header>
+            <div class="rail-body" id="rail-account-body"></div>
+          </section>
+
+          <!-- Schnellstart: Profile -->
+          <section class="rail-card" id="rail-profiles">
+            <header class="rail-card__head">
+              <span class="rail-card__title" data-i18n="tab_profiles">Profiles</span>
+              <button class="btn btn-sm btn-ghost rail-card__action" id="rail-profiles-btn" data-i18n="btn_all">All</button>
+            </header>
+            <div class="rail-list" id="rail-profile-list"></div>
+          </section>
+
+          <!-- Laufende Instanzen (nur sichtbar, wenn etwas laeuft) -->
+          <section class="rail-card" id="rail-instances" hidden>
+            <header class="rail-card__head">
+              <span class="rail-card__title" data-i18n="rail_running">Running</span>
+            </header>
+            <div class="rail-list" id="rail-instance-list"></div>
+          </section>
+
           <div class="skin-panel">
             <div class="skin-change-label" data-i18n="lbl_change_skin">Change Skin:</div>
             <div class="skin-panel__row">
@@ -1629,6 +1656,7 @@ function updateStopButtons(){
   stopBtn.style.display = hasRunning ? '' : 'none';
   stopAllBtn.style.display = running.length >= 2 ? '' : 'none';
   if(!hasRunning) enableLaunchBtn();
+  if (typeof renderLaunchRail === 'function') renderLaunchRail();
 }
 function showLauncher(){
   document.getElementById('launcher-screen').style.display='flex';
@@ -1798,7 +1826,7 @@ function renderCapePreview(url){
 
 const LANGS={
   en:{
-    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes',
+    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes', btn_manage:'Manage', btn_all:'All', rail_running:'Running',
     tab_settings:'Settings', tab_logs:'Logs', tab_account:'Account', tab_recent:'Recent', tab_servers:'Servers', tab_features:'Features', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
     h_logs:'Logs', h_account:'Account', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends',
@@ -1935,7 +1963,7 @@ const LANGS={
     update_install:'Update & Restart', update_github:'Download from GitHub', update_bugreport:'🐛 Bug Report', update_later:'Later',
   },
   de:{
-    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes',
+    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes', btn_manage:'Verwalten', btn_all:'Alle', rail_running:'Läuft',
     tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_account:'Account', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_features:'Features', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
     h_logs:'Protokolle', h_account:'Account', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde',
@@ -2072,7 +2100,7 @@ const LANGS={
     update_install:'Aktualisieren & Neustart', update_github:'Von GitHub herunterladen', update_bugreport:'🐛 Fehler melden', update_later:'Später',
   },
   fr:{
-    tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes',
+    tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes', btn_manage:'Gerer', btn_all:'Tous', rail_running:'En cours',
     tab_settings:'Paramètres', tab_logs:'Journaux', tab_account:'Account', tab_recent:'Récents', tab_servers:'Serveurs', tab_features:'Fonctionnalités', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
     h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
     h_logs:'Journaux', h_account:'Account', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis',
@@ -2207,7 +2235,7 @@ const LANGS={
     update_install:'Mettre à jour & Redémarrer', update_github:'Télécharger depuis GitHub', update_bugreport:'ðŸ› Signaler un bug', update_later:'Plus tard',
   },
   es:{
-    tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas',
+    tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas', btn_manage:'Gestionar', btn_all:'Todos', rail_running:'En ejecución',
     tab_settings:'Ajustes', tab_logs:'Registros', tab_account:'Account', tab_recent:'Recientes', tab_servers:'Servidores', tab_features:'Funciones', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
     h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
     h_logs:'Registros', h_account:'Account', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos',
@@ -2876,6 +2904,7 @@ function renderProfileList(){
     item.querySelector('.profile-share-btn').addEventListener('click',()=>{shareProfile(p.id);});
     el.appendChild(item);
   });
+  renderLaunchRail();
 }
 
 function updateLaunchProfileSelect(){
@@ -2888,8 +2917,105 @@ document.getElementById('profileSelect').addEventListener('change',()=>{ updateV
 function updateVersionDisplay(){
   const p=profiles.find(x=>x.id===document.getElementById('profileSelect').value);
   document.getElementById('profile-version-display').textContent=p?(p.mcVersion||'Latest'):'';
-  document.getElementById('skin-version-display').textContent=p?(p.mcVersion||'Latest'):'—';
+  document.getElementById('skin-version-display').textContent=p?(p.mcVersion||'Latest'):'-';
 }
+
+// ── Launch-Rail: Konto, Profile und laufende Instanzen ─────────────────
+// Fuellt die rechte Spalte der Startseite, damit dort kein leerer Raum bleibt.
+function renderLaunchRail(){
+  // --- Konto ---
+  const accBox = document.getElementById('rail-account-body');
+  if (accBox){
+    accBox.innerHTML = '';
+    const acc = getSelectedAccount();
+    if (acc){
+      const row = document.createElement('div');
+      row.className = 'rail-account';
+      const cv = document.createElement('canvas');
+      cv.className = 'account-head-sm';
+      cv.width = 40; cv.height = 40;
+      const meta = document.createElement('div');
+      meta.className = 'rail-account__meta';
+      const nm = document.createElement('div');
+      nm.className = 'rail-account__name';
+      nm.textContent = acc.name || 'Microsoft';
+      const ty = document.createElement('div');
+      ty.className = 'rail-account__type';
+      ty.textContent = acc.type || 'Account';
+      meta.appendChild(nm); meta.appendChild(ty);
+      row.appendChild(cv); row.appendChild(meta);
+      accBox.appendChild(row);
+      if (acc.skinUrl){ try { drawHead2D(cv, acc.skinUrl, acc.uuid); } catch(e){} }
+    } else {
+      const empty = document.createElement('div');
+      empty.className = 'rail-empty';
+      empty.textContent = t('no_accounts');
+      accBox.appendChild(empty);
+    }
+  }
+
+  // --- Profile (Schnellstart) ---
+  const profBox = document.getElementById('rail-profile-list');
+  if (profBox){
+    profBox.innerHTML = '';
+    if (!profiles.length){
+      const empty = document.createElement('div');
+      empty.className = 'rail-empty';
+      empty.textContent = t('no_profiles');
+      profBox.appendChild(empty);
+    } else {
+      profiles.slice(0, 6).forEach(p => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'rail-item' + (p.id === settings.selectedProfile ? ' is-active' : '');
+        const nm = document.createElement('span');
+        nm.className = 'rail-item__name';
+        nm.textContent = p.name;
+        const mt = document.createElement('span');
+        mt.className = 'rail-item__meta';
+        mt.textContent = (p.modLoader || 'vanilla') + (p.mods && p.mods.length ? ' · ' + p.mods.length : '');
+        item.appendChild(nm); item.appendChild(mt);
+        item.addEventListener('click', () => {
+          settings.selectedProfile = p.id;
+          saveSettings();
+          const sel = document.getElementById('profileSelect');
+          if (sel) sel.value = p.id;
+          updateVersionDisplay();
+          renderLaunchRail();
+        });
+        profBox.appendChild(item);
+      });
+    }
+  }
+
+  // --- Laufende Instanzen ---
+  const instCard = document.getElementById('rail-instances');
+  const instBox = document.getElementById('rail-instance-list');
+  if (instCard && instBox){
+    const running = Object.values(instances).filter(i => i.status === 'running');
+    instCard.hidden = running.length === 0;
+    instBox.innerHTML = '';
+    running.forEach(inst => {
+      const row = document.createElement('div');
+      row.className = 'rail-item rail-item--running';
+      const nm = document.createElement('span');
+      nm.className = 'rail-item__name';
+      nm.textContent = inst.version + (inst.profileName ? ' · ' + inst.profileName : '');
+      const stop = document.createElement('button');
+      stop.type = 'button';
+      stop.className = 'btn btn-sm rail-item__stop';
+      stop.textContent = '■';
+      stop.title = 'Stop';
+      stop.addEventListener('click', () => ipcRenderer.send('stop-minecraft', inst.id));
+      row.appendChild(nm); row.appendChild(stop);
+      instBox.appendChild(row);
+    });
+  }
+}
+
+document.getElementById('rail-account-btn')?.addEventListener('click', () => showPage('account-page'));
+document.getElementById('rail-profiles-btn')?.addEventListener('click', () => showPage('profiles-page'));
+
 
 document.getElementById('new-profile-btn').addEventListener('click',()=>{
   const latestRelease=mcVersionList.find(v=>v.type==='release')?.id||'';
@@ -4060,6 +4186,7 @@ function renderAccountList(){
     el.appendChild(item);
   });
   updateAccountTabHead();
+  renderLaunchRail();
 }
 
 function updateAccountTabHead(){
