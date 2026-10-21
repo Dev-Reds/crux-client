@@ -146,17 +146,22 @@ cp1252-Bytes gelesen und als UTF-8 dekodiert — **nur** wenn das Ergebnis
 gültiges UTF-8 **ohne** U+FFFD ist. Bei neuen Texten einfach echte UTF-8
 schreiben (Editor/Write-Tool), kein doppeltes Encoding.
 
-## IPC: Cape-Liste war tot (2026-10-21)
+## IPC: Cape-Liste wurde entfernt (2026-10-21)
 
-Der Renderer rief `load-custom-cape-list` / `save-custom-cape-list` auf, in
-`main.js` gab es **keine Handler** → "No handler registered" im Log und die
-Custom-Cape-Liste wurde nie gespeichert (jeder Start war leer).
+Es gab eine **Custom-Cape-Liste** (mehrere gespeicherte Capes) auf der
+Capes-Seite plus die IPC-Kanäle `load-custom-cape-list` /
+`save-custom-cape-list` in `main.js`.
 
-- `main.js`: `custom-cape-list.json` in `base`, Item-Format `{ name, dataUrl }`
-- `load-custom-cape-list` → `load(customCapeListPath, [])`
-- `save-custom-cape-list` → `save(customCapeListPath, data)`
-- Tote Kanäle in `main.js` ohne Renderer-Gegenstück: `scan-java`,
-  `get-instance-logs`, `get-instances`, `playit-log`
+- Die Liste ist **entfernt** (UI, Renderer-Code, IPC-Handler, `custom-cape-list.json`).
+  Grund: sie wurde nie persistiert (kein Handler → "No handler registered")
+  und der Cape-Editor speichert ohnehin direkt über `save-custom-cape`.
+- **Neues Custom Cape**: der Button **„New Cape"** sitzt jetzt im Kopf der
+  Capes-Seite (`page-head__actions`, id `cape-editor-btn`) und öffnet den
+  Cape-Editor. Das gespeicherte Cape ist direkt das aktive Custom Cape
+  (`custom-cape.png` + Resource-Pack).
+- `useCustomCape()`, `renderCustomCapeList()`, `loadCustomCapeList()` und
+  `saveCustomCapeList()` sind mit entfernt — bei einer Rückkehr ins Repo
+  nicht wieder aufleben lassen.
 
 ## Mesa3D / AMD GPU Crash Fix
 

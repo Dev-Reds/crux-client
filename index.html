@@ -225,6 +225,12 @@
           <h1 data-i18n="h_cape">Capes</h1>
           <p class="page-head__sub" data-i18n="sub_cape">Minecraft capes and your own designs</p>
         </div>
+        <div class="page-head__actions">
+          <button class="btn btn-primary" id="cape-editor-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span data-i18n="btn_new_cape">New Cape</span>
+          </button>
+        </div>
       </header>
 
       <section class="card">
@@ -255,18 +261,6 @@
         </header>
         <div class="card__body">
           <p class="hint" data-i18n="desc_custom_cape">Design your own cape. It will be loaded as a resource pack every time you launch.</p>
-          <button class="btn btn-primary" id="cape-editor-btn" data-i18n="btn_open_cape_editor">Open Cape Editor</button>
-        </div>
-      </section>
-
-      <section class="card card--spaced">
-        <header class="card__head">
-          <h2 data-i18n="h_custom_cape_list">Custom Cape List</h2>
-        </header>
-        <div class="card__body">
-          <p class="hint" data-i18n="desc_custom_cape_list">Your saved custom capes. Click a cape to equip it.</p>
-          <div id="custom-cape-list-container" class="tile-grid tile-grid--sm"></div>
-          <p id="custom-cape-list-empty" class="hint" style="display:none" data-i18n="no_custom_capes">No custom capes saved yet.</p>
         </div>
       </section>
     </div>
@@ -1732,7 +1726,7 @@ function showPage(id){
   if(id==='mods-page') syncModFilterToProfile();
   if(id==='owner-page' && typeof renderOwnerAccountList==='function') renderOwnerAccountList();
   if(id==='logs-page'){ renderInstanceList(); refreshLogSelect(); updateStopButtons(); }
-  if(id==='launch-page') renderRecentList();  if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
+  if(id==='launch-page') renderRecentList();  if(id==='cape-page'){loadMCCapes();}
   if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); refreshChat(); }
   if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); }
 }
@@ -1881,7 +1875,7 @@ function renderCapePreview(url){
 
 const LANGS={
   en:{
-    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes', btn_manage:'Manage', btn_all:'All', rail_running:'Running',
+    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes', btn_manage:'Manage', btn_all:'All', rail_running:'Running', btn_new_cape:'New Cape',
     tab_settings:'Settings', tab_logs:'Logs', tab_account:'Account', tab_recent:'Recent', tab_servers:'Servers', tab_features:'Features', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
   sub_mods:'Mods that run with every Minecraft version', sub_profiles:'Your versions, mod loaders and mod lists',
@@ -2022,7 +2016,7 @@ const LANGS={
     update_install:'Update & Restart', update_github:'Download from GitHub', update_bugreport:'🐛 Bug Report', update_later:'Later',
   },
   de:{
-    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes', btn_manage:'Verwalten', btn_all:'Alle', rail_running:'Läuft',
+    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes', btn_manage:'Verwalten', btn_all:'Alle', rail_running:'Läuft', btn_new_cape:'Neues Cape',
     tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_account:'Account', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_features:'Features', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
   sub_mods:'Mods, die mit jeder Minecraft-Version laufen', sub_profiles:'Deine Versionen, Mod-Loader und Mod-Listen',
@@ -2163,7 +2157,7 @@ const LANGS={
     update_install:'Aktualisieren & Neustart', update_github:'Von GitHub herunterladen', update_bugreport:'🐛 Fehler melden', update_later:'Später',
   },
   fr:{
-    tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes', btn_manage:'Gerer', btn_all:'Tous', rail_running:'En cours',
+    tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes', btn_manage:'Gerer', btn_all:'Tous', rail_running:'En cours', btn_new_cape:'Nouveau cape',
     tab_settings:'Paramètres', tab_logs:'Journaux', tab_account:'Account', tab_recent:'Récents', tab_servers:'Serveurs', tab_features:'Fonctionnalités', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
     h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
   sub_mods:'Des mods qui fonctionnent avec chaque version de Minecraft', sub_profiles:'Tes versions, chargeurs de mods et listes',
@@ -2302,7 +2296,7 @@ const LANGS={
     update_install:'Mettre à jour & Redémarrer', update_github:'Télécharger depuis GitHub', update_bugreport:'ðŸ› Signaler un bug', update_later:'Plus tard',
   },
   es:{
-    tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas', btn_manage:'Gestionar', btn_all:'Todos', rail_running:'En ejecución',
+    tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas', btn_manage:'Gestionar', btn_all:'Todos', rail_running:'En ejecución', btn_new_cape:'Capa nueva',
     tab_settings:'Ajustes', tab_logs:'Registros', tab_account:'Account', tab_recent:'Recientes', tab_servers:'Servidores', tab_features:'Funciones', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
     h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
   sub_mods:'Mods que funcionan con cada versión de Minecraft', sub_profiles:'Tus versiones, cargadores de mods y listas',
@@ -3457,78 +3451,6 @@ document.getElementById('capes-remove-btn').addEventListener('click',async()=>{
     else document.getElementById('capes-status').textContent='Failed to remove cape';
   } catch(e){ document.getElementById('capes-status').textContent='Error: '+e.message; }
 });
-
-// ── CUSTOM CAPE LIST ──
-let customCapeList = [];
-async function loadCustomCapeList() {
-  try { customCapeList = await ipcRenderer.invoke('load-custom-cape-list'); if (!Array.isArray(customCapeList)) customCapeList = []; } catch { customCapeList = []; }
-}
-function saveCustomCapeList() { ipcRenderer.send('save-custom-cape-list', customCapeList); }
-loadCustomCapeList();
-
-function renderCustomCapeList() {
-  const container = document.getElementById('custom-cape-list-container');
-  const emptyEl = document.getElementById('custom-cape-list-empty');
-  if (!container) return;
-  container.innerHTML = '';
-  if (!customCapeList.length) { emptyEl.style.display = ''; return; }
-  emptyEl.style.display = 'none';
-  customCapeList.forEach((cape, idx) => {
-    const card = document.createElement('div');
-    card.style.cssText = 'background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:.4em;cursor:pointer;text-align:center;transition:all .15s';
-    card.onmouseenter = () => card.style.borderColor = 'var(--acc,#0088ff)';
-    card.onmouseleave = () => card.style.borderColor = '#2a2a2a';
-    const thumb = document.createElement('canvas');
-    thumb.width = 88; thumb.height = 68;
-    thumb.style.cssText = 'width:100%;image-rendering:pixelated;border-radius:4px;margin-bottom:.3em;display:block';
-    if (cape.dataUrl) renderCape3D(thumb, cape.dataUrl);
-    const label = document.createElement('div');
-    label.textContent = cape.name || 'Cape ' + (idx + 1);
-    label.style.cssText = 'font-size:.72em;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-    const btns = document.createElement('div');
-    btns.style.cssText = 'display:flex;gap:.25em;margin-top:.3em;justify-content:center';
-    const equipBtn = document.createElement('button');
-    equipBtn.className = 'btn btn-sm btn-primary';
-    equipBtn.style.cssText = 'width:auto;font-size:.68em;padding:.2em .5em';
-    equipBtn.textContent = 'Use';
-    equipBtn.onclick = (e) => { e.stopPropagation(); useCustomCape(cape); };
-    const delBtn = document.createElement('button');
-    delBtn.className = 'btn btn-sm';
-    delBtn.style.cssText = 'width:auto;font-size:.68em;padding:.2em .5em;color:#f44;border-color:#f4455';
-    delBtn.textContent = '\u2715';
-    delBtn.onclick = (e) => { e.stopPropagation(); customCapeList.splice(idx, 1); saveCustomCapeList(); renderCustomCapeList(); };
-    btns.appendChild(equipBtn); btns.appendChild(delBtn);
-    card.appendChild(thumb); card.appendChild(label); card.appendChild(btns);
-    card.onclick = () => useCustomCape(cape);
-    container.appendChild(card);
-  });
-}
-
-async function useCustomCape(cape) {
-  if (!cape || !cape.dataUrl) return;
-  const result = await ipcRenderer.invoke('save-custom-cape', cape.dataUrl);
-  if (result?.success) {
-    document.getElementById('cape-custom-status').textContent = 'Equipped: ' + (cape.name || 'Custom Cape');
-    document.getElementById('cape-custom-status').style.color = '#1bd96a';
-    document.getElementById('cape-custom-toggle').style.display = '';
-    loadSkinCape();
-  }
-}
-
-// Save current editor cape to list
-const _origCapeEdSave = document.getElementById('cape-ed-save');
-if (_origCapeEdSave) {
-  _origCapeEdSave.addEventListener('click', () => {
-    const canvas = document.getElementById('cape-ed-canvas');
-    if (canvas) {
-      const dataUrl = canvas.toDataURL('image/png');
-      const name = 'Cape ' + (customCapeList.length + 1);
-      customCapeList.push({ name, dataUrl, addedAt: Date.now() });
-      saveCustomCapeList();
-      renderCustomCapeList();
-    }
-  });
-}
 
 function openProfileModal(profileId){
   editingProfileId=profileId;
