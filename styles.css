@@ -531,6 +531,19 @@ body.tabs-left .pages, body.tabs-right .pages { order: 0; }
 .account-panel > .account-list > .mod-list-empty,
 .page > .mod-list-empty { max-width: 34rem; margin: var(--sp-3) auto; }
 
+/* Eigene Custom Cape: Statuszeile unter der Capes-Liste */
+.custom-cape-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.custom-cape-row .hint { margin: 0; }
+
 /* Server-Listen-Elemente */
 .server-item__icon { font-size: 1.3rem; flex-shrink: 0; }
 .server-item__addrs { display: flex; align-items: center; gap: .5rem; margin-top: .2rem; flex-wrap: wrap; }

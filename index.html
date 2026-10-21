@@ -225,18 +225,16 @@
           <h1 data-i18n="h_cape">Capes</h1>
           <p class="page-head__sub" data-i18n="sub_cape">Minecraft capes and your own designs</p>
         </div>
-        <div class="page-head__actions">
-          <button class="btn btn-primary" id="cape-editor-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            <span data-i18n="btn_new_cape">New Cape</span>
-          </button>
-        </div>
       </header>
 
       <section class="card">
         <header class="card__head">
           <h2 data-i18n="sec_mc_capes">Minecraft Capes</h2>
           <div class="card__actions">
+            <button class="btn btn-sm btn-primary" id="cape-editor-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              <span data-i18n="sec_custom_cape">Custom Cape</span>
+            </button>
             <button class="btn btn-sm" id="capes-refresh-btn" data-i18n="btn_refresh">Refresh</button>
             <button class="btn btn-sm btn-danger" id="capes-remove-btn" data-i18n="btn_remove_cape">Remove Cape</button>
           </div>
@@ -247,20 +245,15 @@
           <p id="capes-loading" class="hint" data-i18n="capes_loading">Loading capes...</p>
           <p id="capes-empty" class="hint" style="display:none" data-i18n="capes_empty">No capes found.</p>
           <p id="capes-status" class="hint"></p>
-        </div>
-      </section>
 
-      <section class="card card--spaced">
-        <header class="card__head">
-          <h2 data-i18n="sec_custom_cape">Custom Cape</h2>
-          <div class="card__actions">
+          <!-- Eigenes Custom Cape: Status + Aktionen -->
+          <div class="custom-cape-row">
             <span id="cape-custom-status" class="hint"></span>
-            <button class="btn btn-sm" id="cape-custom-toggle" style="display:none" data-i18n="btn_disable_cape">Disable Cape</button>
-            <button class="btn btn-sm btn-danger" id="cape-custom-remove" data-i18n="btn_remove_custom_cape">Remove Custom Cape</button>
+            <div class="card__actions">
+              <button class="btn btn-sm" id="cape-custom-toggle" style="display:none" data-i18n="btn_disable_cape">Disable Cape</button>
+              <button class="btn btn-sm btn-danger" id="cape-custom-remove" data-i18n="btn_remove_custom_cape">Remove Custom Cape</button>
+            </div>
           </div>
-        </header>
-        <div class="card__body">
-          <p class="hint" data-i18n="desc_custom_cape">Design your own cape. It will be loaded as a resource pack every time you launch.</p>
         </div>
       </section>
     </div>
@@ -1875,7 +1868,7 @@ function renderCapePreview(url){
 
 const LANGS={
   en:{
-    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes', btn_manage:'Manage', btn_all:'All', rail_running:'Running', btn_new_cape:'New Cape',
+    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profiles', tab_cape:'Capes', btn_manage:'Manage', btn_all:'All', rail_running:'Running',
     tab_settings:'Settings', tab_logs:'Logs', tab_account:'Account', tab_recent:'Recent', tab_servers:'Servers', tab_features:'Features', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
   sub_mods:'Mods that run with every Minecraft version', sub_profiles:'Your versions, mod loaders and mod lists',
@@ -2016,7 +2009,7 @@ const LANGS={
     update_install:'Update & Restart', update_github:'Download from GitHub', update_bugreport:'🐛 Bug Report', update_later:'Later',
   },
   de:{
-    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes', btn_manage:'Verwalten', btn_all:'Alle', rail_running:'Läuft', btn_new_cape:'Neues Cape',
+    tab_launch:'Launch', tab_mods:'Client Options', tab_profiles:'Profile', tab_cape:'Capes', btn_manage:'Verwalten', btn_all:'Alle', rail_running:'Läuft',
     tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_account:'Account', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_features:'Features', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
   sub_mods:'Mods, die mit jeder Minecraft-Version laufen', sub_profiles:'Deine Versionen, Mod-Loader und Mod-Listen',
@@ -2157,7 +2150,7 @@ const LANGS={
     update_install:'Aktualisieren & Neustart', update_github:'Von GitHub herunterladen', update_bugreport:'🐛 Fehler melden', update_later:'Später',
   },
   fr:{
-    tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes', btn_manage:'Gerer', btn_all:'Tous', rail_running:'En cours', btn_new_cape:'Nouveau cape',
+    tab_launch:'Lancer', tab_mods:'Options Client', tab_profiles:'Profils', tab_cape:'Capes', btn_manage:'Gerer', btn_all:'Tous', rail_running:'En cours',
     tab_settings:'Paramètres', tab_logs:'Journaux', tab_account:'Account', tab_recent:'Récents', tab_servers:'Serveurs', tab_features:'Fonctionnalités', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
     h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
   sub_mods:'Des mods qui fonctionnent avec chaque version de Minecraft', sub_profiles:'Tes versions, chargeurs de mods et listes',
@@ -2296,7 +2289,7 @@ const LANGS={
     update_install:'Mettre à jour & Redémarrer', update_github:'Télécharger depuis GitHub', update_bugreport:'ðŸ› Signaler un bug', update_later:'Plus tard',
   },
   es:{
-    tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas', btn_manage:'Gestionar', btn_all:'Todos', rail_running:'En ejecución', btn_new_cape:'Capa nueva',
+    tab_launch:'Iniciar', tab_mods:'Opciones Cliente', tab_profiles:'Perfiles', tab_cape:'Capas', btn_manage:'Gestionar', btn_all:'Todos', rail_running:'En ejecución',
     tab_settings:'Ajustes', tab_logs:'Registros', tab_account:'Account', tab_recent:'Recientes', tab_servers:'Servidores', tab_features:'Funciones', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
     h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
   sub_mods:'Mods que funcionan con cada versión de Minecraft', sub_profiles:'Tus versiones, cargadores de mods y listas',
