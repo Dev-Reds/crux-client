@@ -71,7 +71,34 @@ keine festen `rgba(255,255,255,…)`-Werte, sonst brechen helle Bilder.
 - `body.glass::before` = Hintergrundbild (`--gs-frame`), `body.glass::after` =
   Scrim (`--gs-scrim`). Reihenfolge zwingend: Bild zuerst, Scrim darüber.
 
-### Typografie
+### Seiten-Schema (jede Seite)
+
+Jede Seite beginnt mit demselben Kopf:
+
+```html
+<header class="page-head">
+  <div class="page-head__main">
+    <h1 data-i18n="h_x">Titel</h1>
+    <p class="page-head__sub" data-i18n="sub_x">Untertitel</p>
+  </div>
+  <div class="page-head__actions"> … Buttons … </div>
+</header>
+```
+
+- `sub_*` ist ein eigener i18n-Schlüssel (en/de/fr/es) — **pro Seite anlegen**,
+  wenn eine neue Seite dazukommt.
+- Inhalte kommen in `.card` (mit `.card__head` / `.card__body` / `.card__actions`).
+- `.hint` = gedämpfter Hinweistext, `.form-row--narrow|--wide` = Formularbreiten,
+  `.form-grid` = 2-Spalten-Formular, `.tile-grid` = Kachelraster, `.tag-row` = Tags,
+  `.chip-row` = Filter-Chips, `.step-row` / `.step-chip` = Wizard-Schritte,
+  `.menu-wrap` / `.menu` / `.menu-item` = Dropdown-Menü, `.switch-track` / `.switch-knob`
+  = Schalter (JS schaltet nur noch die Klasse `is-on`, keine Inline-Farben mehr).
+
+**Keine Inline-Styles mehr für die Optik.** Wenn im HTML noch
+`style="background:#111…"` steht, ist das ein Fund: als Klasse im `<style>`
+von `styles.css` nachziehen. Ausnahmen: `display:none` zum Ein-/Ausblenden
+(JS schaltet `style.display`) und `hidden`.
+
 
 `html { font-size: clamp(14px, .42vw + 9.8px, 18px) }` — die alte Basis
 `body{font-size:2vw}` (bei 1200 px = 24 px!) ist weg. **Keine px-Festwerte für
