@@ -103,13 +103,13 @@
 
           <!-- Skin-Werkzeuge (ausklappbar) -->
           <section class="rail-card rail-card--fold" id="rail-skin">
-            <header class="rail-card__head">
+            <button class="rail-card__head rail-card__head--toggle" id="rail-skin-toggle" type="button"
+                    aria-expanded="false" aria-controls="rail-skin-body">
               <span class="rail-card__title" data-i18n="lbl_change_skin">Change Skin</span>
-              <button class="rail-card__toggle" id="rail-skin-toggle" type="button"
-                      aria-expanded="false" aria-controls="rail-skin-body" title="Skin-Editor">
+              <span class="rail-card__toggle" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-              </button>
-            </header>
+              </span>
+            </button>
             <div class="rail-card__body" id="rail-skin-body" hidden>
               <div class="skin-panel__row">
                 <input type="text" id="skin-url-input" placeholder="Skin URL...">
@@ -171,7 +171,7 @@
           </div>
         </header>
         <div class="card__body">
-          <p class="hint" data-i18n="desc_rp_auto">When enabled, adds <strong>Open Loader</strong> to your client mods — it automatically loads all resource packs listed below without touching in-game settings.</p>
+          <p class="hint" data-i18n="desc_rp_auto">When enabled, adds Open Loader to your client mods — it automatically loads all resource packs listed below without touching in-game settings.</p>
           <div id="client-rp-list" class="tag-row"></div>
         </div>
       </section>
@@ -335,7 +335,7 @@
         <div class="settings-section">
           <h2 data-i18n="sec_corner_radius">Corner Radius</h2>
           <div class="form-row form-row--narrow">
-            <label data-i18n="lbl_corner_radius">Roundness: <span id="corner-radius-val" class="accent-text">8px</span></label>
+            <label><span data-i18n="lbl_corner_radius">Roundness</span> <span id="corner-radius-val" class="accent-text">8px</span></label>
             <input type="range" id="corner-radius-slider" min="0" max="24" step="1" value="8">
           </div>
         </div>
@@ -2522,47 +2522,37 @@ function buildSettingsNav(){
   const nav=document.getElementById('settings-nav');
   const body=document.querySelector('#settings-page .settings-body');
   if(!nav||!body) return;
-  const navBtns=[...nav.children];
-  const activeIdx=navBtns.findIndex(b=>b.classList.contains('active'));
+  const current=nav.querySelector('button.active')?.dataset.group||'';
   nav.innerHTML='';
 
-  // Eine Nav-Eintrag-Gruppe pro settings-group (nicht pro Einzelabschnitt)
+  // Jede Gruppe ist ein eigener Tab - es wird nicht durch alle gescrollt
   body.querySelectorAll('.settings-group').forEach(grp=>{
     const h2=grp.querySelector('.settings-group__title');
     if(!h2) return;
     const btn=document.createElement('button');
     btn.type='button';
+    btn.dataset.group=grp.id;
     const label=h2.textContent.trim();
     btn.textContent=label;
     btn.title=label;
-    btn.addEventListener('click',()=>{
-      grp.scrollIntoView({behavior:'smooth',block:'start'});
-      [...nav.children].forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-    });
+    btn.addEventListener('click',()=>showSettingsGroup(grp.id));
     nav.appendChild(btn);
   });
-  const list=[...nav.children];
-  if(list[activeIdx]&&activeIdx>=0) list[activeIdx].classList.add('active');
-  else if(list[0]) list[0].classList.add('active');
+  showSettingsGroup(current||(body.querySelector('.settings-group')||{}).id);
 }
-(function settingsScrollSpy(){
-  const page=document.getElementById('settings-page');
-  if(!page) return;
-  page.addEventListener('scroll',()=>{
-    const nav=document.getElementById('settings-nav');
-    const body=document.querySelector('#settings-page .settings-body');
-    if(!nav||!body) return;
-    const btns=[...nav.children];
-    if(btns.length===0) return;
-    const offset=page.getBoundingClientRect().top + 12;
-    let idx=0;
-    body.querySelectorAll('.settings-group').forEach((s,i)=>{
-      if(s.getBoundingClientRect().top - offset <= 0) idx=i;
-    });
-    btns.forEach((b,i)=>b.classList.toggle('active',i===idx));
-  });
-})();
+
+// Zeigt genau eine Gruppe, blendet die anderen aus
+function showSettingsGroup(id){
+  const groups=[...document.querySelectorAll('#settings-page .settings-group')];
+  if(!groups.length) return;
+  let target=groups.find(g=>g.id===id)||groups[0];
+  groups.forEach(g=>{ g.hidden=(g!==target); });
+  const nav=document.getElementById('settings-nav');
+  if(nav) [...nav.children].forEach(b=>b.classList.toggle('active',b.dataset.group===target.id));
+  const body=document.querySelector('#settings-page .settings-body');
+  if(body) body.scrollTop=0;
+}
+// (kein Scroll-Spy mehr: die Einstellungen sind Tabs, kein durchscrollendes Fenster)
 
 function saveSettings(){ ipcRenderer.send('save-settings',settings); }
 

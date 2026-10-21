@@ -1072,22 +1072,32 @@ input[type=range]::-webkit-slider-thumb {
   color: var(--muted);
 }
 .rail-card__action { width: auto; padding: .22rem .55rem; font-size: var(--fs-xs); }
+/* Aufklappbarer Card-Kopf: der ganze Kopf ist die Schaltflaeche */
+.rail-card__head--toggle {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--r-sm);
+  transition: background .16s ease;
+}
+.rail-card__head--toggle:hover { background: rgba(255, 255, 255, .06); }
+.rail-card__head--toggle .rail-card__title { color: var(--text-2); transition: color .16s ease; }
+.rail-card__head--toggle:hover .rail-card__title { color: var(--text); }
 .rail-card__toggle {
-  width: 26px;
-  height: 26px;
   display: grid;
   place-items: center;
-  padding: 0;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--border);
-  background: transparent;
+  width: 22px;
+  height: 22px;
   color: var(--muted);
-  cursor: pointer;
-  transition: transform .2s ease, color .16s ease, background .16s ease, border-color .16s ease;
+  flex: none;
 }
 .rail-card__toggle svg { width: 15px; height: 15px; transform: rotate(-90deg); transition: transform .2s ease; }
-.rail-card__toggle:hover { color: var(--text); background: var(--surface-3); border-color: var(--border-strong); }
-.rail-card__toggle.is-open svg { transform: rotate(0deg); }
+.rail-card__head--toggle[aria-expanded="true"] .rail-card__toggle svg { transform: rotate(0deg); }
 .rail-card__body { display: flex; flex-direction: column; gap: .5rem; }
 .rail-card__body[hidden] { display: none; }
 .rail-body { display: flex; flex-direction: column; gap: .4rem; }
@@ -1389,8 +1399,9 @@ input[type=range]::-webkit-slider-thumb {
 .settings-nav button:hover { background: var(--surface-2); color: var(--text); }
 .settings-nav button.active { background: var(--acc-soft); border-color: var(--acc-line); color: var(--text); font-weight: 650; }
 .settings-body { flex: 1; min-width: 0; scroll-margin-top: 1rem; }
-/* Gruppen: Performance, Darstellung, Sprache, Verhalten, ... */
+/* Gruppen: jede Gruppe ist ein eigener Tab, die anderen sind ausgeblendet */
 .settings-group { margin-bottom: var(--sp-5); }
+.settings-group[hidden] { display: none; }
 .settings-group__title {
   font-size: var(--fs-xs);
   font-weight: 800;
