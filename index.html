@@ -65,6 +65,23 @@
               <div class="lp-label" id="lp-label"></div>
             </div>
           </div>
+
+          <!-- Laufende Instanzen (nur sichtbar, wenn etwas laeuft) -->
+          <section class="rail-card" id="rail-instances" hidden>
+            <header class="rail-card__head">
+              <span class="rail-card__title" data-i18n="rail_running">Running</span>
+            </header>
+            <div class="rail-list" id="rail-instance-list"></div>
+          </section>
+
+          <!-- Schnellstart: Profile -->
+          <section class="rail-card" id="rail-profiles">
+            <header class="rail-card__head">
+              <span class="rail-card__title" data-i18n="tab_profiles">Profiles</span>
+              <button class="btn btn-sm btn-ghost rail-card__action" id="rail-profiles-btn" data-i18n="btn_all">All</button>
+            </header>
+            <div class="rail-list" id="rail-profile-list"></div>
+          </section>
         </div>
         <div class="launch-right">
           <div class="skin3d-wrap" id="skin3d-wrap">
@@ -82,22 +99,7 @@
             <div class="rail-body" id="rail-account-body"></div>
           </section>
 
-          <!-- Schnellstart: Profile -->
-          <section class="rail-card" id="rail-profiles">
-            <header class="rail-card__head">
-              <span class="rail-card__title" data-i18n="tab_profiles">Profiles</span>
-              <button class="btn btn-sm btn-ghost rail-card__action" id="rail-profiles-btn" data-i18n="btn_all">All</button>
-            </header>
-            <div class="rail-list" id="rail-profile-list"></div>
-          </section>
 
-          <!-- Laufende Instanzen (nur sichtbar, wenn etwas laeuft) -->
-          <section class="rail-card" id="rail-instances" hidden>
-            <header class="rail-card__head">
-              <span class="rail-card__title" data-i18n="rail_running">Running</span>
-            </header>
-            <div class="rail-list" id="rail-instance-list"></div>
-          </section>
 
           <div class="skin-panel">
             <div class="skin-panel__row">
