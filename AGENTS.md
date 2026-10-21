@@ -52,6 +52,7 @@ cruxclient.net per `getComputedStyle` verifiziert):
 | Variable | Wer setzt sie | Bedeutung |
 |---|---|---|
 | `--acc` / `--acc2` | `applyAccent()` | Akzentfarbe + 70%-Variante |
+| `--acc-on` | `applyAccent()` | Textfarbe **auf** Akzentflächen (dunkel bei hellen Farben) |
 | `--r` | `applyCornerRadius()` | Eckenradius in px (0–24, Settings) |
 | `--ls-*` | Custom-Dropdown | Listen-/Select-Farben (Dropdown-Code greift darauf zu) |
 | `--gs-*` | `setGlassTone(dark)` | Glass-Ton (hell/Standard bzw. dunkel für dunkle Bilder) |
@@ -75,6 +76,24 @@ keine festen `rgba(255,255,255,…)`-Werte, sonst brechen helle Bilder.
 `html { font-size: clamp(14px, .42vw + 9.8px, 18px) }` — die alte Basis
 `body{font-size:2vw}` (bei 1200 px = 24 px!) ist weg. **Keine px-Festwerte für
 Größen**, sondern `rem` (Basis) bzw. `em` innerhalb von Komponenten.
+
+### Modern-Look (Glas + Ambient)
+
+- **Glas-Flaechen**: `--glass-bg`, `--glass-bg-2`, `--glass-border`,
+  `--glass-border-2`, `--glass-blur`, `--glass-shadow`. Listen, Settings-Sektionen,
+  Modals, Hero, Skin-Panel und Feature-Cards nutzen diese Tokens **plus**
+  `backdrop-filter`. Im Glass-Theme überschreiben `--gs-panel`/`--gs-list`/
+  `--gs-bd` diese Tokens, damit helle und dunkle Hintergrundbilder jeweils
+  passende Panel-Farben bekommen.
+- **Ambient-Hintergrund**: `body:not(.glass)::before` = weiche, langsam driftende
+  Farbwolken (26 s), `::after` = feines Raster als Textur. Die beiden Slots sind
+  im Glass-Theme belegt (Bild + Scrim) — daher zwingend der `:not(.glass)`-Guard.
+  Bei `prefers-reduced-motion` keine Animation.
+- **Toolbar** ist eine **schwebende** Glas-Leiste (Margin + Radius 18 px), bei
+  `tabs-left`/`tabs-right` eine schwebende vertikale Schiene.
+- **Display-Typografie**: `.page h1` und `.launch-title` als Verlaufstext
+  (`background-clip: text`), Weight 800, Tracking `-.035em`/`-.04em`.
+- Aktiver Tab = Verlaufs-Pill (hell → Akzent) mit dunkler Schrift (`--acc-on`).
 
 ### Screenshots prüfen (Headless)
 
