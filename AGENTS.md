@@ -122,6 +122,65 @@ Größen**, sondern `rem` (Basis) bzw. `em` innerhalb von Komponenten.
   (`background-clip: text`), Weight 800, Tracking `-.035em`/`-.04em`.
 - Aktiver Tab = Verlaufs-Pill (hell → Akzent) mit dunkler Schrift (`--acc-on`).
 
+### Profil-Tab: Karten statt Zeilen (2026-10-22)
+
+Der Profil-Tab ist ein **Grid aus Karten** (`.profile-grid` + `.profile-card`),
+keine flache Liste mehr.
+
+- `.profile-grid` hebt die generische Listen-Flaeche aus `.profile-list` auf.
+  `.profile-list` / `.profile-item` bleiben fuer **Recent Played** (Logs-Seite)
+  unveraendert — die beiden Klassen nicht verwechseln!
+- Aufbau einer Karte: `.profile-card__head` (Avatar `.profile-card__avatar`,
+  Titel `.profile-card__name`, Badges `.profile-badge`, Aktionen
+  `.profile-card__icon-btn`) + `.profile-card__meta` (Chips `.profile-chip`).
+- Die Avatar-Farbe folgt dem Mod-Loader (`data-loader="fabric|quilt|forge|
+  neoforge|bedrock|vanilla"`) — dieselben Farben wie die Mod-Filter
+  (`--ok`, `#cc5599`, `--curseforge`, `#ff8800`, `--info`).
+- Aktives Profil: `.is-active` (Akzent-Rand + Streifen links + Badge "Aktiv").
+- Die **Rail-Liste** auf der Startseite (`.rail-profile`) nutzt dieselben
+  Loader-Avatar-Farben, zeigt aber nur Name + Version/Mod-Anzahl. Sie wird
+  von `renderRailProfiles()` gerendert (eigene Funktion, nicht `.rail-item` —
+  das gehoert den laufenden Instanzen).
+- **Keine Inline-Styles** — Badges und Chips sind Klassen in `styles.css`.
+- Glass-Theme: eigene Overrides am Dateiende (`.profile-grid` transparent,
+  `.profile-card` = `--gs-panel`). Badge-/Chip-Farben brauchen dort
+  `!important`, weil das Sicherheitsnetz `body.glass *` die Textfarben
+  ueberschreibt.
+
+### Hintergrundfarbe (Appearance, 2026-10-22)
+
+In der Appearance-Gruppe liegt die Karte **„Background Color"**
+(`#bg-color-section`):
+
+- `settings.bgColor` (Hex, leer = Theme-Standard) wird ueber
+  `applyBgColor()` gesetzt: `--bg` kommt als **Inline-Style auf `document.body`**,
+  damit es `body.light { --bg: … }` ueberstimmt.
+- Der Ambient-Glow folgt dann der Akzentfarbe: `--cloud-a` … `--cloud-d` sind
+  eigene Variablen in `body:not(.glass)::before` (Default = die lila Wolken).
+  Ohne eigene Farbe bleiben die Defaults erhalten.
+- **Kontrast**: `bgLuminance()` prueft die Farbe. `body.bg-dark` /
+  `body.bg-light` sorgen dafuer, dass Text direkt auf dem Seiten-Hintergrund
+  (Headline, Untertitel) lesbar bleibt — die Panels (Cards) behalten ihre
+  Theme-Farben.
+- Die Karte ist im **Glass-Theme ausgeblendet** (`updateBgColorSection()`),
+  dort zeigt das Hintergrundbild die Farbe.
+- `data-i18n-aria` wird von `applyLanguage()` unterstuetzt (aria-label).
+
+### Profil-Reihenfolge: neu/benutzt oben (2026-10-22)
+
+Die Profil-Listen (Profil-Tab, Rail auf der Startseite, Profil-Dropdown)
+sind nach **letzter Nutzung** sortiert:
+
+- Jedes Profil hat `lastUsed` (Zeitstempel). `sortedProfiles()` sortiert
+  absteigend; `Array.sort` ist stabil, Profile ohne Zeitstempel behalten
+  ihre Reihenfolge.
+- `touchProfile(id)` setzt `lastUsed = Date.now()` und rendert neu — wird beim
+  **Start** eines Profils aufgerufen.
+- Neu angelegte Profile (New Profile, Share-Code-Import, NoRisk-Import,
+  Modpack-Import) bekommen direkt `lastUsed: Date.now()`.
+- `migrateProfileOrder()` (Boot) gibt Alt-Profilen ohne `lastUsed` absteigende
+  Werte `n-i`, damit die bisherige Reihenfolge erhalten bleibt.
+
 ### Screenshots prüfen (Headless)
 
 Temporäre Harness-Datei **im Repo-Root** (bei `loadFile('index.html')` zählt

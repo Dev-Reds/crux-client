@@ -210,7 +210,7 @@
         <div class="lp-bg"><div class="lp-fill" id="modpack-progress-fill"></div></div>
         <div class="lp-label" id="modpack-progress-label"></div>
       </div>
-      <div class="profile-list" id="profile-list"></div>
+      <div class="profile-list profile-grid" id="profile-list"></div>
     </div>
 
     <!-- ── CAPE & COSMETICS ── -->
@@ -314,6 +314,16 @@
         <div class="settings-section">
           <h2 data-i18n="sec_color">Active Tab Color (17 colors)</h2>
           <div class="color-grid" id="color-grid"></div>
+        </div>
+        <div class="settings-section" id="bg-color-section">
+          <h2 data-i18n="sec_bg_color">Background Color</h2>
+          <p class="hint" data-i18n="desc_bg_color">Colour of the launcher background. The ambient glow follows your accent colour.</p>
+          <div class="bg-color-row">
+            <input type="color" id="bg-color-input" class="bg-color-input" data-i18n-aria="sec_bg_color" aria-label="Background Color">
+            <button class="btn btn-sm btn-ghost bg-color-reset" id="bg-color-reset-btn" data-i18n="btn_bg_default">Default</button>
+            <span class="bg-color-hint" id="bg-color-value"></span>
+          </div>
+          <div class="color-grid color-grid--bg" id="bg-color-grid"></div>
         </div>
         <div class="settings-section" id="glass-bg-section" style="display:none">
           <h2 data-i18n="sec_glass_bg">Glass Background</h2>
@@ -1529,6 +1539,79 @@ function buildColorGrid(){
   });
 }
 
+// ── Hintergrundfarbe (Appearance) ──────────────────────────────────────
+// Setzt --bg am Body. Der Ambient-Glow folgt dann der Akzentfarbe, damit
+// die gewaehlte Farbe nicht von den lila Wolken ueberdeckt wird.
+const BG_PRESETS = ['#0a0910','#12101c','#0d1420','#101a16','#1a1210','#181018','#0f0f0f','#f4f2fa'];
+let currentBgColor = '';
+function applyBgColor(color){
+  currentBgColor = color || '';
+  const st = document.body.style;
+  if (currentBgColor){
+    st.setProperty('--bg', currentBgColor);
+    st.setProperty('--bg-grad',
+      'radial-gradient(1100px 620px at 76% -12%, color-mix(in srgb, var(--acc) 20%, transparent) 0%, transparent 62%),'+
+      'radial-gradient(900px 520px at 6% 110%, color-mix(in srgb, var(--acc) 22%, transparent) 0%, transparent 64%)');
+    st.setProperty('--cloud-a','color-mix(in srgb, var(--acc) 30%, transparent)');
+    st.setProperty('--cloud-b','color-mix(in srgb, var(--acc) 24%, transparent)');
+    st.setProperty('--cloud-c','color-mix(in srgb, var(--acc) 18%, transparent)');
+    st.setProperty('--cloud-d','color-mix(in srgb, var(--acc) 10%, transparent)');
+  } else {
+    st.removeProperty('--bg');
+    st.removeProperty('--bg-grad');
+    st.removeProperty('--cloud-a'); st.removeProperty('--cloud-b');
+    st.removeProperty('--cloud-c'); st.removeProperty('--cloud-d');
+  }
+  const inp = document.getElementById('bg-color-input');
+  if (inp) inp.value = currentBgColor || defaultBgColor();
+  const hint = document.getElementById('bg-color-value');
+  if (hint) hint.textContent = currentBgColor ? currentBgColor.toUpperCase() : t('bg_color_theme_default');
+  // Kontrast: Text direkt auf dem Seiten-Hintergrund an den Hintergrund anpassen
+  const dark = currentBgColor ? bgLuminance(currentBgColor) < 0.2 : false;
+  document.body.classList.toggle('bg-dark', dark);
+  document.body.classList.toggle('bg-light', !!currentBgColor && !dark);
+  buildBgColorGrid();
+}
+// Relative Helligkeit einer Hex-Farbe (0 = schwarz, 1 = weiss)
+function bgLuminance(hex){
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(String(hex||''));
+  if (!m) return 0;
+  const c = [1,2,3].map(i=>{
+    const v = parseInt(m[i], 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+function defaultBgColor(){
+  return (settings && settings.theme==='light') ? '#f4f2fa' : '#0a0910';
+}
+function buildBgColorGrid(){
+  const g = document.getElementById('bg-color-grid');
+  if (!g) return;
+  g.innerHTML = '';
+  BG_PRESETS.forEach(c=>{
+    const b = document.createElement('button');
+    b.className = 'color-btn bg-color-btn' + (currentBgColor.toLowerCase()===c ? ' sel' : '');
+    b.style.background = c;
+    b.title = c;
+    b.addEventListener('click', ()=>{ setBgColor(c); });
+    g.appendChild(b);
+  });
+  const reset = document.getElementById('bg-color-reset-btn');
+  if (reset) reset.disabled = !currentBgColor;
+}
+function setBgColor(color){
+  settings.bgColor = color || '';
+  applyBgColor(color);
+  saveSettings();
+}
+// Im Glass-Theme zeigt das Hintergrundbild die Farbe — die Farbwahl gilt
+// nur fuer Dark und Light.
+function updateBgColorSection(){
+  const sec = document.getElementById('bg-color-section');
+  if (sec) sec.style.display = (settings && settings.theme==='glass') ? 'none' : '';
+}
+
 // ────────────────────────────────────────
 // INIT
 // ────────────────────────────────────────
@@ -1546,6 +1629,7 @@ async function bootUpdateWindow(){
     if(typeof settings.accentIdx==='number'){ currentAccentIdx=settings.accentIdx; }
     try { applyLanguage(settings.lang || 'en'); } catch {}
     try { applyCornerRadius(); } catch {}
+    try { applyBgColor(settings.bgColor || ''); } catch {}
     try { glassDefaultBgs = (await ipcRenderer.invoke('get-default-glass-bgs')) || []; } catch {}
     try { applyGlassBg(); } catch {}
     try { applyAccent(currentAccentIdx); } catch {}
@@ -1597,6 +1681,8 @@ async function bootLauncher(){
     installedMods = results[3].status==='fulfilled' ? results[3].value : [];
     launchedVersions = results[4].status==='fulfilled' ? results[4].value : [];
     recentHistory = settings.recentHistory || [];
+    // Profile ohne lastUsed: absteigende Werte setzen (alte Reihenfolge bleibt)
+    try { migrateProfileOrder(); } catch (e) { console.warn('[Crux] profile order migration failed', e); }
     // Alte Schein-"Worlds"-Einträge migrieren: es waren nur Spielstarts ohne Welt
     try {
       let recFix=0;
@@ -1636,6 +1722,8 @@ async function bootLauncher(){
     applyLanguage(settings.lang || 'en');
     applyCornerRadius();
     updateGlassBgSection();
+    updateBgColorSection();
+    applyBgColor(settings.bgColor || '');
     try { glassDefaultBgs = (await ipcRenderer.invoke('get-default-glass-bgs')) || []; } catch {}
     applyGlassBg();
     renderGlassBgPresets();
@@ -1937,6 +2025,7 @@ const LANGS={
     btn_copy_code:'📋 Copy Code', btn_import_profile:'Import Profile',
     status_ready:'Ready.', status_loading:'Loading versions...',
     sec_java:'Java Installation', sec_ram:'RAM for Minecraft', sec_lang:'Language', sec_color:'Active Tab Color (17 colors)',
+    sec_bg_color:'Background Color', desc_bg_color:'Colour of the launcher background. The ambient glow follows your accent colour.', btn_bg_default:'Default', bg_color_theme_default:'Theme default',
     btn_rescan:'↻ Rescan Java', btn_dl21:'Download Java 21', btn_dl17:'Download Java 17',
     new_profile:'+ New Profile', edit:'Edit', save:'Save', delete:'Delete',
     no_mods:'No mods installed yet.', no_profiles:'No profiles yet.', no_accounts:'No accounts added yet.', no_instances:'No instances launched yet.',
@@ -1945,6 +2034,7 @@ const LANGS={
     ver_latest:'— Latest Release —', ver_latest_snap:'— Latest Snapshot —', ver_latest_prerelease:'— Latest Pre-release —', ver_releases:'Releases', ver_snapshots:'Snapshots', ver_other:'Other',
     profile_name:'Name:', profile_version:'Minecraft Version:', profile_section:'Section:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Resource Packs', profile_shaderpacks:'Shader Packs',
+    profile_active:'Active', profile_group:'Group', profile_latest:'Latest', profile_mod_one:'Mod',
     lbl_group:'Settings Group (keybinds & settings):', desc_group:'Profiles in the same group share the same Minecraft settings (keybinds, video settings, ...).',
     btn_import_settings:'Import MC Settings…', btn_done:'Done', btn_import:'Import',
     modal_import_settings:'Import Minecraft Settings', modal_import_settings_desc:'Import keybinds and settings from another launcher (Feather, vanilla, ...). They are saved into this profile\'s settings group and apply to every profile in that group.',
@@ -2078,6 +2168,7 @@ const LANGS={
     btn_copy_code:'📋 Code kopieren', btn_import_profile:'Profil importieren',
     status_ready:'Bereit.', status_loading:'Versionen laden...',
     sec_java:'Java-Installation', sec_ram:'RAM für Minecraft', sec_lang:'Sprache', sec_color:'Tab-Farbe (17 Farben)',
+    sec_bg_color:'Hintergrundfarbe', desc_bg_color:'Farbe des Launcher-Hintergrunds. Der ambient Glow folgt der Akzentfarbe.', btn_bg_default:'Standard', bg_color_theme_default:'Theme-Standard',
     btn_rescan:'↻ Java scannen', btn_dl21:'Java 21 herunterladen', btn_dl17:'Java 17 herunterladen',
     new_profile:'+ Neues Profil', edit:'Bearbeiten', save:'Speichern', delete:'Löschen',
     no_mods:'Keine Mods installiert.', no_profiles:'Keine Profile vorhanden.', no_accounts:'Keine Konten vorhanden.', no_instances:'Keine Instanzen gestartet.',
@@ -2086,6 +2177,7 @@ const LANGS={
     ver_latest:'— Neueste Version —', ver_latest_snap:'— Neuester Snapshot —', ver_latest_prerelease:'— Neueste Vorabversion —', ver_releases:'Vollversionen', ver_snapshots:'Snapshots', ver_other:'Sonstige',
     profile_name:'Name:', profile_version:'Minecraft-Version:', profile_section:'Bereich:', profile_mods:'Mods', profile_datapacks:'Datenpakete',
     profile_resourcepacks:'Ressourcenpakete', profile_shaderpacks:'Shaderpakete',
+    profile_active:'Aktiv', profile_group:'Gruppe', profile_latest:'Neueste', profile_mod_one:'Mod',
     lbl_group:'Einstellungs-Gruppe (Keybinds & Einstellungen):', desc_group:'Profile mit derselben Gruppe teilen sich dieselben Minecraft-Einstellungen (Keybinds, Video-Einstellungen, ...).',
     btn_import_settings:'MC-Einstellungen importieren…', btn_done:'Fertig', btn_import:'Importieren',
     modal_import_settings:'Minecraft-Einstellungen importieren', modal_import_settings_desc:'Importiere Keybinds und Einstellungen von einem anderen Launcher (Feather, Vanilla, ...). Sie werden in die Einstellungs-Gruppe dieses Profils gespeichert und gelten für alle Profile dieser Gruppe.',
@@ -2219,6 +2311,7 @@ const LANGS={
     btn_copy_code:'ðŸ“‹ Copier le code', btn_import_profile:'Importer le profil',
     status_ready:'Prêt.', status_loading:'Chargement des versions...',
     sec_java:'Installation Java', sec_ram:'RAM pour Minecraft', sec_lang:'Langue', sec_color:'Couleur de l\'onglet actif',
+    sec_bg_color:'Couleur de fond', desc_bg_color:'Couleur du fond du launcher. Le halo ambiant suit la couleur d\'accent.', btn_bg_default:'Par défaut', bg_color_theme_default:'Couleur du thème',
     btn_rescan:'↻ Analyser Java', btn_dl21:'Télécharger Java 21', btn_dl17:'Télécharger Java 17',
     new_profile:'+ Nouveau profil', edit:'Modifier', save:'Enregistrer', delete:'Supprimer',
     no_mods:'Aucun mod installé.', no_profiles:'Aucun profil.', no_accounts:'Aucun compte.', no_instances:'Aucune instance.',
@@ -2227,6 +2320,7 @@ const LANGS={
     ver_latest:'— Dernière version —', ver_latest_snap:'— Dernier instantané —', ver_latest_prerelease:'— Dernière préversion —', ver_releases:'Versions', ver_snapshots:'Instantanés', ver_other:'Autres',
     profile_name:'Nom :', profile_version:'Version Minecraft :', profile_section:'Section :', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Packs de ressources', profile_shaderpacks:'Packs de shaders',
+    profile_active:'Actif', profile_group:'Groupe', profile_latest:'Recente', profile_mod_one:'Mod',
     lbl_group:'Groupe de réglages (touches & paramètres) :', desc_group:'Les profils du même groupe partagent les mêmes réglages Minecraft (touches, vidéo, ...).',
     btn_import_settings:'Importer les réglages MC…', btn_done:'Terminé', btn_import:'Importer',
     modal_import_settings:'Importer les réglages Minecraft', modal_import_settings_desc:'Importez les touches et réglages d\'un autre launcher (Feather, vanilla, ...). Ils sont enregistrés dans le groupe de réglages de ce profil et s\'appliquent à tous les profils du groupe.',
@@ -2358,6 +2452,7 @@ const LANGS={
     btn_copy_code:'ðŸ“‹ Copiar código', btn_import_profile:'Importar perfil',
     status_ready:'Listo.', status_loading:'Cargando versiones...',
     sec_java:'Instalación de Java', sec_ram:'RAM para Minecraft', sec_lang:'Idioma', sec_color:'Color de pestaña activa',
+    sec_bg_color:'Color de fondo', desc_bg_color:'Color del fondo del launcher. El halo ambiental sigue el color de acento.', btn_bg_default:'Predeterminado', bg_color_theme_default:'Color del tema',
     btn_rescan:'↻ Buscar Java', btn_dl21:'Descargar Java 21', btn_dl17:'Descargar Java 17',
     new_profile:'+ Nuevo perfil', edit:'Editar', save:'Guardar', delete:'Eliminar',
     no_mods:'Sin mods instalados.', no_profiles:'Sin perfiles.', no_accounts:'Sin cuentas.', no_instances:'Sin instancias.',
@@ -2366,6 +2461,7 @@ const LANGS={
     ver_latest:'— Última versión —', ver_latest_snap:'— Último instantáneo —', ver_latest_prerelease:'— Última versión preliminar —', ver_releases:'Versiones', ver_snapshots:'Instantáneas', ver_other:'Otras',
     profile_name:'Nombre:', profile_version:'Versión de Minecraft:', profile_section:'Sección:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Paquetes de recursos', profile_shaderpacks:'Paquetes de shaders',
+    profile_active:'Activo', profile_group:'Grupo', profile_latest:'Reciente', profile_mod_one:'Mod',
     lbl_group:'Grupo de ajustes (teclas y ajustes):', desc_group:'Los perfiles del mismo grupo comparten los mismos ajustes de Minecraft (teclas, vídeo, ...).',
     btn_import_settings:'Importar ajustes de MC…', btn_done:'Listo', btn_import:'Importar',
     modal_import_settings:'Importar ajustes de Minecraft', modal_import_settings_desc:'Importa teclas y ajustes de otro launcher (Feather, vanilla, ...). Se guardan en el grupo de ajustes de este perfil y se aplican a todos los perfiles de ese grupo.',
@@ -2505,6 +2601,12 @@ function applyLanguage(lang){
     const key=el.dataset.i18nTitle;
     const val=t(key);
     if(val) el.title=val;
+  });
+  // Update aria-label attributes
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{
+    const key=el.dataset.i18nAria;
+    const val=t(key);
+    if(val) el.setAttribute('aria-label', val);
   });
   // Re-apply active button styling after text change
   applyAccent(currentAccentIdx);
@@ -2685,6 +2787,8 @@ document.getElementById('launch-btn').addEventListener('click',async()=>{
     autoDownloadForVersion(version);
   }
 
+  // Profil wurde benutzt -> wandert in der Liste nach oben
+  touchProfile(pid);
   ipcRenderer.send('launch-minecraft',{
     version, javaPath, ram, ramUnit, modLoader,
     profileId: pid,
@@ -2988,23 +3092,86 @@ document.getElementById('autoscroll-btn').addEventListener('click',()=>{
 // ────────────────────────────────────────
 // PROFILES
 // ────────────────────────────────────────
+// ── Profil-Tab: Karten-Grid ────────────────────────────────────────────
+// Jedes Profil ist eine eigene Karte: Avatar-Kachel, Badges, Meta-Chips
+// und Aktionen. Optik komplett in styles.css (.profile-card).
+const PROFILE_LOADERS = ['vanilla','fabric','quilt','forge','neoforge','bedrock'];
+function profileLoaderKey(loader){
+  const l = String(loader||'').toLowerCase();
+  return PROFILE_LOADERS.includes(l) ? l : 'vanilla';
+}
+function profileLoaderGlyph(loader){
+  return { vanilla:'V', fabric:'F', quilt:'Q', forge:'Fo', neoforge:'N', bedrock:'B' }[profileLoaderKey(loader)] || 'V';
+}
+// ── Reihenfolge: neu angelegte und zuletzt benutzte Profile oben ────────
+function sortedProfiles(){
+  // Sort ist stabil: Profile ohne Zeitstempel behalten ihre Reihenfolge.
+  return profiles.slice().sort((a,b)=>(b.lastUsed||0)-(a.lastUsed||0));
+}
+function touchProfile(id){
+  const p = profiles.find(x=>x.id===id);
+  if(!p) return;
+  p.lastUsed = Date.now();
+  ipcRenderer.send('save-profiles', profiles);
+  renderProfileList();
+  renderLaunchRail();
+}
+// Migration: Profile ohne lastUsed bekommen absteigende Werte, damit die
+// bisherige Reihenfolge erhalten bleibt und neue Profile nach oben kommen.
+function migrateProfileOrder(){
+  const n = profiles.length;
+  let changed = false;
+  profiles.forEach((p,i)=>{ if(typeof p.lastUsed!=='number'){ p.lastUsed = n-i; changed = true; } });
+  if(changed) ipcRenderer.send('save-profiles', profiles);
+}
 function renderProfileList(){
   const el=document.getElementById('profile-list'); el.innerHTML='';
-  if(!profiles.length){el.innerHTML='<div class="mod-list-empty">No profiles yet.</div>';return;}
-  profiles.forEach(p=>{
-    const item=document.createElement('div');
-    item.className='profile-item'+(p.id===settings.selectedProfile?' sel':'');
-    item.innerHTML=`<span class="profile-name">${p.name}${p.isModpack?'<span style="font-size:.7em;margin-left:.4em;padding:.1em .35em;border-radius:999px;background:#1bd96a22;color:#1bd96a;border:1px solid #1bd96a44">modpack</span>':''}${p.isNrcImported?'<span style="font-size:.7em;margin-left:.4em;padding:.1em .35em;border-radius:999px;background:#e63c8a22;color:#e63c8a;border:1px solid #e63c8a44">NRC</span>':''}</span><span class="profile-meta">${p.mcVersion||'Latest'} · ${p.modLoader||'fabric'} · ${(p.mods||[]).length} mods · <span style="color:${p.group&&p.group!=='default'?'#1bd96a':'#666'}">group:${p.group||'default'}</span></span><button class="btn profile-share-btn" title="Share Profile">Share</button>`;
-    item.addEventListener('click',e=>{ if(e.target.classList.contains('profile-share-btn'))return; settings.selectedProfile=p.id; saveSettings(); openProfileModal(p.id); renderProfileList(); updateLaunchProfileSelect(); syncModFilterToProfile(); });
-    item.querySelector('.profile-share-btn').addEventListener('click',()=>{shareProfile(p.id);});
-    el.appendChild(item);
+  if(!profiles.length){ el.innerHTML='<div class="mod-list-empty">'+escHtml(t('no_profiles'))+'</div>'; return; }
+  sortedProfiles().forEach(p=>{
+    const loader=profileLoaderKey(p.modLoader);
+    const isActive=p.id===settings.selectedProfile;
+    const modCount=(p.mods||[]).length;
+    const group=(p.group||'default').trim()||'default';
+    const card=document.createElement('article');
+    card.className='profile-card'+(isActive?' is-active':'');
+    card.tabIndex=0;
+    card.innerHTML=`
+      <div class="profile-card__head">
+        <span class="profile-card__avatar" data-loader="${loader}">${profileLoaderGlyph(loader)}</span>
+        <div class="profile-card__top">
+          <h3 class="profile-card__name">${escHtml(p.name||'Profile')}</h3>
+          ${isActive?'<span class="profile-badge profile-badge--active">'+escHtml(t('profile_active'))+'</span>':''}
+          ${p.isModpack?'<span class="profile-badge profile-badge--modpack">Modpack</span>':''}
+          ${p.isNrcImported?'<span class="profile-badge profile-badge--nrc">NRC</span>':''}
+        </div>
+        <div class="profile-card__actions">
+          <button type="button" class="btn btn-sm profile-card__icon-btn profile-share-btn" title="${escHtml(t('btn_share'))}" aria-label="${escHtml(t('btn_share'))}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+          </button>
+          <button type="button" class="btn btn-sm profile-card__icon-btn profile-edit-btn" title="${escHtml(t('edit'))}" aria-label="${escHtml(t('edit'))}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="profile-card__meta">
+        <span class="profile-chip profile-chip--ver">${escHtml(p.mcVersion||t('profile_latest'))}</span>
+        <span class="profile-chip profile-chip--${loader}">${escHtml(loader)}</span>
+        <span class="profile-chip">${modCount} ${escHtml(modCount===1?t('profile_mod_one'):t('profile_mods'))}</span>
+        ${group!=='default'?'<span class="profile-chip profile-chip--group profile-chip--group-custom">'+escHtml(t('profile_group'))+': '+escHtml(group)+'</span>':''}
+      </div>`;
+    const openProfile=()=>{ settings.selectedProfile=p.id; saveSettings(); openProfileModal(p.id); renderProfileList(); updateLaunchProfileSelect(); syncModFilterToProfile(); };
+    card.addEventListener('click',e=>{ if(e.target.closest('button'))return; openProfile(); });
+    card.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openProfile(); } });
+    card.querySelector('.profile-edit-btn').addEventListener('click',openProfile);
+    card.querySelector('.profile-share-btn').addEventListener('click',()=>{shareProfile(p.id);});
+    el.appendChild(card);
   });
   renderLaunchRail();
 }
 
 function updateLaunchProfileSelect(){
   const sel=document.getElementById('profileSelect'); sel.innerHTML='';
-  profiles.forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; if(p.id===settings.selectedProfile)o.selected=true; sel.appendChild(o); });
+  sortedProfiles().forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; if(p.id===settings.selectedProfile)o.selected=true; sel.appendChild(o); });
   updateVersionDisplay();
 }
 
@@ -3013,6 +3180,43 @@ function updateVersionDisplay(){
   const p=profiles.find(x=>x.id===document.getElementById('profileSelect').value);
   document.getElementById('profile-version-display').textContent=p?(p.mcVersion||'Latest'):'';
   document.getElementById('skin-version-display').textContent=p?(p.mcVersion||'Latest'):'-';
+}
+
+// ── Rail: Profile-Schnellstart ─────────────────────────────────────
+// Moderne Zeilen: Loader-Avatar, Name, Version/Mods rechts.
+function renderRailProfiles(){
+  const profBox = document.getElementById('rail-profile-list');
+  if (!profBox) return;
+  profBox.innerHTML = '';
+  if (!profiles.length){
+    const empty = document.createElement('div');
+    empty.className = 'rail-empty';
+    empty.textContent = t('no_profiles');
+    profBox.appendChild(empty);
+    return;
+  }
+  sortedProfiles().slice(0, 6).forEach(p => {
+    const loader = profileLoaderKey(p.modLoader);
+    const isActive = p.id === settings.selectedProfile;
+    const modCount = (p.mods || []).length;
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'rail-profile' + (isActive ? ' is-active' : '');
+    item.title = p.name || '';
+    item.innerHTML = `
+      <span class="rail-profile__avatar" data-loader="${loader}">${profileLoaderGlyph(loader)}</span>
+      <span class="rail-profile__name">${escHtml(p.name||'Profile')}</span>
+      <span class="rail-profile__meta">${escHtml(p.mcVersion||t('profile_latest'))}${modCount?' · '+modCount:''}</span>`;
+    item.addEventListener('click', () => {
+      settings.selectedProfile = p.id;
+      saveSettings();
+      const sel = document.getElementById('profileSelect');
+      if (sel) sel.value = p.id;
+      updateVersionDisplay();
+      renderLaunchRail();
+    });
+    profBox.appendChild(item);
+  });
 }
 
 // ── Launch-Rail: Konto, Profile und laufende Instanzen ─────────────────
@@ -3067,38 +3271,7 @@ function renderLaunchRail(){
   }
 
   // --- Profile (Schnellstart) ---
-  const profBox = document.getElementById('rail-profile-list');
-  if (profBox){
-    profBox.innerHTML = '';
-    if (!profiles.length){
-      const empty = document.createElement('div');
-      empty.className = 'rail-empty';
-      empty.textContent = t('no_profiles');
-      profBox.appendChild(empty);
-    } else {
-      profiles.slice(0, 6).forEach(p => {
-        const item = document.createElement('button');
-        item.type = 'button';
-        item.className = 'rail-item' + (p.id === settings.selectedProfile ? ' is-active' : '');
-        const nm = document.createElement('span');
-        nm.className = 'rail-item__name';
-        nm.textContent = p.name;
-        const mt = document.createElement('span');
-        mt.className = 'rail-item__meta';
-        mt.textContent = (p.modLoader || 'vanilla') + (p.mods && p.mods.length ? ' · ' + p.mods.length : '');
-        item.appendChild(nm); item.appendChild(mt);
-        item.addEventListener('click', () => {
-          settings.selectedProfile = p.id;
-          saveSettings();
-          const sel = document.getElementById('profileSelect');
-          if (sel) sel.value = p.id;
-          updateVersionDisplay();
-          renderLaunchRail();
-        });
-        profBox.appendChild(item);
-      });
-    }
-  }
+  renderRailProfiles();
 
   // --- Laufende Instanzen ---
   const instCard = document.getElementById('rail-instances');
@@ -3142,7 +3315,7 @@ document.getElementById('rail-profiles-btn')?.addEventListener('click', () => sh
 
 document.getElementById('new-profile-btn').addEventListener('click',()=>{
   const latestRelease=mcVersionList.find(v=>v.type==='release')?.id||'';
-  const np={id:'p_'+Date.now(),name:'New Profile',group:'default',mcVersion:latestRelease,modLoader:'fabric',mods:[],datapacks:[],resourcePacks:[],shaderPacks:[]};
+  const np={id:'p_'+Date.now(),name:'New Profile',group:'default',mcVersion:latestRelease,modLoader:'fabric',mods:[],datapacks:[],resourcePacks:[],shaderPacks:[],lastUsed:Date.now()};
   profiles.push(np); ipcRenderer.send('save-profiles',profiles); renderProfileList(); updateLaunchProfileSelect(); openProfileModal(np.id);
 });
 
@@ -3901,7 +4074,8 @@ document.getElementById('import-share-confirm-btn').addEventListener('click',asy
       useClientRPs:data.useClientRPs!==false,
       isModpack:!!data.isModpack,
       modrinthId:data.modrinthId||null,
-      mrpackMods:[],mrpackRPs:[]
+      mrpackMods:[],mrpackRPs:[],
+      lastUsed:Date.now()
     };
     profiles.push(np);
     ipcRenderer.send('save-profiles',profiles);
@@ -4016,6 +4190,7 @@ document.getElementById('import-norisk-confirm-btn').addEventListener('click', a
     if(!np) continue;
     let nm=np.name;
     if(profiles.some(p=>p.name===nm)){ let n=2; while(profiles.some(p=>p.name===nm+' ('+n+')')) n++; nm=nm+' ('+n+')'; np.name=nm; }
+    np.lastUsed=Date.now();
     profiles.push(np); added++;
   }
   ipcRenderer.send('save-profiles',profiles);
@@ -5920,7 +6095,8 @@ async function importModpackFromModrinth(projectId, projectName, selectedVersion
       isModpack: true,
       modrinthId: projectId,
       mrpackMods: mods,
-      mrpackRPs: resourcePacks
+      mrpackRPs: resourcePacks,
+      lastUsed: Date.now()
     };
     profiles.push(np);
     rlog('Profile created: '+np.name+' '+mods.length+' mods '+mcVersion+' '+loader);
@@ -7948,11 +8124,28 @@ function renderGlassBgPresets(){
       saveSettings();
       applyTheme(sel.value);
       updateGlassBgSection();
+      updateBgColorSection();
     });
   }
   updateGlassBgSection();
+  updateBgColorSection();
   applyGlassBg();
   renderGlassBgPresets();
+})();
+
+// ── Hintergrundfarbe (Appearance) ──────────────────────────────────────
+(function(){
+  const inp = document.getElementById('bg-color-input');
+  const reset = document.getElementById('bg-color-reset-btn');
+  if (inp){
+    inp.addEventListener('input', ()=>{ applyBgColor(inp.value); });   // Live-Vorschau
+    inp.addEventListener('change', ()=>{ setBgColor(inp.value); });   // erst beim Schliessen speichern
+  }
+  if (reset){
+    reset.addEventListener('click', ()=>{ setBgColor(''); });
+  }
+  applyBgColor(settings.bgColor || '');
+  updateBgColorSection();
 })();
 
 // â”€â”€ Glass background (custom image behind frosted glass) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

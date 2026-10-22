@@ -151,10 +151,10 @@ body:not(.glass)::before {
   z-index: -2;
   pointer-events: none;
   background:
-    radial-gradient(720px 520px at 10% 2%, rgba(160, 108, 255, .45), transparent 60%),
-    radial-gradient(680px 480px at 92% 8%, rgba(91, 50, 184, .42), transparent 60%),
-    radial-gradient(880px 560px at 52% 108%, rgba(120, 80, 255, .3), transparent 62%),
-    radial-gradient(520px 420px at 78% 62%, rgba(201, 166, 255, .16), transparent 64%);
+    radial-gradient(720px 520px at 10% 2%, var(--cloud-a, rgba(160, 108, 255, .45)), transparent 60%),
+    radial-gradient(680px 480px at 92% 8%, var(--cloud-b, rgba(91, 50, 184, .42)), transparent 60%),
+    radial-gradient(880px 560px at 52% 108%, var(--cloud-c, rgba(120, 80, 255, .3)), transparent 62%),
+    radial-gradient(520px 420px at 78% 62%, var(--cloud-d, rgba(201, 166, 255, .16)), transparent 64%);
   filter: blur(30px);
   animation: ambientDrift 26s ease-in-out infinite alternate;
 }
@@ -1151,6 +1151,29 @@ input[type=range]::-webkit-slider-thumb {
 .rail-item--running { border-color: color-mix(in srgb, var(--ok) 35%, transparent); }
 .rail-item__stop { width: auto; padding: .18rem .5rem; font-size: .7rem; color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
 
+/* Profil-Zeilen in der Rail (Schnellstart auf der Startseite) —
+   Loader-Avatar links, Name, Version/Mod-Anzahl rechts. */
+.rail-profile {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  width: 100%;
+  padding: .42rem .5rem;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: .84rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
+}
+.rail-profile:hover { background: rgba(255, 255, 255, .07); color: var(--text); transform: translateX(2px); }
+.rail-profile.is-active { background: var(--acc-soft); border-color: var(--acc-line); color: var(--text); }
+.rail-profile__name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail-profile__meta { flex: none; color: var(--muted); font-size: .72rem; font-variant-numeric: tabular-nums; }
+
 .status-text { color: var(--muted); font-size: var(--fs-sm); margin-top: .6rem; min-height: 1.2em; }
 .status-text.ok { color: var(--ok); }
 .status-text.err { color: var(--danger); }
@@ -1271,6 +1294,160 @@ input[type=range]::-webkit-slider-thumb {
 .profile-edit-btn:hover { border-color: var(--acc); color: var(--acc); }
 .profile-share-btn { width: auto; padding: .22rem .55rem; font-size: var(--fs-xs); background: transparent; border-color: color-mix(in srgb, var(--ok) 35%, transparent); color: var(--ok); border-radius: var(--r-sm); }
 .profile-share-btn:hover { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 10%, transparent); }
+
+/* ── Profil-Karten (Profil-Tab) ────────────────────────────────
+   Der Profil-Tab ist ein Grid aus Karten. `.profile-grid` hebt die
+   generische Listen-Flaeche aus `.profile-list` auf (die bleibt fuer
+   die Recent-Played-Liste aktiv) — jede `.profile-card` traegt die
+   Glas-Flaeche selbst. */
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: var(--sp-3);
+  align-items: start;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.profile-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+  padding: .9rem 1rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+/* Akzent-Streifen links — nur beim aktiven Profil */
+.profile-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--acc);
+  opacity: 0;
+  transition: opacity .18s ease;
+}
+.profile-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--acc-line);
+  background: var(--glass-bg-2);
+  box-shadow: var(--glass-shadow), 0 18px 44px -24px var(--acc-glow);
+}
+.profile-card:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+.profile-card.is-active {
+  border-color: var(--acc);
+  box-shadow: var(--glass-shadow), 0 0 0 1px var(--acc-line), 0 18px 44px -24px var(--acc-glow);
+}
+.profile-card.is-active::before { opacity: 1; }
+
+/* Avatar-Kachel — Farbe folgt dem Mod-Loader (Profil-Karte + Rail) */
+.profile-card__avatar,
+.rail-profile__avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: #fff;
+  background: linear-gradient(135deg, var(--acc-light), var(--acc));
+  box-shadow: 0 6px 16px -9px var(--acc-glow);
+  user-select: none;
+}
+.profile-card__avatar { width: 2.6rem; height: 2.6rem; border-radius: var(--r-sm); font-size: 1rem; }
+.rail-profile__avatar { width: 1.7rem; height: 1.7rem; border-radius: 9px; font-size: .74rem; box-shadow: 0 4px 10px -6px var(--acc-glow); }
+.profile-card__avatar[data-loader="fabric"],
+.rail-profile__avatar[data-loader="fabric"] { background: linear-gradient(135deg, color-mix(in srgb, var(--ok) 62%, #fff), var(--ok)); box-shadow: 0 6px 16px -9px color-mix(in srgb, var(--ok) 60%, transparent); }
+.profile-card__avatar[data-loader="quilt"],
+.rail-profile__avatar[data-loader="quilt"] { background: linear-gradient(135deg, color-mix(in srgb, #cc5599 62%, #fff), #cc5599); box-shadow: 0 6px 16px -9px color-mix(in srgb, #cc5599 60%, transparent); }
+.profile-card__avatar[data-loader="forge"],
+.rail-profile__avatar[data-loader="forge"] { background: linear-gradient(135deg, color-mix(in srgb, var(--curseforge) 62%, #fff), var(--curseforge)); box-shadow: 0 6px 16px -9px color-mix(in srgb, var(--curseforge) 60%, transparent); }
+.profile-card__avatar[data-loader="neoforge"],
+.rail-profile__avatar[data-loader="neoforge"] { background: linear-gradient(135deg, color-mix(in srgb, #ff8800 62%, #fff), #ff8800); box-shadow: 0 6px 16px -9px color-mix(in srgb, #ff8800 60%, transparent); }
+.profile-card__avatar[data-loader="bedrock"],
+.rail-profile__avatar[data-loader="bedrock"] { background: linear-gradient(135deg, color-mix(in srgb, var(--info) 62%, #fff), var(--info)); box-shadow: 0 6px 16px -9px color-mix(in srgb, var(--info) 60%, transparent); }
+.profile-card__avatar[data-loader="vanilla"],
+.rail-profile__avatar[data-loader="vanilla"] { background: linear-gradient(135deg, var(--surface-3), var(--surface-2)); color: var(--text-2); box-shadow: none; }
+
+.profile-card__head { display: flex; align-items: center; gap: .7rem; min-width: 0; }
+.profile-card__top { flex: 1; min-width: 0; display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; overflow: hidden; }
+.profile-card__name {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -.015em;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* Badges (Aktiv / Modpack / NRC / Bedrock) */
+.profile-badge {
+  flex: none;
+  padding: .1rem .5rem;
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.profile-badge--active  { background: var(--acc-soft); border-color: var(--acc-line); color: var(--acc); }
+.profile-badge--modpack { background: color-mix(in srgb, var(--modrinth) 16%, transparent); border-color: color-mix(in srgb, var(--modrinth) 40%, transparent); color: var(--modrinth); }
+.profile-badge--nrc     { background: color-mix(in srgb, #e63c8a 16%, transparent); border-color: color-mix(in srgb, #e63c8a 40%, transparent); color: #e63c8a; }
+.profile-badge--bedrock { background: color-mix(in srgb, var(--info) 16%, transparent); border-color: color-mix(in srgb, var(--info) 40%, transparent); color: var(--info); }
+
+/* Meta-Chips (Version, Loader, Mods, Gruppe) */
+.profile-card__meta { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
+.profile-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .16rem .55rem;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.profile-chip--ver { font-family: var(--mono); }
+.profile-chip--group { color: var(--muted); }
+.profile-chip--group-custom { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 32%, transparent); }
+.profile-chip--vanilla  { color: var(--muted); }
+.profile-chip--fabric   { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 32%, transparent); background: color-mix(in srgb, var(--ok) 10%, transparent); }
+.profile-chip--quilt    { color: #cc5599; border-color: color-mix(in srgb, #cc5599 32%, transparent); background: color-mix(in srgb, #cc5599 10%, transparent); }
+.profile-chip--forge    { color: var(--curseforge); border-color: color-mix(in srgb, var(--curseforge) 32%, transparent); background: color-mix(in srgb, var(--curseforge) 10%, transparent); }
+.profile-chip--neoforge { color: #ff8800; border-color: color-mix(in srgb, #ff8800 32%, transparent); background: color-mix(in srgb, #ff8800 10%, transparent); }
+.profile-chip--bedrock  { color: var(--info); border-color: color-mix(in srgb, var(--info) 32%, transparent); background: color-mix(in srgb, var(--info) 10%, transparent); }
+
+/* Aktionen rechts in der Kopfzeile der Karte */
+.profile-card__actions { flex: none; display: flex; gap: .3rem; }
+.profile-card__icon-btn {
+  width: auto;
+  padding: .3rem;
+  border-radius: var(--r-sm);
+  display: inline-grid;
+  place-items: center;
+  line-height: 0;
+}
+.profile-card__icon-btn svg { width: 1rem; height: 1rem; }
 
 /* Profile-Modal */
 .profile-modal .modal { width: min(95vw, 1500px); max-height: 92vh; }
@@ -1439,6 +1616,45 @@ input[type=range]::-webkit-slider-thumb {
   font-weight: 700;
 }
 .color-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: .45rem; max-width: 24rem; }
+/* Hintergrundfarbe (Appearance) */
+.bg-color-row { display: flex; align-items: center; gap: .6rem; margin-bottom: .7rem; flex-wrap: wrap; }
+.bg-color-input {
+  width: 3.1rem;
+  height: 3.1rem;
+  padding: 0;
+  flex: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+.bg-color-input::-webkit-color-swatch-wrapper { padding: 3px; }
+.bg-color-input::-webkit-color-swatch { border: none; border-radius: 8px; }
+.bg-color-input:hover { border-color: var(--acc); }
+.bg-color-hint { color: var(--muted); font-size: var(--fs-xs); font-family: var(--mono); }
+.color-grid--bg { max-width: 24rem; }
+.bg-color-btn { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); }
+.bg-color-btn.sel { border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-softer); }
+.bg-color-reset { flex: none; }
+.bg-color-reset:disabled { opacity: .45; cursor: default; }
+
+/* Eigene Hintergrundfarbe: Text, der DIREKT auf dem Seiten-Hintergrund
+   liegt (Headline, Untertitel), muss zum Hintergrund passen. Die Panels
+   (Cards) behalten ihre Theme-Farben. */
+body.light.bg-dark .page h1,
+body.light.bg-dark .launch-title {
+  background: none;
+  -webkit-text-fill-color: #fff;
+  color: #fff;
+}
+body.light.bg-dark .page-head__sub { color: rgba(255, 255, 255, .72); }
+body:not(.light):not(.glass).bg-light .page h1,
+body:not(.light):not(.glass).bg-light .launch-title {
+  background: none;
+  -webkit-text-fill-color: #17121f;
+  color: #17121f;
+}
+body:not(.light):not(.glass).bg-light .page-head__sub { color: rgba(23, 18, 31, .68); }
 .corner-grid { display: flex; gap: .6rem; flex-wrap: wrap; }
 .corner-preview { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--sp-4); }
 .gbg-preset { width: 84px; height: 56px; border-radius: var(--r-sm); overflow: hidden; padding: 0; cursor: pointer; border: 2px solid transparent; transition: transform .15s, border-color .15s; background: var(--surface-2); }
@@ -1664,6 +1880,9 @@ body.light select { color-scheme: light; }
 body.light select option { background: #fff; color: var(--text); }
 body.light .btn { background: rgba(21, 10, 42, .03); color: var(--text-2); border-color: var(--border-strong); }
 body.light .btn:hover { background: rgba(21, 10, 42, .06); border-color: rgba(21, 10, 42, .28); color: var(--text); }
+body.light .rail-profile:hover { background: rgba(21, 10, 42, .05); color: var(--text); }
+body.light .bg-color-btn { box-shadow: inset 0 0 0 1px rgba(21, 10, 42, .18); }
+body.light .bg-color-btn.sel { border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-softer); }
 body.light .btn-primary { background: linear-gradient(135deg, var(--acc-light), var(--acc)); color: var(--acc-on); border-color: transparent; }
 body.light .btn-modrinth { background: #f0fff6; color: #0a6b34; border-color: var(--ok); }
 body.light .btn-curseforge { background: #fff5f0; color: #a83500; border-color: var(--curseforge); }
@@ -1809,6 +2028,42 @@ body.glass .mod-item:hover, body.glass .profile-item:hover, body.glass .account-
 body.glass .instance-item:hover, body.glass .mod-result-item:hover { background: rgba(255, 255, 255, .16); }
 body.glass .profile-item.sel, body.glass .instance-item.sel, body.glass .server-item.sel,
 body.glass .server-type-card.sel, body.glass .account-item.sel { background: color-mix(in srgb, var(--acc) 24%, transparent) !important; }
+
+/* Profil-Karten (Profil-Tab) — jede Karte ist eine eigene Glasflaeche,
+   das Grid selbst bleibt transparent. */
+body.glass .profile-grid {
+  background: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+body.glass .profile-card {
+  background: var(--gs-panel) !important;
+  border-color: var(--gs-bd) !important;
+  backdrop-filter: var(--gs-blur);
+  -webkit-backdrop-filter: var(--gs-blur);
+  box-shadow: var(--gs-hl);
+}
+body.glass .profile-card:hover { background: var(--gs-list) !important; border-color: var(--gs-bd2) !important; }
+body.glass .profile-card.is-active { background: color-mix(in srgb, var(--acc) 18%, var(--gs-panel)) !important; border-color: var(--acc) !important; }
+body.glass .profile-badge--active { color: var(--acc) !important; }
+body.glass .profile-badge--modpack { color: #0a7a3d !important; }
+body.glass .profile-badge--nrc { color: #c02a72 !important; }
+body.glass .profile-badge--bedrock { color: #1668b8 !important; }
+body.glass .profile-chip--fabric { color: #0a7a3d !important; }
+body.glass .profile-chip--quilt { color: #a83a72 !important; }
+body.glass .profile-chip--forge { color: #a83500 !important; }
+body.glass .profile-chip--neoforge { color: #a35c00 !important; }
+body.glass .profile-chip--bedrock { color: #1668b8 !important; }
+body.glass .profile-chip--group-custom { color: #0a7a3d !important; }
+body.glass .profile-card__avatar { color: #fff !important; }
+body.glass .profile-card__avatar[data-loader="vanilla"] { color: var(--gs-tx) !important; }
+body.glass .rail-profile__avatar { color: #fff !important; }
+body.glass .rail-profile__avatar[data-loader="vanilla"] { color: var(--gs-tx) !important; }
+body.glass .rail-profile:hover { background: rgba(255, 255, 255, .45) !important; color: var(--gs-tx) !important; }
+body.glass .rail-profile.is-active { background: color-mix(in srgb, var(--acc) 22%, var(--gs-panel)) !important; border-color: var(--acc) !important; }
+body.glass .rail-profile__meta { color: var(--gs-mut) !important; }
 body.glass .server-console { background: var(--gs-list); border-color: var(--gs-bd); color: var(--gs-tx); }
 body.glass .cdrop-trigger { background: var(--gs-panel) !important; border-color: var(--gs-bd) !important; color: var(--gs-tx) !important; }
 body.glass .cdrop:hover .cdrop-trigger { background: rgba(255, 255, 255, .45) !important; }
@@ -1880,10 +2135,12 @@ body.glass .settings-accent-dot { color: #0d7a3d !important; }
   .settings-nav button { width: auto; }
   .feature-grid { grid-template-columns: 1fr; }
   .color-grid { grid-template-columns: repeat(8, 1fr); max-width: 100%; }
+  .profile-grid { grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); }
 }
 @media (max-width: 680px) {
   .toolbar { overflow-x: auto; }
   .tb-btn { padding: 0 .7em; }
   .page { padding: var(--sp-4) var(--sp-3); }
   .modal { width: 96vw; }
+  .profile-grid { grid-template-columns: 1fr; }
 }
