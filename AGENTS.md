@@ -32,8 +32,10 @@ cruxclient.net per `getComputedStyle` verifiziert):
 - **Eyebrows** (z. B. „LAUNCH") = uppercase, Weight 800, `letter-spacing .16em`,
   Farbe `--acc`.
 - Überschriften: Weight 800, `letter-spacing -.025em`, `line-height 1.12`.
-- Der Akzent ist weiterhin **umstellbar** (17 Farben in den Einstellungen).
-  Index 0 ist das Website-Lila `#a06cff` und der Default.
+- Der Akzent ist weiterhin **umstellbar** (17 Farben in den Einstellungen,
+  Karte „Accent Color"). Er wirkt **global**: Buttons, Tabs, Highlights,
+  Profil-Avatare und der Ambient-Hintergrund (`--bg-grad`, `--cloud-a…d`)
+  folgen `--acc`. Index 0 ist das Website-Lila `#a06cff` und der Default.
   `applyAccent()` setzt `--acc-on` (Text auf Akzentflächen) je nach Helligkeit
   der Farbe — helle Farben (Index 0, 4–7, 16) brauchen dunklen Text.
   **Achtung:** Beim Einfügen einer Farbe an Position 0 verschieben sich die
@@ -53,6 +55,7 @@ cruxclient.net per `getComputedStyle` verifiziert):
 |---|---|---|
 | `--acc` / `--acc2` | `applyAccent()` | Akzentfarbe + 70%-Variante |
 | `--acc-on` | `applyAccent()` | Textfarbe **auf** Akzentflächen (dunkel bei hellen Farben) |
+| `--bg-on` | `applyBgColor()` | Lesbare Textfarbe **auf** `--bg` (nur bei eigener Hintergrundfarbe; sonst Fallback `--text`) |
 | `--r` | `applyCornerRadius()` | Eckenradius in px (0–24, Settings) |
 | `--ls-*` | Custom-Dropdown | Listen-/Select-Farben (Dropdown-Code greift darauf zu) |
 | `--gs-*` | `setGlassTone(dark)` | Glass-Ton (hell/Standard bzw. dunkel für dunkle Bilder) |
@@ -133,14 +136,17 @@ keine flache Liste mehr.
 - Aufbau einer Karte: `.profile-card__head` (Avatar `.profile-card__avatar`,
   Titel `.profile-card__name`, Badges `.profile-badge`, Aktionen
   `.profile-card__icon-btn`) + `.profile-card__meta` (Chips `.profile-chip`).
-- Die Avatar-Farbe folgt dem Mod-Loader (`data-loader="fabric|quilt|forge|
-  neoforge|bedrock|vanilla"`) — dieselben Farben wie die Mod-Filter
-  (`--ok`, `#cc5599`, `--curseforge`, `#ff8800`, `--info`).
+- Das Avatar-Zeichen folgt dem Mod-Loader (`data-loader="fabric|quilt|forge|
+  neoforge|bedrock|vanilla"`), der **Hintergrund dem Theme-Akzent**
+  (`--acc` / `--acc-light`, Text `--acc-on`). Nur `vanilla` bleibt neutral.
+  Die Loader-Farben stecken weiterhin in den Meta-Chips `.profile-chip`.
 - Aktives Profil: `.is-active` (Akzent-Rand + Streifen links + Badge "Aktiv").
 - Die **Rail-Liste** auf der Startseite (`.rail-profile`) nutzt dieselben
-  Loader-Avatar-Farben, zeigt aber nur Name + Version/Mod-Anzahl. Sie wird
+  Theme-Akzent-Avatare, zeigt aber nur Name + Version/Mod-Anzahl. Sie wird
   von `renderRailProfiles()` gerendert (eigene Funktion, nicht `.rail-item` —
   das gehoert den laufenden Instanzen).
+- Im Profil-Modal zeigt die gewaehlte Mod-Loader-Pille ihr Zeichen in einem
+  Kreis mit `--acc`-Hintergrund (`data-glyph` + `:has(input:checked)::before`).
 - **Keine Inline-Styles** — Badges und Chips sind Klassen in `styles.css`.
 - Glass-Theme: eigene Overrides am Dateiende (`.profile-grid` transparent,
   `.profile-card` = `--gs-panel`). Badge-/Chip-Farben brauchen dort
@@ -161,7 +167,11 @@ In der Appearance-Gruppe liegt die Karte **„Background Color"**
 - **Kontrast**: `bgLuminance()` prueft die Farbe. `body.bg-dark` /
   `body.bg-light` sorgen dafuer, dass Text direkt auf dem Seiten-Hintergrund
   (Headline, Untertitel) lesbar bleibt — die Panels (Cards) behalten ihre
-  Theme-Farben.
+  Theme-Farben. Zusaetzlich setzt `applyBgColor()` `--bg-on` (helle Schrift
+  auf dunklem, dunkle auf hellem Grund).
+- Der **+Microsoft-Button in der Launch-Rail** (`.rail-add`) nutzt `--bg`
+  als Flaeche und `--bg-on` als Text/Border statt Microsoft-Blau; die
+  Account-Seite (`#btn-add-ms`, `.btn-ms`) bleibt unveraendert blau.
 - Die Karte ist im **Glass-Theme ausgeblendet** (`updateBgColorSection()`),
   dort zeigt das Hintergrundbild die Farbe.
 - `data-i18n-aria` wird von `applyLanguage()` unterstuetzt (aria-label).

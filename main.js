@@ -1,4 +1,6 @@
-const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog, Tray, Menu } = require('electron');
+try { require('electron').shell && 0; } catch(e){}
+
 const https = require('https');
 const http  = require('http');
 const { exec, execSync, spawn, execFile } = require('child_process');
@@ -71,7 +73,7 @@ const P = {
   profiles: path.join(base,'profiles.json'),
   mods:     path.join(base,'mods.json'),
   launched: path.join(base,'launched-versions.json'),
-  clientMods: path.join(base,'client-mods'),
+  clientMods: path.join(base,'client-mods.json'),
   java: path.join(base,'javaInstallations'),
   mc:   path.join(base,'minecraft'),
   servers: path.join(base,'servers'),
@@ -111,10 +113,12 @@ function createWindow() {
     autoHideMenuBar:true,
     icon: path.join(__dirname, 'icons', 'icon.ico'),
     show: false,
-    webPreferences:{ nodeIntegration:true, contextIsolation:false, devTools:false }
+    webPreferences:{ nodeIntegration:true, contextIsolation:false, devTools:true }
   });
   mainWindow.setMenu(null);
-  mainWindow.loadFile('index.html');
+  console.log('[Crux] cwd=', process.cwd(), ' __dirname=', __dirname);
+if (process.env.CRUX_DEVTOOLS === '1') { try { mainWindow.webContents.openDevTools({ mode: 'detach' }); } catch {} }
+mainWindow.loadFile('index.html');
   mainWindow.once('ready-to-show', () => {
     console.log('[Crux] Window ready-to-show');
     logDebug('ready-to-show');
@@ -129,18 +133,87 @@ function createWindow() {
     console.error('[Crux] did-fail-load:', code, desc);
     logDebug('did-fail-load: ' + code + ' ' + desc);
   });
-  // Close button behavior: while Minecraft or a local server is running, just
-  // hide the window instead of quitting. Only a real quit (before-quit) or an
-  // idle launcher closes the app.
-  mainWindow.on('close', (e) => {
-    if (isQuitting) return;
-    const mcRunning = Object.keys(instances || {}).length > 0;
-    const serversRunning = Object.values(serverProcesses || {}).some(s => s.status === 'running');
-    if (mcRunning || serversRunning) {
-      e.preventDefault();
-      mainWindow.hide();
-    }
-  });
+
+  // Initialize system tray after window is created
+  initializeTray();
+}
+
+let tray = null;
+let minimizeToTrayEnabled = false;
+
+async function initializeTray() {
+  try {
+    // Load setting to check if minimize to tray is enabled
+    const settings = await load(P.settings, {});
+    minimizeToTrayEnabled = !!settings.minimizeToTray;
+
+    // Create tray icon
+    const iconPath = path.join(__dirname, 'icons', 'icon.ico');
+    tray = new Tray(iconPath);
+
+    // Create context menu
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Show Crux Client',
+        click: () => {
+          showMainWindow();
+        }
+      },
+      {
+        type: 'separator'
+      },
+      {
+        label: 'Quit',
+        click: () => {
+          isQuitting = true;
+          app.quit();
+        }
+      }
+    ]);
+
+    tray.setToolTip('Crux Client');
+    tray.setContextMenu(contextMenu);
+
+    // Double-click to show
+    tray.on('double-click', () => {
+      showMainWindow();
+    });
+
+    // Handle minimize to tray setting change from renderer
+    ipcMain.on('minimize-to-tray-changed', (event, enabled) => {
+      minimizeToTrayEnabled = enabled;
+    });
+
+    // Override close behavior when minimize to tray is enabled
+    mainWindow.on('close', (e) => {
+      if (isQuitting) return;
+
+      const mcRunning = Object.keys(instances || {}).length > 0;
+      const serversRunning = Object.values(serverProcesses || {}).some(s => s.status === 'running');
+
+      if (mcRunning || serversRunning) {
+        e.preventDefault();
+        mainWindow.hide();
+        return;
+      }
+
+      if (minimizeToTrayEnabled) {
+        e.preventDefault();
+        mainWindow.hide();
+      }
+    });
+
+    // Also handle minimize event
+    mainWindow.on('minimize', (e) => {
+      if (minimizeToTrayEnabled) {
+        e.preventDefault();
+        mainWindow.hide();
+      }
+    });
+
+  } catch (err) {
+    console.error('[Crux] Failed to initialize tray:', err);
+  }
 }
 
 function showMainWindow() {
@@ -291,6 +364,11 @@ app.on('before-quit', () => {
   isQuitting = true;
   stopAllServers();
   stopPlayitAgent();
+  // Clean up tray
+  if (tray) {
+    tray.destroy();
+    tray = null;
+  }
   // Best-effort: mark our presence offline before exiting
   try {
     if (myPresence) { myPresence.online = false; myPresence.inGame = false; postPresence(); }
@@ -314,11 +392,12 @@ const saveSettings = async (data) => {
       'ram','ramUnit','theme','accentIdx','lang','javaPath','launcherRam',
       'selectedProfile','selectedAccount','recentHistory',
       'openLogsAfterLaunch','closeLauncherWhilePlaying','useOriginalLauncher',
+      'minimizeToTray',
       'clientResourcePacks','autoUseResourcePacks',
       'presenceServer','bugreportWebhook','chatServer',
       'useCruxClientMod','tabBarPosition','cornerRadius','glassBgImage',
       'glassBgPreset','glassBgTint',      'loginHistory','bans',
-      'deviceId','deviceName'
+      'deviceId','deviceName','anthropicApiKey','ollamaModel'
     ];
     const clean = {};
     for (const k of Object.keys(existing)) { if (KNOWN_KEYS.includes(k)) clean[k] = existing[k]; }
@@ -405,6 +484,13 @@ async function ensureDefaultServers() {
   } catch {}
 }
 
+ipcMain.on('open-external', (event, url) => {
+  try {
+    const u = String(url || '');
+    if (u.startsWith('https://') || u.startsWith('http://')) shell.openExternal(u);
+  } catch (e) { console.error('open-external', e); }
+});
+
 ipcMain.handle('load-settings',          async () => {
   await ensureDefaultServers();
   await ensureDeviceIdentity();
@@ -418,10 +504,26 @@ ipcMain.handle('load-profiles',          async () => load(P.profiles, [
   { id:'latest-bedrock-pre', name:'Latest Pre-release Bedrock', mcVersion:'__latest_prerelease__', modLoader:'bedrock', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] }
 ]));
 ipcMain.handle('load-mods',              async () => load(P.mods, []));
+ipcMain.handle('load-client-mods',       async () => load(P.clientMods, []));
 ipcMain.handle('load-launched-versions', async () => load(P.launched, []));
 ipcMain.on('save-settings',          async (e,d) => saveSettings(d));
 ipcMain.on('save-accounts',          async (e,d) => save(P.accounts, d));
+ipcMain.handle('delete-account',     async (event, acc) => {
+  try {
+    const accounts = await load(P.accounts, []);
+    const key = String(acc && (acc.uuid || acc.name || ''));
+    const filtered = accounts.filter(a => String(a && (a.uuid || a.name || '')) !== key);
+    await save(P.accounts, filtered);
+    return { ok: true, removed: accounts.length - filtered.length };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+ipcMain.handle('open-app-data-folder', async () => {
+  const base = path.join(process.env.APPDATA || process.env.LOCALAPPDATA || '', 'Crux Client');
+  try { await shell.showItemInFolder(base); return { ok: true }; } catch {}
+  try { await shell.openPath(base); return { ok: true }; } catch (e) { return { ok: false, error: e.message }; }
+});
 ipcMain.on('save-profiles',          async (e,d) => save(P.profiles, d));
+ipcMain.on('save-client-mods',       async (e,d) => save(P.clientMods, d));
 
 // ── Profile offline-capability check ──────────────────────────────────────────
 // Tells the UI whether every mod the profile would deploy is already cached,
@@ -919,22 +1021,345 @@ function nrcExtractOverrides(zipPath, destRoot, onBytes){
 // Auto-scan the installed NoRisk Client (v3 norisk_versions.json or legacy profiles.json).
 ipcMain.handle('import-norisk-profiles', async () => {
   try {
-    const file = nrcCandidates().find(p => fs.existsSync(p));
-    if (!file) return { ok:false, error:'NoRisk Client was not found under %APPDATA%\\norisk\\NoRiskClientV3 (looked for norisk_versions.json / profiles.json). Use "Choose export file…" for a .noriskpack.' };
-    let raw;
-    try { raw = await fs.promises.readFile(file, 'utf8'); }
-    catch(e) { return { ok:false, error:'Could not read ' + file + ': ' + e.message }; }
-    let list;
-    try { list = nrcParseJson(raw); }
-    catch(e) { return { ok:false, error: path.basename(file) + ' is not valid JSON: ' + e.message }; }
-    if (list && !Array.isArray(list) && Array.isArray(list.profiles)) list = list.profiles;   // NoRisk v3
-    if (!Array.isArray(list)) return { ok:false, error: path.basename(file) + ' does not contain a profile list.' };
-    const { profiles, skippedMods } = nrcConvertList(list);
-    return { ok:true, file, profiles, skippedMods };
+    const profiles = [];
+    const skippedMods = 0;
+    const nrcBases = [
+      process.env.APPDATA ? path.join(process.env.APPDATA, 'norisk', 'NoRiskClientV3') : '',
+      path.join(os.homedir(), 'AppData', 'Roaming', 'norisk', 'NoRiskClientV3'),
+    ].filter(Boolean);
+    // 1) data/profiles (custom profiles like "Create Complete")
+    const nrcMeta = (() => { try { const f = nrcCandidates().find(p => fs.existsSync(p)); if (!f) return null; const raw = fs.readFileSync(f, 'utf8'); let l = nrcParseJson(raw); if (l && !Array.isArray(l) && Array.isArray(l.profiles)) l = l.profiles; return Array.isArray(l) ? l : null; } catch { return null; } })();
+    const findMetaForName = (nm) => {
+      if (!nrcMeta) return null;
+      const want = String(nm || '').toLowerCase();
+      return nrcMeta.find(m => String(m.name || '').toLowerCase() === want) || nrcMeta.find(m => String(m.name || '').toLowerCase().includes(want) || want.includes(String(m.name || '').toLowerCase())) || null;
+    };
+    const parseFromModsFolder = (modsDir) => {
+      let mc = 'latest', ld = 'neoforge';
+      try {
+        const sub = fs.readdirSync(modsDir, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name);
+        for (const s of sub) {
+          const m = /^nrc-(.+?)-(forge|neoforge|fabric|quilt)$/i.exec(s);
+          if (m) { mc = m[1]; ld = m[2].toLowerCase(); break; }
+        }
+      } catch {}
+      return { mcVersion: mc, modLoader: ld };
+    };
+    for (const base of nrcBases) {
+      const dataProfilesDir = path.join(base, 'data', 'profiles');
+      if (!fs.existsSync(dataProfilesDir)) continue;
+      let names = [];
+      try { names = fs.readdirSync(dataProfilesDir).filter(d => { try { return fs.statSync(path.join(dataProfilesDir, d)).isDirectory(); } catch { return false; } }); } catch {}
+      for (const name of names) {
+        try {
+          const profPath = path.join(dataProfilesDir, name);
+          const meta = findMetaForName(name);
+          const inferred = parseFromModsFolder(path.join(profPath, 'mods'));
+          const prof = {
+            id: 'nrc_dp_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
+            name: name,
+            group: meta && meta.group ? String(meta.group) : 'NoRisk (custom)',
+            mcVersion: meta && (meta.game_version || meta.gameVersion || meta.version) ? (meta.game_version || meta.gameVersion || meta.version) : inferred.mcVersion,
+            modLoader: (meta && meta.loader) ? String(meta.loader).toLowerCase() : inferred.modLoader,
+            renderApi: 'opengl',
+            mods: [],
+            datapacks: [],
+            resourcePacks: [],
+            shaderPacks: [],
+            useCruxMod: false,
+            useClientMods: true,
+            useClientRPs: true,
+            isNrcImported: true,
+          };
+          const modsDir = path.join(profPath, 'mods');
+          if (fs.existsSync(modsDir)) {
+            const walkJars = (dir) => {
+              let out = [];
+              try {
+                for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+                  const fp = path.join(dir, e.name);
+                  if (e.isDirectory()) out = out.concat(walkJars(fp));
+                  else if (e.isFile() && e.name.toLowerCase().endsWith('.jar')) out.push({ fp, name: e.name });
+                }
+              } catch {}
+              return out;
+            };
+            const jars = walkJars(modsDir);
+            prof.mods = jars.map(j => ({ name: j.name.replace(/\.jar$/i,''), fileName: j.name, diskPath: j.fp, path: 'mods/' + j.name, source: 'NoRisk Client', modrinthId: null, version: 'latest', mcVersion: prof.mcVersion, iconUrl: '', downloadAllVersions: false, disabled: false, loader: prof.modLoader }));
+          }
+          // Fallback: also search instances folders for jars if none found
+          if ((!prof.mods || prof.mods.length === 0)) {
+            for (const base2 of nrcBases) {
+              const instancesDir = path.join(base2, 'instances');
+              if (!fs.existsSync(instancesDir)) continue;
+              let instanceDirs = [];
+              try { instanceDirs = fs.readdirSync(instancesDir).filter(d => { try { return fs.statSync(path.join(instancesDir, d)).isDirectory(); } catch { return false; } }); } catch {}
+              const want = String(prof.name || '').toLowerCase();
+              let matchDir = '';
+              for (const dir of instanceDirs) {
+                const dl = dir.toLowerCase();
+                if (want && (dl.includes(want) || want.includes(dl))) { matchDir = dir; break; }
+              }
+              if (!matchDir) continue;
+              const instMods = path.join(instancesDir, matchDir, 'mods');
+              if (fs.existsSync(instMods)) {
+                const jars = fs.readdirSync(instMods).filter(f => f.toLowerCase().endsWith('.jar'));
+                prof.mods = jars.map(f => ({ name: f.replace(/\.jar$/i,''), fileName: f, diskPath: path.join(instMods,f), path: 'mods/'+f, source:'NoRisk Client', modrinthId: null, version:'latest', mcVersion: prof.mcVersion||'', iconUrl:'', downloadAllVersions:false, disabled:false, loader: prof.modLoader||'fabric' }));
+              }
+              if (prof.mods && prof.mods.length > 0) break;
+            }
+          }
+          const rpDir = path.join(profPath, 'resourcepacks');
+          if (fs.existsSync(rpDir)) prof.resourcePacks = fs.readdirSync(rpDir).map(f => ({ name: f, path: 'resourcepacks/'+f, source: 'NoRisk Client', diskPath: path.join(rpDir,f), enabled: true }));
+          const spDir = path.join(profPath, 'shaderpacks');
+          if (fs.existsSync(spDir)) prof.shaderPacks = fs.readdirSync(spDir).map(f => ({ name: f, path: 'shaderpacks/'+f, source: 'NoRisk Client', diskPath: path.join(spDir,f), enabled: true }));
+          const dpDir = path.join(profPath, 'datapacks');
+          if (fs.existsSync(dpDir)) prof.datapacks = fs.readdirSync(dpDir).map(f => ({ name: f, path: 'datapacks/'+f, source: 'NoRisk Client', diskPath: path.join(dpDir,f), enabled: true }));
+          if (!profiles.find(p => p.name === prof.name)) profiles.push(prof);
+        } catch (e) {}
+      }
+    }
+    // 2) also include entries from norisk_versions.json + instances enrichment (best effort)
+    try {
+      const file = nrcCandidates().find(p => fs.existsSync(p));
+      if (file) {
+        let raw; try { raw = await fs.promises.readFile(file, 'utf8'); } catch {}
+        if (raw) {
+          let list; try { list = nrcParseJson(raw); } catch {}
+          if (list && !Array.isArray(list) && Array.isArray(list.profiles)) list = list.profiles;
+          if (Array.isArray(list)) {
+            const { profiles: plist } = nrcConvertList(list);
+            for (const prof of plist) {
+              // enrich from instances
+              for (const base of nrcBases) {
+                const instancesDir = path.join(base, 'instances');
+                if (!fs.existsSync(instancesDir)) continue;
+                let instanceDirs = [];
+                try { instanceDirs = fs.readdirSync(instancesDir).filter(d => { try { return fs.statSync(path.join(instancesDir, d)).isDirectory(); } catch { return false; } }); } catch {}
+                const want = String(prof.name || '').toLowerCase();
+                let matchDir = '';
+                for (const dir of instanceDirs) {
+                  const dl = dir.toLowerCase();
+                  if (want && (dl.includes(want) || want.includes(dl))) { matchDir = dir; break; }
+                }
+                if (!matchDir) continue;
+                const instRoot = path.join(instancesDir, matchDir);
+                const modsDir = path.join(instRoot, 'mods');
+                const rpDir = path.join(instRoot, 'resourcepacks');
+                const spDir = path.join(instRoot, 'shaderpacks');
+                const dpDir = path.join(instRoot, 'datapacks');
+                if (fs.existsSync(modsDir) && (!prof.mods || prof.mods.length === 0)) {
+                  const jars = fs.readdirSync(modsDir).filter(f => f.toLowerCase().endsWith('.jar'));
+                  prof.mods = jars.map(f => ({ name: f.replace(/\\.jar$/i,''), fileName: f, diskPath: path.join(modsDir,f), path: 'mods/'+f, source:'NoRisk Client', modrinthId: null, version:'latest', mcVersion: prof.mcVersion||'', iconUrl:'', downloadAllVersions:false, disabled:false, loader: prof.modLoader||'fabric' }));
+                }
+                if (fs.existsSync(rpDir)) prof.resourcePacks = fs.readdirSync(rpDir).map(f => ({ name: f, path: 'resourcepacks/'+f, source: 'NoRisk Client', diskPath: path.join(rpDir,f), enabled: true }));
+                if (fs.existsSync(spDir)) prof.shaderPacks = fs.readdirSync(spDir).map(f => ({ name: f, path: 'shaderpacks/'+f, source: 'NoRisk Client', diskPath: path.join(spDir,f), enabled: true }));
+                if (fs.existsSync(dpDir)) prof.datapacks = fs.readdirSync(dpDir).map(f => ({ name: f, path: 'datapacks/'+f, source: 'NoRisk Client', diskPath: path.join(dpDir,f), enabled: true }));
+                break;
+              }
+              if (!profiles.find(p => p.name === prof.name)) profiles.push(prof);
+            }
+          }
+        }
+      }
+    } catch (e) {}
+    return { ok:true, file: 'nrc-scan', profiles, skippedMods };
   } catch (e) { return { ok:false, error: e.message }; }
 });
 
+// Import NoRisk instance — copy mods from NoRisk instance folder
+ipcMain.handle('import-norisk-instance', async (event, profileName) => {
+  try {
+    const nrcBase = process.env.APPDATA ? path.join(process.env.APPDATA, 'norisk', 'NoRiskClientV3') : '';
+    const legacyBase = path.join(os.homedir(), 'AppData', 'Roaming', 'norisk', 'NoRiskClientV3');
+    const bases = [nrcBase, legacyBase].filter(Boolean);
+
+    for (const base of bases) {
+      const instancesDir = path.join(base, 'instances');
+      if (!fs.existsSync(instancesDir)) continue;
+
+      // Find instance folder matching profile name
+      const instanceDirs = fs.readdirSync(instancesDir).filter(d => {
+        try { return fs.statSync(path.join(instancesDir, d)).isDirectory(); } catch { return false; }
+      });
+
+      for (const dir of instanceDirs) {
+        if (dir.toLowerCase().includes(profileName.toLowerCase()) || profileName.toLowerCase().includes(dir.toLowerCase())) {
+          const modsPath = path.join(instancesDir, dir, 'mods');
+          if (fs.existsSync(modsPath)) {
+            const modFiles = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar'));
+            const mods = [];
+            for (const f of modFiles) {
+              mods.push({
+                name: f.replace(/\.jar$/i, ''),
+                fileName: f,
+                diskPath: path.join(modsPath, f),
+                path: 'mods/' + f,
+                source: 'NoRisk Client', modrinthId: null, version: 'latest',
+                mcVersion: '', iconUrl: '', downloadAllVersions: false, disabled: false, loader: 'fabric'
+              });
+            }
+            return { ok: true, mods };
+          }
+        }
+      }
+    }
+    return { ok: true, mods: [] };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+
 // Open a file dialog and parse a NoRisk export (any name/location: .noriskpack/.zip/.json).
+
+ipcMain.handle('choose-mrpack', async () => {
+  try {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select a Modrinth modpack (.mrpack)',
+      properties: ['openFile'],
+      filters: [{ name: 'Modrinth Modpack', extensions: ['mrpack', 'zip'] }, { name: 'All Files', extensions: ['*'] }]
+    });
+    if (res.canceled || !res.filePaths || !res.filePaths.length) return { ok: true, canceled: true };
+    const file = res.filePaths[0];
+    const AdmZip = require('adm-zip');
+    const zip = new AdmZip(file);
+    const entry = zip.getEntry('modrinth.index.json');
+    if (!entry) return { ok: false, error: 'modrinth.index.json not found in this .mrpack (is this a valid Modrinth modpack?)' };
+    let idx;
+    try { idx = JSON.parse(entry.getData().toString('utf8')); } catch (e) { return { ok: false, error: 'Invalid modrinth.index.json: ' + e.message }; }
+    const deps = (idx && idx.dependencies) || {};
+    const mcVer = deps.minecraft || '';
+    const loader = deps['fabric-loader'] ? 'fabric' : (deps['quilt-loader'] ? 'quilt' : (deps['neoforge'] ? 'neoforge' : (deps.forge ? 'forge' : 'fabric')));
+    const loaderVer = deps['fabric-loader'] || deps['quilt-loader'] || deps['neoforge'] || deps.forge || '';
+    const name = (idx && (idx.name || idx.versionId)) || path.basename(file, path.extname(file));
+    const files = Array.isArray(idx.files) ? idx.files : [];
+    // External file URLs (mods/resources) listed in index; we cannot auto-download into profile store without more logic
+    const prof = {
+      id: 'mr_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
+      name: String(name).slice(0, 120),
+      mcVersion: String(mcVer || 'latest'),
+      modLoader: loader,
+      loaderVersion: String(loaderVer || ''),
+      mods: [],
+      datapacks: [],
+      resourcePacks: [],
+      shaderPacks: [],
+      useCruxMod: true,
+      useClientMods: false,
+      useClientRPs: false,
+      isMrpackImport: true,
+      mrpackSourceFile: file,
+      mrpackFilesCount: files.length
+    };
+    return { ok: true, file, profile: prof, mrpackIndex: { name: idx.name, game: idx.game, versionId: idx.versionId, filesCount: files.length, dependencies: deps } };
+  } catch (e) {
+    return { ok: false, error: e.message || String(e) };
+  }
+});
+
+
+ipcMain.handle('choose-mrpack-path', async (event, filePath) => {
+  try {
+    if (!filePath || typeof filePath !== 'string') return { ok: false, error: 'No path' };
+    const AdmZip = require('adm-zip');
+    const zip = new AdmZip(filePath);
+    const entry = zip.getEntry('modrinth.index.json');
+    if (!entry) return { ok: false, error: 'modrinth.index.json not found in this .mrpack' };
+    let idx;
+    try { idx = JSON.parse(entry.getData().toString('utf8')); } catch (e) { return { ok: false, error: 'Invalid modrinth.index.json: ' + e.message }; }
+    const deps = (idx && idx.dependencies) || {};
+    const mcVer = deps.minecraft || '';
+    const loader = deps['fabric-loader'] ? 'fabric' : (deps['quilt-loader'] ? 'quilt' : (deps['neoforge'] ? 'neoforge' : (deps.forge ? 'forge' : 'fabric')));
+    const loaderVer = deps['fabric-loader'] || deps['quilt-loader'] || deps['neoforge'] || deps.forge || '';
+    const name = (idx && (idx.name || idx.versionId)) || path.basename(filePath, path.extname(filePath));
+    const files = Array.isArray(idx.files) ? idx.files : [];
+    const prof = {
+      id: 'mr_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
+      name: String(name).slice(0, 120),
+      mcVersion: String(mcVer || 'latest'),
+      modLoader: loader,
+      loaderVersion: String(loaderVer || ''),
+      mods: [],
+      datapacks: [],
+      resourcePacks: [],
+      shaderPacks: [],
+      useCruxMod: true,
+      useClientMods: false,
+      useClientRPs: false,
+      isMrpackImport: true,
+      mrpackSourceFile: filePath,
+      mrpackFilesCount: files.length
+    };
+    return { ok: true, file: filePath, profile: prof, mrpackIndex: { name: idx.name, game: idx.game, versionId: idx.versionId, filesCount: files.length, dependencies: deps } };
+  } catch (e) {
+    return { ok: false, error: e.message || String(e) };
+  }
+});
+ipcMain.handle('import-mrpack-from-url', async (event, url) => {
+  try {
+    const u = String(url || '');
+    if (!u.startsWith('https://') && !u.startsWith('http://')) return { ok: false, error: 'Invalid URL' };
+    const tmp = path.join(os.tmpdir(), 'crux-mrpack-' + Date.now() + '.mrpack');
+    await new Promise((resolve, reject) => {
+      const mod = u.startsWith('https') ? https : http;
+      const req = mod.get(u, { headers: { 'User-Agent': 'CruxLauncher/1' } }, (res) => {
+        if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          res.resume();
+          // follow once
+          const loc = res.headers.location.startsWith('http') ? res.headers.location : new URL(res.headers.location, u).toString();
+          const mod2 = loc.startsWith('https') ? https : http;
+          const req2 = mod2.get(loc, { headers: { 'User-Agent': 'CruxLauncher/1' } }, (res2) => {
+            if (res2.statusCode !== 200) { res2.resume(); return reject(new Error('HTTP ' + res2.statusCode)); }
+            const ws = fs.createWriteStream(tmp);
+            res2.pipe(ws);
+            ws.on('finish', () => ws.close(resolve));
+            ws.on('error', reject);
+          });
+          req2.on('error', reject);
+          return;
+        }
+        if (res.statusCode !== 200) { res.resume(); return reject(new Error('HTTP ' + res.statusCode)); }
+        const ws = fs.createWriteStream(tmp);
+        res.pipe(ws);
+        ws.on('finish', () => ws.close(resolve));
+        ws.on('error', reject);
+      });
+      req.on('error', reject);
+    });
+    const AdmZip = require('adm-zip');
+    const zip = new AdmZip(tmp);
+    const entry = zip.getEntry('modrinth.index.json');
+    if (!entry) { try { fs.unlinkSync(tmp); } catch {} return { ok: false, error: 'modrinth.index.json not found' }; }
+    let idx;
+    try { idx = JSON.parse(entry.getData().toString('utf8')); } catch (e) { try { fs.unlinkSync(tmp); } catch {} return { ok: false, error: 'Invalid modrinth.index.json: ' + e.message }; }
+    const deps = (idx && idx.dependencies) || {};
+    const mcVer = deps.minecraft || '';
+    const loader = deps['fabric-loader'] ? 'fabric' : (deps['quilt-loader'] ? 'quilt' : (deps['neoforge'] ? 'neoforge' : (deps.forge ? 'forge' : 'fabric')));
+    const loaderVer = deps['fabric-loader'] || deps['quilt-loader'] || deps['neoforge'] || deps.forge || '';
+    const name = (idx && (idx.name || idx.versionId)) || 'Modrinth Modpack';
+    const files = Array.isArray(idx.files) ? idx.files : [];
+    const prof = {
+      id: 'mr_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
+      name: String(name).slice(0, 120),
+      mcVersion: String(mcVer || 'latest'),
+      modLoader: loader,
+      loaderVersion: String(loaderVer || ''),
+      mods: [],
+      datapacks: [],
+      resourcePacks: [],
+      shaderPacks: [],
+      useCruxMod: true,
+      useClientMods: false,
+      useClientRPs: false,
+      isMrpackImport: true,
+      mrpackSourceFile: tmp,
+      mrpackFilesCount: files.length
+    };
+    return { ok: true, file: tmp, profile: prof, mrpackIndex: { name: idx.name, game: idx.game, versionId: idx.versionId, filesCount: files.length, dependencies: deps } };
+  } catch (e) {
+    return { ok: false, error: e.message || String(e) };
+  }
+});
+
+
 ipcMain.handle('choose-norisk-export', async () => {
   try {
     const res = await dialog.showOpenDialog(mainWindow, {
@@ -1841,6 +2266,286 @@ ipcMain.handle('send-bugreport', async (e, report) => {
     return { success: false, error: 'HTTP ' + res.status, body: res.data.slice(0, 500) };
   } catch (err) {
     return { success: false, error: err.message };
+  }
+});
+
+// Analyze bug report with AI (Anthropic/Claude)
+ipcMain.handle('analyze-bugreport', async (e, report) => {
+  try {
+    const settings = await load(P.settings, {});
+    const apiKey = String(settings.anthropicApiKey || '').trim();
+    if (!apiKey) return { success: false, error: 'NO_API_KEY' };
+
+    const text = await collectBugReportContext(report);
+    const title = String(report.title || 'Bug Report');
+    const category = String(report.category || 'Other');
+
+    // Build the prompt for AI analysis
+    const prompt = `You are an expert Minecraft modding and launcher support assistant. Analyze the following bug report and provide the most likely cause and solution.
+
+Bug Report:
+Title: ${title}
+Category: ${category}
+Description: ${report.description || 'No description provided'}
+
+Full Context:
+${text}
+
+Please provide:
+1. Most likely root cause
+2. Step-by-step solution
+3. Any workarounds
+4. Prevention tips
+
+Format your response clearly with headings.`;
+
+    const payload = {
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 4000,
+      messages: [
+        { role: 'user', content: prompt }
+      ]
+    };
+
+    const res = await genericHttp('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify(payload),
+      timeout: 60000
+    });
+
+    if (res.status >= 200 && res.status < 300) {
+      try {
+        const data = JSON.parse(res.data);
+        const analysis = data.content?.[0]?.text || 'No analysis returned';
+        return { success: true, analysis };
+      } catch {
+        return { success: false, error: 'Failed to parse AI response' };
+      }
+    }
+    return { success: false, error: 'HTTP ' + res.status, body: res.data.slice(0, 500) };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// ── AI: local Ollama first (free/unlimited), Anthropic as fallback ────────────
+const AI_SYSTEM_PROMPT = [
+  'You are a Minecraft Java Edition modpack assistant inside the Crux Client launcher.',
+  'Recommend a realistic setup: loader (fabric, quilt, forge or neoforge), a stable Minecraft version and well-known mods that really exist on Modrinth.',
+  'Answer briefly in friendly Markdown. Finish with exactly ONE fenced json code block and nothing after it, in this shape:',
+  '```json',
+  '{"name":"...","mcVersion":"1.21.1","loader":"fabric","mods":["Fabric API","JEI"]}',
+  '```',
+  'Use 3 to 12 real Modrinth mod names.'
+].join('\n');
+
+function preferredOllamaModel(models, budgetBytes){
+  // Nur Modelle waehlen, die in 1/4 des RAM passen. Wenn keines passt, das kleinste.
+  const fits = models.filter(m => Number(m.size || 0) <= budgetBytes);
+  const pool = fits.length ? fits : models;
+  const preferred = ['llama3.2','llama3.1','llama3','qwen2.5','qwen2','mistral','gemma2','gemma','phi4','deepseek-r1'];
+  const matches = pool.filter(x => preferred.some(p => String(x.name).toLowerCase().includes(p)));
+  // Groesstes passendes Modell = meiste Qualitaet innerhalb des RAM-Budgets.
+  const sorted = (matches.length ? matches : pool).sort((a, b) => Number(b.size || 0) - Number(a.size || 0));
+  return sorted[0] ? sorted[0].name : '';
+}
+async function detectOllama(){
+  const budgetBytes = Math.floor(os.totalmem() * 0.25);
+  try {
+    const res = await genericHttp('http://127.0.0.1:11434/api/tags', { timeout: 1500 });
+    if (res.status >= 200 && res.status < 300){
+      const d = JSON.parse(res.data);
+      const models = (Array.isArray(d.models) ? d.models : [])
+        .filter(m => m && m.name)
+        .map(m => ({ name: m.name, size: Number(m.size || 0), family: (m.details && m.details.family) || '' }));
+      return {
+        available: true,
+        models,
+        names: models.map(m => m.name),
+        recommended: preferredOllamaModel(models, budgetBytes),
+        budgetBytes,
+        totalBytes: os.totalmem()
+      };
+    }
+  } catch {}
+  return { available: false, models: [], names: [], recommended: '', budgetBytes, totalBytes: os.totalmem() };
+}
+
+// Ollama nur laufen lassen, solange der AI-Dialog offen ist.
+let ollamaChild = null;
+async function findOllamaExe(){
+  const candidates = [
+    path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Ollama', 'ollama.exe'),
+    'C:\\Program Files\\Ollama\\ollama.exe',
+    path.join(process.env.USERPROFILE || '', 'AppData', 'Local', 'Programs', 'Ollama', 'ollama.exe')
+  ];
+  for (const p of candidates){ if (p && fs.existsSync(p)) return p; }
+  try {
+    const found = await new Promise((resolve) => {
+      execFile('where', ['ollama'], { windowsHide: true }, (err, stdout) => resolve(err ? '' : String(stdout).split(/\r?\n/)[0].trim()));
+    });
+    if (found && fs.existsSync(found)) return found;
+  } catch {}
+  return '';
+}
+async function startOllama(){
+  if ((await detectOllama()).available) return { started: false, alreadyRunning: true };
+  const exe = await findOllamaExe();
+  if (!exe) return { started: false, error: 'OLLAMA_NOT_INSTALLED' };
+  try {
+    ollamaChild = spawn(exe, ['serve'], {
+      detached: true, windowsHide: true, stdio: 'ignore',
+      env: { ...process.env, OLLAMA_HOST: '127.0.0.1:11434' }
+    });
+    ollamaChild.on('error', () => {});
+    for (let i = 0; i < 40; i++){
+      await new Promise(r => setTimeout(r, 250));
+      const info = await detectOllama();
+      if (info.available) return { started: true, info };
+      if (ollamaChild && ollamaChild.exitCode !== null) break;
+    }
+    return { started: false, error: 'OLLAMA_START_TIMEOUT' };
+  } catch (e){
+    return { started: false, error: e.message };
+  }
+}
+// Modelle entladen, auch wenn Ollama schon vor dem Launcher lief (Tray-App).
+// keep_alive:0 ist der offizielle Weg, den RAM sofort freizugeben, ohne den
+// Server anderer Programme zu beenden.
+async function unloadOllamaModels(){
+  const unloaded = [];
+  try {
+    const res = await genericHttp('http://127.0.0.1:11434/api/ps', { timeout: 2000 });
+    if (res.status >= 200 && res.status < 300){
+      let data = {};
+      try { data = JSON.parse(res.data); } catch {}
+      const names = (Array.isArray(data.models) ? data.models : []).map(m => m.name).filter(Boolean);
+      for (const model of names){
+        try {
+          await genericHttp('http://127.0.0.1:11434/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model, keep_alive: 0 }),
+            timeout: 5000
+          });
+          unloaded.push(model);
+        } catch {}
+      }
+    }
+  } catch {}
+  return unloaded;
+}
+async function stopOllama(){
+  const unloaded = await unloadOllamaModels();
+  if (!ollamaChild) return { stopped: false, unloaded };
+  const pid = ollamaChild.pid;
+  ollamaChild = null;
+  if (pid){
+    try { execSync(`taskkill /PID ${pid} /F /T`, { windowsHide: true, stdio: 'ignore' }); }
+    catch { try { process.kill(pid); } catch {} }
+  }
+  return { stopped: true, unloaded };
+}
+app.on('before-quit', () => { try { stopOllama(); } catch {} });
+
+ipcMain.handle('ai-ollama-start', async () => startOllama());
+ipcMain.handle('ai-ollama-stop',  async () => stopOllama());
+ipcMain.handle('ai-backend', async () => {
+  const ollama = await detectOllama();
+  const settings = await load(P.settings, {});
+  return { ollama, hasKey: !!String(settings.anthropicApiKey || '').trim() };
+});
+
+ipcMain.handle('ai-modpack-chat', async (e, messages) => {
+  try {
+    const settings = await load(P.settings, {});
+    const history = (Array.isArray(messages) ? messages : [])
+      .slice(-12)
+      .map(m => ({
+        role: m && m.role === 'assistant' ? 'assistant' : 'user',
+        content: String((m && m.content) || '').slice(0, 8000)
+      }))
+      .filter(m => m.content.trim());
+    if (!history.length) return { ok: false, error: 'EMPTY_MESSAGE' };
+
+    // 1) Ollama: no key, no costs, no limits beyond the user's own hardware.
+    let ollamaError = '';
+    const ollama = await detectOllama();
+    if (ollama.available && ollama.models.length){
+      const saved = String(settings.ollamaModel || '').trim();
+      const savedModel = ollama.models.find(m => m.name === saved);
+      const fits = savedModel && (savedModel.size <= ollama.budgetBytes || savedModel.size === 0);
+      const model = (fits && saved) || ollama.recommended;
+      if (model){
+        try {
+          const res = await genericHttp('http://127.0.0.1:11434/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model, stream: false,
+              messages: [{ role: 'system', content: AI_SYSTEM_PROMPT }, ...history],
+              options: { num_ctx: 2048 },
+              keep_alive: '5m'
+            }),
+            timeout: 180000
+          });
+          if (res.status >= 200 && res.status < 300){
+            let data = {};
+            try { data = JSON.parse(res.data); } catch {}
+            const text = String((data.message || {}).content || '').trim();
+            if (text) return { ok: true, text, backend: 'ollama', model };
+            ollamaError = 'EMPTY_RESPONSE';
+          } else {
+            let detail = '';
+            try { detail = (JSON.parse(res.data).error || {}).message || ''; } catch {}
+            ollamaError = 'Ollama HTTP ' + res.status + (detail ? ': ' + detail : '');
+          }
+        } catch (err){
+          ollamaError = 'Ollama: ' + err.message;
+        }
+      }
+    }
+
+    // 2) Fallback: Anthropic with the existing API key.
+    const apiKey = String(settings.anthropicApiKey || '').trim();
+    if (!apiKey) return { ok: false, error: ollamaError || 'NO_API_KEY' };
+
+    const res = await genericHttp('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 3000,
+        system: AI_SYSTEM_PROMPT,
+        messages: history
+      }),
+      timeout: 60000
+    });
+
+    if (res.status >= 200 && res.status < 300) {
+      let data = {};
+      try { data = JSON.parse(res.data); } catch {}
+      const text = (Array.isArray(data.content) ? data.content : [])
+        .filter(c => c && c.type === 'text')
+        .map(c => c.text)
+        .join('\n')
+        .trim();
+      return text ? { ok: true, text, backend: 'anthropic', model: 'claude-3-5-sonnet-20241022' } : { ok: false, error: 'EMPTY_RESPONSE' };
+    }
+    let detail = '';
+    try { detail = (JSON.parse(res.data).error || {}).message || ''; } catch {}
+    return { ok: false, error: 'HTTP ' + res.status + (detail ? ': ' + detail : '') };
+  } catch (err) {
+    return { ok: false, error: err.message };
   }
 });
 
@@ -3022,7 +3727,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
 
       if (fs.existsSync(versionsDir)) {
         const dirs = fs.readdirSync(versionsDir);
-        forgeId = dirs.find(d => d.toLowerCase().includes('forge') && d.includes(version)) || null;
+        forgeId = dirs.find(d => { const dl = d.toLowerCase(); return dl.includes('forge') && !dl.includes('neoforge') && d.includes(version); }) || null;
         if (forgeId && !fs.existsSync(path.join(versionsDir, forgeId, `${forgeId}.json`))) forgeId = null;
       }
 
@@ -3104,7 +3809,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
               const parentVersions = path.join(parentMcDir, 'versions');
               if (fs.existsSync(parentVersions)) {
                 const pDirs = fs.readdirSync(parentVersions);
-                const foundInParent = pDirs.find(d => d.toLowerCase().includes('forge') && d.includes(version));
+                const foundInParent = pDirs.find(d => { const dl = d.toLowerCase(); return dl.includes('forge') && !dl.includes('neoforge') && d.includes(version); });
                 if (foundInParent) {
                   // Move from parent/.minecraft to our mc dir
                   send('instance-log', { instanceId, line:`[FORGE] Moving installed version from ${parentMcDir} to ${absMc}` });
@@ -3124,7 +3829,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
 
           if (fs.existsSync(versionsDir)) {
             const newDirs = fs.readdirSync(versionsDir);
-            forgeId = newDirs.find(d => d.toLowerCase().includes('forge') && d.includes(version)) || null;
+            forgeId = newDirs.find(d => { const dl = d.toLowerCase(); return dl.includes('forge') && !dl.includes('neoforge') && d.includes(version); }) || null;
             if (forgeId && !fs.existsSync(path.join(versionsDir, forgeId, `${forgeId}.json`))) forgeId = null;
           }
 
@@ -3799,40 +4504,75 @@ ipcMain.on('launch-minecraft', async (event, data) => {
 
     // ── Launch with auto-fix retry ──────────────────────────────────────────────
 
-    // Build a manual launch for NeoForge (mclc can't handle module-path from version JSON)
-    async function buildNeoForgeLaunch() {
+    // Build a manual launch for modern Forge/NeoForge (mclc can't handle module-path/arguments from version JSON)
+    async function buildModernLoaderLaunch() {
+      const loaderTag = modLoader === 'forge' ? 'FORGE' : 'NEOFORGE';
       const verDir = path.join(P.mc, 'versions', versionObj.custom);
       const verJsonPath = path.join(verDir, `${versionObj.custom}.json`);
-      let verJson = JSON.parse(await fs.promises.readFile(verJsonPath, 'utf8'));
+      const childJson = JSON.parse(await fs.promises.readFile(verJsonPath, 'utf8'));
+      let verJson = childJson;
 
-      // Merge inherited parent JSON libraries (NeoForge inherits vanilla MC libraries incl. LWJGL)
+      // Merge inherited parent JSON (libraries + arguments) — loader inherits vanilla MC
       if (verJson.inheritsFrom) {
         const parentPath = path.join(P.mc, 'versions', verJson.inheritsFrom, `${verJson.inheritsFrom}.json`);
         if (fs.existsSync(parentPath)) {
           const parentJson = JSON.parse(await fs.promises.readFile(parentPath, 'utf8'));
           // Merge parent libraries (parent first, child overrides)
           const mergedLibs = [...(parentJson.libraries || [])];
-          for (const lib of (verJson.libraries || [])) {
+          for (const lib of (childJson.libraries || [])) {
             const existingIdx = mergedLibs.findIndex(l => l.name === lib.name);
             if (existingIdx >= 0) mergedLibs[existingIdx] = lib;
             else mergedLibs.push(lib);
           }
-          verJson = { ...parentJson, ...verJson, libraries: mergedLibs };
-          send('instance-log', { instanceId, line: `[NEOFORGE] Merged ${parentJson.libraries?.length||0} parent libs with ${verJson.libraries?.length||0} NeoForge libs` });
+          // Merge arguments (parent game args first, loader args after — same as the official launcher)
+          const parentGame = parentJson.arguments?.game || (parentJson.minecraftArguments ? parentJson.minecraftArguments.split(' ') : []);
+          const parentJvm = parentJson.arguments?.jvm || [];
+          verJson = {
+            ...parentJson,
+            ...childJson,
+            libraries: mergedLibs,
+            arguments: {
+              game: [...parentGame, ...(childJson.arguments?.game || [])],
+              jvm: [...parentJvm, ...(childJson.arguments?.jvm || [])]
+            }
+          };
+          send('instance-log', { instanceId, line: `[${loaderTag}] Merged ${parentJson.libraries?.length||0} parent libs with ${childJson.libraries?.length||0} loader libs` });
         }
       }
 
       const libDir = path.join(P.mc, 'libraries');
+      const assetsDir = path.join(P.mc, 'assets');
       const sep = path.delimiter;
       const versionName = versionObj.custom;
+      const osName = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'osx' : 'linux';
+
+      const argAllowed = (arg) => {
+        if (!arg.rules || !arg.rules.length) return true;
+        let allowed = false;
+        for (const rule of arg.rules) {
+          let matches = true;
+          if (rule.os) {
+            if (rule.os.name && rule.os.name !== osName) matches = false;
+            if (rule.os.arch === 'x86' && process.arch !== 'ia32') matches = false;
+          }
+          // Launcher features (demo, custom resolution, quick play) are handled separately
+          if (rule.features && Object.keys(rule.features).length) matches = false;
+          if (matches) allowed = rule.action === 'allow';
+        }
+        return allowed;
+      };
 
       const resolve = (s) => String(s)
         .replace(/\$\{library_directory\}/g, libDir)
         .replace(/\$\{classpath_separator\}/g, sep)
         .replace(/\$\{version_name\}/g, versionName)
-        .replace(/\$\{assets_directory\}/g, path.join(P.mc, 'assets'))
+        .replace(/\$\{assets_directory\}/g, assetsDir)
+        .replace(/\$\{assets_root\}/g, assetsDir)
         .replace(/\$\{game_directory\}/g, gameDir)
-        .replace(/\$\{version_type\}/g, 'release');
+        .replace(/\$\{natives_directory\}/g, P.mc)
+        .replace(/\$\{launcher_name\}/g, 'Crux Client')
+        .replace(/\$\{launcher_version\}/g, String(CURRENT_VERSION || ''))
+        .replace(/\$\{version_type\}/g, versionType || 'release');
 
       // Build classpath from libraries — but EXCLUDE jars already on the module path (-p)
       const modulePathJars = new Set();
@@ -3870,38 +4610,27 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         }
       }
 
-      // Add the client jar
-      const clientJar = path.join(verDir, `${versionName}.jar`);
-      if (fs.existsSync(clientJar)) classpath.push(clientJar);
+      // Add the client jar (loader version dirs usually only contain the JSON — fall back to the base jar)
+      let clientJar = path.join(verDir, `${versionName}.jar`);
+      if (!fs.existsSync(clientJar)) {
+        const baseId = verJson.inheritsFrom || version;
+        const baseJar = path.join(P.mc, 'versions', baseId, `${baseId}.jar`);
+        clientJar = fs.existsSync(baseJar) ? baseJar : null;
+      }
+      if (clientJar) classpath.push(clientJar);
 
-      // Build JVM args from version JSON
+      // Build JVM args from version JSON (skip the inherited "-cp ${classpath}" pair — we build our own)
       const jvmArgs = [];
-      for (const arg of (verJson.arguments?.jvm || [])) {
+      const rawJvm = verJson.arguments?.jvm || [];
+      for (let i = 0; i < rawJvm.length; i++) {
+        const arg = rawJvm[i];
         if (typeof arg === 'string') {
+          if (['-cp', '-classpath', '--class-path'].includes(arg)) { i++; continue; }
+          if (arg === '${classpath}') continue;
           jvmArgs.push(resolve(arg));
-        } else if (arg.rules) {
-          // Feature-based rule check
-          let allowed = true;
-          if (arg.rules) {
-            for (const rule of arg.rules) {
-              if (rule.features) {
-                for (const [k, v] of Object.entries(rule.features)) {
-                  if (k === 'is_demo_user' && v === true && acc?.isDemo) { /* ok */ }
-                  else if (k === 'has_custom_resolution' && v === true) { /* ok */ }
-                  else { allowed = rule.action === 'allow'; }
-                }
-              }
-              if (rule.os) {
-                if (rule.os.name === 'osx' && process.platform !== 'darwin') allowed = rule.action === 'allow' ? false : true;
-                if (rule.os.name === 'windows' && process.platform !== 'win32') allowed = rule.action === 'allow' ? false : true;
-                if (rule.os.name === 'linux' && process.platform !== 'linux') allowed = rule.action === 'allow' ? false : true;
-              }
-            }
-          }
-          if (allowed && arg.value) {
-            const vals = Array.isArray(arg.value) ? arg.value : [arg.value];
-            for (const v of vals) jvmArgs.push(resolve(v));
-          }
+        } else if (arg.value && argAllowed(arg)) {
+          const vals = Array.isArray(arg.value) ? arg.value : [arg.value];
+          for (const v of vals) jvmArgs.push(resolve(v));
         }
       }
 
@@ -3924,25 +4653,14 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       // Main class
       const mainClass = verJson.mainClass || 'net.minecraft.client.main.Main';
 
-      // Build game args
+      // Build game args (merged parent vanilla args + loader args e.g. "--launchTarget forge_client")
       const gameArgs = [];
       for (const arg of (verJson.arguments?.game || [])) {
         if (typeof arg === 'string') {
           gameArgs.push(resolve(arg));
-        } else if (arg.rules) {
-          let allowed = true;
-          for (const rule of (arg.rules || [])) {
-            if (rule.features) {
-              for (const [k, v] of Object.entries(rule.features)) {
-                if (k === 'is_demo_user') allowed = (v === true) === !!acc?.isDemo;
-                else if (k === 'has_custom_resolution') allowed = v === true;
-              }
-            }
-          }
-          if (allowed && arg.value) {
-            const vals = Array.isArray(arg.value) ? arg.value : [arg.value];
-            for (const v of vals) gameArgs.push(resolve(v));
-          }
+        } else if (arg.value && argAllowed(arg)) {
+          const vals = Array.isArray(arg.value) ? arg.value : [arg.value];
+          for (const v of vals) gameArgs.push(resolve(v));
         }
       }
 
@@ -3950,6 +4668,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       const accessToken = data.accessToken || '0';
       const gameUuid = data.uuid || '00000000-0000-0000-0000-000000000000';
       const playerName = data.playerName || 'Player';
+      const assetIndexId = verJson.assetIndex?.id || version;
 
       for (let i = 0; i < gameArgs.length; i++) {
         gameArgs[i] = gameArgs[i]
@@ -3957,12 +4676,16 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           .replace(/\$\{auth_session\}/g, accessToken)
           .replace(/\$\{auth_access_token\}/g, accessToken)
           .replace(/\$\{auth_uuid\}/g, gameUuid)
+          .replace(/\$\{auth_xuid\}/g, data.xuid || '')
+          .replace(/\$\{clientid\}/g, data.clientId || '')
           .replace(/\$\{user_properties\}/g, '{}')
           .replace(/\$\{user_type\}/g, 'msa')
           .replace(/\$\{version_name\}/g, version)
           .replace(/\$\{game_directory\}/g, gameDir)
-          .replace(/\$\{assets_directory\}/g, path.join(P.mc, 'assets'))
-          .replace(/\$\{asset_index\}/g, verJson.assetIndex?.id || version);
+          .replace(/\$\{assets_directory\}/g, assetsDir)
+          .replace(/\$\{assets_root\}/g, assetsDir)
+          .replace(/\$\{assets_index_name\}/g, assetIndexId)
+          .replace(/\$\{asset_index\}/g, assetIndexId);
       }
 
       // Always add auth at end if not present
@@ -3982,13 +4705,15 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       // Direkter Welt-Join aus Recent > Welten
       gameArgs.push(...worldJoinArgs(data, line => send('instance-log', { instanceId, line }), gameDir));
 
-      // Crux Client custom arg — placed AFTER -cp but before mainClass
-      // forge.eagerDisplay=false disables NeoForge EarlyDisplay entirely
-      // fml.earlyWindowControl=false is an alternative property name
-      // forge.eagerGlVersion=4.5 forces GL 4.5 if early display still runs
-      jvmArgs.push('-Dforge.eagerDisplay=false');
-      jvmArgs.push('-Dfml.earlyWindowControl=false');
-      jvmArgs.push('-Dforge.eagerGlVersion=4.5');
+      // Crux Client custom args — placed AFTER -cp but before mainClass
+      if (modLoader === 'neoforge') {
+        // forge.eagerDisplay=false disables NeoForge EarlyDisplay entirely
+        // fml.earlyWindowControl=false is an alternative property name
+        // forge.eagerGlVersion=4.5 forces GL 4.5 if early display still runs
+        jvmArgs.push('-Dforge.eagerDisplay=false');
+        jvmArgs.push('-Dfml.earlyWindowControl=false');
+        jvmArgs.push('-Dforge.eagerGlVersion=4.5');
+      }
       jvmArgs.push('-Dminecraft.window.title=Crux Client');
       // Mesa3D software OpenGL only when forceSoftwareGL is set (broken GPU drivers).
       // By default use the native GPU driver for best performance & correct textures.
@@ -4025,40 +4750,44 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     }
 
     async function mclcLaunchOnce() {
-      // For NeoForge: manual launch with resolved version JSON
-      if (modLoader === 'neoforge' && versionObj.custom) {
+      // For Forge/NeoForge: manual launch with resolved version JSON
+      if ((modLoader === 'forge' || modLoader === 'neoforge') && versionObj.custom) {
+        const loaderTag = modLoader === 'forge' ? 'FORGE' : 'NEOFORGE';
+        let earlyDisplayJar = null;
+        let earlyDisplayDisabled = null;
         try {
-          // Disable NeoForge EarlyDisplay by renaming its JAR (crashes on old AMD drivers)
-          // Find the actual EarlyDisplay JAR dynamically instead of hardcoding a version
-          let earlyDisplayJar = null;
-          try {
-            const edmDir = path.join(P.mc, 'libraries', 'net', 'neoforged', 'fancymodloader', 'earlydisplay');
-            if (fs.existsSync(edmDir)) {
-              const edmVersions = fs.readdirSync(edmDir).filter(v => fs.existsSync(path.join(edmDir, v, `earlydisplay-${v}.jar`))).sort();
-              if (edmVersions.length) earlyDisplayJar = path.join(edmDir, edmVersions[edmVersions.length - 1], `earlydisplay-${edmVersions[edmVersions.length - 1]}.jar`);
+          if (modLoader === 'neoforge') {
+            // Disable NeoForge EarlyDisplay by renaming its JAR (crashes on old AMD drivers)
+            // Find the actual EarlyDisplay JAR dynamically instead of hardcoding a version
+            try {
+              const edmDir = path.join(P.mc, 'libraries', 'net', 'neoforged', 'fancymodloader', 'earlydisplay');
+              if (fs.existsSync(edmDir)) {
+                const edmVersions = fs.readdirSync(edmDir).filter(v => fs.existsSync(path.join(edmDir, v, `earlydisplay-${v}.jar`))).sort();
+                if (edmVersions.length) earlyDisplayJar = path.join(edmDir, edmVersions[edmVersions.length - 1], `earlydisplay-${edmVersions[edmVersions.length - 1]}.jar`);
+              }
+            } catch {}
+            earlyDisplayDisabled = earlyDisplayJar ? earlyDisplayJar + '.disabled' : null;
+            try {
+              if (earlyDisplayJar && fs.existsSync(earlyDisplayJar)) {
+                await fs.promises.rename(earlyDisplayJar, earlyDisplayDisabled);
+                send('instance-log', { instanceId, line: `[NEOFORGE] Disabled EarlyDisplay (renamed JAR)` });
+              }
+            } catch (e) {
+              send('instance-log', { instanceId, line: `[NEOFORGE] EarlyDisplay disable failed: ${e.message}` });
             }
-          } catch {}
-          const earlyDisplayDisabled = earlyDisplayJar ? earlyDisplayJar + '.disabled' : null;
-          try {
-            if (earlyDisplayJar && fs.existsSync(earlyDisplayJar)) {
-              await fs.promises.rename(earlyDisplayJar, earlyDisplayDisabled);
-              send('instance-log', { instanceId, line: `[NEOFORGE] Disabled EarlyDisplay (renamed JAR)` });
-            }
-          } catch (e) {
-            send('instance-log', { instanceId, line: `[NEOFORGE] EarlyDisplay disable failed: ${e.message}` });
-          }
 
-          // Also patch fml.toml as backup
-          const fmlTomlPath = path.join(gameDir, 'config', 'fml.toml');
-          try {
-            let fmlToml = await fs.promises.readFile(fmlTomlPath, 'utf8');
-            fmlToml = fmlToml.replace(/^earlyWindowControl\s*=\s*true/gm, 'earlyWindowControl = false');
-            fmlToml = fmlToml.replace(/^earlyWindowProvider\s*=\s*"[^"]*"/gm, 'earlyWindowProvider = "disabled"');
-            fmlToml = fmlToml.replace(/^earlyWindowSkipGLVersions\s*=\s*\[[^\]]*\]/gm, 'earlyWindowSkipGLVersions = ["4.6"]');
-            await fs.promises.writeFile(fmlTomlPath, fmlToml, 'utf8');
-            send('instance-log', { instanceId, line: `[NEOFORGE] Patched fml.toml: disabled early window` });
-          } catch (e) {
-            send('instance-log', { instanceId, line: `[NEOFORGE] fml.toml patch skipped: ${e.message}` });
+            // Also patch fml.toml as backup
+            const fmlTomlPath = path.join(gameDir, 'config', 'fml.toml');
+            try {
+              let fmlToml = await fs.promises.readFile(fmlTomlPath, 'utf8');
+              fmlToml = fmlToml.replace(/^earlyWindowControl\s*=\s*true/gm, 'earlyWindowControl = false');
+              fmlToml = fmlToml.replace(/^earlyWindowProvider\s*=\s*"[^"]*"/gm, 'earlyWindowProvider = "disabled"');
+              fmlToml = fmlToml.replace(/^earlyWindowSkipGLVersions\s*=\s*\[[^\]]*\]/gm, 'earlyWindowSkipGLVersions = ["4.6"]');
+              await fs.promises.writeFile(fmlTomlPath, fmlToml, 'utf8');
+              send('instance-log', { instanceId, line: `[NEOFORGE] Patched fml.toml: disabled early window` });
+            } catch (e) {
+              send('instance-log', { instanceId, line: `[NEOFORGE] fml.toml patch skipped: ${e.message}` });
+            }
           }
 
           if (stoppedInstances.has(instanceId)) {
@@ -4067,12 +4796,12 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             return { code: 0, modCrash: false };
           }
 
-          const { javaPath, mainClass, jvmArgs, gameArgs, mesaActive } = await buildNeoForgeLaunch();
-          send('launch-progress', { instanceId, percent:20, message:`Launching NeoForge with ${mainClass}...` });
-          send('instance-log', { instanceId, line: `[NEOFORGE] Java: ${javaPath}` });
+          const { javaPath, mainClass, jvmArgs, gameArgs, mesaActive } = await buildModernLoaderLaunch();
+          send('launch-progress', { instanceId, percent:20, message:`Launching ${loaderTag === 'FORGE' ? 'Forge' : 'NeoForge'} with ${mainClass}...` });
+          send('instance-log', { instanceId, line: `[${loaderTag}] Java: ${javaPath}` });
 
           const allArgs = [...jvmArgs, mainClass, ...gameArgs];
-          send('instance-log', { instanceId, line: `[NEOFORGE] Args: ${allArgs.slice(0, 10).join(' ')}...` });
+          send('instance-log', { instanceId, line: `[${loaderTag}] Args: ${allArgs.slice(0, 10).join(' ')}...` });
 
           const spawnOpts = { cwd: gameDir, detached: false, stdio: ['ignore', 'pipe', 'pipe'] };
           if (mesaActive) {
@@ -4137,7 +4866,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             });
           });
         } catch(neErr) {
-          send('instance-log', { instanceId, line:`[NEOFORGE LAUNCH ERROR] ${neErr.message}` });
+          send('instance-log', { instanceId, line:`[${loaderTag} LAUNCH ERROR] ${neErr.message}` });
           // Fall through to mclc
         }
       }
@@ -5426,6 +6155,242 @@ ipcMain.handle('save-mrpack-mods', async (e, { profileId, files }) => {
   return results;
 });
 
+ipcMain.handle('open-profile-folder', async (e, profileId) => {
+  try {
+    const dir = instanceDir(profileId);
+    await fs.promises.mkdir(dir, { recursive: true });
+    shell.openPath(dir);
+    return { ok: true };
+  } catch (err) {
+    logDebug('open-profile-folder failed: ' + err.message);
+    return { ok: false, error: err.message };
+  }
+});
+
+ipcMain.handle('get-loader-icon', async (event, loader) => {
+  try {
+    const iconPath = path.join(__dirname, 'icons', 'loader-icons', loader + '.png');
+    if (fs.existsSync(iconPath)) {
+      const buf = fs.readFileSync(iconPath);
+      // Detect MIME type from file signature
+      let mime = 'image/png';
+      if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) {
+        mime = 'image/png';
+      } else if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46) {
+        // RIFF/WebP
+        if (buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50) {
+          mime = 'image/webp';
+        }
+      } else if (buf[0] === 0x3C && buf[1] === 0x3F) {
+        // XML/SVG
+        mime = 'image/svg+xml';
+      } else if (buf[0] === 0x3C && buf[1] === 0x73) {
+        // SVG starts with <s
+        mime = 'image/svg+xml';
+      }
+      return { ok: true, dataUrl: 'data:' + mime + ';base64,' + buf.toString('base64') };
+    }
+  } catch {}
+  return { ok: false };
+});
+
+// Scan Modrinth App installations (local profiles)
+ipcMain.handle('scan-modrinth-app', async () => {
+  try {
+    const appData = process.env.APPDATA || '';
+    const localAppData = process.env.LOCALAPPDATA || '';
+    const possiblePaths = [
+      path.join(appData, 'ModrinthApp', 'profiles'),
+      path.join(localAppData, 'ModrinthApp', 'profiles'),
+      path.join(appData, 'Modrinth', 'profiles'),
+      path.join(localAppData, 'Modrinth', 'profiles'),
+    ];
+    const profiles = [];
+    for (const basePath of possiblePaths) {
+      if (!fs.existsSync(basePath)) continue;
+      const dirs = fs.readdirSync(basePath).filter(d => {
+        try { return fs.statSync(path.join(basePath, d)).isDirectory(); } catch { return false; }
+      });
+      for (const dir of dirs) {
+        const instancePath = path.join(basePath, dir);
+        const metaFile = path.join(instancePath, 'instance.json');
+        if (!fs.existsSync(metaFile)) continue;
+        try {
+          const meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
+          profiles.push({
+            id: 'modrinth-' + dir,
+            name: meta.name || dir,
+            gameVersion: meta.gameVersion || '',
+            loader: meta.loader || 'fabric',
+            path: instancePath,
+            modsPath: path.join(instancePath, 'mods'),
+            icon: meta.iconPath ? path.join(instancePath, meta.iconPath) : null,
+            source: 'modrinth-app'
+          });
+        } catch (e) {
+          logDebug('Failed to parse Modrinth instance ' + dir + ': ' + e.message);
+        }
+      }
+    }
+    return { ok: true, profiles };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+// Scan CurseForge App installations (local instances)
+ipcMain.handle('scan-curseforge-app', async () => {
+  try {
+    const appData = process.env.APPDATA || '';
+    const localAppData = process.env.LOCALAPPDATA || '';
+    const possiblePaths = [
+      path.join(appData, 'CurseForge', 'Minecraft', 'Instances'),
+      path.join(localAppData, 'CurseForge', 'Minecraft', 'Instances'),
+      path.join(appData, 'Overwolf', 'CurseForge', 'Minecraft', 'Instances'),
+      path.join(localAppData, 'Overwolf', 'CurseForge', 'Minecraft', 'Instances'),
+    ];
+    const profiles = [];
+    for (const basePath of possiblePaths) {
+      if (!fs.existsSync(basePath)) continue;
+      const dirs = fs.readdirSync(basePath).filter(d => {
+        try { return fs.statSync(path.join(basePath, d)).isDirectory(); } catch { return false; }
+      });
+      for (const dir of dirs) {
+        const instancePath = path.join(basePath, dir);
+        // CurseForge instances have a manifest.json or minecraftinstance.json
+        const manifestFile = path.join(instancePath, 'manifest.json');
+        const mcInstanceFile = path.join(instancePath, 'minecraftinstance.json');
+        let meta = {};
+        let metaFile = null;
+        if (fs.existsSync(manifestFile)) {
+          metaFile = manifestFile;
+        } else if (fs.existsSync(mcInstanceFile)) {
+          metaFile = mcInstanceFile;
+        }
+        if (!metaFile) continue;
+        try {
+          meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
+        } catch (e) {
+          logDebug('Failed to parse CurseForge instance ' + dir + ': ' + e.message);
+          continue;
+        }
+        profiles.push({
+          id: 'curseforge-' + dir,
+          name: meta.name || meta.installName || dir,
+          gameVersion: meta.minecraftVersion || meta.gameVersion || '',
+          loader: meta.loader || meta.modLoader || 'forge',
+          path: instancePath,
+          modsPath: path.join(instancePath, 'mods'),
+          icon: meta.logoPath ? path.join(instancePath, meta.logoPath) : null,
+          source: 'curseforge-app'
+        });
+      }
+    }
+    return { ok: true, profiles };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+// Import CurseForge instance — copy mods to Crux profile
+ipcMain.handle('import-curseforge-instance', async (event, instancePath) => {
+  try {
+    // Handle both instance path and mods path
+    const modsPath = instancePath.endsWith('mods') ? instancePath : path.join(instancePath, 'mods');
+    if (!fs.existsSync(modsPath)) return { ok: true, mods: [] };
+    const modFiles = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar'));
+    const mods = [];
+    for (const f of modFiles) {
+      mods.push({
+        name: f.replace(/\.jar$/i, ''),
+        fileName: f,
+        diskPath: path.join(modsPath, f),
+        path: 'mods/' + f,
+        source: 'CurseForge App', modrinthId: null, version: 'latest',
+        mcVersion: '', iconUrl: '', downloadAllVersions: false, disabled: false, loader: 'forge'
+      });
+    }
+    return { ok: true, mods };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+// Import Modrinth App profile — copy mods to Crux profile
+ipcMain.handle('import-modrinth-instance', async (event, instancePath) => {
+  try {
+    // Handle both instance path and mods path
+    const modsPath = instancePath.endsWith('mods') ? instancePath : path.join(instancePath, 'mods');
+    if (!fs.existsSync(modsPath)) return { ok: true, mods: [] };
+    const modFiles = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar'));
+    const mods = [];
+    for (const f of modFiles) {
+      mods.push({
+        name: f.replace(/\.jar$/i, ''),
+        fileName: f,
+        diskPath: path.join(modsPath, f),
+        path: 'mods/' + f,
+        source: 'Modrinth App', modrinthId: null, version: 'latest',
+        mcVersion: '', iconUrl: '', downloadAllVersions: false, disabled: false, loader: 'fabric'
+      });
+    }
+    return { ok: true, mods };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.handle('get-mc-textures', async (event, type) => {
+  try {
+    const yauzl = require('yauzl');
+    const versionsDir = path.join(P.mc, 'versions');
+    if (!fs.existsSync(versionsDir)) return { ok: false, error: 'Keine Versions-Verzeichnisse gefunden' };
+    const versionDirs = fs.readdirSync(versionsDir).filter(d => {
+      try { return fs.statSync(path.join(versionsDir, d)).isDirectory(); } catch { return false; }
+    });
+    const textures = [];
+    const seen = new Set();
+    // Process newest versions first
+    versionDirs.sort((a, b) => {
+      try { return fs.statSync(path.join(versionsDir, b)).mtimeMs - fs.statSync(path.join(versionsDir, a)).mtimeMs; } catch { return 0; }
+    });
+    for (const verDir of versionDirs) {
+      const jarPath = path.join(versionsDir, verDir, verDir + '.jar');
+      if (!fs.existsSync(jarPath)) continue;
+      await new Promise((resolve) => {
+        yauzl.open(jarPath, { lazyEntries: true, autoClose: true }, (err, zipfile) => {
+          if (err) { resolve(); return; }
+          zipfile.readEntry();
+          zipfile.on('entry', (entry) => {
+            const name = entry.fileName;
+            const prefix = type === 'item' ? 'assets/minecraft/textures/item/' : 'assets/minecraft/textures/block/';
+            if (!name.startsWith(prefix) || !name.endsWith('.png')) { zipfile.readEntry(); return; }
+            const key = name.slice(prefix.length, -4);
+            if (seen.has(key)) { zipfile.readEntry(); return; }
+            seen.add(key);
+            zipfile.openReadStream(entry, (err, readStream) => {
+              if (err) { zipfile.readEntry(); return; }
+              const chunks = [];
+              readStream.on('data', c => chunks.push(c));
+              readStream.on('end', () => {
+                const buf = Buffer.concat(chunks);
+                textures.push({ name: key, dataUrl: 'data:image/png;base64,' + buf.toString('base64'), version: verDir });
+                zipfile.readEntry();
+              });
+              readStream.on('error', () => { zipfile.readEntry(); });
+            });
+          });
+          zipfile.on('end', () => resolve());
+        });
+      });
+      if (textures.length > 500) break; // limit to avoid hanging
+    }
+    return { ok: true, textures };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
 // Kill any leftover java process still holding a server directory's locks
 // (orphans from a previous launcher session keep session.lock / logs/latest.log)
 function killOrphanedServerProcesses(serverDir) {
@@ -6081,6 +7046,8 @@ async function getNeoForgeLatestVersion(mcVersion) {
   });
   return pool[0];
 }
+
+
 
 
 

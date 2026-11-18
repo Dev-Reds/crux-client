@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8"> 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="./Crux-Client.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,15 +24,15 @@
     <!-- <button class="tb-btn" data-page="friends-page" data-i18n="tab_friends">Friends</button> -->
     <button class="tb-btn" data-page="logs-page" data-i18n="tab_logs"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></svg><span id="running-badge" class="tb-badge" style="display:none"></span></button>
     <button class="tb-btn" data-page="servers-page" data-i18n="tab_servers"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg></button>
-    <button class="tb-btn" data-page="features-page" data-i18n="tab_features"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4L12 3Z"/><path d="m18.5 15 .9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1Z"/></svg></button>
+    <button class="tb-btn" data-page="features-page" data-i18n="tab_features" style="display:none"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4L12 3Z"/><path d="m18.5 15 .9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1Z"/></svg></button>
     <button class="tb-btn" data-page="bugreport-page" id="tb-bugreport-btn" data-i18n="tab_bugreport"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3Z"/><path d="M9 21h6M9.5 13h5"/></svg></button>
     <button class="tb-btn" data-page="account-page" id="tb-account-btn" data-i18n="tab_account">
       <canvas class="tb-head" id="tb-account-head" width="24" height="24"></canvas>
     </button>
     <button class="tb-btn" data-page="owner-page" id="tb-owner-btn" style="display:none">Owner</button>
-  </div>
+	  </div>
 
-  <button class="tb-btn" id="settings-fab" data-page="settings-page" data-i18n-title="tab_settings" title="Settings">
+	  <button class="tb-btn" id="settings-fab" data-page="settings-page" data-i18n-title="tab_settings" title="Settings">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
   </button>
 
@@ -88,7 +88,6 @@
             <canvas class="skin3d-canvas" id="skin3d-canvas"></canvas>
           </div>
           <div class="skin-name-display" id="skin-name-display">No account</div>
-          <div class="skin-version-display" id="skin-version-display">—</div>
 
           <!-- Konto-Karte -->
           <section class="rail-card" id="rail-account">
@@ -128,6 +127,19 @@
           </section>
         </div>
       </div>
+
+      <section class="card card--spaced" id="launch-recent-card" style="margin-top:1.25rem;">
+        <header class="card__head">
+          <h2 data-i18n="h_recent">Recent Played</h2>
+          <div class="card__actions">
+            <span class="hint" id="recent-count"></span>
+            <button class="btn btn-sm btn-danger" id="recent-clear-btn" data-i18n="btn_clear_history">Clear History</button>
+          </div>
+        </header>
+        <div class="card__body">
+          <div id="recent-sections"></div>
+        </div>
+      </section>
     </div>
 
     <!-- ─── CLIENT-MODS ─── -->
@@ -144,6 +156,25 @@
           </button>
         </div>
       </header>
+
+      <!-- Mods-Toolbar: Suche + Sortierung -->
+      <div class="mods-toolbar" id="mods-toolbar">
+        <div class="mod-search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:0.15rem;height:1.15rem;color:var(--muted-2);flex:none"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="search" id="mod-search" class="mod-search-input" placeholder="Search mods..." data-i18n-ph="search_mods">
+        </div>
+        <select id="mod-sort" class="mod-sort-select" aria-label="Sort mods" data-i18n-aria="sort_mods">
+          <option value="name" data-i18n="sort_name">Name (A → Z)</option>
+          <option value="name-desc" data-i18n="sort_name_desc">Name (Z → A)</option>
+          <option value="version" data-i18n="sort_version">Version</option>
+          <option value="loader" data-i18n="sort_loader">Loader</option>
+          <option value="source" data-i18n="sort_source">Source</option>
+          <option value="mcversion" data-i18n="sort_mcversion">MC Version</option>
+          <option value="enabled" data-i18n="sort_enabled">Aktiv zuerst</option>
+          <option value="added" data-i18n="sort_added">Hinzugefügt</option>
+        </select>
+        <span class="mods-count-hint" id="mods-count"></span>
+      </div>
 
       <div class="chip-row" role="tablist">
         <button class="btn btn-sm mod-filter-btn active" data-filter="all" id="filter-all" data-i18n="filter_all">All</button>
@@ -188,14 +219,24 @@
         </div>
         <div class="page-head__actions">
           <div class="menu-wrap">
+            <button class="btn" id="new-modpack-btn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+              <span>New Modpack</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div id="new-modpack-dropdown" class="menu">
+              <button class="btn menu-item" id="np-modrinth-btn" type="button">Modrinth</button>
+              <button class="btn menu-item" id="np-curseforge-btn" type="button">CurseForge</button>
+              <button class="btn menu-item" id="np-generate-btn" type="button">Generate (AI)</button>
+            </div>
+          </div>
+          <div class="menu-wrap">
             <button class="btn" id="import-btn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16"/></svg>
               <span data-i18n="btn_import">Import</span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             </button>
             <div id="import-dropdown" class="menu">
-              <button class="btn menu-item btn-modrinth" id="import-modpack-modrinth-btn" data-i18n="btn_import_modpack_modrinth">Modrinth Modpack</button>
-              <button class="btn menu-item btn-curseforge" id="import-modpack-curseforge-btn" data-i18n="btn_import_modpack_curseforge">CurseForge Modpack</button>
               <button class="btn menu-item" id="import-share-btn" data-i18n="btn_import_share">Import Share Code</button>
               <button class="btn menu-item" id="import-norisk-btn" data-i18n="btn_import_norisk">NoRisk Client</button>
             </div>
@@ -361,6 +402,16 @@
             </select>
           </div>
         </div>
+          <div class="settings-section" id="fab-position-section">
+          <h2 data-i18n="sec_fab_position">Settings-Button Position</h2>
+          <div class="form-row form-row--narrow">
+            <label data-i18n="lbl_fab_position">Position:</label>
+            <select id="fab-position-select">
+              <option value="toolbar" data-i18n="fab_pos_toolbar">In der Tab-Leiste</option>
+              <option value="corner" data-i18n="fab_pos_corner">Unten rechts (Kreis)</option>
+            </select>
+          </div>
+        </div>
         </div>
       </section>
       <section class="settings-group" id="setgrp-language">
@@ -499,19 +550,6 @@
         <div class="lp-label" id="lp-label-logs"></div>
       </div>
       <div class="logs-container" id="logs-container"></div>
-
-      <section class="card card--spaced">
-        <header class="card__head">
-          <h2 data-i18n="h_recent">Recent Played</h2>
-          <div class="card__actions">
-            <span class="hint" id="recent-count"></span>
-            <button class="btn btn-sm btn-danger" id="recent-clear-btn" data-i18n="btn_clear_history">Clear History</button>
-          </div>
-        </header>
-        <div class="card__body">
-          <div id="recent-sections"></div>
-        </div>
-      </section>
     </div>
 
     <!-- ── SERVERS ── -->
@@ -1120,15 +1158,23 @@
       <button class="btn modal-close" onclick="document.getElementById('import-norisk-modal').style.display='none'">✕</button>
     </div>
     <div style="padding:1rem">
-      <p class="hint" data-i18n="modal_import_norisk_desc">Import your NoRisk Client profiles — from the installed client or from an exported .noriskpack file (any name, any location).</p>
+      <p class="hint" data-i18n="modal_import_norisk_desc">Import your NoRisk Client profiles — from the installed client or from an exported .noriskpack/.nrpack file (any name, any location). You can also drag &amp; drop the file into the area below.</p>
+      <div id="import-norisk-drop" class="mod-dropzone" style="padding:1.2rem .8rem;text-align:center;cursor:pointer;border:2px dashed var(--border, #2a2a2a);border-radius:var(--r);margin-bottom:.8rem;color:var(--muted, #888);">
+        <div style="font-weight:600;margin-bottom:.25rem;">Drop .nrpack / .noriskpack here</div>
+        <div style="font-size:.75em;">or click “Choose export file…”</div>
+      </div>
       <div id="import-norisk-file" style="font-size:.75em;color:#6cf;margin-bottom:.5em;word-break:break-all"></div>
       <div id="import-norisk-hint" style="font-size:.72em;color:#c98;margin-bottom:.5em;display:none"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.5em;margin-bottom:.4em;flex-wrap:wrap;">
+        <span class="hint" style="margin:0">Profiles (from NRC)</span>
+        <button class="btn btn-sm" id="import-norisk-toggleall-btn" style="width:auto" type="button">Select all</button>
+      </div>
       <div id="import-norisk-list" style="max-height:40vh;overflow-y:auto"></div>
       <div id="import-norisk-bar-wrap" style="display:none;margin-top:.6em"><div class="lp-bg"><div class="lp-fill" id="import-norisk-bar"></div></div></div>
       <div id="import-norisk-status" style="font-size:.8em;color:#888;margin-top:.4em;min-height:1.2em"></div>
       <div style="display:flex;gap:.4em;margin-top:.5em;flex-wrap:wrap">
         <button class="btn btn-sm btn-primary" id="import-norisk-confirm-btn" style="width:auto" data-i18n="btn_import">Import</button>
-        <button class="btn btn-sm" id="import-norisk-file-btn" style="width:auto" data-i18n="btn_choose_export">Choose export fileâ€¦</button>
+        <button class="btn btn-sm" id="import-norisk-file-btn" style="width:auto" data-i18n="btn_choose_export">Choose export file…</button>
       </div>
     </div>
   </div>
@@ -1161,12 +1207,12 @@
       <div class="form-row form-row--wide">
         <label data-i18n="lbl_mod_loader">Mod Loader:</label>
         <div class="modloader-row">
-          <label class="modloader-pick"><input type="radio" name="modLoader" value="fabric" id="ml-fabric" checked> Fabric</label>
-          <label class="modloader-pick"><input type="radio" name="modLoader" value="quilt" id="ml-quilt"> Quilt</label>
-          <label class="modloader-pick"><input type="radio" name="modLoader" value="forge" id="ml-forge"> Forge</label>
-          <label class="modloader-pick"><input type="radio" name="modLoader" value="neoforge" id="ml-neoforge"> NeoForge</label>
-          <label class="modloader-pick"><input type="radio" name="modLoader" value="vanilla" id="ml-vanilla"> Vanilla</label>
-          <label class="modloader-pick"><input type="radio" name="modLoader" value="bedrock" id="ml-bedrock"> Bedrock</label>
+          <label class="modloader-pick"><input type="radio" name="modLoader" value="fabric" id="ml-fabric" checked><img class="modloader-pick__icon" src="./icons/loader-icons/fabric.png" alt="" onerror="this.onerror=null;this.src='./icons/loader-icons/vanilla.png';"> Fabric</label>
+          <label class="modloader-pick"><input type="radio" name="modLoader" value="quilt" id="ml-quilt"><img class="modloader-pick__icon" src="./icons/loader-icons/quilt.png" alt="" onerror="this.onerror=null;this.src='./icons/loader-icons/vanilla.png';"> Quilt</label>
+          <label class="modloader-pick"><input type="radio" name="modLoader" value="forge" id="ml-forge"><img class="modloader-pick__icon" src="./icons/loader-icons/forge.png" alt="" onerror="this.onerror=null;this.src='./icons/loader-icons/vanilla.png';"> Forge</label>
+          <label class="modloader-pick"><input type="radio" name="modLoader" value="neoforge" id="ml-neoforge"><img class="modloader-pick__icon" src="./icons/loader-icons/neoforge.png" alt="" onerror="this.onerror=null;this.src='./icons/loader-icons/vanilla.png';"> NeoForge</label>
+          <label class="modloader-pick"><input type="radio" name="modLoader" value="vanilla" id="ml-vanilla"><img class="modloader-pick__icon" src="./icons/loader-icons/vanilla.png" alt=""> Vanilla</label>
+          <label class="modloader-pick"><input type="radio" name="modLoader" value="bedrock" id="ml-bedrock"><img class="modloader-pick__icon" src="./icons/loader-icons/bedrock.png" alt="" onerror="this.onerror=null;this.src='./icons/loader-icons/vanilla.png';"> Bedrock</label>
         </div>
       </div>
       <div class="form-row form-row--wide">
@@ -1186,15 +1232,32 @@
         </div>
       </div>
       <!-- Mods section (split view: Mods left, packs right) -->
-      <div class="profile-section" data-section="mods">
-        <div class="pack-section" id="profile-mods-section">
-          <div class="pack-section-header">
-            <h3 data-i18n="profile_mods">Mods</h3>
-            <div class="btn-row">
-              <button class="btn btn-sm btn-modrinth" id="profile-btn-modrinth">+</button>
-            </div>
-          </div>
-          <div class="profile-split" id="profile-split">
+          <div class="profile-section" data-section="mods">
+            <div class="pack-section" id="profile-mods-section">
+              <div class="pack-section-header">
+                <h3 data-i18n="profile_mods">Mods</h3>
+                <div class="btn-row">
+                </div>
+              </div>
+              <!-- Mods-Toolbar: Suche + Sortierung (Profil) -->
+              <div class="mods-toolbar" id="profile-mods-toolbar">
+                <div class="mod-search-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:1.15rem;height:1.15rem;color:var(--muted-2);flex:none"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  <input type="search" id="profile-mod-search" class="mod-search-input" placeholder="Search mods..." data-i18n-ph="search_mods">
+                </div>
+                <select id="profile-mod-sort" class="mod-sort-select" aria-label="Sort mods" data-i18n-aria="sort_mods">
+                  <option value="name" data-i18n="sort_name">Name (A → Z)</option>
+                  <option value="name-desc" data-i18n="sort_name_desc">Name (Z → A)</option>
+                  <option value="version" data-i18n="sort_version">Version</option>
+                  <option value="loader" data-i18n="sort_loader">Loader</option>
+                  <option value="source" data-i18n="sort_source">Source</option>
+                  <option value="mcversion" data-i18n="sort_mcversion">MC Version</option>
+                  <option value="enabled" data-i18n="sort_enabled">Aktiv zuerst</option>
+                  <option value="added" data-i18n="sort_added">Hinzugefügt</option>
+                </select>
+                <span class="mods-count-hint" id="profile-mods-count"></span>
+              </div>
+              <div class="profile-split" id="profile-split">
             <div class="profile-split-pane profile-split-left" id="profile-split-left" data-drop-target="mods">
               <div class="pack-list" id="profile-mods-list"></div>
             </div>
@@ -1204,8 +1267,6 @@
                 <div class="pack-section-header">
                   <h3 data-i18n="profile_datapacks">Datapacks</h3>
                   <div class="btn-row">
-                    <button class="btn btn-sm btn-modrinth" id="profile-btn-dp-modrinth">+ Modrinth</button>
-                    <button class="btn btn-sm btn-curseforge" id="profile-btn-dp-curseforge">+ CurseForge</button>
                   </div>
                 </div>
                 <div class="pack-list" id="profile-datapacks"></div>
@@ -1214,8 +1275,6 @@
                 <div class="pack-section-header">
                   <h3 data-i18n="profile_resourcepacks">Resource Packs</h3>
                   <div class="btn-row">
-                    <button class="btn btn-sm btn-modrinth" id="profile-btn-rp-modrinth">+ Modrinth</button>
-                    <button class="btn btn-sm btn-curseforge" id="profile-btn-rp-curseforge">+ CurseForge</button>
                   </div>
                 </div>
                 <div class="pack-list" id="profile-resourcepacks"></div>
@@ -1224,8 +1283,6 @@
                 <div class="pack-section-header">
                   <h3 data-i18n="profile_shaderpacks">Shader Packs</h3>
                   <div class="btn-row">
-                    <button class="btn btn-sm btn-modrinth" id="profile-btn-sp-modrinth">+ Modrinth</button>
-                    <button class="btn btn-sm btn-curseforge" id="profile-btn-sp-curseforge">+ CurseForge</button>
                   </div>
                 </div>
                 <div class="pack-list" id="profile-shaderpacks" data-drop-target="shaderPacks"></div>
@@ -1673,13 +1730,14 @@ async function bootLauncher(){
       ipcRenderer.invoke('load-accounts').then(r=>r||[]),
       ipcRenderer.invoke('load-profiles').then(r=>r||[]),
       ipcRenderer.invoke('load-mods').then(r=>r||[]),
+      ipcRenderer.invoke('load-client-mods').then(r=>r||[]),
       ipcRenderer.invoke('load-launched-versions').then(r=>r||[]),
     ]);
     settings      = results[0].status==='fulfilled' ? results[0].value : {};
     accounts      = results[1].status==='fulfilled' ? results[1].value : [];
     profiles      = results[2].status==='fulfilled' ? results[2].value : [];
-    installedMods = results[3].status==='fulfilled' ? results[3].value : [];
-    launchedVersions = results[4].status==='fulfilled' ? results[4].value : [];
+    installedMods = (results[3].status==='fulfilled' ? results[3].value : []).concat(results[4].status==='fulfilled' ? results[4].value : []);
+    launchedVersions = results[5].status==='fulfilled' ? results[5].value : [];
     recentHistory = settings.recentHistory || [];
     // Profile ohne lastUsed: absteigende Werte setzen (alte Reihenfolge bleibt)
     try { migrateProfileOrder(); } catch (e) { console.warn('[Crux] profile order migration failed', e); }
@@ -1721,12 +1779,11 @@ async function bootLauncher(){
     }
     applyLanguage(settings.lang || 'en');
     applyCornerRadius();
-    updateGlassBgSection();
     updateBgColorSection();
     applyBgColor(settings.bgColor || '');
     try { glassDefaultBgs = (await ipcRenderer.invoke('get-default-glass-bgs')) || []; } catch {}
     applyGlassBg();
-    renderGlassBgPresets();
+    updateGlassBgSection();
 
     buildColorGrid();
     applyAccent(currentAccentIdx);
@@ -1734,11 +1791,12 @@ async function bootLauncher(){
     ensureDefaultMods();
     // Apply saved toggle states
     try {
-      document.getElementById('open-logs-toggle').checked = !!settings.openLogsAfterLaunch;
-      document.getElementById('close-launcher-toggle').checked = !!settings.closeLauncherWhilePlaying;
-      document.getElementById('use-original-launcher-toggle').checked = !!settings.useOriginalLauncher;
+      const tLogs = document.getElementById('open-logs-toggle'); if (tLogs) tLogs.checked = !!settings.openLogsAfterLaunch;
+      const tClose = document.getElementById('close-launcher-toggle'); if (tClose) tClose.checked = !!settings.closeLauncherWhilePlaying;
+      const tOrig = document.getElementById('use-original-launcher-toggle'); if (tOrig) tOrig.checked = !!settings.useOriginalLauncher;
     } catch {}
     applyTabBarPosition();
+    applyFabPosition();
     renderModList();
     fetchMissingModIcons();
     renderAccountList();
@@ -1850,12 +1908,15 @@ function showPage(id){
       b.style.color=lightText?'#111':'#fff';
     } else { b.style.background=''; b.style.borderColor=''; b.style.color=''; }
   });
-  if(id==='mods-page') syncModFilterToProfile();
+  // Show settings button in toolbar when on settings page AND fabPosition is 'toolbar'
+  const tbSettingsBtn = document.getElementById('tb-settings-btn');
+  if(tbSettingsBtn) tbSettingsBtn.style.display = (id === 'settings-page' && (settings.fabPosition || 'toolbar') === 'toolbar') ? '' : 'none';
+  if(id==='mods-page'){ syncModFilterToProfile(); renderModList(); }
   if(id==='owner-page' && typeof renderOwnerAccountList==='function') renderOwnerAccountList();
   if(id==='logs-page'){ renderInstanceList(); refreshLogSelect(); updateStopButtons(); }
   if(id==='logs-page') renderRecentList();  if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
   if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); refreshChat(); }
-  if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && typeof threeCamera !== 'undefined'){ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); } },50); updateStopButtons(); }
+  if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap && wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && threeRenderer && typeof threeCamera !== 'undefined' && threeCamera){ try{ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); }catch(e){} } },50); updateStopButtons(); }
 }
 
 function bindToolbar(){  document.querySelectorAll('.tb-btn[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
@@ -2051,6 +2112,7 @@ const LANGS={
     sec_theme:'Theme', lbl_theme:'Appearance', theme_dark:'Dark', theme_light:'Light', theme_glass:'Glass', theme_win7:'Windows 7', theme_xp:'Windows XP',
     sec_glass_bg:'Glass Background', desc_glass_bg:'Custom background behind the frosted glass. Only shown in the Glass theme.', btn_choose_bg:'Choose Imageâ€¦', btn_remove_bg:'Remove', lbl_bg_tint:'Tint image with accent colour',
     sec_corner_radius:'Corner Radius', lbl_corner_radius:'Roundness', corner_small:'Small', corner_medium:'Medium', corner_large:'Large', corner_round:'Round',
+    sec_fab_position:'Settings Button Position', lbl_fab_position:'Position:', fab_pos_toolbar:'In Tab Bar', fab_pos_corner:'Bottom Right (Circle)', fab_pos_custom:'Custom (Pixels)', lbl_fab_x:'X (Pixel):', lbl_fab_y:'Y (Pixel):',
     sec_reset:'Reset', desc_reset:'Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.',
     btn_reset:'Reset Launcher', sec_updates:'Updates', btn_check_update:'Check for Updates',
     desc_current_version:'Current version:',
@@ -2059,7 +2121,7 @@ const LANGS={
     btn_use_client_mods:'Use Client Mods (from Client Options tab)',
     btn_use_client_rps:'Use Client Resource Packs (from Client Options tab)',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
-    btn_import_share:'📋 Import Share Code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Share',
+    btn_import_share:'📋 Import Share Code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Share', open_folder:'Open Folder',
     btn_stop_server:'■ Stop Server', btn_op_player:'OP Player', btn_whitelist:'Whitelist', btn_backup_world:'Backup World',
     btn_new_server:'+ New Server', server_count:'servers',
     btn_microsoft:'Microsoft',
@@ -2075,6 +2137,7 @@ const LANGS={
     desc_client_rp:'Client resource packs are applied to all profiles.',
     btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
     filter_all:'All', filter_disabled:'Disabled',
+    search_mods:'Search mods...', sort_mods:'Sort mods', sort_name:'Name (A → Z)', sort_name_desc:'Name (Z → A)', sort_version:'Version', sort_loader:'Loader', sort_source:'Source', sort_mcversion:'MC Version', sort_enabled:'Enabled first', sort_added:'Added', mods_count:'{n} mods', mods_count_one:'1 mod',
     btn_new_profile:'+ New Profile', no_mods_installed:'No mods installed yet.',
     launch_via_launcher:'Launch via original Minecraft Launcher',
     after_launch_logs:'Open logs after launch',
@@ -2194,6 +2257,7 @@ const LANGS={
     sec_theme:'Design', lbl_theme:'Darstellung', theme_dark:'Dunkel', theme_light:'Hell', theme_glass:'Glas', theme_win7:'Windows 7', theme_xp:'Windows XP',
     sec_glass_bg:'Glas-Hintergrund', desc_glass_bg:'Eigener Hintergrund hinter dem mattierten Glas. Wird nur im Glas-Theme angezeigt.', btn_choose_bg:'Bild wählenâ€¦', btn_remove_bg:'Entfernen', lbl_bg_tint:'Bild mit Akzentfarbe einfärben',
     sec_corner_radius:'Eckenradius', lbl_corner_radius:'Abrundung', corner_small:'Klein', corner_medium:'Mittel', corner_large:'GroÎ', corner_round:'Rund',
+    sec_fab_position:'Position des Settings-Buttons', lbl_fab_position:'Position:', fab_pos_toolbar:'In der Tab-Leiste', fab_pos_corner:'Unten rechts (Kreis)', fab_pos_custom:'Benutzerdefiniert (Pixel)', lbl_fab_x:'X (Pixel):', lbl_fab_y:'Y (Pixel):',
     sec_reset:'Zurücksetzen', desc_reset:'Löscht alle Konten, Profile, Einstellungen und Mods. Der Launcher startet wie beim ersten Mal.',
     btn_reset:'Launcher zurücksetzen', sec_updates:'Updates', btn_check_update:'Nach Updates suchen',
     desc_current_version:'Aktuelle Version:',
@@ -2202,7 +2266,7 @@ const LANGS={
     btn_use_client_mods:'Client Mods verwenden (aus Client Options Tab)',
     btn_use_client_rps:'Client Ressourcenpakete verwenden (aus Client Options Tab)',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
-    btn_import_share:'📋 Import-Code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Teilen',
+    btn_import_share:'📋 Import-Code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Teilen', open_folder:'Ordner öffnen',
     btn_stop_server:'■ Server stoppen', btn_op_player:'OP Spieler', btn_whitelist:'Whitelist', btn_backup_world:'Welt sichern',
     btn_new_server:'+ Neuer Server', server_count:'Server',
     btn_microsoft:'Microsoft',
@@ -2218,6 +2282,7 @@ const LANGS={
     desc_client_rp:'Client Ressourcenpakete werden auf alle Profile angewendet.',
     btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
     filter_all:'Alle', filter_disabled:'Deaktiviert',
+    search_mods:'Mods suchen...', sort_mods:'Sortieren', sort_name:'Name (A → Z)', sort_name_desc:'Name (Z → A)', sort_version:'Version', sort_loader:'Loader', sort_source:'Quelle', sort_mcversion:'MC-Version', sort_enabled:'Aktiv zuerst', sort_added:'Hinzugefügt', mods_count:'{n} Mods', mods_count_one:'1 Mod',
     btn_new_profile:'+ Neues Profil', no_mods_installed:'Noch keine Mods installiert.',
     launch_via_launcher:'Íber den offiziellen Minecraft Launcher starten',
     after_launch_logs:'Protokolle nach dem Start öffnen',
@@ -2345,7 +2410,7 @@ const LANGS={
     btn_use_client_mods:'Utiliser les Mods Client (onglet Options Client)',
     btn_use_client_rps:'Utiliser les Packs de Ressources Client (onglet Options Client)',
     btn_import_modpack_modrinth:'ðŸ“¦ Modrinth', btn_import_modpack_curseforge:'ðŸ“¦ CurseForge',
-    btn_import_share:'📋 Importer un code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Partager',
+    btn_import_share:'📋 Importer un code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Partager', open_folder:'Ouvrir le dossier',
     btn_stop_server:'■ Arrêter le Serveur', btn_op_player:'OP Joueur', btn_whitelist:'Whitelist', btn_backup_world:'Sauvegarder le monde',
     btn_new_server:'+ Nouveau Serveur', server_count:'serveurs',
     btn_microsoft:'Microsoft',
@@ -2359,6 +2424,7 @@ const LANGS={
     btn_add_rp:'+ Ajouter', client_rp_title:'Packs de Ressources Client',
     btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
     filter_all:'Tous', filter_disabled:'Désactivés',
+    search_mods:'Rechercher des mods...', sort_mods:'Trier', sort_name:'Nom (A → Z)', sort_name_desc:'Nom (Z → A)', sort_version:'Version', sort_loader:'Chargeur', sort_source:'Source', sort_mcversion:'Version MC', sort_enabled:'Activés d\'abord', sort_added:'Ajoutés', mods_count:'{n} mods', mods_count_one:'1 mod',
     btn_new_profile:'+ Nouveau profil', no_mods_installed:'Aucun mod installé.',
     launch_via_launcher:'Lancer via le lanceur Minecraft original',
     after_launch_logs:'Ouvrir les journaux après le lancement',
@@ -2484,7 +2550,7 @@ const LANGS={
     sec_uninstall:'Desinstalar', btn_uninstall:'Desinstalar Crux Client', desc_uninstall:'Elimina el launcher y todos sus datos del sistema.',
     btn_use_crux_mod:'Usar Funciones Crux Client',
     btn_import_modpack_modrinth:'ðŸ“¦ Modrinth', btn_import_modpack_curseforge:'ðŸ“¦ CurseForge',
-    btn_import_share:'📋 Importar código', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Compartir',
+    btn_import_share:'📋 Importar código', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Compartir', open_folder:'Abrir carpeta',
     btn_stop_server:'■ Detener Servidor', btn_op_player:'OP Jugador', btn_whitelist:'Whitelist', btn_backup_world:'Copiar mundo',
     btn_new_server:'+ Nuevo Servidor', server_count:'servidores',
     btn_microsoft:'Microsoft',
@@ -2495,6 +2561,7 @@ const LANGS={
     mc_capes:'Capas de Minecraft', custom_cape:'Capa Personalizada',
     btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
     filter_all:'Todos', filter_disabled:'Desactivados',
+    search_mods:'Buscar mods...', sort_mods:'Ordenar', sort_name:'Nombre (A → Z)', sort_name_desc:'Nombre (Z → A)', sort_version:'Versión', sort_loader:'Cargador', sort_source:'Origen', sort_mcversion:'Versión MC', sort_enabled:'Activados primero', sort_added:'Añadidos', mods_count:'{n} mods', mods_count_one:'1 mod',
     btn_new_profile:'+ Nuevo perfil', no_mods_installed:'Sin mods instalados.',
     launch_via_launcher:'Iniciar a través del Minecraft Launcher original',
     after_launch_logs:'Abrir registros después de iniciar',
@@ -3103,6 +3170,18 @@ function profileLoaderKey(loader){
 function profileLoaderGlyph(loader){
   return { vanilla:'V', fabric:'F', quilt:'Q', forge:'Fo', neoforge:'N', bedrock:'B' }[profileLoaderKey(loader)] || 'V';
 }
+function profileLoaderIcon(loader){
+  const l = profileLoaderKey(loader);
+  const map = {
+    vanilla: 'icons/loader-icons/vanilla.png',
+    fabric: 'icons/loader-icons/fabric.png',
+    quilt: 'icons/loader-icons/quilt.png',
+    forge: 'icons/loader-icons/forge.png',
+    neoforge: 'icons/loader-icons/neoforge.png',
+    bedrock: 'icons/loader-icons/bedrock.png'
+  };
+  return map[l] || map.vanilla;
+}
 // ── Reihenfolge: neu angelegte und zuletzt benutzte Profile oben ────────
 function sortedProfiles(){
   // Sort ist stabil: Profile ohne Zeitstempel behalten ihre Reihenfolge.
@@ -3135,9 +3214,10 @@ function renderProfileList(){
     const card=document.createElement('article');
     card.className='profile-card'+(isActive?' is-active':'');
     card.tabIndex=0;
+    const hasCustomIcon = p.customIcon && String(p.customIcon).startsWith('data:');
     card.innerHTML=`
       <div class="profile-card__head">
-        <span class="profile-card__avatar" data-loader="${loader}">${profileLoaderGlyph(loader)}</span>
+        ${hasCustomIcon ? `<img class="profile-card__avatar profile-card__avatar--custom" src="${escHtml(p.customIcon)}" alt="icon">` : `<img class="profile-card__avatar profile-card__avatar--loader" src="${profileLoaderIcon(loader)}" alt="${escHtml(loader)}">`}
         <div class="profile-card__top">
           <h3 class="profile-card__name">${escHtml(p.name||'Profile')}</h3>
           ${isActive?'<span class="profile-badge profile-badge--active">'+escHtml(t('profile_active'))+'</span>':''}
@@ -3145,6 +3225,9 @@ function renderProfileList(){
           ${p.isNrcImported?'<span class="profile-badge profile-badge--nrc">NRC</span>':''}
         </div>
         <div class="profile-card__actions">
+          <button type="button" class="btn btn-sm profile-card__icon-btn profile-folder-btn" title="${escHtml(t('open_folder'))}" aria-label="${escHtml(t('open_folder'))}" data-profile-id="${escHtml(p.id)}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </button>
           <button type="button" class="btn btn-sm profile-card__icon-btn profile-share-btn" title="${escHtml(t('btn_share'))}" aria-label="${escHtml(t('btn_share'))}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
           </button>
@@ -3159,11 +3242,16 @@ function renderProfileList(){
         <span class="profile-chip">${modCount} ${escHtml(modCount===1?t('profile_mod_one'):t('profile_mods'))}</span>
         ${group!=='default'?'<span class="profile-chip profile-chip--group profile-chip--group-custom">'+escHtml(t('profile_group'))+': '+escHtml(group)+'</span>':''}
       </div>`;
-    const openProfile=()=>{ settings.selectedProfile=p.id; saveSettings(); openProfileModal(p.id); renderProfileList(); updateLaunchProfileSelect(); syncModFilterToProfile(); };
-    card.addEventListener('click',e=>{ if(e.target.closest('button'))return; openProfile(); });
-    card.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openProfile(); } });
-    card.querySelector('.profile-edit-btn').addEventListener('click',openProfile);
+    const selectProfile=()=>{ settings.selectedProfile=p.id; saveSettings(); renderProfileList(); updateLaunchProfileSelect(); syncModFilterToProfile(); };
+    card.addEventListener('click',e=>{ if(e.target.closest('button'))return; selectProfile(); });
+    card.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); selectProfile(); } });
+    card.querySelector('.profile-edit-btn').addEventListener('click',()=>{ settings.selectedProfile=p.id; saveSettings(); openProfileModal(p.id); renderProfileList(); updateLaunchProfileSelect(); syncModFilterToProfile(); });
     card.querySelector('.profile-share-btn').addEventListener('click',()=>{shareProfile(p.id);});
+    card.querySelector('.profile-folder-btn').addEventListener('click',async (e)=>{
+      e.stopPropagation();
+      const res = await ipcRenderer.invoke('open-profile-folder', p.id);
+      if(!res || res.ok === false) alert('Ordner konnte nicht geöffnet werden: '+(res && res.error || 'Unbekannter Fehler'));
+    });
     el.appendChild(card);
   });
   renderLaunchRail();
@@ -3176,10 +3264,21 @@ function updateLaunchProfileSelect(){
 }
 
 document.getElementById('profileSelect').addEventListener('change',()=>{ updateVersionDisplay(); const p=profiles.find(x=>x.id===document.getElementById('profileSelect').value); if(p){ settings.selectedProfile=p.id; saveSettings(); renderProfileList(); syncModFilterToProfile(); }});
+(function forceCloseAllModalsOnBoot(){
+  function closeAll(){
+    try{
+      // Kein !important: sonst lassen sich Modals spaeter nicht mehr per style.display oeffnen.
+      document.querySelectorAll('.modal-overlay').forEach(m=>{ m.style.setProperty('display','none'); });
+      ['loader','update-overlay','update-download-overlay'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+      const sb=document.getElementById('stop-bar'); if(sb) sb.style.pointerEvents='auto';
+    }catch(e){}
+  }
+  closeAll();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', closeAll);
+})();
 function updateVersionDisplay(){
   const p=profiles.find(x=>x.id===document.getElementById('profileSelect').value);
   document.getElementById('profile-version-display').textContent=p?(p.mcVersion||'Latest'):'';
-  document.getElementById('skin-version-display').textContent=p?(p.mcVersion||'Latest'):'-';
 }
 
 // ── Rail: Profile-Schnellstart ─────────────────────────────────────
@@ -3195,25 +3294,35 @@ function renderRailProfiles(){
     profBox.appendChild(empty);
     return;
   }
-  sortedProfiles().slice(0, 6).forEach(p => {
+  sortedProfiles().forEach(p => {
     const loader = profileLoaderKey(p.modLoader);
     const isActive = p.id === settings.selectedProfile;
     const modCount = (p.mods || []).length;
-    const item = document.createElement('button');
-    item.type = 'button';
+    const item = document.createElement('div');
     item.className = 'rail-profile' + (isActive ? ' is-active' : '');
     item.title = p.name || '';
+    const hasCustomIconRail = p.customIcon && String(p.customIcon).startsWith('data:');
     item.innerHTML = `
-      <span class="rail-profile__avatar" data-loader="${loader}">${profileLoaderGlyph(loader)}</span>
+      ${hasCustomIconRail ? `<img class="rail-profile__avatar rail-profile__avatar--custom" src="${escHtml(p.customIcon)}" alt="icon">` : `<img class="rail-profile__avatar rail-profile__avatar--loader" src="${profileLoaderIcon(loader)}" alt="${escHtml(loader)}">`}
       <span class="rail-profile__name">${escHtml(p.name||'Profile')}</span>
-      <span class="rail-profile__meta">${escHtml(p.mcVersion||t('profile_latest'))}${modCount?' · '+modCount:''}</span>`;
-    item.addEventListener('click', () => {
+      <span class="rail-profile__meta">${escHtml(p.mcVersion||t('profile_latest'))}${modCount?' · '+modCount:''}</span>
+      <button type="button" class="rail-profile__edit-btn" title="${escHtml(t('edit'))}" aria-label="${escHtml(t('edit'))}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      </button>`;
+    // Main area click selects profile
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('.rail-profile__edit-btn')) return;
       settings.selectedProfile = p.id;
       saveSettings();
       const sel = document.getElementById('profileSelect');
       if (sel) sel.value = p.id;
       updateVersionDisplay();
       renderLaunchRail();
+    });
+    // Edit button opens profile modal
+    item.querySelector('.rail-profile__edit-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openProfileModal(p.id);
     });
     profBox.appendChild(item);
   });
@@ -4039,6 +4148,34 @@ document.getElementById('share-copy-btn').addEventListener('click',()=>{
   document.addEventListener('click',()=>{ dd.style.display='none'; });
 })();
 
+// ── New Modpack dropdown ──
+(function(){
+  const btn=document.getElementById('new-modpack-btn');
+  const dd=document.getElementById('new-modpack-dropdown');
+  if(!btn||!dd) return;
+  btn.addEventListener('click',(e)=>{ e.stopPropagation(); dd.style.display=dd.style.display==='block'?'none':'block'; });
+  dd.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ dd.style.display='none'; }));
+  document.addEventListener('click',()=>{ dd.style.display='none'; });
+
+  const openModal=(id)=>{ const m=document.getElementById(id); if(m) m.style.display='flex'; };
+  const openPackSearch=(source)=>{
+    // Genau dieselbe Suche wie bei Mods – nur mit dem Modpack-Facet.
+    profileModMode=false; modpackMode=true; profilePackMode='modpack';
+    openModModal(source);
+  };
+  const mr=document.getElementById('np-modrinth-btn');
+  if(mr) mr.addEventListener('click',()=>openPackSearch('modrinth'));
+  const cf=document.getElementById('np-curseforge-btn');
+  if(cf) cf.addEventListener('click',()=>openPackSearch('curseforge'));
+  const other=document.getElementById('np-other-btn');
+  if(other) other.addEventListener('click',()=>alert('More platforms: planned.'));
+  const gen=document.getElementById('np-generate-btn');
+  if(gen) gen.addEventListener('click',()=>{
+    openModal('ai-generate-modal');
+    if(window.aiModpackOnOpen) window.aiModpackOnOpen();
+  });
+})();
+
 // â”€â”€ Import Share Code â”€â”€
 document.getElementById('import-share-btn').addEventListener('click',()=>{
   document.getElementById('share-code-input').value='';
@@ -4110,51 +4247,103 @@ function renderNrcList(data){
   const fileEl=document.getElementById('import-norisk-file');
   const hintEl=document.getElementById('import-norisk-hint');
   listEl.innerHTML=''; statusEl.textContent=''; statusEl.style.color='#888';
-  fileEl.textContent=data.file?('ðŸ“„ '+data.file):'';
+  fileEl.textContent=data.file?('📄 '+data.file):'';
   if(data.source==='export'&&data.hasOverrides){
     hintEl.style.display='block'; hintEl.textContent=t('nrc_overrides_hint');
   } else { hintEl.style.display='none'; hintEl.textContent=''; }
-  if(!data.profiles.length){ listEl.innerHTML='<div class="mod-list-empty">'+escHtml(t('nrc_none'))+'</div>'; return; }
+  if(!data.profiles.length){ listEl.innerHTML='<div class="mod-list-empty">'+escHtml(t('nrc_none'))+'</div>'; nrcUpdateToggleAllLabel(); return; }
   data.profiles.forEach((p,idx)=>{
     const row=document.createElement('label');
     row.style.cssText='display:flex;align-items:center;gap:.6em;padding:.45em 0;border-bottom:1px solid var(--border);cursor:pointer';
-    row.innerHTML=`<input type="checkbox" class="nrc-import-check" checked style="width:1.1em;height:1.1em;flex-shrink:0"><div style="flex:1;min-width:0"><div style="font-size:.85em;font-weight:600;word-break:break-word">${escHtml(p.name)}</div><div style="font-size:.7em;color:var(--text-muted)">${escHtml(p.mcVersion||'Latest')} · ${escHtml(p.modLoader||'fabric')} · ${p.mods.length} mods</div></div>`;
+    const modCount = Array.isArray(p.mods)?p.mods.length:0;
+    const rpCount = Array.isArray(p.resourcePacks)?p.resourcePacks.length:0;
+    const spCount = Array.isArray(p.shaderPacks)?p.shaderPacks.length:0;
+    const dpCount = Array.isArray(p.datapacks)?p.datapacks.length:0;
+    row.innerHTML=`<input type="checkbox" class="nrc-import-check" checked style="width:1.1em;height:1.1em;flex-shrink:0"><div style="flex:1;min-width:0"><div style="font-size:.85em;font-weight:600;word-break:break-word">${escHtml(p.name)}</div><div style="font-size:.7em;color:var(--text-muted)">${escHtml(p.mcVersion||'Latest')} · ${escHtml(p.modLoader||'fabric')} · ${modCount} mods${rpCount?(' · '+rpCount+' RPs'):''}${spCount?(' · '+spCount+' shaders'):''}${dpCount?(' · '+dpCount+' datapacks'):''}</div></div>`;
     row.dataset.idx=idx;
-    const nrcCb=row.querySelector('.nrc-import-check'); if(nrcCb) nrcCb.dataset.idx=idx;
+    const nrcCb=row.querySelector('.nrc-import-check');
+    if(nrcCb){
+      nrcCb.dataset.idx=idx;
+      nrcCb.addEventListener('change', ()=>nrcUpdateToggleAllLabel());
+    }
     listEl.appendChild(row);
   });
+  nrcUpdateToggleAllLabel();
 }
 
 async function nrcOpenImport(){
   const statusEl=document.getElementById('import-norisk-status');
   const listEl=document.getElementById('import-norisk-list');
-  document.getElementById('import-norisk-file').textContent='';
-  document.getElementById('import-norisk-hint').style.display='none';
-  statusEl.textContent=t('nrc_scanning'); statusEl.style.color='#888';
-  listEl.innerHTML='';
-  let res;
-  try{ res=await ipcRenderer.invoke('choose-norisk-export'); }
-  catch(e){ statusEl.textContent='Import failed: '+e.message; statusEl.style.color='#f44'; return; }
-  if(res&&res.ok&&!res.canceled){
-    nrcImportData={ source:'export', file:res.file, isZip:res.isZip, hasOverrides:res.hasOverrides, profiles:res.profiles };
+  const fileEl=document.getElementById('import-norisk-file');
+  const hintEl=document.getElementById('import-norisk-hint');
+  if(fileEl) fileEl.textContent='';
+  if(hintEl) hintEl.style.display='none';
+  if(statusEl){ statusEl.textContent='Loading profiles from NoRisk Client…'; statusEl.style.color='#888'; }
+  if(listEl) listEl.innerHTML='';
+  nrcImportData=null;
+  try{
+    const scan = await ipcRenderer.invoke('import-norisk-profiles');
+    if(!scan || !scan.ok){
+      if(statusEl){ statusEl.textContent = (scan && scan.error) || 'No profiles found.'; statusEl.style.color='#f44'; }
+      return;
+    }
+    nrcImportData = { source:'scan', file:scan.file, profiles:scan.profiles||[] };
     renderNrcList(nrcImportData);
-    return;
+    if(statusEl){ statusEl.textContent=''; statusEl.style.color='#888'; }
+  }catch(e){
+    if(statusEl){ statusEl.textContent = 'Import failed: ' + (e && e.message ? e.message : String(e)); statusEl.style.color='#f44'; }
   }
-  if(res&&!res.ok&&!res.canceled){ listEl.innerHTML=''; statusEl.textContent=res.error; statusEl.style.color='#f44'; return; }
-  // Dialog cancelled → fall back to scanning the installed NoRisk Client.
-  let scan;
-  try{ scan=await ipcRenderer.invoke('import-norisk-profiles'); }
-  catch(e){ statusEl.textContent='Import failed: '+e.message; statusEl.style.color='#f44'; return; }
-  if(!scan.ok){ listEl.innerHTML=''; statusEl.textContent=scan.error; statusEl.style.color='#f44'; return; }
-  nrcImportData={ source:'scan', file:scan.file, profiles:scan.profiles };
-  renderNrcList(nrcImportData);
 }
 
 document.getElementById('import-norisk-btn').addEventListener('click', ()=>{
+    const _mrBtnDrop = document.getElementById('import-modrinth-app-btn'); if (_mrBtnDrop) _mrBtnDrop.addEventListener('click', () => { const dd = document.getElementById('import-dropdown'); if (dd) dd.classList.remove('show'); const m = document.getElementById('import-modrinth-modal'); if (m) m.style.display = 'flex'; });
+    const _cfBtnDrop = document.getElementById('import-curseforge-app-btn'); if (_cfBtnDrop) _cfBtnDrop.addEventListener('click', () => { const dd = document.getElementById('import-dropdown'); if (dd) dd.classList.remove('show'); const m = document.getElementById('import-curseforge-modal'); if (m) m.style.display = 'flex'; });
+    const _openExt = (u) => { try { if (window.ipcRenderer && typeof ipcRenderer.send === 'function') { ipcRenderer.send('open-external', u); } else { window.open(u, '_blank'); } } catch(e) { try{ window.open(u,'_blank'); }catch(_){} } };
+    const _imb2 = document.getElementById('import-modrinth-app-btn');
+    if (_imb2) _imb2.addEventListener('click', () => { const dd = document.getElementById('import-dropdown'); if (dd) dd.classList.remove('show'); const m = document.getElementById('import-modrinth-modal'); if (m) m.style.display = 'flex'; });
+    const _icb2 = document.getElementById('import-curseforge-app-btn');
+    const _mro = document.getElementById('import-modrinth-open-btn'); if (_mro) _mro.addEventListener('click', () => { _openExt('https://modrinth.com/app'); });
+    const _cfo = document.getElementById('import-curseforge-open-btn'); if (_cfo) _cfo.addEventListener('click', () => { _openExt('https://www.curseforge.com/download/app'); });
+    if (_icb2) _icb2.addEventListener('click', () => { const dd = document.getElementById('import-dropdown'); if (dd) dd.classList.remove('show'); const m = document.getElementById('import-curseforge-modal'); if (m) m.style.display = 'flex'; });
   document.getElementById('import-norisk-modal').style.display='flex';
   nrcOpenImport();
 });
 document.getElementById('import-norisk-file-btn').addEventListener('click', ()=>{ nrcOpenImport(); });
+
+function nrcUpdateToggleAllLabel(){
+  const btn=document.getElementById('import-norisk-toggleall-btn'); if(!btn) return;
+  const checks=[...document.querySelectorAll('.nrc-import-check')];
+  const all=checks.length>0 && checks.every(c=>c.checked);
+  btn.textContent = all ? 'Deselect all' : 'Select all';
+}
+const _nrcToggleAllBtn=document.getElementById('import-norisk-toggleall-btn');
+if(_nrcToggleAllBtn){ _nrcToggleAllBtn.addEventListener('click', ()=>{
+  const checks=[...document.querySelectorAll('.nrc-import-check')];
+  const all=checks.length>0 && checks.every(c=>c.checked);
+  checks.forEach(c=>{ c.checked=!all; });
+  nrcUpdateToggleAllLabel();
+}); }
+
+const _nrcDrop=document.getElementById('import-norisk-drop');
+if(_nrcDrop){
+  _nrcDrop.addEventListener('click', ()=>{ nrcOpenImport(); });
+  _nrcDrop.addEventListener('dragover', (e)=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; _nrcDrop.style.borderColor='var(--accent, #6cf)'; });
+  _nrcDrop.addEventListener('dragleave', ()=>{ _nrcDrop.style.borderColor='var(--border, #2a2a2a)'; });
+  _nrcDrop.addEventListener('drop', async (e)=>{
+    e.preventDefault(); _nrcDrop.style.borderColor='var(--border, #2a2a2a)';
+    const f=(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0])?e.dataTransfer.files[0]:null;
+    const pth=(f&&f.path)?f.path:String(f&&f.name||'');
+    if(!pth || !/\.(nrpack|noriskpack)$/i.test(pth)){ const se=document.getElementById('import-norisk-status'); if(se){ se.textContent='Please drop a .nrpack or .noriskpack file.'; se.style.color='#f44'; } return; }
+    const statusEl=document.getElementById('import-norisk-status'); const listEl=document.getElementById('import-norisk-list');
+    if(statusEl){ statusEl.textContent='Loading export…'; statusEl.style.color='#888'; }
+    if(listEl) listEl.innerHTML='<div style="color:#888">Reading…</div>';
+    let res; try{ res=await ipcRenderer.invoke('read-norisk-export', pth); } catch(err){ if(statusEl){ statusEl.textContent='Failed to read file.'; statusEl.style.color='#f44'; } return; }
+    if(!res||!res.ok){ if(listEl) listEl.innerHTML=''; if(statusEl){ statusEl.textContent=(res&&res.error)||'Failed to read export.'; statusEl.style.color='#f44'; } return; }
+    nrcImportData={ source:'export', file:res.file||pth, profiles:res.profiles||[], hasOverrides:!!res.hasOverrides };
+    renderNrcList(nrcImportData);
+    if(statusEl){ statusEl.textContent=''; statusEl.style.color='#888'; }
+  });
+}
 
 document.getElementById('import-norisk-confirm-btn').addEventListener('click', async ()=>{
   const statusEl=document.getElementById('import-norisk-status');
@@ -4166,7 +4355,6 @@ document.getElementById('import-norisk-confirm-btn').addEventListener('click', a
   const selIdx=checks.filter(c=>c.checked).map(c=>parseInt(c.dataset.idx,10));
   if(!selIdx.length){ statusEl.textContent='Select at least one profile.'; statusEl.style.color='#f44'; return; }
 
-  // Import the export's game files (overrides) into the first profile's own game folder.
   if(nrcImportData.source==='export' && nrcImportData.hasOverrides){
     const first=nrcImportData.profiles[selIdx[0]];
     if(!first){ statusEl.textContent='Selected profile not found.'; statusEl.style.color='#f44'; return; }
@@ -4205,13 +4393,6 @@ document.getElementById('import-norisk-confirm-btn').addEventListener('click', a
 });
 
 // Profile pack buttons
-document.getElementById('profile-btn-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='mods'; openModModal('modrinth'); });
-document.getElementById('profile-btn-dp-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='datapacks'; openModModal('modrinth'); });
-document.getElementById('profile-btn-dp-curseforge').addEventListener('click',()=>{ profileModMode=true; profilePackMode='datapacks'; openModModal('curseforge'); });
-document.getElementById('profile-btn-rp-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='resourcePacks'; openModModal('modrinth'); });
-document.getElementById('profile-btn-rp-curseforge').addEventListener('click',()=>{ profileModMode=true; profilePackMode='resourcePacks'; openModModal('curseforge'); });
-document.getElementById('profile-btn-sp-modrinth').addEventListener('click',()=>{ profileModMode=true; profilePackMode='shaderPacks'; openModModal('modrinth'); });
-document.getElementById('profile-btn-sp-curseforge').addEventListener('click',()=>{ profileModMode=true; profilePackMode='shaderPacks'; openModModal('curseforge'); });
 
 function renderProfilePackList(containerId, key, isMods=false){
   const el=document.getElementById(containerId); el.innerHTML='';
@@ -4224,8 +4405,19 @@ function renderProfilePackList(containerId, key, isMods=false){
     // Render mods like the Client Options tab (icon + name + version + buttons)
     // plus a per-mod version dropdown (Modrinth versions).
     // Active mods go left, disabled mods go right.
+    // Suche + Sortierung (bezieht sich auf editingPackData[key]; _idx bewahrt den
+    // Original-Index, damit Toggle/Remove/Version weiter aufs richtige Entry zielen).
+    const q = (profileModSearchQuery || '').trim().toLowerCase();
+    let displayItems = items.filter(m => !q || String(m.name || '').toLowerCase().includes(q));
+    displayItems = sortMods(displayItems, profileModSort);
+    const countEl = document.getElementById('profile-mods-count');
+    if (countEl) countEl.textContent = modsCountText(displayItems.length);
+    if (!displayItems.length){
+      el.innerHTML='<div class="mod-list-empty">'+(isMods?'No mods added yet.':'None added yet.')+'</div>';
+      return;
+    }
     const activeItems=[], disabledItems=[];
-    items.forEach((m,i)=>(m.disabled?disabledItems:activeItems).push({...m,_idx:i}));
+    displayItems.forEach((m,i)=>(m.disabled?disabledItems:activeItems).push({...m,_idx:items.indexOf(m)}));
     appendItemsChunked(el, [...activeItems, ...disabledItems], (mod,i)=>{
       const isDisabled=mod.disabled;
       const item=document.createElement('div'); item.className='mod-item';
@@ -4244,7 +4436,7 @@ function renderProfilePackList(containerId, key, isMods=false){
         </div>
         <div class="mod-btns">
           <select class="btn mod-ver-select" data-i="${mod._idx}" style="width:auto;max-width:11em;padding:.22em .4em;font-size:.68em;color:#aaa" title="Mod version"><option value="">${mod.version&&mod.version!=='latest'?mod.version:'Versionâ€¦'}</option></select>
-          <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-i="${mod._idx}" ${mod.disabled?'':'checked'}><span class="slider"></span></span>
+          <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-i="${mod._idx}" ${mod.disabled?'':'checked'}><span class="slider"></span></label>
           <button class="btn mod-btn mod-remove" data-i="${mod._idx}">Remove</button>
         </div>`;
       return item;
@@ -4293,7 +4485,7 @@ function renderProfilePackList(containerId, key, isMods=false){
       if(key==='resourcePacks'){
         verSel=`<select class="pack-ver-select" data-i="${i}" title="Minecraft version"><option value="all">All</option><option value="${(profileMC||'').replace(/"/g,'&quot;')}">${profileMC||'All'}</option></select>`;
       }
-      tag.innerHTML=`<label class="mod-switch" style="align-self:center" title="${isDisabled?'Enable':'Disable'}"><input type="checkbox" class="pack-toggle" data-i="${i}" ${isDisabled?'':'checked'}><span class="slider"></span></span> ${name} ${verSel} <span class="rt" data-i="${i}">✕</span>`;
+      tag.innerHTML=`<label class="mod-switch" style="align-self:center" title="${isDisabled?'Enable':'Disable'}"><input type="checkbox" class="pack-toggle" data-i="${i}" ${isDisabled?'':'checked'}><span class="slider"></span></label> ${name} ${verSel} <span class="rt" data-i="${i}">✕</span>`;
       const vs=tag.querySelector('.pack-ver-select');
       if(vs) vs.value = isObj ? (item.mcVersion||'all') : 'all';
       if(vs) vs.addEventListener('change',()=>{
@@ -4484,14 +4676,14 @@ function updateAccountTabHead(){
   if(typeof applyBanState==='function') applyBanState();
 }
 
-// Owner-Tab in der Toolbar — nur wenn Sams25 / CookieMurder31 ausgewählt ist
+// Owner-Tab in der Toolbar — nur wenn _OnlySams ausgewählt ist
 function syncOwnerTab(){
   const btn=document.getElementById('tb-owner-btn');
   let owner=false;
   try{
     const acc=getSelectedAccount();
     const name=acc&&(acc.name||acc.username||'');
-    if(name){ const n=String(name).trim().toLowerCase(); owner=(n==='sams25'||n==='cookiemurder31'); }
+    if(name){ const n=String(name).trim().toLowerCase(); owner=(n==='_onlysams'); }
   }catch(e){ owner=false; }
   if(btn) btn.style.display=owner?'':'none';
   const opg=document.getElementById('owner-page');
@@ -5958,14 +6150,18 @@ async function appendModResults(results,seq){
 // ────────────────────────────────────────
 let modpackMode = false;
 
-document.getElementById('import-modpack-modrinth-btn').addEventListener('click',()=>{
-  modpackMode=true; profileModMode=false; profilePackMode='modpack';
-  openModModal('modrinth');
-});
-document.getElementById('import-modpack-curseforge-btn').addEventListener('click',()=>{
-  modpackMode=true; profileModMode=false; profilePackMode='modpack';
-  openModModal('curseforge');
-});
+(function(){
+  const btnMod = document.getElementById('import-modpack-modrinth-btn');
+  if (btnMod) btnMod.addEventListener('click',()=>{
+    modpackMode=true; profileModMode=false; profilePackMode='modpack';
+    openModModal('modrinth');
+  });
+  const btnCf = document.getElementById('import-modpack-curseforge-btn');
+  if (btnCf) btnCf.addEventListener('click',()=>{
+    modpackMode=true; profileModMode=false; profilePackMode='modpack';
+    openModModal('curseforge');
+  });
+})();
 
 async function importModpackFromModrinth(projectId, projectName, selectedVersion) {
   const pp=document.getElementById('modpack-progress'), pf=document.getElementById('modpack-progress-fill'), pl=document.getElementById('modpack-progress-label');
@@ -6494,6 +6690,42 @@ function ensureDefaultMods() {
 // MOD FILTER
 // ────────────────────────────────────────
 let modFilter = 'all';
+let modListSearchQuery = '';
+let modSort = 'name';
+let profileModSearchQuery = '';
+let profileModSort = 'name';
+let modSearchDebounce = null;
+
+function modsCountText(n){
+  const key = n === 1 ? 'mods_count_one' : 'mods_count';
+  return (t(key) || '{n} mods').replace('{n}', n);
+}
+
+function sortMods(arr, by){
+  const s = [...arr];
+  let key = by, desc = false;
+  if (by === 'name-desc'){ key = 'name'; desc = true; }
+  s.sort((a, b) => {
+    let va, vb;
+    switch (key) {
+      case 'name':      va = a.name; vb = b.name; break;
+      case 'version':   va = a.version; vb = b.version; break;
+      case 'loader':    va = a.loader; vb = b.loader; break;
+      case 'source':    va = a.source; vb = b.source; break;
+      case 'mcversion': va = a.mcVersion; vb = b.mcVersion; break;
+      case 'enabled':   va = a.disabled ? 1 : 0; vb = b.disabled ? 1 : 0; break;
+      case 'added':     va = a.addedAt || 0; vb = b.addedAt || 0; break;
+      default:          va = a.name; vb = b.name; break;
+    }
+    if (va == null) va = '';
+    if (vb == null) vb = '';
+    if (key === 'added' || key === 'enabled') return desc ? (vb - va) : (va - vb);
+    va = String(va); vb = String(vb);
+    let c = va.localeCompare(vb, undefined, { sensitivity: 'base' });
+    return desc ? -c : c;
+  });
+  return s;
+}
 document.querySelectorAll('.mod-filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     modFilter = btn.dataset.filter;
@@ -6503,11 +6735,47 @@ document.querySelectorAll('.mod-filter-btn').forEach(btn => {
   });
 });
 
+// Mods-Suche (debounced) + Sortierung (Client Options)
+const modSearchIn = document.getElementById('mod-search');
+const modSortSel = document.getElementById('mod-sort');
+if (modSearchIn) {
+  modSearchIn.addEventListener('input', () => {
+    clearTimeout(modSearchDebounce);
+    modSearchDebounce = setTimeout(() => {
+      modListSearchQuery = modSearchIn.value;
+      renderModList();
+    }, 150);
+  });
+}
+if (modSortSel) {
+  modSortSel.addEventListener('change', () => {
+    modSort = modSortSel.value;
+    renderModList();
+  });
+}
+
+// Profil-Mods: Suche + Sortierung
+const pModSearchIn = document.getElementById('profile-mod-search');
+const pModSortSel = document.getElementById('profile-mod-sort');
+if (pModSearchIn) {
+  pModSearchIn.addEventListener('input', () => {
+    clearTimeout(modSearchDebounce);
+    modSearchDebounce = setTimeout(() => {
+      profileModSearchQuery = pModSearchIn.value;
+      if (typeof renderProfilePackList === 'function') renderProfilePackList('profile-mods-list','mods',true);
+    }, 150);
+  });
+}
+if (pModSortSel) {
+  pModSortSel.addEventListener('change', () => {
+    profileModSort = pModSortSel.value;
+    if (typeof renderProfilePackList === 'function') renderProfilePackList('profile-mods-list','mods',true);
+  });
+}
+
 function syncModFilterToProfile(){
-  const p = profiles.find(x => x.id === settings.selectedProfile) || profiles[0];
-  const loader = p?.modLoader || 'fabric';
-  modFilter = loader;
-  document.querySelectorAll('.mod-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === loader));
+  modFilter = 'all';
+  document.querySelectorAll('.mod-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
   renderModList();
 }
 
@@ -6524,7 +6792,7 @@ function renderModList() {
   const list  = document.getElementById('mod-list');
   const empty = document.getElementById('mod-list-empty');
   const pageEl = document.getElementById('mods-page');
-  const savedScroll = pageEl ? pageEl.scrollTop : 0;
+  if (!list || !empty) return;
   list.querySelectorAll('.mod-item').forEach(e=>e.remove());
 
   let filtered = installedMods;
@@ -6534,8 +6802,18 @@ function renderModList() {
   if (modFilter === 'neoforge') filtered = installedMods.filter(m => m.loader === 'neoforge');
   if (modFilter === 'disabled') filtered = installedMods.filter(m => m.disabled);
 
+  // Suche (Name, case-insensitiv)
+  const q = (modListSearchQuery || '').trim().toLowerCase();
+  if (q) filtered = filtered.filter(m => String(m.name || '').toLowerCase().includes(q));
+
+  // Sortierung
+  filtered = sortMods(filtered, modSort);
+
+  // Treffer-Zahl anzeigen
+  const countEl = document.getElementById('mods-count');
+  if (countEl) countEl.textContent = modsCountText(filtered.length);
+
   if (!filtered.length) {
-    list.querySelectorAll('.mod-item').forEach(e=>e.remove());
     empty.textContent = modFilter === 'disabled' ? 'No disabled mods.' : 'No mods installed yet.';
     empty.style.display = '';
     return;
@@ -6570,18 +6848,42 @@ function renderModList() {
         <div class="mod-meta">${versionDisplay}${modVer} · ${mod.source || 'Client Mod'}</div>
       </div>
       <div class="mod-btns">
-        <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-idx="${realIdx}" ${mod.disabled?'':'checked'}><span class="slider"></span></span>
+        <label class="mod-switch" title="${mod.disabled?'Enable':'Disable'}"><input type="checkbox" class="mod-toggle" data-idx="${realIdx}" ${mod.disabled?'':'checked'}><span class="slider"></span></label>
         <button class="btn mod-btn mod-remove" data-idx="${realIdx}">Remove</button>
       </div>`;
     return item;
   }).then(() => {
-    list.querySelectorAll('.mod-toggle').forEach(btn => btn.addEventListener('change', () => {
-      installedMods[parseInt(btn.dataset.idx)].disabled = !btn.checked; saveMods(); renderModList();
-    }));
-    list.querySelectorAll('.mod-remove').forEach(btn => btn.addEventListener('click', () => {
-      installedMods.splice(parseInt(btn.dataset.idx), 1); saveMods(); renderModList();
-    }));
-    if(pageEl) pageEl.scrollTop = savedScroll;
+    list.querySelectorAll('.mod-toggle').forEach(btn => {
+      const idx = Number(btn.getAttribute('data-idx'));
+      btn.addEventListener('change', () => {
+        try {
+          if (idx >= 0 && idx < installedMods.length) {
+            installedMods[idx].disabled = !btn.checked;
+            saveMods();
+            renderModList();
+          }
+        } catch (err) {
+          console.error('Mod toggle failed:', err);
+          alert('Fehler: ' + (err && err.message || err));
+        }
+      });
+    });
+    list.querySelectorAll('.mod-remove').forEach(btn => {
+      const idx = Number(btn.getAttribute('data-idx'));
+      btn.addEventListener('click', () => {
+        try {
+          if (idx >= 0 && idx < installedMods.length) {
+            installedMods.splice(idx, 1);
+            saveMods();
+            renderModList();
+          }
+        } catch (err) {
+          console.error('Mod remove failed:', err);
+          alert('Fehler: ' + (err && err.message || err));
+        }
+      });
+    });
+    if(pageEl) pageEl.scrollTop = 0;
   });
 }
 
@@ -7925,13 +8227,66 @@ function applyTabBarPosition(){
   }
 })();
 
+function applyFabPosition(){
+  const pos = settings.fabPosition || 'toolbar';
+  const fab = document.getElementById('settings-fab');
+  const toolbar = document.querySelector('.toolbar');
+  if(!fab || !toolbar) return;
+
+  // Remove from current parent
+  fab.remove();
+
+  if(pos === 'toolbar'){
+    // Move INTO toolbar as last child
+    fab.className = 'tb-btn';
+    fab.style.display = ''; // show in toolbar
+    toolbar.appendChild(fab);
+  } else if(pos === 'corner'){
+    // Move back to launcher-screen as floating button
+    fab.className = 'tb-btn fab-position-corner';
+    fab.style.display = '';
+    document.getElementById('launcher-screen').appendChild(fab);
+  } else if(pos === 'custom'){
+    // Move back to launcher-screen as custom positioned button
+    fab.className = 'tb-btn fab-position-custom';
+    fab.style.top = (settings.fabY || 20) + 'px';
+    fab.style.left = (settings.fabX || 20) + 'px';
+    fab.style.right = 'auto';
+    fab.style.bottom = 'auto';
+    fab.style.display = '';
+    document.getElementById('launcher-screen').appendChild(fab);
+  }
+}
+(function bindFabPositionUI(){
+  const sel = document.getElementById('fab-position-select');
+  const custom = document.getElementById('fab-custom-position');
+  const xInput = document.getElementById('fab-x-input');
+  const yInput = document.getElementById('fab-y-input');
+  if(!sel) return;
+  sel.addEventListener('change', () => {
+    settings.fabPosition = sel.value;
+    if(custom) custom.style.display = sel.value === 'custom' ? '' : 'none';
+    saveSettings();
+    applyFabPosition();
+  });
+  if(xInput) xInput.addEventListener('change', () => {
+    settings.fabX = parseInt(xInput.value) || 0;
+    saveSettings();
+    applyFabPosition();
+  });
+  if(yInput) yInput.addEventListener('change', () => {
+    settings.fabY = parseInt(yInput.value) || 0;
+    saveSettings();
+    applyFabPosition();
+  });
+})();
+
 // â”€â”€ Theme selector (settings) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function updateGlassBgSection(){
   const sec = document.getElementById('glass-bg-section');
   if (sec) sec.style.display = settings.theme === 'glass' ? '' : 'none';
   if (typeof renderGlassBgPresets === 'function') renderGlassBgPresets();
 }
-let glassDefaultBgs = [];
 function setGlassTone(dark){
   const st = document.body.style;
   if (dark){
@@ -8055,6 +8410,7 @@ function tintDefaultBg(dataUrl, accent, key){
   });
 }
 var _glassBgToken = 0;
+var glassDefaultBgs = [];
 function currentDefaultBg(){
   var i = Number(settings.glassBgPreset);
   if (!isFinite(i) || i < 0) i = 0;
@@ -10067,6 +10423,421 @@ function convert(sel){
 })();
 </script>
 
-      </body>
+      
+<!-- Modrinth modpack browse modal -->
+<div id="modrinth-browse-modal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:min(56em,92vw);width:56em;max-height:85vh;overflow:auto">
+    <div class="modal-header">
+      <h2>Browse Modrinth modpacks</h2>
+      <button class="btn modal-close" onclick="document.getElementById('modrinth-browse-modal').style.display='none'">&#x2715;</button>
+    </div>
+    <div style="padding:1rem">
+      <div style="display:flex;gap:.4em;flex-wrap:wrap;margin-bottom:.6em">
+        <input id="mr-browse-q" class="pack-input" style="flex:1;min-width:12em" placeholder="Search modpacks…">
+        <button class="btn btn-sm btn-primary" id="mr-browse-search-btn" type="button">Search</button>
+      </div>
+      <div id="mr-browse-status" style="font-size:.8em;color:#888;margin-bottom:.5em;min-height:1.2em"></div>
+      <div id="mr-browse-list" style="display:flex;flex-direction:column;gap:.5em;max-height:50vh;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modrinth App import modal -->
+<div id="import-modrinth-modal" class="modal-overlay" style="display:none">
+  <div class="modal modal--narrow">
+    <div class="modal-header">
+      <h2>Import from Modrinth</h2>
+      <button class="btn modal-close" onclick="document.getElementById('import-modrinth-modal').style.display='none'">&#x2715;</button>
+    </div>
+    <div style="padding:1rem">
+      <p class="hint">Import a Modrinth modpack: drop a <code>.mrpack</code> file here or choose it.</p>
+      <div id="import-mrpack-drop" class="mod-dropzone" style="padding:1.2rem .8rem;text-align:center;cursor:pointer;border:2px dashed var(--border, #2a2a2a);border-radius:var(--r);margin-bottom:.8rem;color:var(--muted, #888);">
+        <div style="font-weight:600;margin-bottom:.25rem;">Drop .mrpack here</div>
+        <div style="font-size:.75em;">or click “Choose .mrpack file”</div>
+      </div>
+      <div id="import-mrpack-file" style="font-size:.75em;color:#6cf;margin-bottom:.5em;word-break:break-all"></div>
+      <div id="import-mrpack-status" style="font-size:.8em;color:#888;margin-top:.4em;min-height:1.2em"></div>
+      <div style="display:flex;gap:.4em;margin-top:.5em;flex-wrap:wrap">
+        <button class="btn btn-sm btn-primary" id="import-mrpack-confirm-btn" style="width:auto" type="button">Import</button>
+        <button class="btn btn-sm" id="import-mrpack-file-btn" style="width:auto" type="button">Choose .mrpack file</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CurseForge App import modal -->
+<div id="import-curseforge-modal" class="modal-overlay" style="display:none">
+  <div class="modal modal--narrow">
+    <div class="modal-header">
+      <h2>Import from CurseForge</h2>
+      <button class="btn modal-close" onclick="document.getElementById('import-curseforge-modal').style.display='none'">&#x2715;</button>
+    </div>
+    <div style="padding:1rem">
+      <p class="hint">Open CurseForge to browse modpacks/mods.</p>
+      <div style="display:flex;gap:.4em;margin-top:.8em;flex-wrap:wrap">
+        <button class="btn btn-sm btn-primary" id="import-curseforge-open-btn" style="width:auto" type="button">Open CurseForge website</button>
+        <button class="btn btn-sm" type="button" onclick="document.getElementById('import-curseforge-modal').style.display='none'">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(function(){
+  async function loadVersionsFor(slugOrId){
+    const r = await fetch('https://api.modrinth.com/v2/project/' + encodeURIComponent(slugOrId) + '/version', { headers: { 'Accept': 'application/json', 'User-Agent': 'CruxLauncher/1' } });
+    if (!r.ok) throw new Error('Versions HTTP ' + r.status);
+    return await r.json();
+  }
+  async function mrBrowseSearch(){
+    const q = (document.getElementById('mr-browse-q')||{}).value || '';
+    const status = document.getElementById('mr-browse-status');
+    const list = document.getElementById('mr-browse-list');
+    if (!list) return;
+    if (status){ status.textContent = 'Searching…'; status.style.color = '#888'; }
+    list.innerHTML = '';
+    try {
+      const params = new URLSearchParams({ limit: '20', facets: JSON.stringify([["project_type:modpack"]]) });
+      if (q.trim()) params.set('query', q.trim());
+      const r = await fetch('https://api.modrinth.com/v2/search?' + params.toString(), { headers: { 'Accept': 'application/json', 'User-Agent': 'CruxLauncher/1 (modpack browser)' } });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      const hits = Array.isArray(data.hits) ? data.hits : [];
+      if (status) status.textContent = hits.length + ' result(s)';
+      if (!hits.length){ list.innerHTML = '<div class="hint">No modpacks found.</div>'; return; }
+      for (const h of hits){
+        const card = document.createElement('div');
+        card.style.cssText = 'border:1px solid var(--border,#2a2a2a);border-radius:8px;padding:.6em .7em;display:flex;flex-direction:column;gap:.45em;';
+        const top = document.createElement('div');
+        top.style.cssText = 'display:flex;gap:.6em;align-items:flex-start;';
+        const img = document.createElement('img');
+        img.src = h.icon_url || '';
+        img.style.cssText = 'width:48px;height:48px;border-radius:6px;object-fit:cover;flex:none;background:#222';
+        img.onerror = () => { img.style.display='none'; };
+        const body = document.createElement('div');
+        body.style.flex = '1';
+        body.innerHTML = '<div style="font-weight:600">' + (h.title||h.slug||'') + '</div><div style="font-size:.8em;color:#aaa;margin-top:.2em">' + (h.description||'') + '</div><div style="font-size:.7em;color:#666;margin-top:.25em">' + (h.downloads? (h.downloads+' downloads') : '') + (h.latest_version? ' · MC ' + h.latest_version : '') + '</div>';
+        const open = document.createElement('a');
+        open.href = 'https://modrinth.com/modpack/' + (h.slug || h.project_id || '');
+        open.target = '_blank';
+        open.rel = 'noopener';
+        open.textContent = 'Open';
+        open.className = 'btn btn-sm';
+        open.style.width = 'auto';
+        top.appendChild(img); top.appendChild(body); top.appendChild(open);
+        card.appendChild(top);
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:.4em;flex-wrap:wrap;align-items:center;';
+        const sel = document.createElement('select');
+        sel.style.cssText = 'flex:1;min-width:12em;background:#1a1a1a;color:#ccc;border:1px solid #333;border-radius:4px;padding:.25em .4em;font-size:.78em;';
+        sel.innerHTML = '<option value="">Loading versions…</option>';
+        const addBtn = document.createElement('button');
+        addBtn.textContent = 'Add selected version';
+        addBtn.className = 'btn btn-sm btn-primary';
+        addBtn.style.width = 'auto';
+        addBtn.disabled = true;
+        const keyId = h.slug || h.project_id || '';
+        loadVersionsFor(keyId).then(vers => {
+          sel.innerHTML = '';
+          if (!Array.isArray(vers) || !vers.length){ sel.innerHTML = '<option value="">No versions</option>'; return; }
+          const maxN = Math.min(30, vers.length);
+          for (let i=0;i<maxN;i++){
+            const v = vers[i];
+            const opt = document.createElement('option');
+            opt.value = String(i);
+            const name = v.name || v.version_number || v.id || ('v'+i);
+            const game = Array.isArray(v.game_versions) ? v.game_versions.slice(0,2).join(', ') : '';
+            opt.textContent = name + (game ? ' ('+game+')' : '');
+            sel.appendChild(opt);
+          }
+          addBtn.disabled = false;
+          sel._mrVers = vers.slice(0,maxN);
+        }).catch(e => {
+          sel.innerHTML = '<option value="">Failed to load</option>';
+          const st2 = document.getElementById('mr-browse-status');
+          if (st2 && String(st2.textContent||'').startsWith('Searching')) { /* ignore */ }
+        });
+        addBtn.addEventListener('click', async () => {
+          const st = document.getElementById('mr-browse-status');
+          const vers = sel._mrVers || [];
+          const idx = parseInt(sel.value,10);
+          const verObj = vers[idx];
+          if (!verObj){ if (st){ st.textContent='Pick a version first.'; st.style.color='#f44'; } return; }
+          const fileObj = Array.isArray(verObj.files) && verObj.files.length ? (verObj.files.find(f=>f.primary) || verObj.files[0]) : null;
+          const dl = fileObj && fileObj.url;
+          if (!dl){ if (st){ st.textContent='No download URL for this version.'; st.style.color='#f44'; } return; }
+          if (st){ st.textContent='Downloading .mrpack…'; st.style.color='#888'; }
+          try {
+            const r = await ipcRenderer.invoke('import-mrpack-from-url', dl);
+            if (!r || !r.ok) throw new Error(r && r.error ? r.error : 'Import failed');
+            const profiles = await ipcRenderer.invoke('load-profiles');
+            const listP = Array.isArray(profiles) ? profiles : [];
+            listP.push(r.profile);
+            await ipcRenderer.invoke('save-profiles', listP);
+            if (typeof saveData === 'function') await saveData();
+            if (typeof loadProfiles === 'function') await loadProfiles();
+            if (typeof renderProfiles === 'function') renderProfiles();
+            if (typeof refreshProfileSelect === 'function') refreshProfileSelect();
+            if (st){ st.textContent = 'Added profile: ' + (r.profile.name || 'Modpack') + ' (' + (verObj.name||verObj.version_number||'') + ')'; st.style.color = '#6f6'; }
+          } catch(e){
+            if (st){ st.textContent = 'Error: ' + (e && e.message ? e.message : String(e)); st.style.color = '#f44'; }
+          }
+        });
+        row.appendChild(sel); row.appendChild(addBtn);
+        card.appendChild(row);
+        list.appendChild(card);
+      }
+    } catch(e){
+      if (status){ status.textContent = 'Error: ' + (e && e.message ? e.message : String(e)); status.style.color = '#f44'; }
+      list.innerHTML = '';
+    }
+  }
+  const btn = document.getElementById('mr-browse-search-btn');
+  if (btn) btn.addEventListener('click', mrBrowseSearch);
+  const inp = document.getElementById('mr-browse-q');
+  if (inp) inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') mrBrowseSearch(); });
+  window.mrBrowseSearch = mrBrowseSearch;
+})();
+
+</script>
+
+
+<!-- AI Generate modpack modal -->
+<div id="ai-generate-modal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:min(42em,94vw);width:42em;max-height:85vh;display:flex;flex-direction:column">
+    <div class="modal-header">
+      <h2>Generate Modpack (AI)</h2>
+      <button class="btn modal-close" id="ai-modal-close" type="button">&#x2715;</button>
+    </div>
+    <div style="padding:1rem;display:flex;flex-direction:column;gap:.6em;flex:1;min-height:0">
+      <p class="hint" style="margin:0">Describe the modpack you want (e.g. “fabric 1.21 tech modpack with Create-like mods, performance focused”). Claude suggests a loader, MC version and real Modrinth mods — you can create the profile from the answer.</p>
+      <div style="display:flex;gap:.4em;flex-wrap:wrap;align-items:center">
+        <span id="ai-backend-label" class="hint" style="margin:0">Checking AI backend…</span>
+        <select id="ai-model-select" class="pack-input" style="width:auto;min-width:12em;display:none"></select>
+        <button class="btn btn-sm" id="ai-refresh-backend" type="button" style="width:auto">Refresh</button>
+      </div>
+      <div id="ai-key-row" style="display:flex;gap:.4em;flex-wrap:wrap">
+        <input type="password" id="ai-api-key" class="pack-input" style="flex:1;min-width:14em" placeholder="Anthropic API key (sk-ant-…)">
+        <button class="btn btn-sm" id="ai-key-save" type="button" style="width:auto">Save key</button>
+      </div>
+      <div id="ai-chat-log" style="flex:1;min-height:12em;max-height:50vh;overflow-y:auto;border:1px solid var(--border,#2a2a2a);border-radius:8px;padding:.6em;background:rgba(0,0,0,.15);display:flex;flex-direction:column;gap:.5em"></div>
+      <div style="display:flex;gap:.4em">
+        <input id="ai-chat-input" class="pack-input" style="flex:1" placeholder="Describe your modpack…">
+        <button class="btn btn-sm btn-primary" id="ai-chat-send" type="button" style="width:auto">Send</button>
+      </div>
+      <div style="display:flex;gap:.6em;align-items:center;justify-content:space-between;min-height:1.6em">
+        <div id="ai-chat-status" style="font-size:.75em;color:#888"></div>
+        <button class="btn btn-sm btn-primary" id="ai-create-profile" type="button" style="width:auto;display:none">Create profile</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(function(){
+  const log = document.getElementById('ai-chat-log');
+  const inp = document.getElementById('ai-chat-input');
+  const btn = document.getElementById('ai-chat-send');
+  const status = document.getElementById('ai-chat-status');
+  const keyInput = document.getElementById('ai-api-key');
+  const keySave = document.getElementById('ai-key-save');
+  const keyRow = document.getElementById('ai-key-row');
+  const backendLabel = document.getElementById('ai-backend-label');
+  const modelSel = document.getElementById('ai-model-select');
+  const refreshBtn = document.getElementById('ai-refresh-backend');
+  const createBtn = document.getElementById('ai-create-profile');
+  const history = [];
+  let busy = false;
+  let pendingPlan = null;
+
+  function setStatus(text, color){
+    if (!status) return;
+    status.textContent = text || '';
+    status.style.color = color || '#888';
+  }
+  function aiChatAppend(role, text){
+    if (!log) return;
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:.45em .55em;border-radius:6px;max-width:100%;white-space:pre-wrap;font-size:.9em;line-height:1.35;';
+    if (role === 'user'){ div.style.background = 'rgba(106,111,255,.15)'; div.style.marginLeft = '1.5em'; div.textContent = text; }
+    else { div.style.background = 'rgba(255,255,255,.06)'; div.style.marginRight = '1.5em'; div.textContent = text; }
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+  function keyState(){
+    const has = !!((keyInput && keyInput.value || '').trim());
+    if (keySave) keySave.textContent = has ? 'Key saved ✓' : 'Save key';
+    return has;
+  }
+  async function refreshBackend(){
+    let info = {};
+    try { info = await ipcRenderer.invoke('ai-backend') || {}; } catch {}
+    const ollama = info.ollama || {};
+    const names = Array.isArray(ollama.names) ? ollama.names : [];
+    const hasKey = !!((keyInput && keyInput.value || '').trim()) || !!info.hasKey;
+    if (keyRow) keyRow.style.display = (ollama.available && names.length) ? 'none' : '';
+    if (modelSel){
+      modelSel.innerHTML = '';
+      if (ollama.available && names.length){
+        for (const m of names){
+          const detail = (ollama.models || []).find(x => x.name === m);
+          const gb = detail && detail.size ? (detail.size / 1073741824).toFixed(1) + ' GB' : '';
+          const o = document.createElement('option'); o.value = m; o.textContent = m + (gb ? ' (' + gb + ')' : ''); modelSel.appendChild(o);
+        }
+        const saved = (typeof settings !== 'undefined' && settings.ollamaModel) || '';
+        const savedFits = saved && (ollama.models || []).some(x => x.name === saved && x.size <= ollama.budgetBytes);
+        const wanted = savedFits || ollama.recommended || names[0];
+        modelSel.value = names.includes(wanted) ? wanted : (ollama.recommended || names[0]);
+        modelSel.style.display = '';
+      } else {
+        modelSel.style.display = 'none';
+      }
+    }
+    if (backendLabel){
+      const budgetGB = ollama.budgetBytes ? (ollama.budgetBytes / 1073741824).toFixed(1) : '?';
+      backendLabel.textContent = (ollama.available && names.length)
+        ? `AI aktiv: Ollama · max. ${budgetGB} GB RAM (¼ des Systems) · keine Eingabe nötig`
+        : (hasKey ? 'AI: Anthropic (API-Key gespeichert)' : 'Kein lokales AI-Modell gefunden');
+    }
+    const ready = !!(ollama.available && names.length) || hasKey;
+    setStatus(ready ? 'AI ready — describe your modpack.' : 'No AI backend — run “ollama pull llama3.2” or enter an Anthropic API key.', ready ? '#1bd96a' : '#888');
+    return info;
+  }
+  function parsePlan(text){
+    const m = String(text || '').match(/```json\s*([\s\S]*?)```/i);
+    if (!m) return null;
+    try {
+      const p = JSON.parse(m[1]);
+      return (p && Array.isArray(p.mods)) ? p : null;
+    } catch { return null; }
+  }
+
+  async function closeAiModal(){
+    const modal = document.getElementById('ai-generate-modal');
+    if (modal) modal.style.display = 'none';
+    try { await ipcRenderer.invoke('ai-ollama-stop'); } catch {}
+  }
+  window.aiModpackOnOpen = async function(){
+    if (keyInput) keyInput.value = String((window.settings && settings.anthropicApiKey) || '');
+    keyState();
+    try { await ipcRenderer.invoke('ai-ollama-start'); } catch {}
+    await refreshBackend();
+    setTimeout(() => { if (inp) inp.focus(); }, 40);
+  };
+  const aiModal = document.getElementById('ai-generate-modal');
+  const aiClose = document.getElementById('ai-modal-close');
+  if (aiClose) aiClose.addEventListener('click', closeAiModal);
+  if (aiModal) aiModal.addEventListener('click', (e) => { if (e.target === aiModal) closeAiModal(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && aiModal && aiModal.style.display === 'flex') closeAiModal();
+  });
+  if (refreshBtn) refreshBtn.addEventListener('click', refreshBackend);
+  if (modelSel) modelSel.addEventListener('change', () => {
+    if (typeof settings !== 'undefined') settings.ollamaModel = modelSel.value;
+    if (typeof saveSettings === 'function') saveSettings();
+  });
+
+  if (keySave) keySave.addEventListener('click', () => {
+    const v = String((keyInput && keyInput.value) || '').trim();
+    if (typeof settings !== 'undefined') settings.anthropicApiKey = v;
+    if (typeof saveSettings === 'function') saveSettings();
+    keyState();
+  });
+  if (keyInput) keyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && keySave) keySave.click(); });
+
+  async function send(){
+    if (busy) return;
+    const t = String((inp && inp.value) || '').trim();
+    if (!t) return;
+    let info = {};
+    try { info = await ipcRenderer.invoke('ai-backend') || {}; } catch {}
+    const ollama = info.ollama || {};
+    const localReady = !!(ollama.available && (ollama.models || []).length);
+    const key = String((keyInput && keyInput.value) || '').trim();
+    if (!localReady && !key){
+      setStatus('Install Ollama or enter an Anthropic API key first.', '#f44');
+      return;
+    }
+    aiChatAppend('user', t);
+    if (inp) inp.value = '';
+    history.push({ role: 'user', content: t });
+    busy = true; if (btn) btn.disabled = true;
+    setStatus(localReady ? 'Asking local AI (Ollama)…' : 'Asking Claude…');
+    try {
+      const r = await ipcRenderer.invoke('ai-modpack-chat', history.slice());
+      if (!r || !r.ok){
+        const err = (r && r.error) || 'Unknown error';
+        history.pop();
+        setStatus(err === 'NO_API_KEY' ? 'No API key saved.' : 'AI error: ' + err, '#f44');
+        aiChatAppend('assistant', err === 'NO_API_KEY' ? 'Please save your API key first.' : 'Error: ' + err);
+        return;
+      }
+      aiChatAppend('assistant', r.text);
+      history.push({ role: 'assistant', content: r.text });
+      pendingPlan = parsePlan(r.text);
+      if (createBtn) createBtn.style.display = pendingPlan ? '' : 'none';
+      const via = r.backend === 'ollama' ? ('Ollama' + (r.model ? ' · ' + r.model : '')) : 'Anthropic';
+      setStatus(pendingPlan ? `Plan von ${via} — „Create profile" erstellt das Profil.` : `Antwort von ${via}.`, '#1bd96a');
+    } catch (e){
+      history.pop();
+      setStatus('AI error: ' + (e && e.message || e), '#f44');
+    } finally {
+      busy = false; if (btn) btn.disabled = false;
+    }
+  }
+  if (btn) btn.addEventListener('click', send);
+  if (inp) inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+
+  async function createProfile(){
+    if (!pendingPlan || busy) return;
+    busy = true; if (createBtn) createBtn.disabled = true;
+    setStatus('Creating profile…');
+    try {
+      const p = pendingPlan;
+      const loader = ['fabric','quilt','forge','neoforge'].includes(String(p.loader || '').toLowerCase())
+        ? String(p.loader).toLowerCase() : 'fabric';
+      const known = (typeof mcVersionList !== 'undefined' && Array.isArray(mcVersionList)) ? mcVersionList : [];
+      const mcVersion = known.some(v => v.id === p.mcVersion) ? p.mcVersion
+        : ((known.find(v => v.type === 'release') || {}).id || p.mcVersion || '');
+      const mods = [];
+      const facets = encodeURIComponent(JSON.stringify([['project_type:mod']]));
+      for (const name of (p.mods || []).slice(0, 20)){
+        try {
+          const q = encodeURIComponent(String(name));
+          const d = await ipcRenderer.invoke('fetch-json-no-cors', `https://api.modrinth.com/v2/search?query=${q}&facets=${facets}&limit=3`);
+          const h = (d && d.hits || [])[0];
+          if (h) mods.push({
+            name: h.title, version: 'latest', mcVersion,
+            source: 'Modrinth', iconUrl: h.icon_url || '', modrinthId: h.project_id,
+            downloadAllVersions: false, disabled: false, loader
+          });
+        } catch {}
+      }
+      const np = {
+        id: 'p_' + Date.now(), name: String(p.name || 'AI Modpack').slice(0, 80),
+        group: 'default', mcVersion, modLoader: loader,
+        mods, datapacks: [], resourcePacks: [], shaderPacks: [], lastUsed: Date.now()
+      };
+      profiles.push(np);
+      ipcRenderer.send('save-profiles', profiles);
+      if (typeof renderProfileList === 'function') renderProfileList();
+      if (typeof updateLaunchProfileSelect === 'function') updateLaunchProfileSelect();
+      await closeAiModal();
+      if (typeof showPage === 'function') showPage('profiles-page');
+      if (typeof openProfileModal === 'function') openProfileModal(np.id);
+    } catch (e){
+      setStatus('Failed to create profile: ' + (e && e.message || e), '#f44');
+    } finally {
+      busy = false; if (createBtn) createBtn.disabled = false;
+    }
+  }
+  if (createBtn) createBtn.addEventListener('click', createProfile);
+  window.aiModpackOnOpen();
+})();
+</script>
+
+</body>
 </html>
 
