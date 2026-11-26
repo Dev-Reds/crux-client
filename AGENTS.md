@@ -480,6 +480,26 @@ mit der echten App + Messung im Live-DOM. Muster: temporäre Harness-Datei **im 
 - `paint()` setzt erst das Originalbild, dann das gefaerbte - `_glassBgToken` verhindert,
   dass ein langsamer Canvas-Lauf ein spaeter gewaehltes Bild ueberschreibt.
 
+### Drag & Drop: `File.path` gibt es in Electron 41 nicht mehr
+
+`webUtils.getPathForFile(file)` ist der Nachfolger von `File.path` (siehe
+`electron.d.ts`: "superseded the previous augmentation to the `File` object with
+the `path` property"). Ohne Fix fiel der NoRisk-Drop auf `f.name` zurück und der
+Main-Prozess stat'te z. B. `C:\Program Files\Crux Client\Create+.noriskpack` →
+`ENOENT`.
+
+- Im Renderer (`index.html`, direkt nach `const { ipcRenderer, shell } = …`)
+  sitzt ein **`drop`-Capture-Listener auf `document`**. Er setzt für alle
+  `dataTransfer.files` `f.path` via `webUtils.getPathForFile()` nach. Capture ist
+  wichtig: er läuft vor allen modalspezifischen `drop`-Handlern (auch vor
+  `stopPropagation()` im `#import-norisk-drop`).
+- Der NoRisk-Drop darf **nie** auf `f.name` als Pfad fallen — das ergab die
+  ENOENT-Meldung. Ohne echten Pfad: Meldung anzeigen, nicht statten.
+- Zusätzlich lehnt `readNoriskExportFile()` (main.js) relative Pfade mit einem
+  klaren Hinweis ab (statt `ENOENT` aus dem Installationsordner).
+- Neue Drop-Funktionen dürfen weiter `f.path` benutzen — der Capture-Listener
+  versorgt sie alle. Nicht einzelne Handler auf `webUtils` umbauen.
+
 ### Stats
 
 Das Stats-Feature (Launch-Tab-Statistiken) ist **entfernt** und darf nicht wieder

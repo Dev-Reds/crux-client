@@ -1581,6 +1581,29 @@ function rlog(msg){ try{ ipcRenderer.send('renderer-log', msg); }catch{} }
 window.onerror = (msg, src, line, col, err) => { rlog(`ERROR: ${msg} at ${src}:${line}:${col} ${err?.stack||''}`); };
 window.addEventListener('unhandledrejection', (e) => { rlog(`UNHANDLED PROMISE: ${e.reason?.stack||e.reason}`); });
 
+// Electron 41 liefert bei gedragten Dateien kein File.path mehr. Ohne den echten
+// Pfad wurde z.B. "Create+.noriskpack" relativ zum Installationsordner aufgeloest
+// (ENOENT). Der Capture-Listener laeuft vor allen Drop-Handlern und setzt path
+// fuer alle Dateien ueber webUtils.getPathForFile wieder.
+document.addEventListener('drop', (e) => {
+  try {
+    const list = e.dataTransfer && e.dataTransfer.files;
+    if (!list || !list.length) return;
+    const wu = require('electron').webUtils;
+    if (!wu || typeof wu.getPathForFile !== 'function') return;
+    for (const f of list) {
+      if (!f || f.path) continue;
+      try {
+        const real = wu.getPathForFile(f);
+        if (real) {
+          try { Object.defineProperty(f, 'path', { value: real, configurable: true, enumerable: true, writable: true }); }
+          catch { try { f.path = real; } catch {} }
+        }
+      } catch {}
+    }
+  } catch {}
+}, true);
+
 // â”€â”€ Service-down toasts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // A toast stays on screen until it is clicked away OR the service answers again.
 // The main process owns the polling; this side only reacts to its broadcasts.
@@ -4454,7 +4477,7 @@ if(_nrcDrop){
   _nrcDrop.addEventListener('drop', async (e)=>{
     e.preventDefault(); e.stopPropagation(); _nrcDrop.style.borderColor='var(--border, #2a2a2a)';
     const f=(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0])?e.dataTransfer.files[0]:null;
-    const pth=(f&&f.path)?f.path:String(f&&f.name||'');
+    const pth=(f&&f.path)?f.path:'';
     if(!pth || !/\.(nrpack|noriskpack)$/i.test(pth)){ const se=document.getElementById('import-norisk-status'); if(se){ se.textContent='Please drop a .nrpack or .noriskpack file.'; se.style.color='#f44'; } return; }
     const statusEl=document.getElementById('import-norisk-status'); const listEl=document.getElementById('import-norisk-list');
     if(statusEl){ statusEl.textContent='Loading export…'; statusEl.style.color='#888'; }

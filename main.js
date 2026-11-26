@@ -1749,6 +1749,9 @@ ipcMain.handle('import-mrpack-from-url', async (event, url) => {
 // Gemeinsamer Parser fuer Datei-Dialog UND Drag & Drop.
 async function readNoriskExportFile(file){
   try {
+    // Drag & Drop muss den echten Pfad liefern - ein reiner Dateiname wuerde
+    // relativ zum Installationsordner aufgeloest werden (ENOENT).
+    if (!file || !path.isAbsolute(file)) return { ok:false, error:'No absolute file path. Drag the export from Explorer or use "Choose file".' };
     const stat = await fs.promises.stat(file);
 
     // Detect ZIP by magic bytes ("PK").
