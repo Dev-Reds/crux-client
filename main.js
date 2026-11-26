@@ -833,8 +833,9 @@ async function predownloadVanillaGameFiles(version, javaPath, sendProgress, cust
     javaPath,
     overrides: { detached: false },
   };
-  launcher.on('download-status', s => sendProgress(`Spieldatei: ${s.name}`));
-  launcher.on('progress', e => sendProgress(`Spieldateien: ${e.type} ${e.task}/${e.total}`));
+  // Keine download-status/progress-Listener: MCLC feuert pro Datenchunk und
+  // pro einem der 5000 Assets - die Nachrichten wurden vorher ohnehin
+  // verworfen, kosteten aber Event-Loop-Zeit und verursachten Ruckler.
 
   // MCLC feuert alle 5000+ Assets gleichzeitig ab - das ist nicht pausierbar.
   // Nur für diesen Hintergrund-Lauf: Downloads begrenzen und vor jedem neuen
@@ -1177,9 +1178,10 @@ function autoPrecacheHash(profile, version, loader, mods, rps) {
 }
 
 function precacheLog(msg) {
-  console.log('[OFFLINE-CACHE] ' + msg);
-  // Massen-Fortschritt (einzelne Spieldateien) nicht an die UI weiterreichen.
+  // Massen-Fortschritt (einzelne Spieldateien / 5000 Assets) weder loggen
+  // noch an die UI schicken - das war die Hauptursache für Ruckler im Cache.
   if (/^(Spieldatei|Spieldateien):/.test(msg)) return;
+  console.log('[OFFLINE-CACHE] ' + msg);
   try { if (mainWindow) mainWindow.webContents.send('auto-precache-progress', msg); } catch {}
 }
 
