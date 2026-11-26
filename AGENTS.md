@@ -500,6 +500,28 @@ Main-Prozess stat'te z. B. `C:\Program Files\Crux Client\Create+.noriskpack` →
 - Neue Drop-Funktionen dürfen weiter `f.path` benutzen — der Capture-Listener
   versorgt sie alle. Nicht einzelne Handler auf `webUtils` umbauen.
 
+### Offline-Cache pausiert bei Nutzeraktivität
+
+Der automatische Offline-Cache (`autoPrecache` in `main.js`) darf nie mit einer
+Nutzeraktion konkurrieren:
+
+- Renderer (`index.html`, direkt nach dem Drop-Fix): `pointerdown`,
+  `pointermove` (nur mit gedrückter Taste), `keydown`, `wheel`, `dragover` und
+  `drop` senden `cache-user-active = true`. Nach 3500 ms ohne weitere Eingabe
+  geht `false` raus. Zusätzlich hält der `ipcRenderer.invoke`-Wrapper den
+  Busy-Zustand, bis die aufgerufene Funktion zurückkehrt — die Aktion des
+  Users läuft also immer vor dem Cache fertig.
+- Hauptprozess: `setPrecacheUserBusy()` setzt `autoPrecache.userBusy`; alle
+  Cache-Schritte laufen über `precacheStep()` → `waitForPrecacheIdle()`.
+  Ein bereits gestarteter Schritt wird nicht mitten unterbrochen.
+- `predownloadVanillaGameFiles()` patcht `Handler.prototype.downloadAsync`
+  nur während seines Laufs: maximal 8 parallele Downloads und vor jedem
+  Download `cacheGate()`. `abortPrecache()` (Spielstart) bricht sofort ab und
+  entfernt den Patch über `precacheRestorers` wieder, damit ein Spielstart
+  nie in den Cache-Patch läuft.
+- Beim Übergang auf `false` wird der Cache nach 1500 ms neu eingeplant;
+  ansonsten greift der 5-Minuten-Tick.
+
 ### Stats
 
 Das Stats-Feature (Launch-Tab-Statistiken) ist **entfernt** und darf nicht wieder

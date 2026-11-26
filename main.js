@@ -835,7 +835,57 @@ async function predownloadVanillaGameFiles(version, javaPath, sendProgress, cust
   };
   launcher.on('download-status', s => sendProgress(`Spieldatei: ${s.name}`));
   launcher.on('progress', e => sendProgress(`Spieldateien: ${e.type} ${e.task}/${e.total}`));
-  await launcher.launch(opts);
+
+  // MCLC feuert alle 5000+ Assets gleichzeitig ab - das ist nicht pausierbar.
+  // Nur für diesen Hintergrund-Lauf: Downloads begrenzen und vor jedem neuen
+  // Download auf Nutzer-Ruhe warten. Nach dem Lauf wird das Patch entfernt.
+  const HandlerClass = require('minecraft-launcher-core/components/handler');
+  const origDownload = HandlerClass.prototype.downloadAsync;
+  let activeDownloads = 0;
+  const downloadQueue = [];
+  let interrupted = false;
+  const waitForSlot = async () => {
+    if (activeDownloads >= 8) await new Promise(resolve => downloadQueue.push(resolve));
+    activeDownloads++;
+  };
+  const releaseSlot = () => {
+    activeDownloads--;
+    const next = downloadQueue.shift();
+    if (next) next();
+  };
+  const cacheGate = async () => {
+    if (autoPrecache.abort) { interrupted = true; throw new Error('OFFLINE_CACHE_PAUSED'); }
+    await waitForPrecacheIdle();
+    if (autoPrecache.abort) { interrupted = true; throw new Error('OFFLINE_CACHE_PAUSED'); }
+  };
+  const patchedDownload = function (...args) {
+    return (async () => {
+      await waitForSlot();
+      try {
+        await cacheGate();
+        return await origDownload.apply(this, args);
+      } finally {
+        releaseSlot();
+      }
+    })();
+  };
+  const restoreDownload = () => {
+    if (HandlerClass.prototype.downloadAsync === patchedDownload) {
+      HandlerClass.prototype.downloadAsync = origDownload;
+    }
+    precacheRestorers.delete(restoreDownload);
+  };
+  HandlerClass.prototype.downloadAsync = patchedDownload;
+  precacheRestorers.add(restoreDownload);
+  try {
+    await launcher.launch(opts);
+  } catch (e) {
+    // MCLC bricht bei einer abgebrochenen Hintergrund-Download-Kette ab.
+    if (!interrupted) throw e;
+  } finally {
+    restoreDownload();
+  }
+  if (interrupted) return { paused: true, jsonOk: false, jarOk: false, assetsOk: false };
 
   const vDir = path.join(P.mc, 'versions', customId || version);
   return {
@@ -1009,11 +1059,52 @@ const autoPrecache = {
   busy: false,
   abort: false,         // Spielstart bricht den Hintergrund-Cache sofort ab
   timer: null,
+  userBusy: false,      // Nutzer arbeitet gerade im Launcher -> Cache pausiert
+  idleWaiters: [],      // warten auf "Nutzer wieder untätig"
 };
+// Temporäre MCLC-Download-Patches des Caches (siehe predownloadVanillaGameFiles).
+const precacheRestorers = new Set();
 
 // Der Cache läuft im Hauptprozess, darf dort aber nie die Event-Loop blockieren.
 // Nach jedem Arbeitsschritt bekommt Electron/IPC wieder Luft (Klicks reagieren).
-const yieldToUi = () => new Promise(r => setImmediate(r));
+
+// Der Renderer meldet jede Nutzeraktion (Klick, Tastatur, laufende IPC-Aktion).
+// Solange userBusy gilt, startet der Cache keine neuen Schritte mehr; bereits
+// laufende Downloads werden nach dem letzten Schritt fortgesetzt.
+function setPrecacheUserBusy(active) {
+  const next = !!active;
+  if (autoPrecache.userBusy === next) return;
+  autoPrecache.userBusy = next;
+  if (!next) {
+    const waiters = autoPrecache.idleWaiters.splice(0);
+    for (const resolve of waiters) resolve();
+    // Der Nutzer ist fertig: Cache nach kurzer Ruhe weiterplanen, statt auf
+    // den naechsten 5-Minuten-Tick zu warten.
+    if (!autoPrecache.busy && !autoPrecache.abort) scheduleAutoPrecache(1500);
+  }
+}
+ipcMain.on('cache-user-active', (event, active) => setPrecacheUserBusy(active));
+
+function waitForPrecacheIdle() {
+  if (!autoPrecache.userBusy) return Promise.resolve();
+  return new Promise(resolve => autoPrecache.idleWaiters.push(resolve));
+}
+
+// Spielstart bricht den Cache sofort ab - auch wenn gerade auf Nutzer-Ruhe
+// gewartet wird (sonst haengen die wartenden Downloads bis zur Ruhe fest).
+function abortPrecache() {
+  autoPrecache.abort = true;
+  const waiters = autoPrecache.idleWaiters.splice(0);
+  for (const resolve of waiters) resolve();
+  // Kein Cache-Patch darf in einen Spielstart hinein laufen.
+  for (const restore of [...precacheRestorers]) restore();
+}
+
+// Ein Cache-Schritt: erst auf Nutzer-Ruhe warten, dann der Event-Loop Luft geben.
+async function precacheStep() {
+  await waitForPrecacheIdle();
+  await new Promise(r => setImmediate(r));
+}
 
 function autoPrecacheHash(profile, version, loader, mods, rps) {
   return crypto.createHash('md5').update(JSON.stringify({
@@ -1048,7 +1139,7 @@ async function precacheResourcePacks(profile, version, send) {
   for (const list of lists) {
     for (const rp of list) {
       if (autoPrecache.abort) return;
-      await yieldToUi();
+      await precacheStep();
       try {
         if (!rp || rp.disabled) continue;
         const name = typeof rp === 'string' ? rp : (rp.name || rp.fileName || '');
@@ -1094,7 +1185,7 @@ async function precacheResourcePacks(profile, version, send) {
           tempDest: path.join(rpDir, fname), downloadUrl,
           onDownload: () => send('Ressourcenpaket: ' + (packName || fname))
         });
-        await yieldToUi();
+        await precacheStep();
       } catch (e) {
         console.error('[OFFLINE-CACHE] RP failed:', e.message);
       }
@@ -1111,7 +1202,7 @@ async function precacheProfileAssets(profile, mods, rps, send) {
   const loader = profile.modLoader || 'fabric';
 
   send(`Starte Offline-Cache: ${profile.name || profile.id} (${version}, ${loader})`);
-  await yieldToUi();
+  await precacheStep();
   if (autoPrecache.abort) return { ok:false, aborted:true };
 
   // Spieldateien teilen sich alle Profile mit gleicher Version/Loader.
@@ -1119,7 +1210,7 @@ async function precacheProfileAssets(profile, mods, rps, send) {
   if (!autoPrecache.gameDone.has(gameKey)) {
     try {
       const javas = await findInstalledJavas();
-      await yieldToUi();
+      await precacheStep();
       if (autoPrecache.abort) return { ok:false, aborted:true };
       const javaPath = javas[0]?.path || null;
       if (javaPath) {
@@ -1128,10 +1219,12 @@ async function precacheProfileAssets(profile, mods, rps, send) {
           const r = await ensureLoaderForOffline(version, loader, javaPath, send).catch(() => ({ installed:false, id:null }));
           loaderId = r.id;
         }
-        await yieldToUi();
+        await precacheStep();
         if (autoPrecache.abort) return { ok:false, aborted:true };
         send('Spieldateien (Version, Libraries, Assets)…');
         const g = await predownloadVanillaGameFiles(version, javaPath, send, loaderId || undefined);
+        if (g && g.paused) return { ok:false, paused:true };
+        if (autoPrecache.abort) return { ok:false, aborted:true };
         if (g && g.jsonOk && g.jarOk) autoPrecache.gameDone.add(gameKey);
       }
     } catch (e) {
@@ -1139,14 +1232,14 @@ async function precacheProfileAssets(profile, mods, rps, send) {
     }
   }
 
-  await yieldToUi();
+  await precacheStep();
   if (autoPrecache.abort) return { ok:false, aborted:true };
   send('Mods…');
   const modsDownloaded = await downloadProfileMods(profile, mods, version, loader, send);
-  await yieldToUi();
+  await precacheStep();
   if (autoPrecache.abort) return { ok:false, aborted:true };
   await precacheResourcePacks(profile, version, send);
-  await yieldToUi();
+  await precacheStep();
   if (autoPrecache.abort) return { ok:false, aborted:true };
   send(`Fertig: ${profile.name || profile.id}`);
   return { ok:true, version, modsDownloaded };
@@ -1172,6 +1265,9 @@ function scheduleAutoPrecache(delay = 4000) {
 
 async function runAutoPrecache() {
   if (autoPrecache.busy || !mainWindow) return;
+  // Solange der Nutzer arbeitet, gar nicht erst anfangen. Nach seiner Aktion
+  // wird der Cache automatisch wieder eingeplant.
+  if (autoPrecache.userBusy) { scheduleAutoPrecache(15000); return; }
   const profiles = autoPrecache.profiles.filter(p => p && p.id && p.modLoader !== 'bedrock');
   if (!profiles.length) return;
   // Keine Änderungen an einem laufenden Spiel vornehmen.
@@ -1183,7 +1279,7 @@ async function runAutoPrecache() {
   const rps = autoPrecache.clientRPs || [];
   try {
     for (const p of profiles) {
-      await yieldToUi();
+      await precacheStep();
       if (autoPrecache.abort) break;
       const version = resolveConcreteVersion(p.mcVersion);
       if (!version) continue;
@@ -1194,12 +1290,12 @@ async function runAutoPrecache() {
       if (autoPrecache.done.get(p.id) === hash && gameReady) continue;
       try {
         const r = await precacheProfileAssets(p, mods, rps, precacheLog);
-        if (r.aborted) break;
+        if (r.aborted || r.paused) break;
         if (r.ok) autoPrecache.done.set(p.id, hash);
       } catch (e) {
         console.error('[OFFLINE-CACHE] Profile failed:', p.name || p.id, e.message);
       }
-      await yieldToUi();
+      await precacheStep();
     }
   } finally {
     autoPrecache.busy = false;
@@ -4095,7 +4191,7 @@ try {
 `.trim();
 
 async function launchBedrock(aumid, send, instanceId) {
-  autoPrecache.abort = true; // Spielstart hat Vorrang vor dem Hintergrund-Cache
+  abortPrecache(); // Spielstart hat Vorrang vor dem Hintergrund-Cache
   const scriptPath = path.join(os.tmpdir(), 'crux-activate-app.ps1');
   try {
     fs.writeFileSync(scriptPath, '\uFEFF' + BEDROCK_ACTIVATE_PS, 'utf8');
@@ -4291,7 +4387,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
   // GPU-Auto-Retry auf den nächsten Modus gewechselt.
   let currentGpuMode = 'native';
   // Ein Spielstart hat Vorrang: laufende Hintergrund-Downloads sofort stoppen.
-  autoPrecache.abort = true;
+  abortPrecache();
   mainWindow.webContents.send('instance-started', { id:instanceId, version, profileId, profileName, startTime:instances[instanceId].startTime, serverAddress: data.serverAddress||null, serverPort: data.serverPort||null, serverName: data.serverName||null });
 
   const send = (ch,...a) => { try { if (ch === 'launch-progress' && a[0] && a[0].instanceId && stoppedInstances.has(a[0].instanceId)) return; mainWindow.webContents.send(ch,...a); } catch {} };

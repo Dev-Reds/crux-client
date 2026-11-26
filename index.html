@@ -1604,6 +1604,41 @@ document.addEventListener('drop', (e) => {
   } catch {}
 }, true);
 
+// Offline-Cache pausieren, solange der Nutzer arbeitet. Maus/Tastatur setzen
+// "busy", und jeder laufende ipcRenderer.invoke haelt busy bis er fertig ist.
+// Erst nach kurzer Ruhe macht der Cache im Hauptprozess weiter.
+let _cacheInputBusy = false;
+let _cacheInvokeCount = 0;
+let _cacheReportedBusy = false;
+let _cacheIdleTimer = null;
+function _syncCacheBusy() {
+  const busy = _cacheInputBusy || _cacheInvokeCount > 0;
+  if (busy === _cacheReportedBusy) return;
+  _cacheReportedBusy = busy;
+  try { ipcRenderer.send('cache-user-active', busy); } catch {}
+}
+function _cacheUserActivity() {
+  _cacheInputBusy = true;
+  clearTimeout(_cacheIdleTimer);
+  _cacheIdleTimer = setTimeout(() => { _cacheInputBusy = false; _syncCacheBusy(); }, 3500);
+  _syncCacheBusy();
+}
+document.addEventListener('pointerdown', _cacheUserActivity, true);
+document.addEventListener('pointermove', (e) => { if (e.buttons) _cacheUserActivity(); }, true);
+document.addEventListener('keydown', _cacheUserActivity, true);
+document.addEventListener('wheel', _cacheUserActivity, true);
+document.addEventListener('dragover', _cacheUserActivity, true);
+document.addEventListener('drop', _cacheUserActivity, true);
+try {
+  const _ipcInvoke = ipcRenderer.invoke.bind(ipcRenderer);
+  ipcRenderer.invoke = async function (channel, ...args) {
+    _cacheInvokeCount++;
+    _syncCacheBusy();
+    try { return await _ipcInvoke(channel, ...args); }
+    finally { _cacheInvokeCount--; _syncCacheBusy(); }
+  };
+} catch {}
+
 // â”€â”€ Service-down toasts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // A toast stays on screen until it is clicked away OR the service answers again.
 // The main process owns the polling; this side only reacts to its broadcasts.
