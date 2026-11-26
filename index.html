@@ -26,9 +26,6 @@
     <button class="tb-btn" data-page="servers-page" data-i18n="tab_servers"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg></button>
     <button class="tb-btn" data-page="features-page" data-i18n="tab_features" style="display:none"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4L12 3Z"/><path d="m18.5 15 .9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1Z"/></svg></button>
     <button class="tb-btn" data-page="bugreport-page" id="tb-bugreport-btn" data-i18n="tab_bugreport"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3Z"/><path d="M9 21h6M9.5 13h5"/></svg></button>
-    <button class="tb-btn" data-page="account-page" id="tb-account-btn" data-i18n="tab_account">
-      <canvas class="tb-head" id="tb-account-head" width="24" height="24"></canvas>
-    </button>
     <button class="tb-btn" data-page="owner-page" id="tb-owner-btn" style="display:none">Owner</button>
 	  </div>
 
@@ -48,7 +45,7 @@
   <div class="pages">
 
     <!-- ── LAUNCH ── -->
-    <div id="launch-page" class="page active">
+    <div id="launch-page" class="page active" data-drop-kind="launch">
       <div class="launch-layout">
         <div class="launch-left">
           <h1 class="launch-title" data-i18n="h_launch">Launch</h1>
@@ -125,25 +122,26 @@
               </div>
             </div>
           </section>
+
+          <!-- Zuletzt gespielt — rechts, direkt unter den Skin-Karten -->
+          <section class="rail-card" id="launch-recent-card">
+            <header class="rail-card__head">
+              <span class="rail-card__title" data-i18n="h_recent">Recent Played</span>
+              <div class="launch-recent__tools">
+                <span class="launch-recent__count" id="recent-count"></span>
+                <button class="btn btn-sm btn-ghost rail-card__action" id="recent-clear-btn" data-i18n="btn_clear_history">Clear History</button>
+              </div>
+            </header>
+            <div class="rail-card__body">
+              <div id="recent-sections"></div>
+            </div>
+          </section>
         </div>
       </div>
-
-      <section class="card card--spaced" id="launch-recent-card" style="margin-top:1.25rem;">
-        <header class="card__head">
-          <h2 data-i18n="h_recent">Recent Played</h2>
-          <div class="card__actions">
-            <span class="hint" id="recent-count"></span>
-            <button class="btn btn-sm btn-danger" id="recent-clear-btn" data-i18n="btn_clear_history">Clear History</button>
-          </div>
-        </header>
-        <div class="card__body">
-          <div id="recent-sections"></div>
-        </div>
-      </section>
     </div>
 
     <!-- ─── CLIENT-MODS ─── -->
-    <div id="mods-page" class="page">
+    <div id="mods-page" class="page" data-drop-kind="mods">
       <header class="page-head">
         <div class="page-head__main">
           <h1 data-i18n="h_mods">Client Options</h1>
@@ -203,7 +201,9 @@
         </header>
         <div class="card__body">
           <p class="hint" data-i18n="desc_rp_auto">When enabled, adds Open Loader to your client mods — it automatically loads all resource packs listed below without touching in-game settings.</p>
-          <div id="client-rp-list" class="tag-row"></div>
+          <div id="client-rp-list" class="mod-list">
+            <div class="mod-list-empty" id="client-rp-list-empty" data-i18n="no_client_rps">No resource packs added yet.</div>
+          </div>
         </div>
       </section>
     </div>
@@ -211,7 +211,7 @@
 
 
     <!-- ── PROFILES ── -->
-    <div id="profiles-page" class="page">
+    <div id="profiles-page" class="page" data-drop-kind="profile">
       <header class="page-head">
         <div class="page-head__main">
           <h1 data-i18n="h_profiles">Profiles</h1>
@@ -239,6 +239,7 @@
             <div id="import-dropdown" class="menu">
               <button class="btn menu-item" id="import-share-btn" data-i18n="btn_import_share">Import Share Code</button>
               <button class="btn menu-item" id="import-norisk-btn" data-i18n="btn_import_norisk">NoRisk Client</button>
+              <button class="btn menu-item" id="import-mc-launcher-btn" data-i18n="btn_import_mc_launcher">Minecraft Launcher</button>
             </div>
           </div>
           <button class="btn btn-primary" id="new-profile-btn">
@@ -255,7 +256,7 @@
     </div>
 
     <!-- ── CAPE & COSMETICS ── -->
-    <div id="cape-page" class="page" style="display:none">
+    <div id="cape-page" class="page" style="display:none" data-drop-kind="cape">
       <header class="page-head">
         <div class="page-head__main">
           <h1 data-i18n="h_cape">Capes</h1>
@@ -302,7 +303,7 @@
     </div>
 
     <!-- ── SETTINGS ── -->
-    <div id="settings-page" class="page">
+    <div id="settings-page" class="page" data-drop-kind="settings">
       <header class="page-head">
         <div class="page-head__main">
           <h1 data-i18n="h_settings">Settings</h1>
@@ -389,6 +390,22 @@
             <label><span data-i18n="lbl_corner_radius">Roundness</span> <span id="corner-radius-val" class="accent-text">8px</span></label>
             <input type="range" id="corner-radius-slider" min="0" max="24" step="1" value="8">
           </div>
+        </div>
+        <div class="settings-section" id="font-section">
+          <h2 data-i18n="sec_font">Font</h2>
+          <div class="form-row form-row--narrow">
+            <label data-i18n="lbl_font_style">Style</label>
+            <select id="font-mode-select">
+              <option value="system" data-i18n="font_system">System</option>
+              <option value="minecraft" data-i18n="font_minecraft">Minecraft</option>
+              <option value="custom" data-i18n="font_custom">Custom</option>
+            </select>
+          </div>
+          <div class="form-row form-row--narrow" id="font-custom-row" style="display:none">
+            <label data-i18n="lbl_font_family">Font family</label>
+            <select id="font-custom-select"></select>
+          </div>
+          <p class="font-preview" id="font-preview">Aa Bb Cc 0123 — Crux Client</p>
         </div>
         <div class="settings-section">
           <h2 data-i18n="sec_tab_bar">Tab Bar</h2>
@@ -553,7 +570,7 @@
     </div>
 
     <!-- ── SERVERS ── -->
-    <div id="servers-page" class="page" style="display:none">
+    <div id="servers-page" class="page" style="display:none" data-drop-kind="server">
       <header class="page-head">
         <div class="page-head__main">
           <h1 data-i18n="h_servers">Servers</h1>
@@ -998,6 +1015,68 @@
       </div>
     </div>
 
+    <!-- ── Owner: Nachricht an einen Account ── -->
+    <div id="owner-notice-modal" class="modal-overlay notice-send-modal" style="display:none">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>Nachricht senden</h2>
+          <button class="btn modal-close" id="owner-notice-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="hint">Die Nachricht poppt beim Account <strong id="owner-notice-account">—</strong> auf, ohne ihn zu bannen.</p>
+          <textarea id="owner-notice-text" rows="5" placeholder="Nachricht eingeben …"></textarea>
+          <div class="error-text" id="owner-notice-error"></div>
+          <div class="modal-actions">
+            <button class="btn" id="owner-notice-cancel">Abbrechen</button>
+            <button class="btn btn-primary" id="owner-notice-send">Senden</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Owner: Zugriff auf den Owner-Tab erteilen ── -->
+    <div id="owner-access-modal" class="modal-overlay notice-send-modal" style="display:none">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>Zugriff auf Owner-Tab geben</h2>
+          <button class="btn modal-close" id="owner-access-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="hint">Wähle einen Account und bestätige. Der Account kann danach den Owner-Tab sehen; du kannst den Zugriff jederzeit zurückziehen.</p>
+          <select id="owner-access-select"></select>
+          <div class="error-text" id="owner-access-error"></div>
+          <div class="modal-actions">
+            <button class="btn" id="owner-access-cancel">Abbrechen</button>
+            <button class="btn btn-primary" id="owner-access-confirm">Bestätigen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Owner: Freigabe für ein neues Gerät ── -->
+    <div id="owner-device-approval" class="owner-device-approval" style="display:none">
+      <span id="owner-device-approval-text">Neues Gerät wartet auf Freigabe</span>
+      <button class="btn btn-sm btn-primary" id="owner-device-approve-btn">Freigeben</button>
+      <button class="btn btn-sm" id="owner-device-reject-btn">Ablehnen</button>
+    </div>
+
+    <!-- ── Nachricht-Popup beim Empfänger ── -->
+    <div id="notice-modal" class="modal-overlay notice-modal" style="display:none">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>Nachricht vom Owner</h2>
+          <button class="btn modal-close" id="notice-modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="hint" id="notice-from">—</p>
+          <div class="notice-text" id="notice-text"></div>
+          <div class="modal-actions">
+            <button class="btn btn-primary" id="notice-ok">Verstanden</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── ACCOUNT ── -->
     <div id="account-page" class="page" style="display:none">
       <header class="page-head">
@@ -1024,6 +1103,22 @@
           <p class="page-head__sub">Minecraft Accounts - jemals eingeloggt</p>
         </div>
       </header>
+      <section class="card card--spaced owner-info-card">
+        <div class="card__body owner-info-bar">
+          <div class="owner-info-cell">
+            <div class="owner-info-label">
+              Wer kann den Owner-Tab sehen
+              <button class="btn btn-sm owner-action owner-action--msg" id="owner-access-add" title="Einem Account Zugriff geben">+ Zugriff geben</button>
+            </div>
+            <p class="hint">Der Account <strong>_OnlySams</strong> hat immer Zugriff. Weitere Accounts kannst du hier hinzufügen und zurückziehen.</p>
+            <div id="owner-access-list" class="owner-info-list"></div>
+          </div>
+          <div class="owner-info-cell">
+            <div class="owner-info-label">Wer schaut gerade zu</div>
+            <div id="owner-viewers" class="owner-info-list"></div>
+          </div>
+        </div>
+      </section>
       <div class="chip-row">
         <button class="btn btn-sm chip--ok" id="owner-filter-active">Aktiv</button>
         <button class="btn btn-sm chip--danger" id="owner-filter-banned">Gebannt</button>
@@ -1135,7 +1230,7 @@
 </div>
 
 <!-- â”€â”€ Import Share Code Modal â”€â”€ -->
-<div id="import-share-modal" class="modal-overlay" style="display:none">
+<div id="import-share-modal" class="modal-overlay" style="display:none" data-drop-kind="share">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
       <h2 data-i18n="modal_import">Import Profile</h2>
@@ -1151,7 +1246,7 @@
 </div>
 
 <!-- â”€â”€ Import NoRisk Client profiles modal â”€â”€ -->
-<div id="import-norisk-modal" class="modal-overlay" style="display:none">
+<div id="import-norisk-modal" class="modal-overlay" style="display:none" data-drop-kind="norisk">
   <div class="modal modal--narrow">
     <div class="modal-header">
       <h2 data-i18n="modal_import_norisk">Import NoRisk Client Profiles</h2>
@@ -1175,6 +1270,29 @@
       <div style="display:flex;gap:.4em;margin-top:.5em;flex-wrap:wrap">
         <button class="btn btn-sm btn-primary" id="import-norisk-confirm-btn" style="width:auto" data-i18n="btn_import">Import</button>
         <button class="btn btn-sm" id="import-norisk-file-btn" style="width:auto" data-i18n="btn_choose_export">Choose export file…</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ Import from the original Minecraft Launcher â”€â”€ -->
+<div id="import-mc-launcher-modal" class="modal-overlay" style="display:none">
+  <div class="modal modal--narrow">
+    <div class="modal-header">
+      <h2 data-i18n="mcimp_title">Import from Minecraft Launcher</h2>
+      <button class="btn modal-close" onclick="document.getElementById('import-mc-launcher-modal').style.display='none'">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="hint" data-i18n="mcimp_desc">Select the launcher instances to import. Settings, server list and all worlds are copied into new Crux profiles.</p>
+      <div class="mcimp-toolbar">
+        <span class="hint" id="mcimp-count"></span>
+        <button class="btn btn-sm" id="mcimp-toggleall-btn" type="button" data-i18n="mcimp_toggle">Select all</button>
+      </div>
+      <div id="mcimp-list" class="mcimp-list result-scroll"></div>
+      <div id="mcimp-status" class="status-text"></div>
+      <div class="modal-actions">
+        <button class="btn btn-sm btn-primary" id="mcimp-import-btn" type="button" data-i18n="mcimp_import">Import selected</button>
+        <button class="btn btn-sm" id="mcimp-refresh-btn" type="button" data-i18n="mcimp_refresh">Rescan</button>
       </div>
     </div>
   </div>
@@ -1309,13 +1427,7 @@
       <div class="modal-actions">
         <button class="btn btn-sm btn-primary" id="save-profile-btn" style="display:none" data-i18n="btn_save">Save</button>
         <button class="btn btn-sm btn-ok" id="share-profile-btn" data-i18n="btn_share">Share</button>
-        <button class="btn btn-sm" id="download-offline-btn" title="Download all mods + game files so this profile works without internet">💾 Download for offline</button>
         <button class="btn btn-sm btn-danger" id="delete-profile-btn" data-i18n="btn_delete">Delete</button>
-        <div style="flex:1"></div>
-        <span id="offline-cap-indicator" class="offline-cap" title="Whether every mod for this profile is already cached">
-          <span id="offline-cap-dot" class="offline-cap__dot"></span>
-          <span id="offline-cap-text" class="offline-cap__text">—</span>
-        </span>
       </div>
     </div>
   </div>
@@ -1337,7 +1449,7 @@
 </div>
 
 <!-- ── SKIN PIXEL EDITOR ── -->
-<div class="skin-editor-overlay" id="skin-editor-overlay">
+<div class="skin-editor-overlay" id="skin-editor-overlay" data-drop-kind="skin-editor">
   <div class="skin-editor-panel">
     <h2>🎨 Skin Pixel Editor <span style="font-size:.6em;color:#666;font-weight:normal">64×64</span></h2>
     <div class="skin-editor-toolbar">
@@ -1380,7 +1492,7 @@
     </div>
 
 <!-- ─── CAPE PIXEL EDITOR OVERLAY ─── -->
-<div class="skin-editor-overlay" id="cape-editor-overlay">
+<div class="skin-editor-overlay" id="cape-editor-overlay" data-drop-kind="cape-editor">
   <div class="skin-editor-panel">
     <h2>🎨 Cape Pixel Editor <span style="font-size:.6em;color:#666;font-weight:normal">64×32</span></h2>
     <div class="skin-editor-toolbar" id="cape-editor-toolbar">
@@ -1417,7 +1529,7 @@
 </div>
 
 <!-- ── SKIN LIST OVERLAY ── -->
-<div class="skin-editor-overlay" id="skin-list-overlay">
+<div class="skin-editor-overlay" id="skin-list-overlay" data-drop-kind="skin">
   <div class="skin-editor-panel" style="max-width:600px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5em">
       <h2 style="margin:0" data-i18n="skin_list_title">ðŸ“‹ Skin List</h2>
@@ -1543,10 +1655,16 @@ function updateOfflineUI(){
   if(!banner) return;
   banner.style.display=(!appOnline||!navigator.onLine)?'flex':'none';
 }
+let _offlineStrikes = 0;
 function checkConnectivity(){
   ipcRenderer.invoke('check-online')
-    .then(online=>{ appOnline = online !== false; })
-    .catch(()=>{ appOnline=false; })
+    .then(online=>{
+      // Keep the banner off for single failed checks (busy launcher / IPC gap).
+      _offlineStrikes = online === false ? _offlineStrikes + 1 : 0;
+      if (_offlineStrikes >= 2) appOnline = false;
+      else if (online !== false) appOnline = true;
+    })
+    .catch(()=>{ /* inconclusive while busy - keep previous state */ })
     .finally(updateOfflineUI);
 }
 // â”€â”€ Foreground-only background checks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1686,6 +1804,7 @@ async function bootUpdateWindow(){
     if(typeof settings.accentIdx==='number'){ currentAccentIdx=settings.accentIdx; }
     try { applyLanguage(settings.lang || 'en'); } catch {}
     try { applyCornerRadius(); } catch {}
+    try { applyFont(); } catch {}
     try { applyBgColor(settings.bgColor || ''); } catch {}
     try { glassDefaultBgs = (await ipcRenderer.invoke('get-default-glass-bgs')) || []; } catch {}
     try { applyGlassBg(); } catch {}
@@ -1779,6 +1898,7 @@ async function bootLauncher(){
     }
     applyLanguage(settings.lang || 'en');
     applyCornerRadius();
+    applyFont();
     updateBgColorSection();
     applyBgColor(settings.bgColor || '');
     try { glassDefaultBgs = (await ipcRenderer.invoke('get-default-glass-bgs')) || []; } catch {}
@@ -1804,8 +1924,15 @@ async function bootLauncher(){
     if(typeof syncOwnerTab==='function') syncOwnerTab();
     if(typeof applyBanState==='function') applyBanState();
     if(typeof refreshRemote==='function'){
-      if(typeof republishAll==='function') republishAll().then(()=>refreshRemote());
-      else refreshRemote();
+      const startRemote=()=>{
+        if(typeof republishAll==='function') republishAll().then(()=>refreshRemote());
+        else refreshRemote();
+      };
+      const selected=getSelectedAccount();
+      if(typeof ensureOwnerDeviceAccess==='function' && selected){
+        // Erst Geraete-Token klären, dann Owner-Befehle an den Server publizieren.
+        ensureOwnerDeviceAccess(selected).then(startRemote).catch(startRemote);
+      }else startRemote();
       setInterval(refreshRemote, 60000);
     }
     renderProfileList();
@@ -1913,10 +2040,14 @@ function showPage(id){
   if(tbSettingsBtn) tbSettingsBtn.style.display = (id === 'settings-page' && (settings.fabPosition || 'toolbar') === 'toolbar') ? '' : 'none';
   if(id==='mods-page'){ syncModFilterToProfile(); renderModList(); }
   if(id==='owner-page' && typeof renderOwnerAccountList==='function') renderOwnerAccountList();
+  if(id==='owner-page' && typeof refreshOwnerInfo==='function') refreshOwnerInfo();
   if(id==='logs-page'){ renderInstanceList(); refreshLogSelect(); updateStopButtons(); }
-  if(id==='logs-page') renderRecentList();  if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
+  if(id==='launch-page') renderRecentList();
+  if(id==='cape-page'){loadMCCapes();renderCustomCapeList();}
   if(id==='friends-page'){ refreshFriendStatuses(); refreshFriendRequests(); refreshChat(); }
   if(id==='launch-page'){ const wrap=document.getElementById('skin3d-wrap'); setTimeout(()=>{ if(wrap && wrap.clientWidth>0 && typeof threeRenderer !== 'undefined' && threeRenderer && typeof threeCamera !== 'undefined' && threeCamera){ try{ threeRenderer.setSize(wrap.clientWidth, wrap.clientHeight); threeCamera.aspect = wrap.clientWidth / wrap.clientHeight; threeCamera.updateProjectionMatrix(); }catch(e){} } },50); updateStopButtons(); }
+  // Owner-Tab als "gerade geöffnet" melden — auch beim Verlassen sofort.
+  if(typeof reportPresence==='function') reportPresence();
 }
 
 function bindToolbar(){  document.querySelectorAll('.tb-btn[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
@@ -2112,6 +2243,7 @@ const LANGS={
     sec_theme:'Theme', lbl_theme:'Appearance', theme_dark:'Dark', theme_light:'Light', theme_glass:'Glass', theme_win7:'Windows 7', theme_xp:'Windows XP',
     sec_glass_bg:'Glass Background', desc_glass_bg:'Custom background behind the frosted glass. Only shown in the Glass theme.', btn_choose_bg:'Choose Imageâ€¦', btn_remove_bg:'Remove', lbl_bg_tint:'Tint image with accent colour',
     sec_corner_radius:'Corner Radius', lbl_corner_radius:'Roundness', corner_small:'Small', corner_medium:'Medium', corner_large:'Large', corner_round:'Round',
+    sec_font:'Font', lbl_font_style:'Style', font_system:'System', font_minecraft:'Minecraft', font_custom:'Custom', lbl_font_family:'Font family',
     sec_fab_position:'Settings Button Position', lbl_fab_position:'Position:', fab_pos_toolbar:'In Tab Bar', fab_pos_corner:'Bottom Right (Circle)', fab_pos_custom:'Custom (Pixels)', lbl_fab_x:'X (Pixel):', lbl_fab_y:'Y (Pixel):',
     sec_reset:'Reset', desc_reset:'Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.',
     btn_reset:'Reset Launcher', sec_updates:'Updates', btn_check_update:'Check for Updates',
@@ -2122,6 +2254,7 @@ const LANGS={
     btn_use_client_rps:'Use Client Resource Packs (from Client Options tab)',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
     btn_import_share:'📋 Import Share Code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Share', open_folder:'Open Folder',
+    btn_import_mc_launcher:'🟦 Minecraft Launcher', mcimp_title:'Import from Minecraft Launcher', mcimp_desc:'Select the launcher instances to import. Settings, server list and all worlds are copied into new Crux profiles.', mcimp_toggle:'Select all', mcimp_deselect:'Deselect all', mcimp_count:'{n} instances', mcimp_import:'Import selected', mcimp_refresh:'Rescan', mcimp_empty:'No Minecraft Launcher instances found.', mcimp_scanning:'Scanning…', mcimp_worlds:'worlds', mcimp_packs:'resource packs', mcimp_customdir:'custom folder', mcimp_latest_release:'Latest Release', mcimp_latest_snapshot:'Latest Snapshot', mcimp_settings:'settings', mcimp_servers:'servers', mcimp_done:'Imported {n} profile(s).', mcimp_failed:'Import failed: {e}', mcimp_pick:'Select at least one instance.',
     btn_stop_server:'■ Stop Server', btn_op_player:'OP Player', btn_whitelist:'Whitelist', btn_backup_world:'Backup World',
     btn_new_server:'+ New Server', server_count:'servers',
     btn_microsoft:'Microsoft',
@@ -2135,6 +2268,7 @@ const LANGS={
     rp_input_placeholder:'Resource pack name or URL...',
     btn_add_rp:'+ Add', client_rp_title:'Client Resource Packs',
     desc_client_rp:'Client resource packs are applied to all profiles.',
+    no_client_rps:'No resource packs added yet.',
     btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
     filter_all:'All', filter_disabled:'Disabled',
     search_mods:'Search mods...', sort_mods:'Sort mods', sort_name:'Name (A → Z)', sort_name_desc:'Name (Z → A)', sort_version:'Version', sort_loader:'Loader', sort_source:'Source', sort_mcversion:'MC Version', sort_enabled:'Enabled first', sort_added:'Added', mods_count:'{n} mods', mods_count_one:'1 mod',
@@ -2257,6 +2391,7 @@ const LANGS={
     sec_theme:'Design', lbl_theme:'Darstellung', theme_dark:'Dunkel', theme_light:'Hell', theme_glass:'Glas', theme_win7:'Windows 7', theme_xp:'Windows XP',
     sec_glass_bg:'Glas-Hintergrund', desc_glass_bg:'Eigener Hintergrund hinter dem mattierten Glas. Wird nur im Glas-Theme angezeigt.', btn_choose_bg:'Bild wählenâ€¦', btn_remove_bg:'Entfernen', lbl_bg_tint:'Bild mit Akzentfarbe einfärben',
     sec_corner_radius:'Eckenradius', lbl_corner_radius:'Abrundung', corner_small:'Klein', corner_medium:'Mittel', corner_large:'GroÎ', corner_round:'Rund',
+    sec_font:'Schrift', lbl_font_style:'Stil', font_system:'System', font_minecraft:'Minecraft', font_custom:'Eigene', lbl_font_family:'Schriftart',
     sec_fab_position:'Position des Settings-Buttons', lbl_fab_position:'Position:', fab_pos_toolbar:'In der Tab-Leiste', fab_pos_corner:'Unten rechts (Kreis)', fab_pos_custom:'Benutzerdefiniert (Pixel)', lbl_fab_x:'X (Pixel):', lbl_fab_y:'Y (Pixel):',
     sec_reset:'Zurücksetzen', desc_reset:'Löscht alle Konten, Profile, Einstellungen und Mods. Der Launcher startet wie beim ersten Mal.',
     btn_reset:'Launcher zurücksetzen', sec_updates:'Updates', btn_check_update:'Nach Updates suchen',
@@ -2267,6 +2402,7 @@ const LANGS={
     btn_use_client_rps:'Client Ressourcenpakete verwenden (aus Client Options Tab)',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
     btn_import_share:'📋 Import-Code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Teilen', open_folder:'Ordner öffnen',
+    btn_import_mc_launcher:'🟦 Minecraft Launcher', mcimp_title:'Aus Minecraft Launcher importieren', mcimp_desc:'Wähle die zu importierenden Launcher-Instanzen. Einstellungen, Serverliste und alle Welten werden in neue Crux-Profile kopiert.', mcimp_toggle:'Alle auswählen', mcimp_deselect:'Auswahl aufheben', mcimp_count:'{n} Instanzen', mcimp_import:'Auswahl importieren', mcimp_refresh:'Erneut scannen', mcimp_empty:'Keine Minecraft-Launcher-Instanzen gefunden.', mcimp_scanning:'Suche…', mcimp_worlds:'Welten', mcimp_packs:'Ressourcenpakete', mcimp_customdir:'eigenes Verzeichnis', mcimp_latest_release:'Neueste Version', mcimp_latest_snapshot:'Neueste Snapshot', mcimp_settings:'Einstellungen', mcimp_servers:'Server', mcimp_done:'{n} Profil(e) importiert.', mcimp_failed:'Import fehlgeschlagen: {e}', mcimp_pick:'Mindestens eine Instanz auswählen.',
     btn_stop_server:'■ Server stoppen', btn_op_player:'OP Spieler', btn_whitelist:'Whitelist', btn_backup_world:'Welt sichern',
     btn_new_server:'+ Neuer Server', server_count:'Server',
     btn_microsoft:'Microsoft',
@@ -2280,6 +2416,7 @@ const LANGS={
     rp_input_placeholder:'Ressourcenpaket Name oder URL...',
     btn_add_rp:'+ Hinzufügen', client_rp_title:'Client Ressourcenpakete',
     desc_client_rp:'Client Ressourcenpakete werden auf alle Profile angewendet.',
+    no_client_rps:'Noch keine Ressourcenpakete hinzugefügt.',
     btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
     filter_all:'Alle', filter_disabled:'Deaktiviert',
     search_mods:'Mods suchen...', sort_mods:'Sortieren', sort_name:'Name (A → Z)', sort_name_desc:'Name (Z → A)', sort_version:'Version', sort_loader:'Loader', sort_source:'Quelle', sort_mcversion:'MC-Version', sort_enabled:'Aktiv zuerst', sort_added:'Hinzugefügt', mods_count:'{n} Mods', mods_count_one:'1 Mod',
@@ -2402,6 +2539,7 @@ const LANGS={
     sec_theme:'Thème', lbl_theme:'Apparence', theme_dark:'Sombre', theme_light:'Clair', theme_glass:'Verre', theme_win7:'Windows 7', theme_xp:'Windows XP',
     sec_glass_bg:'Fond du verre', desc_glass_bg:'Fond personnalisé derrière le verre dépoli. Affiché uniquement dans le thème Verre.', btn_choose_bg:'Choisir une imageâ€¦', btn_remove_bg:'Retirer', lbl_bg_tint:'Teinter lâ€™image avec la couleur dâ€™accentuation',
     sec_corner_radius:'Rayon des coins', lbl_corner_radius:'Arrondi', corner_small:'Petit', corner_medium:'Moyen', corner_large:'Grand', corner_round:'Rond',
+    sec_font:'Police', lbl_font_style:'Style', font_system:'Système', font_minecraft:'Minecraft', font_custom:'Personnalisée', lbl_font_family:'Famille de police',
     sec_reset:'Réinitialiser', desc_reset:'Supprime tous les comptes, profils, paramètres et mods. Le lanceur redémarrera comme au premier lancement.',
     btn_reset:'Réinitialiser le Lanceur', sec_updates:'Mises à jour', btn_check_update:'Vérifier les mises à jour',
     desc_current_version:'Version actuelle :',
@@ -2411,6 +2549,7 @@ const LANGS={
     btn_use_client_rps:'Utiliser les Packs de Ressources Client (onglet Options Client)',
     btn_import_modpack_modrinth:'ðŸ“¦ Modrinth', btn_import_modpack_curseforge:'ðŸ“¦ CurseForge',
     btn_import_share:'📋 Importer un code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Partager', open_folder:'Ouvrir le dossier',
+    btn_import_mc_launcher:'🟦 Minecraft Launcher', mcimp_title:'Importer depuis le Minecraft Launcher', mcimp_desc:'Sélectionnez les instances à importer. Paramètres, liste des serveurs et tous les mondes sont copiés dans de nouveaux profils Crux.', mcimp_toggle:'Tout sélectionner', mcimp_deselect:'Tout désélectionner', mcimp_count:'{n} instances', mcimp_import:'Importer la sélection', mcimp_refresh:'Réanalyser', mcimp_empty:'Aucune instance du Minecraft Launcher trouvée.', mcimp_scanning:'Recherche…', mcimp_worlds:'mondes', mcimp_packs:'packs de ressources', mcimp_customdir:'dossier personnalisé', mcimp_latest_release:'Dernière version', mcimp_latest_snapshot:'Dernier snapshot', mcimp_settings:'paramètres', mcimp_servers:'serveurs', mcimp_done:'{n} profil(s) importé(s).', mcimp_failed:'Échec de l’import : {e}', mcimp_pick:'Sélectionnez au moins une instance.',
     btn_stop_server:'■ Arrêter le Serveur', btn_op_player:'OP Joueur', btn_whitelist:'Whitelist', btn_backup_world:'Sauvegarder le monde',
     btn_new_server:'+ Nouveau Serveur', server_count:'serveurs',
     btn_microsoft:'Microsoft',
@@ -2422,6 +2561,7 @@ const LANGS={
     auto_use:'Automatique',
     rp_input_placeholder:'Nom ou URL du pack de ressources...',
     btn_add_rp:'+ Ajouter', client_rp_title:'Packs de Ressources Client',
+    no_client_rps:'Aucun pack de ressources ajouté.',
     btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
     filter_all:'Tous', filter_disabled:'Désactivés',
     search_mods:'Rechercher des mods...', sort_mods:'Trier', sort_name:'Nom (A → Z)', sort_name_desc:'Nom (Z → A)', sort_version:'Version', sort_loader:'Chargeur', sort_source:'Source', sort_mcversion:'Version MC', sort_enabled:'Activés d\'abord', sort_added:'Ajoutés', mods_count:'{n} mods', mods_count_one:'1 mod',
@@ -2544,6 +2684,7 @@ const LANGS={
     sec_theme:'Tema', lbl_theme:'Apariencia', theme_dark:'Oscuro', theme_light:'Claro', theme_glass:'Vidrio', theme_win7:'Windows 7', theme_xp:'Windows XP',
     sec_glass_bg:'Fondo de vidrio', desc_glass_bg:'Fondo personalizado detrás del vidrio esmerilado. Solo se muestra en el tema Vidrio.', btn_choose_bg:'Elegir imagenâ€¦', btn_remove_bg:'Quitar', lbl_bg_tint:'Teñir la imagen con el color de acento',
     sec_corner_radius:'Radio de esquinas', lbl_corner_radius:'Redondeo', corner_small:'Pequeño', corner_medium:'Medio', corner_large:'Grande', corner_round:'Redondo',
+    sec_font:'Fuente', lbl_font_style:'Estilo', font_system:'Sistema', font_minecraft:'Minecraft', font_custom:'Personalizada', lbl_font_family:'Familia de fuente',
     sec_reset:'Restablecer', desc_reset:'Elimina todas las cuentas, perfiles, ajustes y mods. El launcher se reiniciará como si se abriera por primera vez.',
     btn_reset:'Restablecer Launcher', sec_updates:'Actualizaciones', btn_check_update:'Buscar actualizaciones',
     desc_current_version:'Versión actual:',
@@ -2551,6 +2692,7 @@ const LANGS={
     btn_use_crux_mod:'Usar Funciones Crux Client',
     btn_import_modpack_modrinth:'ðŸ“¦ Modrinth', btn_import_modpack_curseforge:'ðŸ“¦ CurseForge',
     btn_import_share:'📋 Importar código', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Compartir', open_folder:'Abrir carpeta',
+    btn_import_mc_launcher:'🟦 Minecraft Launcher', mcimp_title:'Importar desde Minecraft Launcher', mcimp_desc:'Selecciona las instancias que deseas importar. Los ajustes, la lista de servidores y todos los mundos se copian en nuevos perfiles de Crux.', mcimp_toggle:'Seleccionar todo', mcimp_deselect:'Deseleccionar todo', mcimp_count:'{n} instancias', mcimp_import:'Importar selección', mcimp_refresh:'Volver a buscar', mcimp_empty:'No se encontraron instancias de Minecraft Launcher.', mcimp_scanning:'Buscando…', mcimp_worlds:'mundos', mcimp_packs:'paquetes de recursos', mcimp_customdir:'carpeta personalizada', mcimp_latest_release:'Última versión', mcimp_latest_snapshot:'Última snapshot', mcimp_settings:'ajustes', mcimp_servers:'servidores', mcimp_done:'{n} perfil(es) importado(s).', mcimp_failed:'Error al importar: {e}', mcimp_pick:'Selecciona al menos una instancia.',
     btn_stop_server:'■ Detener Servidor', btn_op_player:'OP Jugador', btn_whitelist:'Whitelist', btn_backup_world:'Copiar mundo',
     btn_new_server:'+ Nuevo Servidor', server_count:'servidores',
     btn_microsoft:'Microsoft',
@@ -2559,6 +2701,7 @@ const LANGS={
     skin_list_title:'ðŸ“‹ Lista de Skins', skin_list_desc:'Haz clic en un skin para aplicarlo. Los skins se guardan localmente.',
     skin_template_toggle:'Mostrar plantilla',
     mc_capes:'Capas de Minecraft', custom_cape:'Capa Personalizada',
+    no_client_rps:'Todavía no hay paquetes de recursos.',
     btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
     filter_all:'Todos', filter_disabled:'Desactivados',
     search_mods:'Buscar mods...', sort_mods:'Ordenar', sort_name:'Nombre (A → Z)', sort_name_desc:'Nombre (Z → A)', sort_version:'Versión', sort_loader:'Cargador', sort_source:'Origen', sort_mcversion:'Versión MC', sort_enabled:'Activados primero', sort_added:'Añadidos', mods_count:'{n} mods', mods_count_one:'1 mod',
@@ -3069,6 +3212,20 @@ ipcRenderer.on('mods-updated',(_, modsUpdated)=>{
   }
   saveMods(); renderModList();
 });
+// Der Main-Prozess hat Profil-Mods beim Start aufgelöst/automatisch
+// deaktiviert. Die UI uebernimmt den Stand, damit ein spaeteres Speichern
+// die aufgelosten IDs nicht wieder verliert.
+ipcRenderer.on('profile-mods-updated',(_, data)=>{
+  if(!data || !data.profileId || !Array.isArray(data.mods))return;
+  const p=profiles.find(x=>x.id===data.profileId);
+  if(p) p.mods=data.mods;
+  if(data.profileId===editingProfileId) editingPackData.mods=data.mods;
+  ipcRenderer.send('save-profiles',profiles);
+  if(typeof renderProfileList==='function')renderProfileList();
+  if(typeof updateLaunchProfileSelect==='function')updateLaunchProfileSelect();
+  if(typeof renderProfilePackList==='function'&&editingProfileId===data.profileId)
+    renderProfilePackList('profile-mods-list','mods',true);
+});
 async function autoDownloadForVersion(mcVersion){
   for(const mod of installedMods){
     if(!mod.downloadAllVersions||mod.disabled||!mod.modrinthId)continue;
@@ -3240,7 +3397,7 @@ function renderProfileList(){
         <span class="profile-chip profile-chip--ver">${escHtml(p.mcVersion||t('profile_latest'))}</span>
         <span class="profile-chip profile-chip--${loader}">${escHtml(loader)}</span>
         <span class="profile-chip">${modCount} ${escHtml(modCount===1?t('profile_mod_one'):t('profile_mods'))}</span>
-        ${group!=='default'?'<span class="profile-chip profile-chip--group profile-chip--group-custom">'+escHtml(t('profile_group'))+': '+escHtml(group)+'</span>':''}
+        <span class="profile-chip profile-chip--group${group!=='default'?' profile-chip--group-custom':''}">${escHtml(t('profile_group'))}: ${escHtml(group)}</span>
       </div>`;
     const selectProfile=()=>{ settings.selectedProfile=p.id; saveSettings(); renderProfileList(); updateLaunchProfileSelect(); syncModFilterToProfile(); };
     card.addEventListener('click',e=>{ if(e.target.closest('button'))return; selectProfile(); });
@@ -3448,8 +3605,6 @@ function updateModLoaderVisibility(){
   [secRenderApi,secGroupInput,secImportSettings].forEach(el=>{ if(el) el.style.display=isBedrock?'none':''; });
   if(secClientMods) secClientMods.style.display=isBedrock?'none':'';
   if(secClientRPs) secClientRPs.style.display=isBedrock?'none':'';
-  const offlineBtn=document.getElementById('download-offline-btn');
-  if(offlineBtn) offlineBtn.style.display=isBedrock?'none':'';
   const saveBtn=document.getElementById('save-profile-btn');
   if(saveBtn) saveBtn.style.display=isBedrock?'':'none';
 
@@ -3579,40 +3734,45 @@ async function checkLoaderAvailability(mcVersion){
   }
 }
 
-// ── RECENT PLAYED ──
+// ── Recent Played ───────────────────────────────────────────────────
+// Jeder Eintrag zeigt das Icon des Profils, mit dem er entstanden ist
+// (eigenes Profilbild, sonst das Loader-Icon). Optik komplett in styles.css.
+function recentProfileIcon(entry){
+  const p = entry && entry.profileId ? profiles.find(x=>x.id===entry.profileId) : null;
+  const loader = profileLoaderKey(p ? p.modLoader : (entry && entry.modLoader));
+  if(p && p.customIcon && String(p.customIcon).startsWith('data:'))
+    return `<img class="rail-profile__avatar rail-profile__avatar--custom" src="${escHtml(p.customIcon)}" alt="" loading="lazy">`;
+  return `<img class="rail-profile__avatar rail-profile__avatar--loader" src="${profileLoaderIcon(loader)}" alt="${escHtml(loader)}" loading="lazy">`;
+}
 function renderRecentList(){
   const el=document.getElementById('recent-sections'); el.innerHTML='';
   const clearBtn=document.getElementById('recent-clear-btn');
   const total=recentHistory.length;
   document.getElementById('recent-count').textContent=`${total} entries`;
-  if(clearBtn) clearBtn.style.display=total?'':'none';
-  if(!total){ el.innerHTML='<div class="mod-list-empty">No recent activity yet.</div>'; return; }
+  if(clearBtn) clearBtn.hidden=!total;
+  if(!total) return;
 
   const categories=[
-    { type:'server', title:'Servers', icon:'🌐', emptyMsg:'No servers joined yet.' },
-    { type:'instance', title:'Instances', icon:'📦', emptyMsg:'No instances launched yet.' },
-    { type:'world', title:'Worlds', icon:'🌍', emptyMsg:'No worlds played yet.' },
+    { type:'server', title:'Servers', icon:'🌐' },
+    { type:'instance', title:'Instances', icon:'📦' },
+    { type:'world', title:'Worlds', icon:'🌍' },
   ];
   const MAX_PER_CAT=6;
 
   for(const cat of categories){
-    const items=recentHistory.filter(r=>r.type===cat.type).slice(0,MAX_PER_CAT);
+    const all=recentHistory.filter(r=>r.type===cat.type);
+    if(!all.length) continue; // leere Kategorie komplett ausblenden
+    const items=all.slice(0,MAX_PER_CAT);
     const section=document.createElement('div');
-    section.style.cssText='margin-bottom:1em';
-    section.innerHTML=`<h2 style="font-size:1em;color:#aaa;margin-bottom:.5em">${cat.icon} ${cat.title} <span style="color:#555;font-weight:normal">(${items.length}${recentHistory.filter(r=>r.type===cat.type).length>MAX_PER_CAT?' of '+recentHistory.filter(r=>r.type===cat.type).length:''})</span></h2>`;
-
-    if(!items.length){
-      section.innerHTML+=`<div class="mod-list-empty" style="font-size:.8em">${cat.emptyMsg}</div>`;
-      el.appendChild(section);
-      continue;
-    }
+    section.className='recent-section';
+    section.innerHTML=`<h2 class="recent-section__title">${cat.icon} ${cat.title} <span class="recent-section__count">(${items.length}${all.length>MAX_PER_CAT?' of '+all.length:''})</span></h2>`;
 
     const list=document.createElement('div');
-    list.className='profile-list';
+    list.className='recent-list';
     items.forEach((r,i)=>{
       const globalIdx=recentHistory.indexOf(r);
       const item=document.createElement('div');
-      item.className='profile-item';
+      item.className='recent-item';
       const date=new Date(r.time).toLocaleString();
 
       if(cat.type==='server'){
@@ -3622,10 +3782,13 @@ function renderRecentList(){
         if(r.profileName) metaParts.push(r.profileName);
         metaParts.push(date);
         item.innerHTML=`
-          <span class="profile-name">${escHtml(r.serverName||r.profileName||'Server')}</span>
-          <span class="profile-meta">${metaParts.join(' · ')}</span>
-          <button class="btn btn-sm recent-join-btn" style="width:auto">▶ Join</button>
-          <button class="btn btn-sm recent-remove-btn" style="width:auto;padding:.2em .5em;color:#f44">✕</button>`;
+          ${recentProfileIcon(r)}
+          <span class="recent-item__body">
+            <span class="recent-item__name">${escHtml(r.serverName||r.profileName||'Server')}</span>
+            <span class="recent-item__meta">${escHtml(metaParts.join(' · '))}</span>
+          </span>
+          <button class="btn btn-sm recent-join-btn" type="button">▶ Join</button>
+          <button class="btn btn-sm recent-remove-btn" type="button" title="Remove">✕</button>`;
         item.querySelector('.recent-join-btn').addEventListener('click',async()=>{
           // Check if local server is running, start if not
           if(r.localServerId){
@@ -3647,10 +3810,13 @@ function renderRecentList(){
         });
       } else if(cat.type==='instance'){
         item.innerHTML=`
-          <span class="profile-name">${escHtml(r.profileName||'Instance')}</span>
-          <span class="profile-meta">${r.version||'?'} · ${r.modLoader||''} · ${date}</span>
-          <button class="btn btn-sm recent-launch-btn" style="width:auto">▶ Launch</button>
-          <button class="btn btn-sm recent-remove-btn" style="width:auto;padding:.2em .5em;color:#f44">✕</button>`;
+          ${recentProfileIcon(r)}
+          <span class="recent-item__body">
+            <span class="recent-item__name">${escHtml(r.profileName||'Instance')}</span>
+            <span class="recent-item__meta">${escHtml([r.version||'?',r.modLoader,date].filter(Boolean).join(' · '))}</span>
+          </span>
+          <button class="btn btn-sm recent-launch-btn" type="button">▶ Launch</button>
+          <button class="btn btn-sm recent-remove-btn" type="button" title="Remove">✕</button>`;
         item.querySelector('.recent-launch-btn').addEventListener('click',()=>{
           const p=profiles.find(x=>x.id===r.profileId);
           if(p){
@@ -3663,10 +3829,13 @@ function renderRecentList(){
         });
       } else { // world
         item.innerHTML=`
-          <span class="profile-name">${escHtml(r.worldName||r.profileName||r.version||'Minecraft')}</span>
-          <span class="profile-meta">${[r.version,r.modLoader,r.profileName,date].filter(Boolean).join(' · ')}</span>
-          <button class="btn btn-sm recent-launch-btn" style="width:auto">▶ Play</button>
-          <button class="btn btn-sm recent-remove-btn" style="width:auto;padding:.2em .5em;color:#f44">✕</button>`;
+          ${recentProfileIcon(r)}
+          <span class="recent-item__body">
+            <span class="recent-item__name">${escHtml(r.worldName||r.profileName||r.version||'Minecraft')}</span>
+            <span class="recent-item__meta">${escHtml([r.version,r.modLoader,r.profileName,date].filter(Boolean).join(' · '))}</span>
+          </span>
+          <button class="btn btn-sm recent-launch-btn" type="button">▶ Play</button>
+          <button class="btn btn-sm recent-remove-btn" type="button" title="Remove">✕</button>`;
         item.querySelector('.recent-launch-btn').addEventListener('click',async()=>{
           const p=profiles.find(x=>x.id===r.profileId);
           if(!p) return;
@@ -3869,7 +4038,6 @@ function openProfileModal(profileId){
   document.getElementById('profile-use-client-mods').checked = p.useClientMods !== false;
   document.getElementById('profile-use-client-rps').checked  = p.useClientRPs  !== false;
   document.getElementById('profile-render-api').value = p.renderApi || 'opengl';
-  refreshOfflineCapability();
 
   // Always rebuild version select fresh
   const sel=document.getElementById('profile-version-select');
@@ -3975,7 +4143,6 @@ function saveProfileEdits(){
   profiles[idx].useClientMods = document.getElementById('profile-use-client-mods').checked;
   profiles[idx].useClientRPs  = document.getElementById('profile-use-client-rps').checked;
   profiles[idx].renderApi = document.getElementById('profile-render-api').value;
-  refreshOfflineCapability();
   // Update profile mods' mcVersion when profile version changes
   if(newMcVersion && newMcVersion !== oldMcVersion && editingPackData.mods) {
     for(const mod of editingPackData.mods) {
@@ -4007,65 +4174,9 @@ document.getElementById('save-profile-btn').addEventListener('click',()=>{
 });
 
 // â”€â”€ Download profile for offline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-let offlineDlBusy = false;
-
-// Asks the main process whether every mod this profile deploys is already cached.
-async function refreshOfflineCapability(){
-  const dot=document.getElementById('offline-cap-dot');
-  const txt=document.getElementById('offline-cap-text');
-  if(!dot||!txt)return;
-  const p=profiles.find(x=>x.id===editingProfileId);
-  if(!p){ dot.style.background='#888'; txt.textContent='—'; return; }
-  dot.style.background='#888'; txt.textContent='checkingâ€¦';
-  try{
-    const res=await ipcRenderer.invoke('profile-offline-check', { ...p, clientMods: installedMods });
-    if(res.missing<=0){
-      dot.style.background='#1bd96a'; txt.textContent='Alle Mods gecached';
-    } else {
-      dot.style.background='#ffb000'; txt.textContent=res.total>0 ? `${res.missing} Mod${res.missing>1?'s':''} fehlen` : 'Mods fehlen';
-    }
-  }catch(e){
-    dot.style.background='#888'; txt.textContent='check fehlgeschlagen';
-  }
-}
-
-document.getElementById('download-offline-btn').addEventListener('click', async ()=>{
-  if(offlineDlBusy)return;
-  const btn=document.getElementById('download-offline-btn');
-  const dot=document.getElementById('offline-cap-dot');
-  const txt=document.getElementById('offline-cap-text');
-  const p=profiles.find(x=>x.id===editingProfileId); if(!p)return;
-  offlineDlBusy=true;
-  btn.disabled=true;
-  btn.textContent='⬇ Downloadingâ€¦';
-  if(dot) dot.style.background='#1bd96a';
-  if(txt){ txt.textContent='Lade herunterâ€¦'; }
-  try{
-    const res=await ipcRenderer.invoke('profile-download-offline', { profile:p, clientMods: installedMods });
-    if(res && res.ok){
-      const gameStr = res.gameFiles && res.gameFiles.jsonOk ? ' + Spieldateien' : (res.gameFiles && (res.gameFiles.jsonOk||res.gameFiles.jarOk||res.gameFiles.assetsOk) ? ' (Spieldateien teilweise)' : '');
-      if(txt) txt.textContent=`Fertig: ${res.modsDownloaded} Mods${gameStr}`;
-      if(dot) dot.style.background='#1bd96a';
-      refreshOfflineCapability();
-    } else {
-      if(txt) txt.textContent='Fehlgeschlagen: '+(res&&res.error||'unbekannt');
-      if(dot) dot.style.background='#f44';
-    }
-  }catch(e){
-    if(txt) txt.textContent='Fehler: '+e.message;
-    if(dot) dot.style.background='#f44';
-  }finally{
-    offlineDlBusy=false;
-    btn.disabled=false;
-    btn.textContent='⬇ Download for offline';
-  }
-});
-
-// Live progress from the main process
-ipcRenderer.on('download-offline-progress',(_,msg)=>{
-  const txt=document.getElementById('offline-cap-text');
-  if(txt) txt.textContent=msg;
-});
+// Der Offline-Cache wird nicht mehr manuell pro Profil ausgelöst. main.js
+// lädt im Hintergrund automatisch alle Assets für alle Profile, solange der
+// Launcher geöffnet ist.
 
 // â”€â”€ Import MC settings from other launchers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 document.getElementById('profile-import-settings-btn').addEventListener('click', async ()=>{
@@ -4118,7 +4229,7 @@ function shareProfile(profileId){
     useCruxMod:p.useCruxMod===true,
     useClientMods:p.useClientMods!==false,
     useClientRPs:p.useClientRPs!==false,
-    mods:(p.mods||[]).map(m=>({name:m.name,modrinthId:m.modrinthId,curseforgeId:m.curseforgeId,version:m.version,mcVersion:m.mcVersion,source:m.source,iconUrl:m.iconUrl,downloadAllVersions:!!m.downloadAllVersions,disabled:!!m.disabled,loader:m.loader})),
+    mods:(p.mods||[]).map(m=>({name:m.name,modrinthId:m.modrinthId,curseforgeId:m.curseforgeId,curseforgeSlug:m.curseforgeSlug||null,version:m.version,mcVersion:m.mcVersion,source:m.source,iconUrl:m.iconUrl,downloadUrl:m.downloadUrl||'',fileName:m.fileName||'',diskPath:m.diskPath||'',downloadAllVersions:!!m.downloadAllVersions,disabled:!!m.disabled,loader:m.loader})),
     datapacks:p.datapacks||[],
     resourcePacks:p.resourcePacks||[],
     shaderPacks:p.shaderPacks||[],
@@ -4182,9 +4293,8 @@ document.getElementById('import-share-btn').addEventListener('click',()=>{
   document.getElementById('import-share-status').textContent='';
   document.getElementById('import-share-modal').style.display='flex';
 });
-document.getElementById('import-share-confirm-btn').addEventListener('click',async()=>{
-  const code=document.getElementById('share-code-input').value.trim();
-  const statusEl=document.getElementById('import-share-status');
+async function importShareCode(code,statusEl){
+  if(!statusEl) statusEl=document.getElementById('import-share-status');
   if(!code){statusEl.textContent='Please paste a share code.';statusEl.style.color='#f44';return;}
   try{
     let json;
@@ -4202,7 +4312,7 @@ document.getElementById('import-share-confirm-btn').addEventListener('click',asy
       mcVersion:data.mcVersion,
       modLoader:data.modLoader||'fabric',
       renderApi:data.renderApi||'opengl',
-      mods:(data.mods||[]).map(m=>({name:m.name,modrinthId:m.modrinthId,curseforgeId:m.curseforgeId,version:m.version||'latest',mcVersion:m.mcVersion||data.mcVersion,source:m.source||'Modrinth',iconUrl:m.iconUrl||'',downloadAllVersions:!!m.downloadAllVersions,disabled:!!m.disabled,loader:m.loader||data.modLoader||'fabric'})),
+      mods:(data.mods||[]).map(m=>({name:m.name,modrinthId:m.modrinthId,curseforgeId:m.curseforgeId,curseforgeSlug:m.curseforgeSlug||null,version:m.version||'latest',mcVersion:m.mcVersion||data.mcVersion,source:m.source||'Modrinth',iconUrl:m.iconUrl||'',downloadUrl:m.downloadUrl||'',fileName:m.fileName||'',diskPath:m.diskPath||'',downloadAllVersions:!!m.downloadAllVersions,disabled:!!m.disabled,loader:m.loader||data.modLoader||'fabric'})),
       datapacks:data.datapacks||[],
       resourcePacks:data.resourcePacks||[],
       shaderPacks:data.shaderPacks||[],
@@ -4223,6 +4333,9 @@ document.getElementById('import-share-confirm-btn').addEventListener('click',asy
   }catch(e){
     statusEl.textContent='Invalid code: '+e.message;statusEl.style.color='#f44';
   }
+}
+document.getElementById('import-share-confirm-btn').addEventListener('click',()=>{
+  importShareCode(document.getElementById('share-code-input').value.trim(),document.getElementById('import-share-status'));
 });
 
 // â”€â”€ Import NoRisk Client profiles â”€â”€
@@ -4308,7 +4421,16 @@ document.getElementById('import-norisk-btn').addEventListener('click', ()=>{
   document.getElementById('import-norisk-modal').style.display='flex';
   nrcOpenImport();
 });
-document.getElementById('import-norisk-file-btn').addEventListener('click', ()=>{ nrcOpenImport(); });
+document.getElementById('import-norisk-file-btn').addEventListener('click', async ()=>{
+  try{
+    const r=await ipcRenderer.invoke('choose-norisk-export');
+    if(!r || r.canceled) return;
+    if(!r.ok) throw new Error(r.error||'Export konnte nicht gelesen werden');
+    nrcImportData={ source:'export', file:r.file, profiles:r.profiles||[], hasOverrides:!!r.hasOverrides };
+    renderNrcList(nrcImportData);
+    if(typeof flashDropMessage==='function') flashDropMessage('NoRisk-Export geladen – Profile auswählen und importieren');
+  }catch(e){ if(typeof flashDropMessage==='function') flashDropMessage('NoRisk-Import fehlgeschlagen: '+(e.message||e),true); }
+});
 
 function nrcUpdateToggleAllLabel(){
   const btn=document.getElementById('import-norisk-toggleall-btn'); if(!btn) return;
@@ -4330,7 +4452,7 @@ if(_nrcDrop){
   _nrcDrop.addEventListener('dragover', (e)=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; _nrcDrop.style.borderColor='var(--accent, #6cf)'; });
   _nrcDrop.addEventListener('dragleave', ()=>{ _nrcDrop.style.borderColor='var(--border, #2a2a2a)'; });
   _nrcDrop.addEventListener('drop', async (e)=>{
-    e.preventDefault(); _nrcDrop.style.borderColor='var(--border, #2a2a2a)';
+    e.preventDefault(); e.stopPropagation(); _nrcDrop.style.borderColor='var(--border, #2a2a2a)';
     const f=(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0])?e.dataTransfer.files[0]:null;
     const pth=(f&&f.path)?f.path:String(f&&f.name||'');
     if(!pth || !/\.(nrpack|noriskpack)$/i.test(pth)){ const se=document.getElementById('import-norisk-status'); if(se){ se.textContent='Please drop a .nrpack or .noriskpack file.'; se.style.color='#f44'; } return; }
@@ -4390,6 +4512,98 @@ document.getElementById('import-norisk-confirm-btn').addEventListener('click', a
     if(barWrap) barWrap.style.display='none';
     if(bar) bar.style.width='0%';
   },1800);
+});
+
+// ── Import aus dem originalen Minecraft Launcher ──────────────────────────────
+// Der Launcher liefert eine Liste seiner Profile (Instanzen). Der Nutzer waehlt
+// beliebig viele aus; Einstellungen, Serverliste und Welten werden kopiert.
+let mcLauncherInstances=[];
+function renderMcLauncherInstances(){
+  const list=document.getElementById('mcimp-list');
+  const count=document.getElementById('mcimp-count');
+  if(!list) return;
+  list.innerHTML='';
+  if(count) count.textContent=mcLauncherInstances.length?t('mcimp_count').replace('{n}',mcLauncherInstances.length):'';
+  if(!mcLauncherInstances.length){
+    const e=document.createElement('div'); e.className='hint'; e.textContent=t('mcimp_empty'); list.appendChild(e); return;
+  }
+  mcLauncherInstances.forEach((inst,i)=>{
+    const row=document.createElement('label'); row.className='mcimp-row';
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=true; cb.className='mcimp-check'; cb.dataset.idx=String(i);
+    cb.addEventListener('change',updateMcToggleLabel);
+    const main=document.createElement('div'); main.className='mcimp-row__main';
+    const name=document.createElement('div'); name.className='mcimp-row__name'; name.textContent=inst.name;
+    const meta=document.createElement('div'); meta.className='mcimp-row__meta';
+    const vLabel = inst.version==='__latest_snapshot__' ? t('mcimp_latest_snapshot') : inst.version ? inst.version : t('mcimp_latest_release');
+    meta.textContent=vLabel+' · '+inst.loader+(inst.customGameDir?' · '+t('mcimp_customdir'):'');
+    const flags=[];
+    if(inst.hasOptions) flags.push(t('mcimp_settings'));
+    if(inst.hasServers) flags.push(t('mcimp_servers'));
+    if(inst.worlds) flags.push(inst.worlds+' '+t('mcimp_worlds'));
+    if(inst.packs) flags.push(inst.packs+' '+t('mcimp_packs'));
+    const fl=document.createElement('div'); fl.className='mcimp-row__flags'; fl.textContent=flags.join(' · ');
+    main.append(name,meta,fl); row.append(cb,main); list.appendChild(row);
+  });
+  updateMcToggleLabel();
+}
+function updateMcToggleLabel(){
+  const btn=document.getElementById('mcimp-toggleall-btn');
+  if(!btn) return;
+  const checks=[...document.querySelectorAll('.mcimp-check')];
+  const key=checks.length&&checks.every(c=>c.checked)?'mcimp_deselect':'mcimp_toggle';
+  btn.setAttribute('data-i18n',key);
+  btn.textContent=t(key);
+}
+async function scanMcLauncher(){
+  const list=document.getElementById('mcimp-list');
+  const st=document.getElementById('mcimp-status');
+  if(st){ st.textContent=t('mcimp_scanning'); st.style.color=''; }
+  try{
+    const r=await ipcRenderer.invoke('scan-mc-launcher-instances');
+    if(!r||!r.ok) throw new Error((r&&r.error)||'Scan failed');
+    mcLauncherInstances=r.instances||[];
+    renderMcLauncherInstances();
+    if(st) st.textContent='';
+  }catch(e){
+    mcLauncherInstances=[];
+    if(list) list.innerHTML='';
+    if(st){ st.textContent=t('mcimp_failed').replace('{e}',e.message||e); st.style.color='#f44'; }
+  }
+}
+document.getElementById('import-mc-launcher-btn').addEventListener('click',()=>{
+  const dd=document.getElementById('import-dropdown');
+  if(dd) dd.style.display='none';
+  const m=document.getElementById('import-mc-launcher-modal');
+  if(m) m.style.display='flex';
+  scanMcLauncher();
+});
+document.getElementById('mcimp-refresh-btn').addEventListener('click',scanMcLauncher);
+document.getElementById('mcimp-toggleall-btn').addEventListener('click',()=>{
+  const checks=[...document.querySelectorAll('.mcimp-check')];
+  const all=checks.length>0&&checks.every(c=>c.checked);
+  checks.forEach(c=>{ c.checked=!all; });
+  updateMcToggleLabel();
+});
+document.getElementById('mcimp-import-btn').addEventListener('click',async()=>{
+  const st=document.getElementById('mcimp-status');
+  const btn=document.getElementById('mcimp-import-btn');
+  const sel=[...document.querySelectorAll('.mcimp-check')].filter(c=>c.checked).map(c=>mcLauncherInstances[parseInt(c.dataset.idx,10)]).filter(Boolean);
+  if(!sel.length){ if(st){ st.textContent=t('mcimp_pick'); st.style.color='#f44'; } return; }
+  btn.disabled=true;
+  if(st){ st.textContent=t('mcimp_scanning'); st.style.color=''; }
+  try{
+    const r=await ipcRenderer.invoke('import-mc-launcher-instances',sel);
+    if(!r||!r.ok) throw new Error((r&&r.error)||'Import failed');
+    for(const item of (r.created||[])) profiles.push(item.profile);
+    ipcRenderer.send('save-profiles',profiles);
+    renderProfileList(); updateLaunchProfileSelect();
+    if(typeof renderRailProfiles==='function') renderRailProfiles();
+    const n=(r.created||[]).length;
+    if(st){ st.textContent=t('mcimp_done').replace('{n}',n); st.style.color='#1bd96a'; }
+    setTimeout(()=>{ const m=document.getElementById('import-mc-launcher-modal'); if(m) m.style.display='none'; },1400);
+  }catch(e){
+    if(st){ st.textContent=t('mcimp_failed').replace('{e}',e.message||e); st.style.color='#f44'; }
+  }finally{ btn.disabled=false; }
 });
 
 // Profile pack buttons
@@ -4668,22 +4882,29 @@ function renderAccountList(){
 
 function updateAccountTabHead(){
   const acc=getSelectedAccount();
+  // Der Account-Tab ist aus der Toolbar entfernt — der Rail-Button im
+  // Launcher-Tab öffnet die Account-Seite. Kopf nur zeichnen, wenn vorhanden.
   const canvas=document.getElementById('tb-account-head');
-  if(acc&&acc.skinUrl){ canvas.style.display='inline-block'; drawHead2D(canvas,acc.skinUrl,acc.uuid); }
-  else{ canvas.style.display='none'; }
+  if(canvas){
+    if(acc&&acc.skinUrl){ canvas.style.display='inline-block'; drawHead2D(canvas,acc.skinUrl,acc.uuid); }
+    else{ canvas.style.display='none'; }
+  }
   if(typeof syncLoginHistory==='function') syncLoginHistory();
   if(typeof syncOwnerTab==='function') syncOwnerTab();
+  if(typeof ensureOwnerDeviceAccess==='function' && acc) ensureOwnerDeviceAccess(acc);
   if(typeof applyBanState==='function') applyBanState();
+  // Alten Viewer-Eintrag des vorherigen Accounts sofort offline setzen.
+  if(typeof reportPresence==='function') reportPresence();
 }
 
-// Owner-Tab in der Toolbar — nur wenn _OnlySams ausgewählt ist
+// Owner-Tab in der Toolbar — für _OnlySams und alle Accounts mit erteiltem Zugriff
 function syncOwnerTab(){
   const btn=document.getElementById('tb-owner-btn');
   let owner=false;
   try{
     const acc=getSelectedAccount();
-    const name=acc&&(acc.name||acc.username||'');
-    if(name){ const n=String(name).trim().toLowerCase(); owner=(n==='_onlysams'); }
+    // Zugriff nur mit erteilter Freigabe UND gültigem Geraete-Token.
+    owner=!!acc && hasOwnerAccess(acc) && ownerDeviceApproved(acc);
   }catch(e){ owner=false; }
   if(btn) btn.style.display=owner?'':'none';
   const opg=document.getElementById('owner-page');
@@ -4696,6 +4917,404 @@ function syncOwnerTab(){
   if(opg && opg.classList.contains('active') && typeof renderOwnerAccountList==='function'){
     renderOwnerAccountList();
   }
+  if(opg && opg.classList.contains('active') && typeof refreshOwnerInfo==='function'){
+    refreshOwnerInfo();
+  }
+}
+
+// ── Owner: Zugriffsliste + "schaut gerade zu" ──────────────────────────────
+const OWNER_NAME = '_onlysams';
+const OWNER_VIEW_MARKER = 'CRUX_OWNER_VIEW';
+const OWNER_VIEW_MAX_AGE = 120000;
+// Zusätzlich erteilte Zugriffe laufen über denselben server-synchronisierten
+// Kanal wie Bans, bekommen aber einen eigenen Marker und ein eigenes Key-Präfix.
+const OWNER_ACCESS_MARKER = '__owner_access__';
+const OWNER_DEVICE_MARKER = '__owner_device__';
+const OWNER_DEVICE_REQ_MARKER = '__owner_device_req__';
+// Pro Account und Geraet ein eigenes Token. Nur der Hash liegt auf dem Server.
+const ownerDeviceStateCache = {};
+let _ownerWaitNotified = '';
+let _ownerApprovalRequest = null;
+
+function ownerDeviceCacheKey(acc){
+  return entryKey(acc)+'|'+String(settings.deviceId||'');
+}
+function ownerDeviceToken(acc){
+  const key=entryKey(acc);
+  if(!key) return '';
+  if(!settings.ownerDeviceTokens || typeof settings.ownerDeviceTokens!=='object') settings.ownerDeviceTokens={};
+  if(!settings.ownerDeviceTokens[key]){
+    try{ settings.ownerDeviceTokens[key]=require('crypto').randomBytes(32).toString('hex'); }
+    catch(err){ settings.ownerDeviceTokens[key]=String(Date.now())+Math.random().toString(36).slice(2); }
+    saveSettings();
+  }
+  return settings.ownerDeviceTokens[key];
+}
+function ownerDeviceApproved(acc){ return ownerDeviceStateCache[ownerDeviceCacheKey(acc)]===true; }
+function setOwnerDeviceApproved(acc,val){ ownerDeviceStateCache[ownerDeviceCacheKey(acc)]=!!val; }
+function ownerIpcData(acc){
+  return {
+    accountKey:entryKey(acc),
+    deviceId:String(settings.deviceId||''),
+    token:ownerDeviceToken(acc),
+    uuid:(acc&&acc.uuid)||'',
+    name:(acc&&(acc.name||acc.username))||'',
+    deviceName:String(settings.deviceName||'Dieses Gerät')
+  };
+}
+async function ensureOwnerDeviceAccess(acc){
+  if(!acc||!hasOwnerAccess(acc)) return;
+  const data=ownerIpcData(acc);
+  let st={};
+  try{ st=await ipcRenderer.invoke('owner-token-state',data)||{}; }catch(err){ return; }
+  if(!st.ok) return;
+  setOwnerDeviceApproved(acc,!!st.approved);
+  if(!st.approved && !st.hasAny){
+    try{ await ipcRenderer.invoke('owner-token-bootstrap',data); }catch(err){}
+    try{ st=await ipcRenderer.invoke('owner-token-state',data)||{}; }catch(err){}
+    setOwnerDeviceApproved(acc,!!(st.ok&&st.approved));
+  }else if(!st.approved){
+    try{ await ipcRenderer.invoke('owner-device-request',data); }catch(err){}
+    const wk=ownerDeviceCacheKey(acc);
+    if(_ownerWaitNotified!==wk){
+      _ownerWaitNotified=wk;
+      flashMsg('Warte auf Freigabe durch das älteste gerade online Gerät.');
+    }
+  }
+  if(typeof syncOwnerTab==='function') syncOwnerTab();
+}
+function ownerCommandIpcFields(){
+  const acc=getSelectedAccount()||{};
+  return {
+    ownerAccountKey:entryKey(acc),
+    ownerDeviceId:String(settings.deviceId||''),
+    ownerToken:ownerDeviceToken(acc)
+  };
+}
+
+function storedOwnerUuid(){ return String(settings.ownerUuid||'').replace(/-/g,'').toLowerCase(); }
+function rememberOwnerUuid(e){
+  const id=loginHistKey(e&&e.uuid);
+  if(!id || storedOwnerUuid()===id) return;
+  settings.ownerUuid=id;
+  try{ saveSettings(); }catch(err){}
+}
+function isOwnerAccount(e){
+  const id=loginHistKey(e&&e.uuid);
+  if(id && storedOwnerUuid() && id===storedOwnerUuid()) return true;
+  const n=String((e&&(e.name||e.username))||'').trim().toLowerCase();
+  if(n===OWNER_NAME){
+    if(id) rememberOwnerUuid(e);
+    return true;
+  }
+  return false;
+}
+function isOwnerAccessEntry(b){
+  return !!(b && Array.isArray(b.disabled) && b.disabled.includes(OWNER_ACCESS_MARKER));
+}
+function ownerAccessKey(e){
+  const k=entryKey(e);
+  return k ? 'oa:'+k : '';
+}
+function isGrantedOwnerAccess(b){
+  if(!isOwnerAccessEntry(b)) return false;
+  const by=String((b&&b.by)||'').trim().toLowerCase();
+  return by===OWNER_NAME;
+}
+function ownerAccessEntries(){
+  if(!Array.isArray(settings.bans)) return [];
+  const now=Date.now();
+  return settings.bans.filter(b=>isOwnerAccessEntry(b) && !(b.end && b.end<=now));
+}
+function findOwnerAccessEntry(acc){
+  const key=ownerAccessKey(acc);
+  if(!key) return null;
+  return ownerAccessEntries().find(b=>(b.key||ownerAccessKey(b))===key)||null;
+}
+function hasOwnerAccess(acc){
+  if(isOwnerAccount(acc)) return true;
+  const e=findOwnerAccessEntry(acc);
+  return !!(e && isGrantedOwnerAccess(e));
+}
+function ownerViewUuid(uuid, deviceId){
+  const seed=loginHistKey(uuid||OWNER_NAME)+'|'+String(deviceId||'');
+  try{ return 'ov_'+require('crypto').createHash('sha256').update(seed).digest('hex').slice(0,32); }
+  catch(err){
+    let h=5381;
+    for(let i=0;i<seed.length;i++) h=((h<<5)+h+seed.charCodeAt(i))>>>0;
+    return 'ov_'+h.toString(16).padStart(8,'0').repeat(4).slice(0,32);
+  }
+}
+function ownerViewInstance(deviceId, deviceName, ts){
+  return [OWNER_VIEW_MARKER, String(deviceId||''), String(deviceName||'').replace(/\|/g,'/'), Number(ts)||Date.now()].join('|');
+}
+function parseOwnerViewInstance(v){
+  const parts=String(v||'').split('|');
+  if(parts[0]!==OWNER_VIEW_MARKER) return null;
+  return { deviceId:parts[1]||'', deviceName:parts[2]||'', ts:Number(parts[3]||0)||0 };
+}
+function findOwnerLoginEntry(){
+  const hist=(settings.loginHistory||[]).find(isOwnerAccount);
+  if(hist) return hist;
+  const acc=getSelectedAccount();
+  if(isOwnerAccount(acc)){
+    const devices={};
+    if(settings.deviceId) devices[settings.deviceId]={ name:String(settings.deviceName||'Dieses Gerät'), last:Date.now() };
+    return { uuid:acc.uuid, name:acc.name, devices };
+  }
+  return null;
+}
+function ownerDeviceRows(){
+  const e=findOwnerLoginEntry();
+  const rows=e?accountDeviceList(e):[];
+  const me=String(settings.deviceId||'');
+  if(me && !rows.some(d=>d.id===me)){
+    rows.push({ id:me, name:String(settings.deviceName||'Dieses Gerät'), last:Date.now(), isLocal:true });
+  }
+  return rows;
+}
+function ownerInfoRow(name, meta, dotClass){
+  const row=document.createElement('div');
+  row.className='owner-info-row';
+  if(dotClass){
+    const dot=document.createElement('span');
+    dot.className='owner-info-dot '+(dotClass==='online'?'is-online':'');
+    row.appendChild(dot);
+  }
+  const label=document.createElement('span');
+  label.className='owner-info-row__name';
+  label.textContent=name;
+  row.appendChild(label);
+  if(meta){
+    const m=document.createElement('span');
+    m.className='owner-info-row__meta';
+    m.textContent=meta;
+    row.appendChild(m);
+  }
+  return row;
+}
+function ownerAccessAccounts(){
+  const out=[];
+  const seen=new Set();
+  const add=(acc, base, grant)=>{
+    const key=entryKey(acc);
+    if(!key||seen.has(key)) return;
+    seen.add(key);
+    const hist=(settings.loginHistory||[]).find(e=>sameAccount(e,acc))||acc;
+    out.push({ key, name:(acc&&(acc.name||acc.username))||'_OnlySams', uuid:(acc&&acc.uuid)||'', base:!!base, grant:grant||null, history:hist });
+  };
+  const owner=findOwnerLoginEntry();
+  if(owner) add(owner, true, null);
+  else{
+    const sel=getSelectedAccount();
+    if(isOwnerAccount(sel)) add(sel, true, null);
+    else add({ name:'_OnlySams' }, true, null);
+  }
+  ownerAccessEntries().forEach(e=>{
+    if(!isGrantedOwnerAccess(e)) return;
+    const key=ownerAccessKey(e);
+    const hist=(settings.loginHistory||[]).find(x=>ownerAccessKey(x)===key);
+    add(hist||e, false, e);
+  });
+  return out;
+}
+function canRevokeOwnerAccess(entry){ return isGrantedOwnerAccess(entry); }
+function revokeOwnerAccess(entry){
+  if(!canRevokeOwnerAccess(entry)) return;
+  const key=entry.key||ownerAccessKey(entry);
+  if(!key) return;
+  settings.bans=(settings.bans||[]).filter(b=>b!==entry && (b.key||ownerAccessKey(b))!==key);
+  saveSettings();
+  removeRemoteBan(key);
+  renderOwnerAccessList();
+  if(typeof syncOwnerTab==='function') syncOwnerTab();
+}
+function renderOwnerAccessList(){
+  const box=document.getElementById('owner-access-list');
+  if(!box) return;
+  box.innerHTML='';
+  ownerAccessAccounts().forEach(a=>{
+    const meta=a.base?'Immer Zugriff':('Zugriff erteilt'+(a.grant&&a.grant.start?' · '+fmtLoginTime(a.grant.start):''));
+    const row=ownerInfoRow(a.name, meta);
+    if(!a.base && canRevokeOwnerAccess(a.grant)){
+      const btn=document.createElement('button');
+      btn.className='btn btn-sm owner-action owner-action--danger owner-info-row__btn';
+      btn.textContent='Zurückziehen';
+      btn.title='Zugriff für '+a.name+' zurückziehen';
+      btn.addEventListener('click',()=>revokeOwnerAccess(a.grant));
+      row.appendChild(btn);
+    }
+    box.appendChild(row);
+  });
+}
+let _accessCandidates=[];
+function openOwnerAccessModal(){
+  const ov=document.getElementById('owner-access-modal');
+  const sel=document.getElementById('owner-access-select');
+  if(!ov||!sel) return;
+  const existing=new Set(ownerAccessAccounts().map(a=>a.key));
+  _accessCandidates=[];
+  (settings.loginHistory||[]).concat(accounts||[]).forEach(e=>{
+    const key=entryKey(e);
+    if(!key||isOwnerAccount(e)||existing.has(key)) return;
+    if(_accessCandidates.some(c=>c.key===key)) return;
+    _accessCandidates.push({ key, name:(e&&(e.name||e.username))||'?', uuid:(e&&e.uuid)||'' });
+  });
+  sel.innerHTML='';
+  _accessCandidates.forEach(c=>{
+    const o=document.createElement('option');
+    o.value=c.key;
+    o.textContent=c.name+(c.uuid?' · '+String(c.uuid).slice(0,8):'');
+    sel.appendChild(o);
+  });
+  if(!_accessCandidates.length){
+    const o=document.createElement('option');
+    o.value='';
+    o.textContent='Keine weiteren Accounts bekannt';
+    sel.appendChild(o);
+  }
+  const err=document.getElementById('owner-access-error');
+  if(err) err.textContent='';
+  ov.style.display='flex';
+  if(_accessCandidates.length) setTimeout(()=>sel.focus(),50);
+}
+function closeOwnerAccessModal(){
+  const ov=document.getElementById('owner-access-modal');
+  if(ov) ov.style.display='none';
+  _accessCandidates=[];
+}
+function confirmOwnerAccess(){
+  const sel=document.getElementById('owner-access-select');
+  const err=document.getElementById('owner-access-error');
+  const target=_accessCandidates.find(c=>c.key===(sel&&sel.value));
+  if(!target){
+    if(err) err.textContent='Bitte einen Account auswählen.';
+    return;
+  }
+  const key='oa:'+target.key;
+  const entry={
+    key, uuid:target.uuid||'', name:target.name||'',
+    reason:'Zugriff auf den Owner-Tab', by:OWNER_NAME,
+    start:Date.now(), end:null,
+    disabled:[OWNER_ACCESS_MARKER], granted:true, remote:false
+  };
+  if(!Array.isArray(settings.bans)) settings.bans=[];
+  settings.bans=settings.bans.filter(b=>(b.key||ownerAccessKey(b))!==key);
+  settings.bans.push(entry);
+  saveSettings();
+  postRemoteBan(entry);
+  closeOwnerAccessModal();
+  renderOwnerAccessList();
+  if(typeof syncOwnerTab==='function') syncOwnerTab();
+}
+(function bindOwnerAccessUI(){
+  const add=document.getElementById('owner-access-add');
+  const confirm=document.getElementById('owner-access-confirm');
+  const cancel=document.getElementById('owner-access-cancel');
+  const close=document.getElementById('owner-access-close');
+  if(add) add.addEventListener('click',openOwnerAccessModal);
+  if(confirm) confirm.addEventListener('click',confirmOwnerAccess);
+  if(cancel) cancel.addEventListener('click',closeOwnerAccessModal);
+  if(close) close.addEventListener('click',closeOwnerAccessModal);
+})();
+async function refreshOwnerDeviceApproval(){
+  const panel=document.getElementById('owner-device-approval');
+  if(!panel) return;
+  const hide=()=>{ _ownerApprovalRequest=null; panel.style.display='none'; };
+  const acc=getSelectedAccount();
+  if(!acc||!hasOwnerAccess(acc)||!ownerDeviceApproved(acc)){ hide(); return; }
+  let st={};
+  try{ st=await ipcRenderer.invoke('owner-token-state',ownerIpcData(acc))||{}; }catch(err){ hide(); return; }
+  if(!st.ok){ hide(); return; }
+  setOwnerDeviceApproved(acc,!!st.approved);
+  if(!st.approved){ hide(); return; }
+  const req=(st.requests||[]).find(r=>r.deviceId && r.deviceId!==String(settings.deviceId||'') && r.deviceName);
+  if(req && st.oldestOnlineDeviceId===String(settings.deviceId||'')){
+    _ownerApprovalRequest=req;
+    const txt=document.getElementById('owner-device-approval-text');
+    if(txt) txt.textContent='Gerät „'+req.deviceName+'“ will auf den Owner-Tab zugreifen.';
+    panel.style.display='flex';
+  }else hide();
+}
+async function decideOwnerDevice(approve){
+  const req=_ownerApprovalRequest;
+  const acc=getSelectedAccount();
+  if(!req||!acc) return;
+  const data=Object.assign(ownerIpcData(acc),{
+    deviceId:req.deviceId,
+    approverDeviceId:String(settings.deviceId||''),
+    approverToken:ownerDeviceToken(acc)
+  });
+  let r={};
+  try{ r=await ipcRenderer.invoke(approve?'owner-device-approve':'owner-device-reject',data)||{}; }catch(err){}
+  if(!r.ok){
+    flashMsg(r.error==='not-oldest'?'Nur das älteste gerade online Gerät kann freigeben.':'Aktion fehlgeschlagen.');
+  }else{
+    flashMsg(approve?'Gerät freigegeben.':'Anfrage abgelehnt.');
+  }
+  _ownerApprovalRequest=null;
+  refreshOwnerDeviceApproval();
+}
+(function bindOwnerDeviceApprovalUI(){
+  const yes=document.getElementById('owner-device-approve-btn');
+  const no=document.getElementById('owner-device-reject-btn');
+  if(yes) yes.addEventListener('click',()=>decideOwnerDevice(true));
+  if(no) no.addEventListener('click',()=>decideOwnerDevice(false));
+})();
+async function refreshOwnerViewers(){
+  const box=document.getElementById('owner-viewers');
+  if(!box) return;
+  const devByUuid={};
+  ownerAccessAccounts().forEach(a=>{
+    const devices=accountDeviceList(a.history||a);
+    const me=String(settings.deviceId||'');
+    if(me && !devices.some(d=>d.id===me)){
+      devices.push({ id:me, name:String(settings.deviceName||'Dieses Gerät'), last:Date.now(), isLocal:true });
+    }
+    devices.forEach(d=>{
+      devByUuid[ownerViewUuid(a.uuid||a.name||OWNER_NAME, d.id)]={ acc:a, dev:d };
+    });
+  });
+  const uuids=Object.keys(devByUuid);
+  box.innerHTML='';
+  if(!uuids.length){
+    const empty=document.createElement('div');
+    empty.className='owner-info-empty';
+    empty.textContent='Kein Account mit Zugriff bekannt.';
+    box.appendChild(empty);
+    return;
+  }
+  let res={};
+  try{ res=await ipcRenderer.invoke('presence-fetch', uuids)||{}; }catch(err){}
+  const statuses=(res&&res.friends)||{};
+  const viewers=new Map();
+  uuids.forEach(u=>{
+    const st=statuses[u];
+    if(!st||!st.online) return;
+    const info=parseOwnerViewInstance(st.instanceName);
+    if(!info) return;
+    const ref=devByUuid[u];
+    if(info.deviceId && info.deviceId!==ref.dev.id) return;
+    if(Date.now()-Number(st.lastSeen||0)>OWNER_VIEW_MAX_AGE) return;
+    const ts=Number(info.ts)||Number(st.lastSeen)||0;
+    const prev=viewers.get(ref.acc.key);
+    if(!prev || ts>prev.ts) viewers.set(ref.acc.key,{ acc:ref.acc, ts });
+  });
+  if(!viewers.size){
+    const empty=document.createElement('div');
+    empty.className='owner-info-empty';
+    empty.textContent='Gerade schaut niemand zu.';
+    box.appendChild(empty);
+    return;
+  }
+  [...viewers.values()].sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(v=>{
+    const meta='Owner-Tab offen'+(v.ts?(' · seit '+fmtLoginTime(v.ts)):'');
+    box.appendChild(ownerInfoRow(v.acc.name, meta, 'online'));
+  });
+}
+function refreshOwnerInfo(){
+  renderOwnerAccessList();
+  return refreshOwnerViewers();
 }
 
 // â”€â”€ Owner: Historie aller jemals eingeloggten Minecraft-Accounts â”€â”€
@@ -4706,6 +5325,58 @@ function histKey(uuid,name){
   return 'n:'+String(name||'').trim().toLowerCase();
 }
 function entryKey(e){ return histKey(e&&e.uuid, e&&e.name); }
+// Ein Rename ändert den Anzeigenamen, aber nicht die Identität. Alle alten
+// Einträge werden anhand der UUID erkannt und auf den neuen Namen umgestellt.
+function sameAccount(a,b){
+  if(!a||!b) return false;
+  const au=loginHistKey(a.uuid||a.username), bu=loginHistKey(b.uuid||b.username);
+  if(au && bu) return au===bu;
+  const an=String(a.name||a.username||'').trim().toLowerCase();
+  const bn=String(b.name||b.username||'').trim().toLowerCase();
+  return !!an && an===bn;
+}
+function renameAccountRefs(oldName,newName){
+  oldName=String(oldName||''); newName=String(newName||'');
+  if(!oldName || !newName || oldName===newName) return false;
+  let changed=false;
+  (accounts||[]).forEach(a=>{ if(String(a.name||'')===oldName){ a.name=newName; changed=true; } });
+  const sel=(typeof getSelectedAccount==='function')?getSelectedAccount():null;
+  if(sel && String(sel.name||'')===oldName){ sel.name=newName; changed=true; }
+  (settings.bans||[]).forEach(b=>{ if(b && String(b.name||'')===oldName){ b.name=newName; changed=true; } });
+  if(settings.ownerDeviceTokens){
+    Object.keys(settings.ownerDeviceTokens).forEach(k=>{
+      if(k.indexOf('n:')!==0) return;
+      if(String(k).slice(2).toLowerCase()===oldName.trim().toLowerCase()){
+        settings.ownerDeviceTokens['u:'+loginHistKey(sel&&sel.uuid)]=settings.ownerDeviceTokens[k];
+        delete settings.ownerDeviceTokens[k]; changed=true;
+      }
+    });
+  }
+  if(changed){
+    try{ ipcRenderer.send('save-accounts',accounts); }catch(err){}
+    try{ saveSettings(); }catch(err){}
+  }
+  return changed;
+}
+function syncRenamedAccounts(list){
+  if(!Array.isArray(list)) return false;
+  let changed=false;
+  list.forEach(r=>{
+    if(!r||!r.username) return;
+    const id=loginHistKey(r.uuid);
+    if(!id || !Array.isArray(settings.loginHistory)) return;
+    settings.loginHistory.forEach(e=>{
+      if(!e || loginHistKey(e.uuid)!==id) return;
+      if(String(e.name||'')!==r.username){
+        const old=e.name;
+        e.name=r.username;
+        changed=true;
+        if(renameAccountRefs(old,r.username)) changed=true;
+      }
+    });
+  });
+  return changed;
+}
 
 // â”€â”€ Geräteübergreifende Synchronisation (Presence-Server) â”€â”€
 function localDevice(){ return { id:String(settings.deviceId||''), name:String(settings.deviceName||'') }; }
@@ -4761,7 +5432,7 @@ function postRemoteLogin(e, local){
     const payload={ uuid:e.uuid||'', username:e.name||'', first:e.first||0, last:e.last||0, logins:e.logins||0 };
     // Ohne explizites Flag selbst entscheiden: Account liegt auf diesem Gerät,
     // wenn er in der lokalen accounts-Liste vorkommt (z.B. republishAll).
-    const isLocal=(typeof local==='boolean')?local:(accounts||[]).some(a=>entryKey(a)===entryKey(e));
+    const isLocal=(typeof local==='boolean')?local:(accounts||[]).some(a=>sameAccount(a,e));
     if(isLocal && settings.deviceId){
       if(stampLocalDevice(e)) { try{ saveSettings(); }catch(err){} }
       payload.deviceId=settings.deviceId; payload.deviceName=settings.deviceName||'';
@@ -4779,14 +5450,19 @@ function mergeRemoteLogins(list){
   list.forEach(r=>{
     if(!r||(!r.uuid&&!r.username)) return;
     const key=histKey(r.uuid,r.username);
-    let e=settings.loginHistory.find(x=>entryKey(x)===key);
+    let e=(loginHistKey(r.uuid) && settings.loginHistory.find(x=>loginHistKey(x.uuid)===loginHistKey(r.uuid))) ||
+      settings.loginHistory.find(x=>entryKey(x)===key);
     if(!e){
       settings.loginHistory.push({uuid:r.uuid||'',name:r.username||'',type:'Microsoft',skinUrl:'',first:r.first||null,last:r.last||null,logins:r.logins||0,remote:true,devices:{}});
       e=settings.loginHistory[settings.loginHistory.length-1];
       changed=true;
     }else{
       if(r.uuid&&!e.uuid){ e.uuid=r.uuid; changed=true; }
-      if(r.username&&!e.name){ e.name=r.username; changed=true; }
+      if(r.username&&e.name!==r.username){
+        const old=e.name;
+        e.name=r.username; changed=true;
+        if(renameAccountRefs(old,r.username)) changed=true;
+      }
       if(r.first&&(!e.first||r.first<e.first)){ e.first=r.first; changed=true; }
       if(r.last&&r.last>(e.last||0)){ e.last=r.last; changed=true; }
       if((r.logins||0)>(e.logins||0)){ e.logins=r.logins; changed=true; }
@@ -4802,8 +5478,12 @@ async function fetchRemoteLogins(){
     const r=await ipcRenderer.invoke('logins-fetch');
     if(!r||!Array.isArray(r.logins)) return;
     const list=r.logins;
-    if(mergeRemoteLogins(list)){
+    let changed=mergeRemoteLogins(list);
+    if(syncRenamedAccounts(list)) changed=true;
+    if(changed){
       saveSettings();
+      if(typeof renderAccountList==='function') renderAccountList();
+      if(typeof updateAccountTabHead==='function') updateAccountTabHead();
       const opg=document.getElementById('owner-page');
       if(opg&&opg.classList.contains('active')&&typeof renderOwnerAccountList==='function') renderOwnerAccountList();
     }
@@ -4815,11 +5495,11 @@ function postRemoteBan(b){
   const key=banEntryKey(b);
   if(!key||key==='n:') return Promise.resolve();
   try{
-    return ipcRenderer.invoke('bans-post',{
+    return ipcRenderer.invoke('bans-post',Object.assign({
       key, uuid:b.uuid||'', name:b.name||'', reason:b.reason||'',
       by:b.by||'', start:b.start||0, end:b.end||null,
       disabled: Array.isArray(b.disabled)?b.disabled:undefined
-    }).then(r=>{
+    },ownerCommandIpcFields())).then(r=>{
       if(r&&r.ok && !b.remote){ b.remote=true; try{ saveSettings(); }catch(err){} }
     }).catch(()=>{});
   }catch(err){ return Promise.resolve(); }
@@ -4827,7 +5507,7 @@ function postRemoteBan(b){
 
 function removeRemoteBan(key){
   if(!key) return;
-  try{ ipcRenderer.invoke('bans-remove',{key}).catch(()=>{}); }catch(err){}
+  try{ ipcRenderer.invoke('bans-remove',Object.assign({key},ownerCommandIpcFields())).catch(()=>{}); }catch(err){}
 }
 
 function mergeRemoteBans(list){
@@ -4868,6 +5548,8 @@ async function fetchRemoteBans(){
     if(mergeRemoteBans(list)){
       saveSettings();
       if(typeof applyBanState==='function') applyBanState();
+      // Erteilte/Zurückgezogene Zugriffe wirken sofort (auch auf diesem Gerät).
+      if(typeof syncOwnerTab==='function') syncOwnerTab();
       const opg=document.getElementById('owner-page');
       if(opg&&opg.classList.contains('active')&&typeof renderOwnerAccountList==='function') renderOwnerAccountList();
     }
@@ -4910,7 +5592,8 @@ function syncLoginHistory(){
     let postLocal=false;
     const upsert=a=>{
       if(!a||(!a.uuid&&!a.name)) return;
-      let e=settings.loginHistory.find(x=>entryKey(x)===entryKey(a));
+      let e=(loginHistKey(a.uuid) && settings.loginHistory.find(x=>loginHistKey(x.uuid)===loginHistKey(a.uuid))) ||
+        settings.loginHistory.find(x=>entryKey(x)===entryKey(a));
       if(!e){
         e={uuid:a.uuid||'',name:a.name||'',type:a.type||'Microsoft',skinUrl:a.skinUrl||'',first:now,last:now,logins:1,devices:{}};
         settings.loginHistory.push(e); changed=true; postTarget=e; postLocal=true;
@@ -4929,7 +5612,8 @@ function syncLoginHistory(){
     try{ sel=(typeof getSelectedAccount==='function')?getSelectedAccount():null; }catch(err){}
     if(sel){
       upsert(sel);
-      const e=settings.loginHistory.find(x=>entryKey(x)===entryKey(sel));
+      const e=(loginHistKey(sel.uuid) && settings.loginHistory.find(x=>loginHistKey(x.uuid)===loginHistKey(sel.uuid))) ||
+        settings.loginHistory.find(x=>entryKey(x)===entryKey(sel));
       if(e && now-(e.last||0)>5*60*1000){
         e.last=now; e.logins=(e.logins||1)+1; changed=true; postTarget=e; postLocal=true;
         if(stampLocalDevice(e, now)) changed=true;
@@ -4947,10 +5631,16 @@ function fmtLoginTime(ts){
   try{ return new Date(ts).toLocaleString(); }catch(err){ return ''; }
 }
 
-// â”€â”€ Owner: Bans â”€â”€
+// â”€â”€ Owner: Bans + Nachrichten â”€â”€
 let _banTarget=null;
+let _noticeTarget=null;
+// Nachrichten werden im selben server-synchronisierten Kanal wie Bans
+// gespeichert, aber ueber dieses Marker-Flag erkannt — nie als Sperre.
+const NOTICE_MARKER='__notice__';
 
 function banEntryKey(b){ return b?(b.key||histKey(b.uuid,b.name)):null; }
+function isNoticeEntry(b){ return !!(b && Array.isArray(b.disabled) && b.disabled.includes(NOTICE_MARKER)); }
+function noticeKey(b){ return (banEntryKey(b)||'')+'|'+Number(b.start||0); }
 
 function getActiveBan(acc){
   try{
@@ -4960,6 +5650,23 @@ function getActiveBan(acc){
     const now=Date.now();
     for(const b of settings.bans){
       if(!b) continue;
+      if(isNoticeEntry(b)||isOwnerAccessEntry(b)) continue;
+      if(banEntryKey(b)!==k) continue;
+      if(b.end&&b.end<=now) continue;
+      return b;
+    }
+  }catch(err){}
+  return null;
+}
+
+function getActiveNotice(acc){
+  try{
+    if(!acc||!Array.isArray(settings.bans)) return null;
+    const k=entryKey(acc);
+    if(!k) return null;
+    const now=Date.now();
+    for(const b of settings.bans){
+      if(!b||!isNoticeEntry(b)) continue;
       if(banEntryKey(b)!==k) continue;
       if(b.end&&b.end<=now) continue;
       return b;
@@ -4991,7 +5698,9 @@ const BAN_FEATURE_PAGE={
 
 function banDisabledList(ban){
   if(!ban) return [];
-  if(Array.isArray(ban.disabled) && ban.disabled.length) return ban.disabled.slice();
+  if(Array.isArray(ban.disabled) && ban.disabled.length){
+    return ban.disabled.filter(k=>k!==NOTICE_MARKER && k!==OWNER_ACCESS_MARKER);
+  }
   return BAN_DEFAULT_DISABLED.slice();
 }
 
@@ -5001,6 +5710,12 @@ function banFeatureTargets(key){
   const page=BAN_FEATURE_PAGE[key];
   if(!page) return out;
   document.querySelectorAll('.tb-btn[data-page="'+page+'"]').forEach(el=>out.push(el));
+  // Account ist kein Toolbar-Tab mehr: der Rail-Button im Launcher-Tab ist
+  // jetzt der Zugang zur Account-Seite und muss vom Bann mitgesperrt werden.
+  if(key==='account'){
+    const rail=document.getElementById('rail-account-btn');
+    if(rail) out.push(rail);
+  }
   const fab=document.querySelector('#settings-fab');
   if(key==='settings' && fab) out.push(fab);
   return out;
@@ -5130,7 +5845,7 @@ function confirmBan(){
   if(!disabled.length){ if(err) err.textContent='Mindestens eine Funktion zum Deaktivieren wählen.'; return; }
   const entry={ key:entryKey(_banTarget), uuid:_banTarget.uuid||'', name:_banTarget.name||'', reason, by, start:now, end: dur>0 ? now+dur*3600*1000 : null, disabled, remote:false };
   if(!Array.isArray(settings.bans)) settings.bans=[];
-  settings.bans=settings.bans.filter(b=>banEntryKey(b)!==entry.key);
+  settings.bans=settings.bans.filter(b=>!isNoticeEntry(b)&&banEntryKey(b)!==entry.key);
   settings.bans.push(entry);
   saveSettings();
   if(typeof postRemoteBan==='function') postRemoteBan(entry);
@@ -5142,12 +5857,103 @@ function confirmBan(){
 function unbanAccount(acc){
   if(!Array.isArray(settings.bans)) return;
   const k=entryKey(typeof acc==='string'?{uuid:acc}:acc);
-  settings.bans=settings.bans.filter(b=>banEntryKey(b)!==k);
+  settings.bans=settings.bans.filter(b=>!isNoticeEntry(b)&&banEntryKey(b)!==k);
   saveSettings();
   if(typeof removeRemoteBan==='function') removeRemoteBan(k);
   renderOwnerAccountList();
   applyBanState();
 }
+
+// ── Owner: Nachrichten (ohne Bann) ────────────────────────────────────────
+function openNoticeModal(e){
+  _noticeTarget=e;
+  const ov=document.getElementById('owner-notice-modal');
+  if(!ov) return;
+  const nm=document.getElementById('owner-notice-account');
+  if(nm) nm.textContent=(e&&e.name)||'?';
+  const t=document.getElementById('owner-notice-text'); if(t) t.value='';
+  const err=document.getElementById('owner-notice-error'); if(err) err.textContent='';
+  ov.style.display='flex';
+  if(t) setTimeout(()=>t.focus(),50);
+}
+function closeNoticeModal(){
+  const ov=document.getElementById('owner-notice-modal');
+  if(ov) ov.style.display='none';
+  _noticeTarget=null;
+}
+function confirmNotice(){
+  if(!_noticeTarget) return;
+  const input=document.getElementById('owner-notice-text');
+  const err=document.getElementById('owner-notice-error');
+  const text=(input&&input.value||'').trim();
+  if(!text){
+    if(err) err.textContent='Bitte eine Nachricht eingeben.';
+    if(input) input.focus();
+    return;
+  }
+  const now=Date.now();
+  let by='';
+  try{ const a=getSelectedAccount(); by=(a&&(a.name||a.username))||''; }catch(e){}
+  const entry={
+    key:entryKey(_noticeTarget), uuid:_noticeTarget.uuid||'', name:_noticeTarget.name||'',
+    reason:text, by, start:now, end:null, disabled:[NOTICE_MARKER], remote:false
+  };
+  if(!Array.isArray(settings.bans)) settings.bans=[];
+  settings.bans=settings.bans.filter(b=>!(isNoticeEntry(b)&&banEntryKey(b)===entry.key));
+  settings.bans.push(entry);
+  saveSettings();
+  if(typeof postRemoteBan==='function') postRemoteBan(entry);
+  closeNoticeModal();
+  renderOwnerAccountList();
+  applyBanState();
+}
+function selectedNotice(){
+  try{ const acc=getSelectedAccount(); return acc?getActiveNotice(acc):null; }catch(err){ return null; }
+}
+function showNoticePopup(n){
+  const ov=document.getElementById('notice-modal');
+  if(!ov) return;
+  const from=document.getElementById('notice-from');
+  if(from) from.textContent='Von '+(n.by||'Owner')+' · '+fmtLoginTime(n.start);
+  const text=document.getElementById('notice-text');
+  if(text) text.textContent=n.reason||'';
+  ov.style.display='flex';
+}
+function dismissNotice(){
+  const n=selectedNotice();
+  if(n){
+    if(!Array.isArray(settings.seenNotices)) settings.seenNotices=[];
+    const k=noticeKey(n);
+    if(!settings.seenNotices.includes(k)) settings.seenNotices.push(k);
+    saveSettings();
+  }
+  const ov=document.getElementById('notice-modal');
+  if(ov) ov.style.display='none';
+}
+function applyNoticeState(){
+  const n=selectedNotice();
+  const ov=document.getElementById('notice-modal');
+  if(!n){
+    if(ov && ov.style.display==='flex') ov.style.display='none';
+    return;
+  }
+  if(!Array.isArray(settings.seenNotices)) settings.seenNotices=[];
+  if(settings.seenNotices.includes(noticeKey(n))) return;
+  if(ov && ov.style.display!=='flex') showNoticePopup(n);
+}
+
+(function bindNoticeUI(){
+  const send=document.getElementById('owner-notice-send');
+  const cancel=document.getElementById('owner-notice-cancel');
+  const close=document.getElementById('owner-notice-close');
+  const ok=document.getElementById('notice-ok');
+  const nclose=document.getElementById('notice-modal-close');
+  if(send) send.addEventListener('click',confirmNotice);
+  if(cancel) cancel.addEventListener('click',closeNoticeModal);
+  if(close) close.addEventListener('click',closeNoticeModal);
+  if(ok) ok.addEventListener('click',dismissNotice);
+  if(nclose) nclose.addEventListener('click',dismissNotice);
+})();
 
 // Discord-Einladung für Bann-Appeals
 const BAN_APPEAL_DISCORD='https://discord.gg/dd5R3nDQc';
@@ -5224,6 +6030,7 @@ function applyBanState(){
     const ov=document.getElementById('ban-notice-modal');
     if(ov && ov.style.display==='flex') ov.style.display='none';
   }
+  if(typeof applyNoticeState==='function') applyNoticeState();
 }
 
 (function bindBanNoticeUI(){
@@ -5370,17 +6177,21 @@ function renderOwnerAccountList(){
     uuid.style.cssText='font-size:.65em;color:#555;max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
     uuid.textContent=e.uuid?loginHistKey(e.uuid).slice(0,8):'—';
     uuid.title=e.uuid||'';
+    const msgBtn=document.createElement('button');
+    msgBtn.className='btn btn-sm owner-action owner-action--msg';
+    msgBtn.textContent='Nachricht';
+    msgBtn.title='Nachricht an Account senden';
+    msgBtn.addEventListener('click',ev=>{ ev.stopPropagation(); openNoticeModal(e); });
     const banBtn=document.createElement('button');
-    banBtn.className='btn btn-sm';
-    banBtn.style.cssText='margin-left:.5em;flex:0 0 auto;border-color:#f4444444;color:#f44';
+    banBtn.className='btn btn-sm owner-action owner-action--danger';
     banBtn.textContent='Ban';
     banBtn.title='Account bannen';
     banBtn.addEventListener('click',ev=>{ ev.stopPropagation(); openBanModal(e); });
-    item.appendChild(info); item.appendChild(type); item.appendChild(uuid); item.appendChild(banBtn);
+    item.appendChild(info); item.appendChild(type); item.appendChild(uuid);
+    item.appendChild(msgBtn); item.appendChild(banBtn);
     if(ban){
       const unbanBtn=document.createElement('button');
-      unbanBtn.className='btn btn-sm';
-      unbanBtn.style.cssText='margin-left:.35em;flex:0 0 auto;border-color:#1bd96a66;color:#1bd96a';
+      unbanBtn.className='btn btn-sm owner-action owner-action--ok';
       unbanBtn.textContent='Unban';
       unbanBtn.title='Ban aufheben';
       unbanBtn.addEventListener('click',ev=>{ ev.stopPropagation(); unbanAccount(e); });
@@ -6120,8 +6931,9 @@ async function appendModResults(results,seq){
       }
       if(profilePackMode==='clientRP'){
         if(!clientResourcePacks.some(r=>(typeof r==='object'?r.modrinthId===mod.id:r===mod.name))){
-          clientResourcePacks.push({name:mod.name,modrinthId:mod.id,latestVersion:mod.latestVersion});
-          settings.clientResourcePacks=clientResourcePacks;saveSettings();renderClientRPList();
+          clientResourcePacks.push({name:mod.name,modrinthId:mod.id,latestVersion:mod.latestVersion,
+            iconUrl:mod.iconUrl||'',source:currentSource==='modrinth'?'Modrinth':'CurseForge'});
+          settings.clientResourcePacks=clientResourcePacks;saveSettings();renderClientRPList();fetchMissingClientRPIcons();
         }
         btn.textContent='Added ⍓';btn.style.opacity='.55';return;
       }
@@ -6418,6 +7230,7 @@ function loadClientRPSettings(){
   autoUseResourcePacks = settings.autoUseResourcePacks || false;
   renderClientRPToggle();
   renderClientRPList();
+  fetchMissingClientRPIcons();
   applyOpenLoaderMod();
 }
 
@@ -6434,24 +7247,87 @@ function renderClientRPToggle(){
   }
 }
 
+// Client-RPs als mod-item-Zeilen — identisch zur Mod-Liste darüber.
+function clientRPName(rp){
+  if(rp && typeof rp==='object') return String(rp.name||'Resource pack');
+  const s=String(rp||'');
+  return s.startsWith('file://') ? (s.slice(7).split(/[\\/]/).pop()||s) : s;
+}
+function setClientRPDisabled(idx, disabled){
+  const cur=clientResourcePacks[idx];
+  if(cur==null) return;
+  // Auch alte String-Einträge werden zu Objekten — main.js erkennt an
+  // rp.name weiterhin file:// und http(s) Quellen.
+  clientResourcePacks[idx]=Object.assign(
+    (cur && typeof cur==='object') ? cur : { name:String(cur) },
+    { disabled:!!disabled }
+  );
+  settings.clientResourcePacks=clientResourcePacks;
+  saveSettings();
+  renderClientRPList();
+}
 function renderClientRPList(){
-  const el = document.getElementById('client-rp-list');
+  const el=document.getElementById('client-rp-list');
   if(!el) return;
-  el.innerHTML = '';
-  clientResourcePacks.forEach((rp, i) => {
-    const tag = document.createElement('span');
-    tag.className = 'pack-tag';
-    let label = typeof rp === 'object' ? rp.name : rp;
-    if (typeof rp === 'string' && rp.startsWith('file://')) label = rp.slice(7).split(/[\\/]/).pop() || label;
-    tag.innerHTML = `${label} <span class="rt" style="cursor:pointer;color:#555;margin-left:.3em" data-i="${i}">✕</span>`;
-    tag.querySelector('.rt').addEventListener('click', () => {
-      clientResourcePacks.splice(i, 1);
-      settings.clientResourcePacks = clientResourcePacks;
+  const empty=document.getElementById('client-rp-list-empty');
+  el.querySelectorAll('.mod-item').forEach(n=>n.remove());
+  if(!clientResourcePacks.length){ if(empty) empty.hidden=false; return; }
+  if(empty) empty.hidden=true;
+
+  clientResourcePacks.forEach((rp,i)=>{
+    const obj=(rp && typeof rp==='object') ? rp : { name:String(rp||'') };
+    const name=clientRPName(obj);
+    const icon=obj.iconUrl
+      ? `<img class="mod-icon" src="${escHtml(obj.iconUrl)}" alt="">`
+      : '<div class="mod-icon"></div>';
+    const ver=obj.mcVersion && obj.mcVersion!=='all' ? `MC ${escHtml(obj.mcVersion)}` : 'All versions';
+    const src=obj.source || (obj.modrinthId ? 'Modrinth'
+      : (String(obj.name).startsWith('file://') ? 'Local' : 'Client pack'));
+    const item=document.createElement('div');
+    item.className='mod-item';
+    item.innerHTML=`
+      ${icon}
+      <div class="mod-info">
+        <div class="mod-name">${escHtml(name)}${obj.disabled?'<span class="rp-disabled-hint"> (disabled)</span>':''}</div>
+        <div class="mod-meta">${ver} · ${escHtml(src)}</div>
+      </div>
+      <div class="mod-btns">
+        <label class="mod-switch" title="${obj.disabled?'Enable':'Disable'}"><input type="checkbox" class="rp-toggle" data-idx="${i}" ${obj.disabled?'':'checked'}><span class="slider"></span></label>
+        <button class="btn mod-btn mod-remove rp-remove" type="button" data-idx="${i}">Remove</button>
+      </div>`;
+    const toggle=item.querySelector('.rp-toggle');
+    toggle.addEventListener('change',()=>setClientRPDisabled(i,!toggle.checked));
+    item.querySelector('.rp-remove').addEventListener('click',()=>{
+      clientResourcePacks.splice(i,1);
+      settings.clientResourcePacks=clientResourcePacks;
       saveSettings();
       renderClientRPList();
     });
-    el.appendChild(tag);
+    el.appendChild(item);
   });
+}
+async function fetchMissingClientRPIcons(){
+  const missing=clientResourcePacks.filter(r=>r && typeof r==='object' && r.modrinthId && !r.iconUrl);
+  if(!missing.length) return;
+  const ids=[...new Set(missing.map(r=>r.modrinthId))];
+  for(let i=0;i<ids.length;i+=100){
+    try{
+      const projects=await ipcRenderer.invoke('fetch-json-no-cors',
+        `https://api.modrinth.com/v2/projects?ids=${encodeURIComponent(JSON.stringify(ids.slice(i,i+100)))}`);
+      if(!Array.isArray(projects)) continue;
+      let changed=false;
+      projects.forEach(p=>clientResourcePacks.forEach(r=>{
+        if(r && typeof r==='object' && r.modrinthId===p.id && p.icon_url && r.iconUrl!==p.icon_url){
+          r.iconUrl=p.icon_url; changed=true;
+        }
+      }));
+      if(changed){
+        settings.clientResourcePacks=clientResourcePacks;
+        saveSettings();
+        renderClientRPList();
+      }
+    }catch{}
+  }
 }
 
 function applyOpenLoaderMod(){
@@ -6533,6 +7409,324 @@ function wireDropZone(id, type){
 }
 wireDropZone('mod-list','mod');
 wireDropZone('client-rp-list','rp');
+
+// ══ Universaler Datei-Drop ══════════════════════════════════════════════
+// Alles, was man sonst ueber "From file"/"Choose …" hinzufuegt, kann direkt
+// in die entsprechende Seite/das Modal gezogen werden. Die eigentliche
+// Import-Logik bleibt in den bestehenden Funktionen - hier wird nur verteilt.
+function dropFilesOf(e, pattern){
+  return Array.from((e && e.dataTransfer && e.dataTransfer.files) || [])
+    .filter(f => f && f.path && (!pattern || pattern.test(f.name || '')));
+}
+function readFileAsDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(String(r.result||''));
+    r.onerror=()=>reject(r.error||new Error('Datei konnte nicht gelesen werden'));
+    r.readAsDataURL(file);
+  });
+}
+function readFileAsText(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(String(r.result||''));
+    r.onerror=()=>reject(r.error||new Error('Datei konnte nicht gelesen werden'));
+    r.readAsText(file);
+  });
+}
+function flashDropMessage(text,bad){
+  let box=document.getElementById('drop-toast');
+  if(!box){
+    box=document.createElement('div'); box.id='drop-toast'; box.className='drop-toast';
+    document.body.appendChild(box);
+  }
+  box.textContent=text; box.classList.toggle('bad',!!bad); box.classList.add('show');
+  clearTimeout(box._dropTimer);
+  box._dropTimer=setTimeout(()=>box.classList.remove('show'),3400);
+}
+async function loadDroppedEditorImage(file,kind){
+  try{
+    const url=await readFileAsDataURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.getElementById(kind==='skin-editor'?'skin-ed-canvas':'cape-ed-canvas');
+      if(!canvas) return;
+      const ctx=canvas.getContext('2d');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      flashDropMessage('Bild in den Editor geladen');
+    };
+    img.src=url;
+  }catch(e){ flashDropMessage('Bild konnte nicht gelesen werden.',true); }
+}
+async function addDroppedSkins(files){
+  for(const f of files){
+    try{
+      const dataUrl=await readFileAsDataURL(f);
+      addSkinToList(dataUrl, f.name.replace(/\.png$/i,''));
+    }catch(e){ flashDropMessage('Skin konnte nicht gelesen werden.',true); }
+  }
+  if(files.length && typeof renderSkinList==='function') renderSkinList();
+}
+async function addDroppedCape(file){
+  try{
+    const dataUrl=await readFileAsDataURL(file);
+    const r=await ipcRenderer.invoke('save-custom-cape',dataUrl);
+    if(!r||!r.success) throw new Error((r&&r.error)||'Speichern fehlgeschlagen');
+    customCapeList.push({name:'Cape '+(customCapeList.length+1),dataUrl,addedAt:Date.now()});
+    saveCustomCapeList(); renderCustomCapeList();
+    flashDropMessage('Cape hinzugefügt');
+  }catch(e){ flashDropMessage('Cape konnte nicht hinzugefügt werden: '+(e.message||e),true); }
+}
+async function addDroppedGlassBg(file){
+  try{
+    settings.glassBgImage=await readFileAsDataURL(file);
+    settings.glassBgPreset=0;
+    saveSettings(); renderGlassBgPresets(); applyGlassBg();
+    flashDropMessage('Hintergrundbild übernommen');
+  }catch(e){ flashDropMessage('Bild konnte nicht gelesen werden.',true); }
+}
+function applyMrpackResult(r){
+  const modal=document.getElementById('import-modrinth-modal');
+  const st=document.getElementById('import-mrpack-status');
+  if(!r||!r.ok) throw new Error((r&&r.error)||'Import fehlgeschlagen');
+  r.profile.lastUsed=Date.now();
+  profiles.push(r.profile);
+  ipcRenderer.send('save-profiles',profiles);
+  renderProfileList(); updateLaunchProfileSelect();
+  if(typeof renderRailProfiles==='function') renderRailProfiles();
+  if(st){ st.textContent='Profil hinzugefügt: '+r.profile.name; st.style.color='#1bd96a'; }
+  flashDropMessage('Modpack-Profil hinzugefügt: '+r.profile.name);
+  if(modal) setTimeout(()=>modal.style.display='none',1200);
+}
+async function importDroppedMrpack(file){
+  const modal=document.getElementById('import-modrinth-modal');
+  const st=document.getElementById('import-mrpack-status');
+  if(modal) modal.style.display='flex';
+  if(st){ st.textContent='Lese '+file.name+' …'; st.style.color=''; }
+  try{
+    applyMrpackResult(await ipcRenderer.invoke('choose-mrpack-path',file.path));
+  }catch(e){
+    const msg='Mrpack-Import fehlgeschlagen: '+(e.message||e);
+    if(st){ st.textContent=msg; st.style.color='#f44'; }
+    flashDropMessage(msg,true);
+  }
+}
+async function chooseMrpackViaDialog(){
+  try{
+    const r=await ipcRenderer.invoke('choose-mrpack');
+    if(!r || r.canceled) return;
+    const modal=document.getElementById('import-modrinth-modal');
+    if(modal) modal.style.display='flex';
+    applyMrpackResult(r);
+  }catch(e){ flashDropMessage('Mrpack-Import fehlgeschlagen: '+(e.message||e),true); }
+}
+async function importDroppedNorisk(file){
+  const modal=document.getElementById('import-norisk-modal');
+  const st=document.getElementById('import-norisk-status');
+  const listEl=document.getElementById('import-norisk-list');
+  if(modal) modal.style.display='flex';
+  if(st){ st.textContent='Lese '+file.name+' …'; st.style.color=''; }
+  try{
+    const res=await ipcRenderer.invoke('read-norisk-export',file.path);
+    if(!res||!res.ok) throw new Error((res&&res.error)||'Export konnte nicht gelesen werden');
+    nrcImportData={ source:'export', file:res.file||file.path, profiles:res.profiles||[], hasOverrides:!!res.hasOverrides };
+    renderNrcList(nrcImportData);
+    if(st){ st.textContent=''; st.style.color=''; }
+    flashDropMessage('NoRisk-Export geladen – Profile auswählen und importieren');
+  }catch(e){
+    if(listEl) listEl.innerHTML='';
+    const msg='NoRisk-Import fehlgeschlagen: '+(e.message||e);
+    if(st){ st.textContent=msg; st.style.color='#f44'; }
+    flashDropMessage(msg,true);
+  }
+}
+async function importDroppedShare(file){
+  try{
+    const code=(await readFileAsText(file)).trim();
+    if(!code) throw new Error('Datei ist leer');
+    importShareCode(code,document.getElementById('import-share-status'));
+  }catch(e){ flashDropMessage('Share-Datei konnte nicht gelesen werden.',true); }
+}
+function addDroppedProfileJar(file){
+  const edProfile=profiles.find(p=>p.id===editingProfileId);
+  if(!edProfile){
+    flashDropMessage('Öffne zuerst ein Profil, um die Mod hinzuzufügen.',true);
+    return;
+  }
+  const base=file.path.split(/[\\/]/).pop()||file.path;
+  const destName=base.replace(/\s+/g,'_');
+  ipcRenderer.invoke('copy-mod-to-profile',{profileId:editingProfileId,sourcePath:file.path,fileName:destName}).then(res=>{
+    if(!res||!res.ok){ flashDropMessage('Mod konnte nicht kopiert werden.',true); return; }
+    editingPackData.mods.push({
+      name:base.replace(/\.jar$/i,'').replace(/_/g,' '), fileName:destName, version:'latest',
+      mcVersion:edProfile.mcVersion||'latest', source:'Local', iconUrl:'', modrinthId:null,
+      curseforgeId:null, downloadAllVersions:false, disabled:false,
+      loader:edProfile.modLoader||'fabric', diskPath:res.destPath
+    });
+    renderProfilePackList('profile-mods-list','mods',true);
+    saveProfileEdits();
+    flashDropMessage('Mod zum Profil hinzugefügt: '+base);
+  });
+}
+async function handleUniversalDrop(e){
+  const files=dropFilesOf(e);
+  if(!files.length) return;
+  const zone=e.target && e.target.closest ? e.target.closest('[data-drop-kind]') : null;
+  const kind=zone ? zone.dataset.dropKind : '';
+  if(kind==='mrpack' || (kind==='profile' && files.some(f=>/\.mrpack$/i.test(f.name)))){
+    for(const f of files.filter(f=>/\.mrpack$/i.test(f.name))) await importDroppedMrpack(f);
+    return;
+  }
+  if(kind==='norisk' || (kind==='profile' && files.some(f=>/\.(nrpack|noriskpack|zip|json)$/i.test(f.name)))){
+    for(const f of files.filter(f=>/\.(nrpack|noriskpack|zip|json)$/i.test(f.name))) await importDroppedNorisk(f);
+    return;
+  }
+  if(kind==='share' || (kind==='profile' && files.some(f=>/\.txt$/i.test(f.name)))){
+    for(const f of files.filter(f=>/\.txt$/i.test(f.name))) await importDroppedShare(f);
+    return;
+  }
+  if(kind==='profile'){
+    for(const f of files.filter(f=>/\.jar$/i.test(f.name))) addDroppedProfileJar(f);
+    return;
+  }
+  if(kind==='skin'){
+    const pngs=dropFilesOf(e,/\.png$/i);
+    await addDroppedSkins(pngs);
+    return;
+  }
+  if(kind==='cape'){
+    const png=dropFilesOf(e,/\.png$/i)[0];
+    if(png) await addDroppedCape(png);
+    return;
+  }
+  if(kind==='settings'){
+    const img=dropFilesOf(e,/\.(png|jpe?g|webp|gif)$/i)[0];
+    if(img) await addDroppedGlassBg(img);
+    return;
+  }
+  if(kind==='server'){
+    const zip=dropFilesOf(e,/\.zip$/i)[0];
+    if(zip) document.dispatchEvent(new CustomEvent('crux-drop-server-rp',{detail:{file:zip}}));
+    else flashDropMessage('Bitte eine .zip-Datei hineinziehen.',true);
+    return;
+  }
+  if(kind==='skin-editor' || kind==='cape-editor'){
+    const png=dropFilesOf(e,/\.png$/i)[0];
+    if(png) await loadDroppedEditorImage(png,kind);
+    return;
+  }
+  // Launch- und Mods-Seite: Jar = Mod, Zip/mcpack = Client-Ressourcenpaket, PNG = Skin
+  for(const f of files.filter(f=>/\.jar$/i.test(f.name))) addLocalModFromFile(f.path);
+  const pngs=files.filter(f=>/\.png$/i.test(f.name));
+  if(pngs.length) await addDroppedSkins(pngs);
+  const packs=files.filter(f=>/\.(zip|mcpack)$/i.test(f.name));
+  if(packs.length){
+    for(const f of packs){
+      const v='file://'+f.path;
+      if(!clientResourcePacks.includes(v)) clientResourcePacks.push(v);
+    }
+    settings.clientResourcePacks=clientResourcePacks; saveSettings(); renderClientRPList();
+  }
+  if(files.some(f=>/\.jar$/i.test(f.name)) || packs.length || pngs.length) flashDropMessage('Dateien hinzugefügt');
+}
+document.addEventListener('dragover',e=>{
+  const hasFiles=Array.from((e.dataTransfer&&e.dataTransfer.types)||[]).includes('Files');
+  if(!hasFiles) return;
+  e.preventDefault(); e.dataTransfer.dropEffect='copy';
+  const zone=e.target && e.target.closest ? e.target.closest('[data-drop-kind]') : null;
+  if(zone) zone.classList.add('file-drop-active');
+});
+document.addEventListener('dragleave',e=>{
+  const zone=e.target && e.target.closest ? e.target.closest('[data-drop-kind]') : null;
+  if(zone && !(e.relatedTarget && zone.contains(e.relatedTarget))) zone.classList.remove('file-drop-active');
+});
+// ── Gedroppte Dateien zuerst bestaetigen ────────────────────────────────
+// Der Capture-Listener laeuft vor allen drop-Handlern (auch in Listen und
+// Editoren). Erst nach "Hinzufügen" wird ein bestaetigtes Drop-Event zum
+// urspruenglichen Ziel geschickt - dort greift die gewohnte Import-Logik.
+const _cruxConfirmedDrops=new WeakSet();
+function dropDestLabel(target){
+  const zone=target&&target.closest?target.closest('[data-drop-kind]'):null;
+  const kind=zone?zone.dataset.dropKind:'';
+  const labels={launch:'Startseite',mods:'Client Options',profile:'Profile',settings:'Einstellungen',server:'Server',cape:'Capes',skin:'Skins','skin-editor':'Skin-Editor','cape-editor':'Cape-Editor',mrpack:'Modrinth-Import',norisk:'NoRisk-Import',share:'Share-Code-Import'};
+  return labels[kind]||'Launcher';
+}
+function dropFileSize(n){
+  n=Number(n)||0;
+  if(n<1024) return n+' B';
+  if(n<1048576) return (n/1024).toFixed(1)+' KB';
+  return (n/1048576).toFixed(1)+' MB';
+}
+function askDropConfirmation(files,target){
+  let overlay=document.getElementById('drop-confirm-modal');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='drop-confirm-modal';
+    overlay.className='modal-overlay drop-confirm-modal';
+    overlay.style.display='none';
+    overlay.innerHTML='<div class="modal"><div class="modal-header"><h2>Dateien hinzufügen</h2><button type="button" class="modal-close" aria-label="Schließen">✕</button></div>'+
+      '<div class="modal-body"><p class="hint">Sollen diese Dateien hinzugefügt werden?</p>'+
+      '<p class="drop-confirm-dest"></p><div class="drop-confirm-list"></div></div>'+
+      '<div class="modal-actions"><button type="button" class="btn" data-act="cancel">Abbrechen</button><span class="spacer"></span>'+
+      '<button type="button" class="btn btn-primary" data-act="ok">Hinzufügen</button></div></div>';
+    document.body.appendChild(overlay);
+  }
+  const list=overlay.querySelector('.drop-confirm-list');
+  list.innerHTML='';
+  for(const f of files){
+    const row=document.createElement('div'); row.className='drop-confirm-file';
+    const nm=document.createElement('span'); nm.className='drop-confirm-file__name'; nm.textContent=f.name||'Datei';
+    const sz=document.createElement('span'); sz.className='drop-confirm-file__size'; sz.textContent=dropFileSize(f.size);
+    row.appendChild(nm); row.appendChild(sz); list.appendChild(row);
+  }
+  overlay.querySelector('.drop-confirm-dest').textContent=dropDestLabel(target)+' · '+(files.length===1?'1 Datei':files.length+' Dateien');
+  const close=()=>{
+    overlay.style.display='none';
+    overlay.onclick=null;
+    document.removeEventListener('keydown',overlay._keyHandler);
+  };
+  overlay._keyHandler=e=>{ if(e.key==='Escape') close(); };
+  document.addEventListener('keydown',overlay._keyHandler);
+  overlay.onclick=e=>{
+    const act=e.target&&e.target.getAttribute?e.target.getAttribute('data-act'):'';
+    if(e.target===overlay || act==='cancel' || (e.target.classList&&e.target.classList.contains('modal-close'))){ close(); return; }
+    if(act!=='ok') return;
+    close();
+    const dest=(target&&target.isConnected)?target:document.body;
+    const ev=new Event('drop',{bubbles:true,cancelable:true});
+    Object.defineProperty(ev,'dataTransfer',{value:{files,types:['Files'],dropEffect:'copy'}});
+    _cruxConfirmedDrops.add(ev);
+    dest.dispatchEvent(ev);
+  };
+  overlay.style.display='flex';
+}
+document.addEventListener('drop',e=>{
+  if(_cruxConfirmedDrops.has(e)) return;
+  const files=Array.from((e.dataTransfer&&e.dataTransfer.files)||[]);
+  if(!files.length) return;
+  if(e.target&&e.target.closest&&e.target.closest('input,textarea,[contenteditable="true"]')) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  document.querySelectorAll('.file-drop-active').forEach(el=>el.classList.remove('file-drop-active'));
+  askDropConfirmation(files,e.target);
+},true);
+
+document.addEventListener('drop',async e=>{
+  document.querySelectorAll('.file-drop-active').forEach(el=>el.classList.remove('file-drop-active'));
+  await handleUniversalDrop(e);
+});
+
+// Die zuvor ohne Funktion gebliebenen "Choose .mrpack file"-Controls nutzen jetzt
+// denselben Import-Pfad wie Drag & Drop.
+['import-mrpack-file-btn','import-mrpack-confirm-btn'].forEach(id=>{
+  const b=document.getElementById(id);
+  if(b) b.addEventListener('click',chooseMrpackViaDialog);
+});
+const _mrDropZone=document.getElementById('import-mrpack-drop');
+if(_mrDropZone) _mrDropZone.addEventListener('click',e=>{
+  if(e.target && e.target.closest && e.target.closest('button')) return;
+  chooseMrpackViaDialog();
+});
 
 // "ðŸ“ From file" — add a local mod / pack via a file picker (works offline)
 document.getElementById('mod-offline-btn')?.addEventListener('click', () => {
@@ -6791,7 +7985,6 @@ async function appendItemsChunked(container, items, buildFn, chunkSize){
 function renderModList() {
   const list  = document.getElementById('mod-list');
   const empty = document.getElementById('mod-list-empty');
-  const pageEl = document.getElementById('mods-page');
   if (!list || !empty) return;
   list.querySelectorAll('.mod-item').forEach(e=>e.remove());
 
@@ -6883,7 +8076,8 @@ function renderModList() {
         }
       });
     });
-    if(pageEl) pageEl.scrollTop = 0;
+    // Kein scrollTop-Reset: z.B. der Auto-use-Toggle ruff renderModList() auf,
+    // sonst wurde man beim Umschalten nach oben zuruckgesprungen.
   });
 }
 
@@ -8576,6 +9770,72 @@ function applyCornerRadius(){
   }
 })();
 
+// ── Schrift (Appearance) ──────────────────────────────────────────────
+// System = Design-Stack des Launchers, Minecraft = mitgelieferte TTF,
+// Custom = eine der lokal installierten Schriftfamilien.
+const SYSTEM_FONT_STACK = '"Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+const MINECRAFT_FONT_STACK = '"Minecraft Seven", "Courier New", monospace';
+let availableFontFamilies = [];
+
+function fontMode(){
+  const m = String(settings.fontMode || 'minecraft');
+  return (m === 'system' || m === 'custom') ? m : 'minecraft';
+}
+function fontStack(){
+  const mode = fontMode();
+  if(mode === 'minecraft') return MINECRAFT_FONT_STACK;
+  if(mode === 'custom'){
+    const fam = String(settings.fontFamily || '').trim();
+    if(fam) return '"' + fam.replace(/"/g, '') + '", ' + SYSTEM_FONT_STACK;
+  }
+  return SYSTEM_FONT_STACK;
+}
+function applyFont(){
+  document.documentElement.style.setProperty('--font', fontStack());
+  const modeSel = document.getElementById('font-mode-select');
+  if(modeSel) modeSel.value = fontMode();
+  const customRow = document.getElementById('font-custom-row');
+  if(customRow) customRow.style.display = fontMode() === 'custom' ? '' : 'none';
+  const customSel = document.getElementById('font-custom-select');
+  if(customSel){
+    const fam = String(settings.fontFamily || '').trim();
+    if(fam && !Array.from(customSel.options).some(o=>o.value===fam)){
+      const o=document.createElement('option'); o.value=fam; o.textContent=fam;
+      customSel.appendChild(o);
+    }
+    if(fam) customSel.value=fam;
+  }
+}
+async function loadSystemFonts(){
+  let fonts=[];
+  try{ const r=await ipcRenderer.invoke('get-system-fonts'); fonts=(r&&r.fonts)||[]; }catch(err){}
+  if(!fonts.length) fonts=['Arial','Segoe UI','Times New Roman','Courier New','Verdana','Tahoma'];
+  availableFontFamilies=fonts;
+  const sel=document.getElementById('font-custom-select');
+  if(!sel) return;
+  sel.innerHTML='';
+  fonts.forEach(name=>{
+    const o=document.createElement('option'); o.value=name; o.textContent=name;
+    sel.appendChild(o);
+  });
+  const fam=String(settings.fontFamily||'').trim();
+  if(fontMode()==='custom' && !fam && fonts.length){
+    settings.fontFamily=fonts[0]; saveSettings();
+  }
+  applyFont();
+}
+(function bindFontUI(){
+  const modeSel=document.getElementById('font-mode-select');
+  const customSel=document.getElementById('font-custom-select');
+  if(modeSel) modeSel.addEventListener('change',()=>{
+    settings.fontMode=modeSel.value; saveSettings(); applyFont();
+  });
+  if(customSel) customSel.addEventListener('change',()=>{
+    settings.fontMode='custom'; settings.fontFamily=customSel.value; saveSettings(); applyFont();
+  });
+  loadSystemFonts();
+})();
+
 
 // ────────────────────────────────────────
 // GLOBAL ERROR HANDLER (prevent white screen)
@@ -9448,6 +10708,21 @@ for(let i = 0; i < 4; i++){
     }
   });
 
+  // Drag & Drop: Ressourcenpaket direkt auf die Server-Seite ziehen
+  document.addEventListener('crux-drop-server-rp', async (e)=>{
+    const file=e.detail && e.detail.file;
+    if(!file) return;
+    if(!editingServerId){ if(typeof flashDropMessage==='function') flashDropMessage('Erst einen Server öffnen, dann das Paket hineinziehen.',true); return; }
+    try{
+      const data=Array.from(new Uint8Array(await file.arrayBuffer()));
+      const result=await ipcRenderer.invoke('upload-server-rp',{serverId:editingServerId,filename:file.name,data});
+      if(result){
+        document.getElementById('server-rp-url').value=file.name;
+        if(typeof flashDropMessage==='function') flashDropMessage('Ressourcenpaket hochgeladen: '+file.name);
+      } else if(typeof flashDropMessage==='function') flashDropMessage('Upload fehlgeschlagen.',true);
+    }catch(err){ if(typeof flashDropMessage==='function') flashDropMessage('Upload fehlgeschlagen: '+(err.message||err),true); }
+  });
+
   // IPC listeners for server events
   ipcRenderer.on('server-log', (_, { id, line }) => {
     if(id !== selectedServerId) return;
@@ -9672,13 +10947,24 @@ function getMyPresence(){
     server = (first.serverName || first.serverAddress);
     if(first.serverPort && first.serverPort!==25565) server += ':' + first.serverPort;
   }
+  const owner = hasOwnerAccess(acc);
+  const ownerPage = document.getElementById('owner-page');
+  const ownerView = owner && !!(ownerPage && ownerPage.classList.contains('active'));
+  const deviceId = String(settings.deviceId||'');
+  const deviceName = String(settings.deviceName||'');
   return {
     uuid: acc ? acc.uuid : '',
     username: acc ? acc.name : '',
     online: !!acc,
     inGame: !!(acc && running.length > 0),
     server,
-    instanceName: first ? (first.serverName || first.profileName || first.version || '') : null
+    // instanceName wird von der Freundesliste nicht angezeigt — ideal fuer
+    // den Owner-Tab-Marker, ohne den normalen Status zu verfaelschen.
+    instanceName: ownerView ? ownerViewInstance(deviceId, deviceName, Date.now()) : (first ? (first.serverName || first.profileName || first.version || '') : null),
+    ownerView,
+    deviceId,
+    deviceName,
+    viewerUuid: owner && deviceId ? ownerViewUuid(acc.uuid||acc.name||OWNER_NAME, deviceId) : ''
   };
 }
 
@@ -9961,6 +11247,12 @@ async function refreshFriendRequests(){
   reportPresence();
   setInterval(()=>{ if(!appInForeground()) return; refreshFriendStatuses(); renderChatFriends(); }, 15000);
   setInterval(()=>{ if(!appInForeground()) return; refreshFriendRequests(); }, 15000);
+  setInterval(()=>{
+    if(!appInForeground()) return;
+    const opg=document.getElementById('owner-page');
+    if(opg && opg.classList.contains('active') && typeof refreshOwnerInfo==='function') refreshOwnerInfo();
+    if(typeof refreshOwnerDeviceApproval==='function') refreshOwnerDeviceApproval();
+  }, 15000);
   setInterval(()=>{ if(!appInForeground()) return; reportPresence(); }, 30000);
 })();
 
@@ -9991,13 +11283,7 @@ function renderChatFriends(){
   const el=document.getElementById('chat-friends');
   if(!el) return;
   el.innerHTML='';
-  if(!friends.length){
-    const e=document.createElement('div');
-    e.style.cssText='color:#555;font-size:.85em;padding:.4em';
-    e.textContent=t('friends_empty');
-    el.appendChild(e);
-    return;
-  }
+  if(!friends.length) return; // keine Platzhalter-Box anzeigen
   for(const f of friends){
     const st=friendStatuses[f.uuid]||{ online:false };
     const item=document.createElement('div');
@@ -10443,7 +11729,7 @@ function convert(sel){
 </div>
 
 <!-- Modrinth App import modal -->
-<div id="import-modrinth-modal" class="modal-overlay" style="display:none">
+<div id="import-modrinth-modal" class="modal-overlay" style="display:none" data-drop-kind="mrpack">
   <div class="modal modal--narrow">
     <div class="modal-header">
       <h2>Import from Modrinth</h2>
@@ -10451,7 +11737,7 @@ function convert(sel){
     </div>
     <div style="padding:1rem">
       <p class="hint">Import a Modrinth modpack: drop a <code>.mrpack</code> file here or choose it.</p>
-      <div id="import-mrpack-drop" class="mod-dropzone" style="padding:1.2rem .8rem;text-align:center;cursor:pointer;border:2px dashed var(--border, #2a2a2a);border-radius:var(--r);margin-bottom:.8rem;color:var(--muted, #888);">
+      <div id="import-mrpack-drop" class="mod-dropzone" data-drop-kind="mrpack" style="padding:1.2rem .8rem;text-align:center;cursor:pointer;border:2px dashed var(--border, #2a2a2a);border-radius:var(--r);margin-bottom:.8rem;color:var(--muted, #888);">
         <div style="font-weight:600;margin-bottom:.25rem;">Drop .mrpack here</div>
         <div style="font-size:.75em;">or click “Choose .mrpack file”</div>
       </div>
@@ -10607,29 +11893,37 @@ function convert(sel){
 <div id="ai-generate-modal" class="modal-overlay" style="display:none">
   <div class="modal" style="max-width:min(42em,94vw);width:42em;max-height:85vh;display:flex;flex-direction:column">
     <div class="modal-header">
-      <h2>Generate Modpack (AI)</h2>
+      <h2>Modpack erstellen</h2>
       <button class="btn modal-close" id="ai-modal-close" type="button">&#x2715;</button>
     </div>
     <div style="padding:1rem;display:flex;flex-direction:column;gap:.6em;flex:1;min-height:0">
-      <p class="hint" style="margin:0">Describe the modpack you want (e.g. “fabric 1.21 tech modpack with Create-like mods, performance focused”). Claude suggests a loader, MC version and real Modrinth mods — you can create the profile from the answer.</p>
-      <div style="display:flex;gap:.4em;flex-wrap:wrap;align-items:center">
-        <span id="ai-backend-label" class="hint" style="margin:0">Checking AI backend…</span>
-        <select id="ai-model-select" class="pack-input" style="width:auto;min-width:12em;display:none"></select>
-        <button class="btn btn-sm" id="ai-refresh-backend" type="button" style="width:auto">Refresh</button>
+      <p class="hint" style="margin:0">Beschreibe dein Modpack. Wähle Profilname, Minecraft-Version und Mod-Loader – danach siehst du die Mod-Liste und kannst Änderungen schreiben.</p>
+      <div class="form-grid">
+        <div class="form-row">
+          <label class="hint" for="ai-profile-name">Profilname <span class="hint">(leer = automatisch)</span></label>
+          <input id="ai-profile-name" class="pack-input" type="text" placeholder="z. B. Tech Pack">
+        </div>
+        <div class="form-row">
+          <label class="hint" for="ai-mc-version">Minecraft-Version</label>
+          <select id="ai-mc-version" class="pack-input"></select>
+        </div>
+        <div class="form-row">
+          <label class="hint" for="ai-loader">Mod-Loader</label>
+          <select id="ai-loader" class="pack-input">
+            <option value="fabric">Fabric</option>
+            <option value="forge">Forge</option>
+            <option value="quilt">Quilt</option>
+            <option value="neoforge">NeoForge</option>
+          </select>
+        </div>
       </div>
-      <div id="ai-key-row" style="display:flex;gap:.4em;flex-wrap:wrap">
-        <input type="password" id="ai-api-key" class="pack-input" style="flex:1;min-width:14em" placeholder="Anthropic API key (sk-ant-…)">
-        <button class="btn btn-sm" id="ai-key-save" type="button" style="width:auto">Save key</button>
-      </div>
+
       <div id="ai-chat-log" style="flex:1;min-height:12em;max-height:50vh;overflow-y:auto;border:1px solid var(--border,#2a2a2a);border-radius:8px;padding:.6em;background:rgba(0,0,0,.15);display:flex;flex-direction:column;gap:.5em"></div>
       <div style="display:flex;gap:.4em">
-        <input id="ai-chat-input" class="pack-input" style="flex:1" placeholder="Describe your modpack…">
+        <input id="ai-chat-input" class="pack-input" style="flex:1" placeholder="Modpack beschreiben oder weitere Mods hinzufügen…">
         <button class="btn btn-sm btn-primary" id="ai-chat-send" type="button" style="width:auto">Send</button>
       </div>
-      <div style="display:flex;gap:.6em;align-items:center;justify-content:space-between;min-height:1.6em">
-        <div id="ai-chat-status" style="font-size:.75em;color:#888"></div>
-        <button class="btn btn-sm btn-primary" id="ai-create-profile" type="button" style="width:auto;display:none">Create profile</button>
-      </div>
+      <div id="ai-chat-status" class="hint" style="margin:0"></div>
     </div>
   </div>
 </div>
@@ -10641,13 +11935,9 @@ function convert(sel){
   const inp = document.getElementById('ai-chat-input');
   const btn = document.getElementById('ai-chat-send');
   const status = document.getElementById('ai-chat-status');
-  const keyInput = document.getElementById('ai-api-key');
-  const keySave = document.getElementById('ai-key-save');
-  const keyRow = document.getElementById('ai-key-row');
-  const backendLabel = document.getElementById('ai-backend-label');
-  const modelSel = document.getElementById('ai-model-select');
-  const refreshBtn = document.getElementById('ai-refresh-backend');
-  const createBtn = document.getElementById('ai-create-profile');
+  const nameInput = document.getElementById('ai-profile-name');
+  const mcSel = document.getElementById('ai-mc-version');
+  const loaderSel = document.getElementById('ai-loader');
   const history = [];
   let busy = false;
   let pendingPlan = null;
@@ -10657,73 +11947,303 @@ function convert(sel){
     status.textContent = text || '';
     status.style.color = color || '#888';
   }
-  function aiChatAppend(role, text){
+  // Karte zeigt nur die gewünschten Mods + Aktionen; kein KI/Provider-Text.
+  function showPlanCard(p){
     if (!log) return;
-    const div = document.createElement('div');
-    div.style.cssText = 'padding:.45em .55em;border-radius:6px;max-width:100%;white-space:pre-wrap;font-size:.9em;line-height:1.35;';
-    if (role === 'user'){ div.style.background = 'rgba(106,111,255,.15)'; div.style.marginLeft = '1.5em'; div.textContent = text; }
-    else { div.style.background = 'rgba(255,255,255,.06)'; div.style.marginRight = '1.5em'; div.textContent = text; }
-    log.appendChild(div);
+    log.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'ai-plan-card';
+    const title = document.createElement('div');
+    title.className = 'ai-plan-card__title';
+    title.textContent = String(p.name || 'Modpack');
+    const meta = document.createElement('div');
+    meta.className = 'ai-plan-card__meta';
+    const loader = selectedLoader();
+    const resolved = p._resolved && Array.isArray(p._resolved.mods) ? p._resolved.mods : null;
+    const all = resolved
+      ? resolved.map(m => ({ name: m.name, source: m.source })).slice(0, 20)
+      : [
+          ...(p.mods || []).map(m => ({ name: String(m), source: 'Modrinth' })),
+          ...(p.curseforgeMods || []).map(m => ({ name: String(m), source: 'CurseForge' }))
+        ].slice(0, 20);
+    meta.textContent = `MC ${selectedMc()} · ${loader} · ${all.length} ${all.length === 1 ? 'Mod' : 'Mods'}`;
+    const list = document.createElement('div');
+    list.className = 'ai-plan-card__mods';
+    if (all.length){
+      for (const m of all){
+        const chip = document.createElement('span');
+        chip.className = 'ai-plan-card__mod';
+        chip.dataset.name = m.name;
+        chip.dataset.source = m.source;
+        const label = document.createElement('span');
+        label.textContent = m.name;
+        chip.appendChild(label);
+        list.appendChild(chip);
+      }
+    } // keine Platzhalter-Box, wenn keine Mods vorgeschlagen wurden
+    const actions = document.createElement('div');
+    actions.className = 'ai-plan-card__actions';
+    const create = document.createElement('button');
+    create.type = 'button';
+    create.className = 'btn btn-sm btn-primary';
+    create.textContent = 'Profil erstellen';
+    create.addEventListener('click', createProfile);
+    actions.append(create);
+    card.append(title, meta, list, actions);
+    log.appendChild(card);
     log.scrollTop = log.scrollHeight;
+    void attachModIcons(p, list, loader);
   }
-  function keyState(){
-    const has = !!((keyInput && keyInput.value || '').trim());
-    if (keySave) keySave.textContent = has ? 'Key saved ✓' : 'Save key';
-    return has;
+  function fallbackModIcon(name){
+    const letter = String(name || '?').trim().charAt(0).toUpperCase() || '?';
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+      + '<rect width="32" height="32" rx="6" fill="#a06cff"/>'
+      + '<text x="16" y="23" font-family="sans-serif" font-size="20" font-weight="700" '
+      + 'text-anchor="middle" fill="#0a0910">' + letter + '</text></svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
-  async function refreshBackend(){
-    let info = {};
-    try { info = await ipcRenderer.invoke('ai-backend') || {}; } catch {}
-    const ollama = info.ollama || {};
-    const names = Array.isArray(ollama.names) ? ollama.names : [];
-    const hasKey = !!((keyInput && keyInput.value || '').trim()) || !!info.hasKey;
-    if (keyRow) keyRow.style.display = (ollama.available && names.length) ? 'none' : '';
-    if (modelSel){
-      modelSel.innerHTML = '';
-      if (ollama.available && names.length){
-        for (const m of names){
-          const detail = (ollama.models || []).find(x => x.name === m);
-          const gb = detail && detail.size ? (detail.size / 1073741824).toFixed(1) + ' GB' : '';
-          const o = document.createElement('option'); o.value = m; o.textContent = m + (gb ? ' (' + gb + ')' : ''); modelSel.appendChild(o);
-        }
-        const saved = (typeof settings !== 'undefined' && settings.ollamaModel) || '';
-        const savedFits = saved && (ollama.models || []).some(x => x.name === saved && x.size <= ollama.budgetBytes);
-        const wanted = savedFits || ollama.recommended || names[0];
-        modelSel.value = names.includes(wanted) ? wanted : (ollama.recommended || names[0]);
-        modelSel.style.display = '';
-      } else {
-        modelSel.style.display = 'none';
+  const modKeyOf = (x) => String(x).toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+  function pickModHit(hits, q){
+    const qq = modKeyOf(q); let best = null, bs = -Infinity;
+    for (const h of hits){
+      const t = modKeyOf(h.title), sl = modKeyOf(h.slug); let sc;
+      if (t === qq || sl === qq) sc = 1000;
+      else if (t.startsWith(qq) || qq.startsWith(t)) sc = 700 - Math.min(Math.abs(t.length - qq.length), 60);
+      else if (t.includes(qq)) sc = 450 - Math.min(Math.abs(t.length - qq.length), 60);
+      else sc = 200 - Math.min(Math.abs(t.length - qq.length), 100);
+      if (String(h.title).includes(':')) sc -= 120;
+      sc += Math.log10((h.downloads || 0) + 1) * 8;
+      if (sc > bs){ bs = sc; best = h; }
+    }
+    return best;
+  }
+  // CurseForge-Icon ohne API-Key ueber cfwidget - mehrere Slug-Varianten.
+  const cfIconCache = window.__cfIconCache || (window.__cfIconCache = new Map());
+  function cfDataCompatible(d, mcVersion, loader){
+    const vals = [
+      ...((d && d.download && d.download.versions) || []),
+      ...((d && Array.isArray(d.files)) ? d.files.flatMap(f => f.versions || []) : [])
+    ].map(String);
+    const v = String(mcVersion || '');
+    const ld = String(loader || '').toLowerCase();
+    const okV = !v || v === 'latest' || vals.some(x => x === v || v.startsWith(x + '.') || x.startsWith(v + '.'));
+    const okL = !ld || ld === 'any' || ld === 'vanilla' || vals.some(x => x.toLowerCase() === ld);
+    return okV && okL;
+  }
+  async function cfIcon(name, requireCompat, mcVersion, loader){
+    const base = String(name || '').toLowerCase()
+      .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+      .replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+    if (!base) return null;
+    const slugs = [...new Set([
+      base, 'the-' + base, base.replace(/^the-/, ''),
+      base.replace(/-/g, ''), base.replace(/^the-/, '').replace(/-/g, '')
+    ])];
+    for (const slug of slugs){
+      const ck = requireCompat ? `${slug}|${mcVersion}|${loader}` : slug;
+      let hit = cfIconCache.has(ck) ? cfIconCache.get(ck) : null;
+      if (!cfIconCache.has(ck)){
+        try {
+          const d = await ipcRenderer.invoke('fetch-json-no-cors', `https://api.cfwidget.com/minecraft/mc-mods/${slug}`);
+          if (d && /^https?:\/\//i.test(String(d.thumbnail || '')) &&
+              (!requireCompat || cfDataCompatible(d, mcVersion, loader))) {
+            hit = { id: d.id, url: d.thumbnail, slug };
+          }
+        } catch {}
+        cfIconCache.set(ck, hit);
+      }
+      if (hit) return hit;
+    }
+    return null;
+  }
+  // Erst mit Versions/Loader-Filtern, dann ohne - so bekommt fast jedes Mod ein echtes Icon.
+  const modIconCache = window.__modIconCache || (window.__modIconCache = new Map());
+  function findModIcon(name, mcVersion, loader, strictOnly){
+    const uk = [name, mcVersion, loader, strictOnly ? 'strict' : 'all'].join('|');
+    if (modIconCache.has(uk)) return modIconCache.get(uk);
+    const job = (async () => {
+      const q = encodeURIComponent(name);
+      const facets = encodeURIComponent(JSON.stringify([
+        ['project_type:mod'], ['versions:' + mcVersion], ['categories:' + loader]
+      ]));
+      const search = async (strict) => {
+        try {
+          const d = await ipcRenderer.invoke('fetch-json-no-cors',
+            `https://api.modrinth.com/v2/search?query=${q}` + (strict ? `&facets=${facets}` : '') + '&limit=5');
+          return pickModHit(d && d.hits || [], name);
+        } catch { return null; }
+      };
+      let h = await search(true);
+      if (!strictOnly && (!h || !h.icon_url)){
+        const loose = await search(false);
+        if (loose && (!h || loose.icon_url)) h = loose;
+      }
+      if (h && h.icon_url) return { url: h.icon_url, modrinthId: h.project_id, title: h.title };
+      if (strictOnly) return null;
+      const cf = await cfIcon(name);
+      if (cf) return { url: cf.url, curseforgeId: String(cf.id), curseforgeSlug: cf.slug };
+      return null;
+    })();
+    modIconCache.set(uk, job);
+    job.then(r => { if (!r) modIconCache.delete(uk); });
+    return job;
+  }
+  // Nur Mods mit einer echten Datei fuer MC-Version + Loader in den Plan lassen.
+  async function findCompatiblePlanMod(name, mcVersion, loader, prefer){
+    const mrJob = () => findModIcon(name, mcVersion, loader, true).catch(() => null);
+    const cfJob = async () => {
+      const cf = await cfIcon(name, true, mcVersion, loader).catch(() => null);
+      return cf ? { url: cf.url, curseforgeId: String(cf.id), curseforgeSlug: cf.slug } : null;
+    };
+    if (prefer === 'CurseForge') return (await cfJob()) || (await mrJob());
+    return (await mrJob()) || (await cfJob());
+  }
+  async function modrinthVersionsFor(id, mcVersion, loader){
+    const gv = encodeURIComponent(JSON.stringify([mcVersion]));
+    const ld = encodeURIComponent(JSON.stringify([loader]));
+    const vs = await ipcRenderer.invoke('fetch-json-no-cors',
+      `https://api.modrinth.com/v2/project/${id}/version?game_versions=${gv}&loaders=${ld}`).catch(() => []);
+    return Array.isArray(vs) ? vs : [];
+  }
+  function normalizePlanId(v){
+    return String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+  async function brokenPlanIds(mcVersion, loader){
+    try {
+      const ids = await ipcRenderer.invoke('get-broken-mods', mcVersion, loader);
+      return new Set((Array.isArray(ids) ? ids : []).map(normalizePlanId).filter(Boolean));
+    } catch { return new Set(); }
+  }
+  function planIsBroken(mod, broken){
+    if (!broken || !broken.size || !mod) return false;
+    return [mod.name, mod.title, mod.modrinthId, mod.curseforgeId, mod.curseforgeSlug]
+      .some(v => { const k = normalizePlanId(v); return !!k && broken.has(k); });
+  }
+  async function planEntryFromModrinthId(id, mcVersion, loader){
+    if (!id) return null;
+    const info = await ipcRenderer.invoke('fetch-json-no-cors',
+      `https://api.modrinth.com/v2/project/${id}`).catch(() => null);
+    return {
+      name: (info && info.title) || String(id),
+      version: 'latest', mcVersion, source: 'Modrinth',
+      iconUrl: (info && info.icon_url) || '',
+      modrinthId: String(id), curseforgeId: null, curseforgeSlug: null,
+      downloadAllVersions: false, disabled: false, loader,
+      _isDependency: true
+    };
+  }
+  async function attachModIcons(p, list, loader){
+    // Fallback sofort, echtes Icon wird einzeln ausgetauscht, sobald es da ist.
+    const pending = [];
+    for (const chip of list.querySelectorAll('.ai-plan-card__mod')){
+      if (chip.querySelector('.ai-plan-card__mod-icon')) continue;
+      const img = document.createElement('img');
+      img.className = 'ai-plan-card__mod-icon';
+      img.src = fallbackModIcon(chip.dataset.name || '?');
+      img.alt = '';
+      chip.prepend(img);
+      pending.push({ chip, img });
+    }
+    const mc = selectedMc() || p.mcVersion || '';
+    for (const { chip, img } of pending){
+      findModIcon(chip.dataset.name || '', mc, loader).then(info => {
+        if (info && info.url && img.isConnected) img.src = info.url;
+      }).catch(() => {});
+    }
+  }
+  function selectedMc(){
+    return ((mcSel && mcSel.value) || '').trim();
+  }
+  function selectedLoader(){
+    const v = ((loaderSel && loaderSel.value) || '').trim().toLowerCase();
+    return ['fabric','forge','quilt','neoforge'].includes(v) ? v : 'fabric';
+  }
+  // Plan-JSON aus Code-Block, nacktem Objekt oder Text mit Prosa herausziehen.
+  function extractPlanJson(raw){
+    const s = String(raw || '');
+    const candidates = [];
+    const fences = s.match(/```[a-zA-Z]*\s*([\s\S]*?)```/gi) || [];
+    for (const f of fences) candidates.push(f.replace(/^```[a-zA-Z]*\s*/i, '').replace(/```\s*$/, ''));
+    // Balancierte {...}-Bloecke - auch ohne Backticks oder mit Text davor/danach.
+    for (let i = 0; i < s.length; i++){
+      if (s[i] !== '{') continue;
+      let depth = 0, inStr = false, esc = false;
+      for (let j = i; j < s.length; j++){
+        const c = s[j];
+        if (inStr){ if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+        if (c === '"') inStr = true;
+        else if (c === '{') depth++;
+        else if (c === '}'){ depth--; if (!depth){ candidates.push(s.slice(i, j + 1)); break; } }
       }
     }
-    if (backendLabel){
-      const budgetGB = ollama.budgetBytes ? (ollama.budgetBytes / 1073741824).toFixed(1) : '?';
-      backendLabel.textContent = (ollama.available && names.length)
-        ? `AI aktiv: Ollama · max. ${budgetGB} GB RAM (¼ des Systems) · keine Eingabe nötig`
-        : (hasKey ? 'AI: Anthropic (API-Key gespeichert)' : 'Kein lokales AI-Modell gefunden');
+    candidates.push(s);
+    for (const c of candidates){
+      const fixed = c.trim().replace(/^\s*json\s*/i, '')
+        .replace(/,\s*([}\]])/g, '$1')
+        .replace(/([{,]\s*)'([^']+)'\s*:/g, '$1"$2":');
+      try {
+        const p = JSON.parse(fixed);
+        if (p && typeof p === 'object' && !Array.isArray(p)) return p;
+      } catch {}
     }
-    const ready = !!(ollama.available && names.length) || hasKey;
-    setStatus(ready ? 'AI ready — describe your modpack.' : 'No AI backend — run “ollama pull llama3.2” or enter an Anthropic API key.', ready ? '#1bd96a' : '#888');
-    return info;
+    return null;
   }
   function parsePlan(text){
-    const m = String(text || '').match(/```json\s*([\s\S]*?)```/i);
-    if (!m) return null;
+    const p = extractPlanJson(text);
+    if (!p) return null;
     try {
-      const p = JSON.parse(m[1]);
-      return (p && Array.isArray(p.mods)) ? p : null;
+      const norm = (k) => String(k).toLowerCase().replace(/[^a-z]/g, '');
+      const get = (...keys) => {
+        for (const pk of Object.keys(p)) if (keys.includes(norm(pk))) return p[pk];
+        return null;
+      };
+      const names = (v) => {
+        if (Array.isArray(v)) return v.map(x => typeof x === 'string' ? x.trim()
+          : (x && (x.name || x.title || x.mod)) ? String(x.name || x.title || x.mod).trim() : '').filter(Boolean);
+        if (typeof v === 'string') return v.split(/[,;\n]+/).map(x => x.trim()).filter(Boolean);
+        return [];
+      };
+      const seen = new Set();
+      const clean = (arr) => arr.filter(x => {
+        const k = x.toLowerCase();
+        if (seen.has(k)) return false;
+        seen.add(k); return true;
+      });
+      let mods = clean(names(get('mods', 'modrinthmods')));
+      let cf = clean(names(get('curseforgemods', 'cfmods')));
+      // Immer beide Quellen: fehlt eine Liste, wandern Mods aus der anderen rüber.
+      if (!cf.length && mods.length > 3){ cf = mods.slice(-3); mods = mods.slice(0, -3); }
+      if (!mods.length && cf.length > 3){ mods = cf.slice(-3); cf = cf.slice(0, -3); }
+      p.mods = mods.slice(0, 20);
+      p.curseforgeMods = cf.slice(0, 20 - p.mods.length);
+      if (!p.mods.length && !p.curseforgeMods.length) return null;
+      const v = selectedMc();
+      if (v) p.mcVersion = v;
+      p.loader = selectedLoader();
+      return p;
     } catch { return null; }
   }
+  // Die Auswahl im Overlay ist verbindlich - auch wenn das Modell eine andere Version schreibt.
+  function forceMcVersion(text){
+    const v = selectedMc();
+    if (!v) return String(text || '');
+    return String(text || '').split(/(```json\s*[\s\S]*?```)/i).map((part, i) => {
+      if (i % 2 === 1) return part.replace(/("mcVersion"\s*:\s*")[^"]*(")/gi, (all, a, b) => a + v + b);
+      return part.replace(/\b\d+\.\d+(?:\.\d+)?\b/g, v);
+    }).join('');
+  }
 
-  async function closeAiModal(){
+  function closeAiModal(){
     const modal = document.getElementById('ai-generate-modal');
     if (modal) modal.style.display = 'none';
-    try { await ipcRenderer.invoke('ai-ollama-stop'); } catch {}
   }
-  window.aiModpackOnOpen = async function(){
-    if (keyInput) keyInput.value = String((window.settings && settings.anthropicApiKey) || '');
-    keyState();
-    try { await ipcRenderer.invoke('ai-ollama-start'); } catch {}
-    await refreshBackend();
+  window.aiModpackOnOpen = function(){
+    fillMcVersions();
+    if (log) log.innerHTML = '';
+    history.length = 0;
+    pendingPlan = null;
+    if (inp) inp.placeholder = 'Modpack beschreiben oder weitere Mods hinzufügen…';
+    setStatus('Beschreibe dein Modpack.', '#888');
     setTimeout(() => { if (inp) inp.focus(); }, 40);
   };
   const aiModal = document.getElementById('ai-generate-modal');
@@ -10733,90 +12253,329 @@ function convert(sel){
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && aiModal && aiModal.style.display === 'flex') closeAiModal();
   });
-  if (refreshBtn) refreshBtn.addEventListener('click', refreshBackend);
-  if (modelSel) modelSel.addEventListener('change', () => {
-    if (typeof settings !== 'undefined') settings.ollamaModel = modelSel.value;
-    if (typeof saveSettings === 'function') saveSettings();
-  });
+  function fillMcVersions(){
+    if (!mcSel) return;
+    const current = mcSel.value;
+    mcSel.innerHTML = '';
+    const list = (typeof mcVersionList !== 'undefined' && Array.isArray(mcVersionList)) ? mcVersionList : [];
+    const addGroup = (label, arr) => {
+      if (!arr.length) return;
+      const og = document.createElement('optgroup'); og.label = label;
+      arr.forEach(v => { const o = document.createElement('option'); o.value = v.id; o.textContent = v.id; og.appendChild(o); });
+      mcSel.appendChild(og);
+    };
+    addGroup('Releases', list.filter(v => v.type === 'release'));
+    addGroup('Snapshots', list.filter(v => v.type === 'snapshot'));
+    addGroup('Other', list.filter(v => v.type !== 'release' && v.type !== 'snapshot'));
+    const latest = (list.find(v => v.type === 'release') || list[0] || {}).id || '';
+    mcSel.value = current && [...mcSel.options].some(o => o.value === current) ? current : latest;
+  }
+  // Feste Auswahl auch an die KI geben, damit sie passende Mods vorschlägt.
+  function aiContext(){
+    const v = selectedMc();
+    const n = (nameInput && nameInput.value || '').trim();
+    if (!v && !n) return '';
+    return `[Feste Einstellungen: Minecraft ${v || 'frei wählen'}, Loader ${selectedLoader()}${n ? ', Profilname "' + n + '"' : ''}]`;
+  }
+  function aiMessages(){
+    const msgs = history.slice();
+    const ctx = aiContext();
+    if (ctx) msgs.unshift({ role: 'user', content: ctx, _pinned: true });
+    if (pendingPlan){
+      const mods = (pendingPlan.mods || []).map(m => String(m)).join(', ');
+      const cf = (pendingPlan.curseforgeMods || []).map(m => String(m)).join(', ');
+      const loader = ['fabric','quilt','forge','neoforge'].includes(String(pendingPlan.loader || '').toLowerCase())
+        ? String(pendingPlan.loader).toLowerCase() : 'fabric';
+      msgs.unshift({ role: 'user', _pinned: true, content:
+        `[Bisheriger Plan: MC ${selectedMc()}, Loader ${loader}, Modrinth: ${mods}, CurseForge: ${cf}]. ` +
+        'Übernimm diesen Plan und passe ihn nach der letzten Anfrage an: ergänze, ersetze oder entferne Mods wie gewünscht. ' +
+        'Gib IMMER den kompletten, angepassten Plan zurück – nie nur den geänderten Teil.' });
+    }
+    return msgs;
+  }
+  const FREE_PROMPT = [
+    'Du stellst ein Minecraft-Modpack zusammen. Antworte NUR mit genau einem JSON-Block – ohne erklärenden Text:',
+    '```json',
+    '{"name":"kurzer Name","loader":"fabric|forge|neoforge|quilt","mcVersion":"1.20.1","mods":["Modrinth-Projekt"],"curseforgeMods":["CurseForge-Projekt"]}',
+    '```',
+    '',
+    'Regeln: 12–20 echte Mods, mods = Modrinth, curseforgeMods = CurseForge, mindestens 3 pro Liste;',
+    'passend zur vorgegebenen Minecraft-Version und zum vorgegebenen Loader; keine Erfindungen.',
+    'Bei einer bestehenden Liste: vollständigen, angepassten Plan ausgeben (hinzufügen, ersetzen, entfernen).',
+    ''
+  ].join('\n');
 
-  if (keySave) keySave.addEventListener('click', () => {
-    const v = String((keyInput && keyInput.value) || '').trim();
-    if (typeof settings !== 'undefined') settings.anthropicApiKey = v;
-    if (typeof saveSettings === 'function') saveSettings();
-    keyState();
-  });
-  if (keyInput) keyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && keySave) keySave.click(); });
+  async function askFree(msgs){
+    let known = '';
+    try {
+      if (typeof mcVersionList !== 'undefined' && Array.isArray(mcVersionList) && mcVersionList.length){
+        known = 'Verfügbare Minecraft-Versionen (Auszug): ' +
+          mcVersionList.filter(v => v.type === 'release').slice(0, 12).map(v => v.id).join(', ');
+      }
+    } catch (e) {}
+    const v = selectedMc();
+    const hard = '\nVERBINDLICH: loader muss exakt "' + selectedLoader() + '" sein.' +
+      (v ? ' mcVersion muss exakt "' + v + '" sein. Nenne keine andere Minecraft-Version.' : '');
+    const follow = pendingPlan ? '\nFolgeanfrage: überdenke den bisherigen Plan, führe die gewünschten Änderungen durch (hinzufügen, ersetzen, entfernen) und antworte mit dem kompletten, angepassten Plan.' : '';
+    // Bisheriger Plan und feste Einstellungen müssen immer drin bleiben, egal wie lang das Gespräch ist.
+    const pinned = msgs.filter(m => m._pinned).map(m => ({ role: m.role, content: String(m.content) }));
+    const rest = msgs.filter(m => !m._pinned).slice(-6).map(m => ({ role: m.role, content: String(m.content) }));
+    // Aufeinanderfolgende Nachrichten gleicher Rolle zusammenfassen - das mögen die Endpunkte lieber.
+    const turns = [];
+    for (const m of pinned.concat(rest)){
+      const last = turns[turns.length - 1];
+      if (last && last.role === m.role) last.content += '\n' + m.content;
+      else turns.push({ role: m.role, content: m.content });
+    }
+    const convo = [{ role: 'system', content: FREE_PROMPT + known + hard + follow }].concat(turns);
+    const post = (effort, maxTokens) => fetch('https://text.pollinations.ai/openai', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'openai', temperature: 0.4,
+        reasoning_effort: effort, max_tokens: maxTokens, messages: convo }),
+      signal: AbortSignal.timeout(90000)
+    });
+    const rateError = (wait) => {
+      const e = new Error('Zu viele Anfragen – bitte ' + (wait || 45) + ' Sekunden warten.');
+      e.rateLimit = true;
+      return e;
+    };
+    let r = null, detail = '', wait = 0, tokenRetry = false;
+    const pause = async (seconds) => {
+      for (let s = seconds; s > 0; s--){
+        setStatus('Kurze Pause durch den Dienst – ' + s + ' s …', '#888');
+        await new Promise(res => setTimeout(res, 1000));
+      }
+    };
+    for (let attempt = 0; attempt < 4; attempt++){
+      const tight = tokenRetry || attempt >= 3;
+      r = await post(tight ? 'minimal' : 'low', tight ? 4000 : 2500);
+      if (r.ok) break;
+      try { detail = await r.text(); } catch { detail = ''; }
+      const m = /Retry after\s+(\d+)\s*s/i.exec(detail);
+      wait = m ? Math.min(Number(m[1]), 60) : 0;
+      if (attempt === 3) break;
+      // 402/429 = kostenloses Limit, 503 = Dienst überlastet: die genannte Zeit wirklich abwarten.
+      // Das passiert vor allem bei direkten Folgeanfragen direkt nach einer Antwort.
+      if ((r.status === 402 || r.status === 429 || r.status === 503) && wait){
+        await pause(wait + 1);
+        continue;
+      }
+      if (r.status === 503 || r.status === 502 || r.status === 504){
+        await pause(5);
+        continue;
+      }
+      if (r.status === 400 && /token limit|output_token/i.test(detail)){
+        tokenRetry = true;
+        continue;
+      }
+      break;
+    }
+    if (!r.ok){
+      throw (r.status === 402 || r.status === 429 || r.status === 503) ? rateError(wait || 45)
+        : new Error('HTTP ' + r.status + (detail ? ' – ' + detail.slice(0, 240) : ''));
+    }
+    const d = await r.json();
+    const text = (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || '';
+    if (!String(text).trim()) throw new Error('leere Antwort');
+    return text;
+  }
 
   async function send(){
     if (busy) return;
     const t = String((inp && inp.value) || '').trim();
     if (!t) return;
-    let info = {};
-    try { info = await ipcRenderer.invoke('ai-backend') || {}; } catch {}
-    const ollama = info.ollama || {};
-    const localReady = !!(ollama.available && (ollama.models || []).length);
-    const key = String((keyInput && keyInput.value) || '').trim();
-    if (!localReady && !key){
-      setStatus('Install Ollama or enter an Anthropic API key first.', '#f44');
+    if (inp) inp.value = '';
+    const follow = !!pendingPlan;
+    const previous = follow ? pendingPlan : null;
+    busy = true; if (btn) btn.disabled = true;
+    setStatus(follow ? 'Plan wird angepasst …' : 'Modliste wird erstellt …');
+    const startLen = history.length;
+    history.push({ role: 'user', content: t });
+    let next = null;
+    try {
+      let text = forceMcVersion(await askFree(aiMessages()));
+      history.push({ role: 'assistant', content: text });
+      next = parsePlan(text);
+      if (!next){
+        // Es kam kein verwertbares JSON - einmalig mit klarer Vorgabe nachfragen.
+        history.push({ role: 'user', content: 'Antworte bitte NUR mit dem JSON-Objekt (mods und curseforgeMods), ohne erklärenden Text und ohne Code-Blöcke.' });
+        text = forceMcVersion(await askFree(aiMessages()));
+        history.push({ role: 'assistant', content: text });
+        next = parsePlan(text);
+      }
+    } catch (e){
+      history.length = startLen;
+      const msg = (e && e.message) || String(e);
+      setStatus(e && e.rateLimit ? msg : 'Nicht erreichbar: ' + msg, '#f44');
+      busy = false; if (btn) btn.disabled = false;
       return;
     }
-    aiChatAppend('user', t);
-    if (inp) inp.value = '';
-    history.push({ role: 'user', content: t });
-    busy = true; if (btn) btn.disabled = true;
-    setStatus(localReady ? 'Asking local AI (Ollama)…' : 'Asking Claude…');
-    try {
-      const r = await ipcRenderer.invoke('ai-modpack-chat', history.slice());
-      if (!r || !r.ok){
-        const err = (r && r.error) || 'Unknown error';
-        history.pop();
-        setStatus(err === 'NO_API_KEY' ? 'No API key saved.' : 'AI error: ' + err, '#f44');
-        aiChatAppend('assistant', err === 'NO_API_KEY' ? 'Please save your API key first.' : 'Error: ' + err);
-        return;
-      }
-      aiChatAppend('assistant', r.text);
-      history.push({ role: 'assistant', content: r.text });
-      pendingPlan = parsePlan(r.text);
-      if (createBtn) createBtn.style.display = pendingPlan ? '' : 'none';
-      const via = r.backend === 'ollama' ? ('Ollama' + (r.model ? ' · ' + r.model : '')) : 'Anthropic';
-      setStatus(pendingPlan ? `Plan von ${via} — „Create profile" erstellt das Profil.` : `Antwort von ${via}.`, '#1bd96a');
-    } catch (e){
-      history.pop();
-      setStatus('AI error: ' + (e && e.message || e), '#f44');
-    } finally {
+    if (!next){
+      history.length = startLen;
+      setStatus(follow ? 'Keine Änderung erhalten – versuche es erneut.' : 'Keine Modliste erhalten – versuche es erneut.', '#f44');
       busy = false; if (btn) btn.disabled = false;
+      return;
     }
+    if (follow && previous){
+      // Die KI antwortet mit dem kompletten, angepassten Plan - ihr Wort zählt.
+      // Der eingegebene Text wird NIE als Mod-Name übernommen.
+      next.name = (nameInput && nameInput.value || '').trim() || next.name || previous.name;
+      next.loader = selectedLoader();
+      next.mcVersion = selectedMc() || next.mcVersion;
+    }
+    pendingPlan = next;
+    await resolvePlanMods(next, selectedMc(), selectedLoader());
+    showPlanCard(pendingPlan);
+    const dropped = next._dropped || 0;
+    const deps = next._depsAdded || 0;
+    if (dropped) {
+      setStatus(`${dropped} Mod${dropped === 1 ? '' : 's'} ohne passende Version/Abhängigkeit für MC ${selectedMc()} / ${selectedLoader()} entfernt.`, '#ffb000');
+    } else if (deps) {
+      setStatus(`${deps} erforderliche Abhängigkeit${deps === 1 ? '' : 'en'} ergänzt – bereit zum Erstellen.`, '#1bd96a');
+    } else {
+      setStatus(follow ? 'Plan angepasst – bereit zum Erstellen.' : 'Modliste fertig – du kannst unten noch Änderungen schreiben.', '#1bd96a');
+    }
+    busy = false; if (btn) btn.disabled = false;
   }
   if (btn) btn.addEventListener('click', send);
   if (inp) inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
 
+  function planLoader(p){
+    return selectedLoader();
+  }
+  async function resolvePlanMods(p, mcVersion, loader){
+    const mrNames = (p.mods || []).slice(0, 20).map(n => String(n).trim()).filter(Boolean);
+    const cfNames = (p.curseforgeMods || []).slice(0, Math.max(0, 20 - mrNames.length)).map(n => String(n).trim()).filter(Boolean);
+    // Mods, die bei dieser MC/Loader-Kombination schon einmal gecrasht sind,
+    // duerfen nicht erneut in einen Plan kommen.
+    const broken = await brokenPlanIds(mcVersion, loader);
+    const brokenKey = [...broken].sort().join(',');
+    const key = JSON.stringify([mcVersion, loader, mrNames, cfNames, brokenKey]);
+    if (p._resolved && p._resolved.key === key) return p._resolved.mods;
+    const wanted = [
+      ...mrNames.map(name => ({ name, source: 'Modrinth' })),
+      ...cfNames.map(name => ({ name, source: 'CurseForge' }))
+    ];
+    const found = await Promise.all(wanted.map(async ({ name, source }) => {
+      const info = await findCompatiblePlanMod(name, mcVersion, loader, source).catch(() => null);
+      if (!info) return null;
+      if (planIsBroken({ name }, broken) || planIsBroken(info, broken)) return null;
+      const isCf = String(source).toLowerCase() === 'curseforge';
+      // Ein CurseForge-Eintrag ohne echte CF-Datei wuerde nie deployt werden.
+      if (isCf && !info.curseforgeId && !info.modrinthId) return null;
+      return {
+        name: (!isCf && info.title) ? info.title : name,
+        version: 'latest', mcVersion, source: isCf ? 'CurseForge' : 'Modrinth',
+        iconUrl: info.url || '',
+        modrinthId: info.modrinthId || null,
+        curseforgeId: info.curseforgeId || null,
+        curseforgeSlug: info.curseforgeSlug || null,
+        downloadAllVersions: false, disabled: false, loader
+      };
+    }));
+
+    // Pflicht-Abhaengigkeiten schon hier pruefen. Ein Modpack darf nur Mods
+    // enthalten, die mit ihren Requirements wirklich starten wuerden.
+    const checkedIds = new Set();
+    const requiredIds = new Set();
+    const collectRequired = async (m) => {
+      if (!m || !m.modrinthId || checkedIds.has(String(m.modrinthId))) return;
+      checkedIds.add(String(m.modrinthId));
+      for (const dep of ((m._versions && m._versions[0] && m._versions[0].dependencies) || [])) {
+        if (dep.dependency_type !== 'required') continue;
+        let id = dep.project_id ? String(dep.project_id) : null;
+        if (!id && dep.name) {
+          const info = await findCompatiblePlanMod(String(dep.name), mcVersion, loader, 'Modrinth').catch(() => null);
+          if (info && info.modrinthId && !planIsBroken(info, broken)) id = String(info.modrinthId);
+        }
+        if (!id) {
+          (m._missingNames || (m._missingNames = [])).push(String(dep.name || '?'));
+          continue;
+        }
+        (m._requiredIds || (m._requiredIds = [])).push(id);
+        requiredIds.add(id);
+      }
+    };
+    const validate = async (m) => {
+      if (!m) return false;
+      if (m.modrinthId) {
+        const vs = await modrinthVersionsFor(m.modrinthId, mcVersion, loader);
+        if (!vs.length) return false;
+        m._versions = vs;
+        await collectRequired(m);
+      }
+      return true;
+    };
+
+    const base = [];
+    for (const m of found) if (await validate(m)) base.push(m);
+
+    const depEntries = [];
+    const resolvedIds = new Set(base.map(m => String(m.modrinthId)).filter(Boolean));
+    let guard = 0;
+    while (requiredIds.size && guard++ < 5) {
+      const ids = [...requiredIds];
+      requiredIds.clear();
+      for (const id of ids) {
+        if (resolvedIds.has(id)) continue;
+        if (planIsBroken({ modrinthId: id }, broken)) continue;
+        const e = await planEntryFromModrinthId(id, mcVersion, loader);
+        if (!e || planIsBroken(e, broken) || !(await validate(e))) continue;
+        depEntries.push(e);
+        resolvedIds.add(id);
+      }
+    }
+
+    // Kette auflösen: faellt eine Abhaengigkeit, faellt auch ihr Abhaenger.
+    let all = [...base, ...depEntries];
+    let changed = true;
+    while (changed) {
+      changed = false;
+      const ids = new Set(all.map(m => String(m.modrinthId)).filter(Boolean));
+      const keep = all.filter(m =>
+        !(m._missingNames || []).length &&
+        (m._requiredIds || []).every(id => ids.has(id)));
+      if (keep.length !== all.length) changed = true;
+      all = keep;
+    }
+
+    const byName = new Map();
+    // Abhaengigkeiten zuerst, damit sie vom 20er-Limit nicht abgeschnitten werden.
+    for (const m of [...all.filter(m => m._isDependency), ...all.filter(m => !m._isDependency)]){
+      const nk = String(m.name).toLowerCase();
+      if (byName.has(nk)) continue;
+      if (m.modrinthId && [...byName.values()].some(x => x.modrinthId === m.modrinthId)) continue;
+      if (m.curseforgeId && [...byName.values()].some(x => x.curseforgeId === m.curseforgeId)) continue;
+      if (/^(sodium|embeddium|rubidium|magnesium)/i.test(m.name) && [...byName.values()].some(x => /^(sodium|embeddium|rubidium|magnesium)/i.test(x.name))) continue;
+      byName.set(nk, m);
+    }
+    const mods = [...byName.values()].slice(0, 20);
+    p._dropped = Math.max(0, wanted.length - mods.filter(m => !m._isDependency).length);
+    p._depsAdded = mods.filter(m => m._isDependency).length;
+    // Nur kompatible, echte Mods bleiben im Plan - auch fuer Folgeanfragen.
+    p.mods = mods.filter(m => m.source === 'Modrinth').map(m => m.name);
+    p.curseforgeMods = mods.filter(m => m.source === 'CurseForge').map(m => m.name);
+    p._resolved = { key: JSON.stringify([mcVersion, loader, p.mods, p.curseforgeMods]), mods };
+    return mods;
+  }
   async function createProfile(){
     if (!pendingPlan || busy) return;
-    busy = true; if (createBtn) createBtn.disabled = true;
+    busy = true;
     setStatus('Creating profile…');
     try {
       const p = pendingPlan;
-      const loader = ['fabric','quilt','forge','neoforge'].includes(String(p.loader || '').toLowerCase())
-        ? String(p.loader).toLowerCase() : 'fabric';
-      const known = (typeof mcVersionList !== 'undefined' && Array.isArray(mcVersionList)) ? mcVersionList : [];
-      const mcVersion = known.some(v => v.id === p.mcVersion) ? p.mcVersion
-        : ((known.find(v => v.type === 'release') || {}).id || p.mcVersion || '');
-      const mods = [];
-      const facets = encodeURIComponent(JSON.stringify([['project_type:mod']]));
-      for (const name of (p.mods || []).slice(0, 20)){
-        try {
-          const q = encodeURIComponent(String(name));
-          const d = await ipcRenderer.invoke('fetch-json-no-cors', `https://api.modrinth.com/v2/search?query=${q}&facets=${facets}&limit=3`);
-          const h = (d && d.hits || [])[0];
-          if (h) mods.push({
-            name: h.title, version: 'latest', mcVersion,
-            source: 'Modrinth', iconUrl: h.icon_url || '', modrinthId: h.project_id,
-            downloadAllVersions: false, disabled: false, loader
-          });
-        } catch {}
+      const loader = planLoader(p);
+      const mcVersion = selectedMc();
+      const profileName = (nameInput && nameInput.value || '').trim() || String(p.name || 'AI Modpack');
+      const mods = await resolvePlanMods(p, mcVersion, loader);
+      if (!mods.length){
+        setStatus('Keine Mods mit einer Version für diese Minecraft-Version und diesen Loader gefunden.', '#f44');
+        busy = false;
+        return;
       }
       const np = {
-        id: 'p_' + Date.now(), name: String(p.name || 'AI Modpack').slice(0, 80),
+        id: 'p_' + Date.now(), name: profileName.slice(0, 80),
         group: 'default', mcVersion, modLoader: loader,
         mods, datapacks: [], resourcePacks: [], shaderPacks: [], lastUsed: Date.now()
       };
@@ -10824,20 +12583,18 @@ function convert(sel){
       ipcRenderer.send('save-profiles', profiles);
       if (typeof renderProfileList === 'function') renderProfileList();
       if (typeof updateLaunchProfileSelect === 'function') updateLaunchProfileSelect();
-      await closeAiModal();
+      closeAiModal();
       if (typeof showPage === 'function') showPage('profiles-page');
       if (typeof openProfileModal === 'function') openProfileModal(np.id);
     } catch (e){
       setStatus('Failed to create profile: ' + (e && e.message || e), '#f44');
     } finally {
-      busy = false; if (createBtn) createBtn.disabled = false;
+      busy = false;
     }
   }
-  if (createBtn) createBtn.addEventListener('click', createProfile);
   window.aiModpackOnOpen();
 })();
 </script>
 
 </body>
 </html>
-

@@ -79,6 +79,9 @@ const P = {
   servers: path.join(base,'servers'),
   groups: path.join(base,'groups'),
   instances: path.join(base,'instances'),
+  broken: path.join(base,'broken-mods.json'),
+  gpuDrivers: path.join(base,'gpu-drivers.json'),
+  modCache: path.join(base,'mod-cache'),
 };
 app.setPath('userData', base);
 app.setPath('cache', path.join(base,'Cache'));
@@ -371,7 +374,7 @@ app.on('before-quit', () => {
   }
   // Best-effort: mark our presence offline before exiting
   try {
-    if (myPresence) { myPresence.online = false; myPresence.inGame = false; postPresence(); }
+    if (myPresence) { myPresence.online = false; myPresence.inGame = false; myPresence.ownerView = false; postPresence(); }
   } catch {}
 });
 
@@ -396,8 +399,10 @@ const saveSettings = async (data) => {
       'clientResourcePacks','autoUseResourcePacks',
       'presenceServer','bugreportWebhook','chatServer',
       'useCruxClientMod','tabBarPosition','cornerRadius','glassBgImage',
+      'fontMode','fontFamily',
       'glassBgPreset','glassBgTint',      'loginHistory','bans',
-      'deviceId','deviceName','anthropicApiKey','ollamaModel'
+      'seenNotices','ownerDeviceTokens','ownerUuid',
+      'deviceId','deviceName','anthropicApiKey'
     ];
     const clean = {};
     for (const k of Object.keys(existing)) { if (KNOWN_KEYS.includes(k)) clean[k] = existing[k]; }
@@ -456,6 +461,51 @@ ipcMain.handle('get-default-glass-bgs', async () => {
   } catch { return []; }
 });
 
+// Installed font families for the Appearance → Font setting. Cached because
+// enumerating fonts is comparatively slow and the list rarely changes.
+let _systemFontCache = null;
+function runFontCommand(cmd, args) {
+  return new Promise(resolve => {
+    try {
+      execFile(cmd, args, { encoding: 'utf8', timeout: 8000, maxBuffer: 1024 * 1024 },
+        (err, stdout) => resolve(err ? '' : String(stdout || '')));
+    } catch { resolve(''); }
+  });
+}
+async function systemFontFamilies() {
+  if (_systemFontCache) return _systemFontCache;
+  let out = '';
+  try {
+    if (process.platform === 'win32') {
+      out = await runFontCommand('powershell', [
+        '-NoProfile', '-NonInteractive', '-Command',
+        "Add-Type -AssemblyName System.Drawing; [System.Drawing.FontFamily]::Families | ForEach-Object { $_.Name }"
+      ]);
+    } else if (process.platform === 'darwin') {
+      out = await runFontCommand('system_profiler', ['SPFontsDataType']);
+    } else {
+      out = await runFontCommand('fc-list', [':', 'family']);
+    }
+  } catch {}
+  const names = [];
+  if (process.platform === 'darwin') {
+    const re = /^\s*Family:\s*(.+?)\s*$/gm;
+    let m;
+    while ((m = re.exec(out))) names.push(m[1]);
+  } else {
+    out.split(/\r?\n/).forEach(line => {
+      line.split(',').forEach(part => names.push(part));
+    });
+  }
+  const clean = names.map(n => String(n).replace(/\s*\(.*\)\s*$/, '').trim())
+    .filter(n => n && !/^[.#]/.test(n));
+  _systemFontCache = Array.from(new Set(clean)).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  return _systemFontCache;
+}
+ipcMain.handle('get-system-fonts', async () => {
+  return { ok: true, fonts: await systemFontFamilies() };
+});
+
 // Auto-configure the default servers on first run so installed clients
 // have the Friends and Chat tabs ready without manual setup.
 async function ensureDefaultServers() {
@@ -480,6 +530,12 @@ async function ensureDefaultServers() {
       console.log('[Crux] Bug report webhook default applied');
       changed = true;
     }
+    // Minecraft ist der Standard-Font. Explizit gewaehlte System-/Custom-Fonts
+    // bleiben unberuehrt.
+    if (s.fontMode === undefined || s.fontMode === null || s.fontMode === '') {
+      s.fontMode = 'minecraft';
+      changed = true;
+    }
     if (changed) await save(P.settings, s);
   } catch {}
 }
@@ -494,19 +550,53 @@ ipcMain.on('open-external', (event, url) => {
 ipcMain.handle('load-settings',          async () => {
   await ensureDefaultServers();
   await ensureDeviceIdentity();
-  return load(P.settings, {});
+  const s = await load(P.settings, {});
+  autoPrecache.clientRPs = Array.isArray(s.clientResourcePacks) ? s.clientResourcePacks : [];
+  scheduleAutoPrecache();
+  return s;
 });
 ipcMain.handle('load-accounts',          async () => load(P.accounts, []));
-ipcMain.handle('load-profiles',          async () => load(P.profiles, [
-  { id:'latest-java', name:'Latest Version Java', mcVersion:'', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
-  { id:'latest-snapshot', name:'Latest Snapshot Java', mcVersion:'__latest_snapshot__', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
-  { id:'latest-bedrock', name:'Latest Bedrock', mcVersion:'', modLoader:'bedrock', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
-  { id:'latest-bedrock-pre', name:'Latest Pre-release Bedrock', mcVersion:'__latest_prerelease__', modLoader:'bedrock', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] }
-]));
-ipcMain.handle('load-mods',              async () => load(P.mods, []));
-ipcMain.handle('load-client-mods',       async () => load(P.clientMods, []));
+ipcMain.handle('load-profiles',          async () => {
+  const loaded = await load(P.profiles, [
+    { id:'latest-java', name:'Latest Version Java', mcVersion:'', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
+    { id:'latest-snapshot', name:'Latest Snapshot Java', mcVersion:'__latest_snapshot__', modLoader:'fabric', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
+    { id:'latest-bedrock', name:'Latest Bedrock', mcVersion:'', modLoader:'bedrock', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] },
+    { id:'latest-bedrock-pre', name:'Latest Pre-release Bedrock', mcVersion:'__latest_prerelease__', modLoader:'bedrock', mods:[], datapacks:[], resourcePacks:[], shaderPacks:[] }
+  ]);
+  let list = Array.isArray(loaded) ? loaded : [];
+  // Alte MC-Launcher-Importe: interne Gruppe nach dataGroup verschieben und
+  // nach aussen "default" anzeigen (gleiche Kartenhoehe wie alle Profile).
+  let migrated = false;
+  list = list.map(p => {
+    if (p && p.isMcLauncherImport && typeof p.group === 'string' && /^mc-/.test(p.group) && !p.dataGroup) {
+      migrated = true;
+      return { ...p, group: 'default', dataGroup: p.group };
+    }
+    return p;
+  });
+  if (migrated) await save(P.profiles, list);
+  autoPrecache.profiles = list;
+  scheduleAutoPrecache();
+  return list;
+});
+ipcMain.handle('load-mods',              async () => {
+  const mods = await load(P.mods, []);
+  autoPrecache.mods = Array.isArray(mods) ? mods : [];
+  scheduleAutoPrecache();
+  return mods;
+});
+ipcMain.handle('load-client-mods',       async () => {
+  const mods = await load(P.clientMods, []);
+  autoPrecache.clientMods = Array.isArray(mods) ? mods : [];
+  scheduleAutoPrecache();
+  return mods;
+});
 ipcMain.handle('load-launched-versions', async () => load(P.launched, []));
-ipcMain.on('save-settings',          async (e,d) => saveSettings(d));
+ipcMain.on('save-settings',          async (e,d) => {
+  await saveSettings(d);
+  if (d && Array.isArray(d.clientResourcePacks)) autoPrecache.clientRPs = d.clientResourcePacks;
+  scheduleAutoPrecache();
+});
 ipcMain.on('save-accounts',          async (e,d) => save(P.accounts, d));
 ipcMain.handle('delete-account',     async (event, acc) => {
   try {
@@ -522,8 +612,16 @@ ipcMain.handle('open-app-data-folder', async () => {
   try { await shell.showItemInFolder(base); return { ok: true }; } catch {}
   try { await shell.openPath(base); return { ok: true }; } catch (e) { return { ok: false, error: e.message }; }
 });
-ipcMain.on('save-profiles',          async (e,d) => save(P.profiles, d));
-ipcMain.on('save-client-mods',       async (e,d) => save(P.clientMods, d));
+ipcMain.on('save-profiles',          async (e,d) => {
+  await save(P.profiles, d);
+  autoPrecache.profiles = Array.isArray(d) ? d : [];
+  scheduleAutoPrecache();
+});
+ipcMain.on('save-client-mods',       async (e,d) => {
+  await save(P.clientMods, d);
+  autoPrecache.clientMods = Array.isArray(d) ? d : [];
+  scheduleAutoPrecache();
+});
 
 // ── Profile offline-capability check ──────────────────────────────────────────
 // Tells the UI whether every mod the profile would deploy is already cached,
@@ -547,25 +645,27 @@ ipcMain.handle('profile-offline-check', async (event, profile) => {
         candidates.push(m);
       }
     }
+    const alreadyCandidate = (m) =>
+      (m.modrinthId && candidates.some(c => c.modrinthId === m.modrinthId)) ||
+      (m.curseforgeId && candidates.some(c => c.curseforgeId === m.curseforgeId));
     for (const m of (profile.mods || [])) {
       if (m.disabled) continue;
       if (m.loader && m.loader !== 'any' && m.loader !== modLoader) continue;
-      if (!candidates.some(c => c.modrinthId && c.modrinthId === m.modrinthId)) candidates.push(m);
+      if (!alreadyCandidate(m)) candidates.push(m);
     }
     for (const m of (profile.mrpackMods || [])) {
       if (m.disabled) continue;
-      if (!candidates.some(c => c.modrinthId && c.modrinthId === m.modrinthId)) candidates.push(m);
+      if (!alreadyCandidate(m)) candidates.push(m);
     }
 
     let missing = 0;
     for (const mod of candidates) {
-      if (!mod.modrinthId) {
+      if (!mod.modrinthId && !mod.curseforgeId) {
         if (mod.diskPath && fs.existsSync(mod.diskPath)) continue;
         if (mod.data && mod.data.length) continue;
         missing++;
-      } else {
-        const has = files.some(f => f.startsWith(mod.modrinthId + '-') && f.endsWith('.jar'));
-        if (!has) missing++;
+      } else if (!modHasJar(mod, files)) {
+        missing++;
       }
     }
     return { ok: missing === 0, total: candidates.length, missing };
@@ -590,12 +690,14 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
   const modsDir = path.join(instanceDir(profile.id), 'mods');
   await fs.promises.mkdir(modsDir, { recursive: true });
   const existingFiles = fs.existsSync(modsDir) ? fs.readdirSync(modsDir) : [];
+  const broken = await brokenIdsFor(version, modLoader);
 
   const toDeploy = [];
   const pushUnique = (mod) => {
-    if (mod.disabled) return;
+    if (mod.disabled || modHasBrokenId(mod, broken)) return;
     if (mod.loader && mod.loader !== 'any' && mod.loader !== modLoader) return;
-    if (toDeploy.some(m => m.modrinthId && m.modrinthId === mod.modrinthId)) return;
+    if (mod.modrinthId && toDeploy.some(m => m.modrinthId === mod.modrinthId)) return;
+    if (mod.curseforgeId && toDeploy.some(m => m.curseforgeId === mod.curseforgeId)) return;
     toDeploy.push(mod);
   };
 
@@ -608,8 +710,11 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
       if (mod.mcVersion === version || mod.mcVersion === 'all' || mod.mcVersion === 'latest' || mod.downloadAllVersions) pushUnique(mod);
     }
   }
-  // profile mods
-  for (const mod of (profile.mods || [])) pushUnique(mod);
+  // profile mods — Namen ohne Quelle nachschlagen, damit sie offline gecacht werden
+  for (const mod of (profile.mods || [])) {
+    await resolveProfileModIdentity(mod, version, modLoader);
+    pushUnique(mod);
+  }
   // auto fabric deps
   if (modLoader === 'fabric' || modLoader === 'quilt') {
     const fabricDeps = [
@@ -621,6 +726,7 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
     ];
     for (const dep of fabricDeps) pushUnique(dep);
   }
+  await addRequiredDependencies(toDeploy, version, modLoader, false, broken);
 
 // Crux Client Features jar (only if the per-profile toggle is on and an asset exists)
   if (profile.useCruxMod === true && (modLoader === 'fabric' || modLoader === 'quilt')) {
@@ -633,8 +739,19 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
   const versionCache = new Map();
   let done = 0;
   for (const mod of toDeploy) {
+    const tryCurseforgeFallback = async () => {
+      if (!mod.curseforgeId || mod._cfFallbackTried) return false;
+      mod._cfFallbackTried = true;
+      return await deployCurseforgeMod(mod, modsDir, version, modLoader,
+        (line) => sendProgress(line.replace(/^\[MODS\]\s*/, '')));
+    };
     try {
       if (!mod.modrinthId) {
+        if (mod.curseforgeId) {
+          await deployCurseforgeMod(mod, modsDir, version, modLoader, (line) => sendProgress(line.replace(/^\[MODS\]\s*/, '')));
+          done++;
+          continue;
+        }
         if (mod.diskPath && fs.existsSync(mod.diskPath)) {
           const dest = path.join(modsDir, mod.fileName || (String(mod.name||'mod').replace(/[^a-zA-Z0-9._-]/g,'_') + '.jar'));
           if (!fs.existsSync(dest)) await fs.promises.copyFile(mod.diskPath, dest);
@@ -646,38 +763,49 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
         continue;
       }
 
-      const hasJar = existingFiles.some(f => f.startsWith(mod.modrinthId + '-') && f.endsWith('.jar'));
+      const hasJar = modHasJar(mod, existingFiles);
       if (hasJar) { done++; continue; }
 
       let versionData = versionCache.get(mod.modrinthId);
       if (!versionData) {
         const allVersions = await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version`).catch(() => null);
-        if (!allVersions || !allVersions.length) { done++; continue; }
+        if (!allVersions || !allVersions.length) {
+          await tryCurseforgeFallback();
+          done++; continue;
+        }
         if (mod._mrpack) {
           // mrpack mods are deployed as the first listed version (same as launch)
           versionData = allVersions[0];
         } else {
           // profile/client mods: match MC version AND loader, otherwise skip (launch disables it)
           versionData = allVersions.find(v => (v.game_versions || []).includes(version) && (v.loaders || []).includes(modLoader)) || null;
-          if (!versionData) { done++; continue; }
+          if (!versionData) {
+            await tryCurseforgeFallback();
+            done++; continue;
+          }
         }
         versionCache.set(mod.modrinthId, versionData);
       }
       if (!versionData) { done++; continue; }
 
       const file = versionData.files.find(f => f.primary) || versionData.files[0];
-      if (!file) { done++; continue; }
+      if (!file) { await tryCurseforgeFallback(); done++; continue; }
       const dest = path.join(modsDir, `${mod.modrinthId}-${file.filename}`);
-      if (!fs.existsSync(dest)) {
-        sendProgress(`Lade Mod herunter: ${mod.name || mod.modrinthId}`);
-        await downloadFile(file.url, dest);
-      }
+      await deployModCachedOrDownload({
+        url: file.url,
+        cacheName: modrinthCacheName(mod.modrinthId, versionData, file),
+        dest,
+        label: mod.name || mod.modrinthId,
+        log: line => sendProgress(line.replace(/^\[CACHE\]\s*/, ''))
+      });
       existingFiles.push(`${mod.modrinthId}-${file.filename}`);
     } catch (e) {
       console.error('[OFFLINE-DL] Mod failed:', mod.name, e.message);
+      if (mod.modrinthId) await tryCurseforgeFallback();
     }
     done++;
   }
+  await persistProfileMods(profile.id, profile.mods);
   return toDeploy.length;
 }
 
@@ -714,18 +842,103 @@ async function predownloadVanillaGameFiles(version, javaPath, sendProgress, cust
   };
 }
 
+// Loader-Versionen numerisch vergleichen: 0.19.5 < 0.20.1.
+function compareVersionNumbers(a, b){
+  const pa = String(a || '').match(/\d+/g)?.map(Number) || [];
+  const pb = String(b || '').match(/\d+/g)?.map(Number) || [];
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++){
+    const diff = (pa[i] || 0) - (pb[i] || 0);
+    if (diff) return diff > 0 ? 1 : -1;
+  }
+  return 0;
+}
+
+function loaderVerFromId(id, prefix){
+  // prefix endet bereits mit '-' (z. B. 'fabric-loader-').
+  const m = String(id || '').match(new RegExp('^' + prefix + '([0-9][^-]*)-'));
+  return m ? m[1] : null;
+}
+
+// Neuesten installierten Loader-Ordnernamen fuer diese MC-Version finden.
+function newestLoaderId(version, prefix){
+  const versionsDir = path.join(P.mc, 'versions');
+  if (!fs.existsSync(versionsDir)) return null;
+  const dirs = fs.readdirSync(versionsDir).filter(d =>
+    d.toLowerCase().startsWith(prefix.toLowerCase()) &&
+    (d.endsWith(`-${version}`) || d.endsWith(version)) &&
+    fs.existsSync(path.join(versionsDir, d, `${d}.json`))
+  );
+  if (!dirs.length) return null;
+  dirs.sort((a, b) => compareVersionNumbers(loaderVerFromId(a, prefix), loaderVerFromId(b, prefix)));
+  return dirs[dirs.length - 1];
+}
+
+// Zwei bekannte Problemfaelle automatisch beheben:
+//  - ein alter Loader-Ordner wird immer wiederverwendet (0.19.5), obwohl es
+//    fuer die MC-Version schon eine neuere Version gibt (0.20.1);
+//  - Mods laden immer die neueste Version und verlangen dann einen neueren Loader.
+// Der Service wird vor jedem Start geprueft; bei Offline/Fehler bleibt der
+// installierte Loader unangetastet.
+async function refreshLoaderIfOutdated(version, modLoader, javaPath, onProgress){
+  if (modLoader !== 'fabric' && modLoader !== 'quilt') return null;
+  const isFabric = modLoader === 'fabric';
+  const prefix = isFabric ? 'fabric-loader-' : 'quilt-loader-';
+  const currentId = newestLoaderId(version, prefix);
+  let list = null;
+  try {
+    list = await fetchJson(isFabric
+      ? `https://meta.fabricmc.net/v2/versions/loader/${version}`
+      : `https://meta.quiltmc.net/v3/versions/loader/${version}`);
+  } catch {
+    return currentId;
+  }
+  if (!Array.isArray(list) || !list.length || !list[0]?.loader?.version) return currentId;
+  const latest = String(list[0].loader.version);
+  if (currentId && compareVersionNumbers(loaderVerFromId(currentId, prefix), latest) >= 0) return currentId;
+
+  let instVer = list[0].installer?.version;
+  if (isFabric && !instVer){
+    try { const m = await fetchJson('https://meta.fabricmc.net/v2/versions/installer'); instVer = m[0]?.version; } catch {}
+  }
+  if (!instVer) instVer = isFabric ? '0.11.2' : '0.5.1';
+  const installerName = isFabric ? `fabric-installer-${instVer}.jar` : `quilt-installer-${instVer}.jar`;
+  const instPath = path.join(base, installerName);
+  const instUrl = isFabric
+    ? `https://maven.fabricmc.net/net/fabricmc/fabric-installer/${instVer}/${installerName}`
+    : `https://maven.quiltmc.org/repository/release/org/quiltmc/quilt-installer/${instVer}/${installerName}`;
+  onProgress?.(`Aktualisiere ${isFabric ? 'Fabric' : 'Quilt'}-Loader auf ${latest}…`);
+  try {
+    if (!fs.existsSync(instPath)) await downloadFile(instUrl, instPath);
+    const javaExe = `"${path.resolve(javaPath)}"`;
+    const args = isFabric
+      ? `client -dir "${path.resolve(P.mc)}" -mcversion ${version} -loader ${latest} -noprofile`
+      : `install client -dir "${path.resolve(P.mc)}" -mcversion ${version} -loader ${latest} -noprofile`;
+    await new Promise((res, rej) => exec(
+      `${javaExe} -jar "${path.resolve(instPath)}" ${args}`,
+      { timeout: 120000 }, (e, o, se) => { if (e) rej(new Error(se || e.message || String(e))); else res(o); }
+    ));
+    const updatedId = newestLoaderId(version, prefix);
+    if (!updatedId || compareVersionNumbers(loaderVerFromId(updatedId, prefix), latest) < 0){
+      throw new Error(`Loader ${latest} wurde installiert, aber kein passender Versionsordner gefunden`);
+    }
+    onProgress?.(`${isFabric ? 'Fabric' : 'Quilt'}-Loader aktualisiert: ${latest}`);
+    return updatedId;
+  } catch (e){
+    console.error('[LOADER AUTO-FIX]', e);
+    onProgress?.(`Loader-Update fehlgeschlagen: ${e.message}`);
+    return currentId;
+  }
+}
+
 // Install Fabric/Quilt loader for the version if not already present (so the
 // loader + its libraries are cached for offline use).
 async function ensureLoaderForOffline(version, modLoader, javaPath, sendProgress) {
   const versionsDir = path.join(P.mc, 'versions');
   let loaderId = null;
-  if (fs.existsSync(versionsDir)) {
-    const dirs = fs.readdirSync(versionsDir);
-    loaderId = dirs.find(d => {
-      const lower = d.toLowerCase();
-      const isLoader = lower.startsWith('fabric-loader-') || lower.startsWith('quilt-loader-');
-      return isLoader && (d.endsWith(`-${version}`) || d.endsWith(version));
-    }) || null;
+  if (modLoader === 'fabric' || modLoader === 'quilt'){
+    const prefix = modLoader === 'fabric' ? 'fabric-loader-' : 'quilt-loader-';
+    loaderId = newestLoaderId(version, prefix);
+    if (loaderId) loaderId = await refreshLoaderIfOutdated(version, modLoader, javaPath, sendProgress) || loaderId;
   }
   if (loaderId && fs.existsSync(path.join(versionsDir, loaderId, `${loaderId}.json`))) {
     return { installed: true, id: loaderId };
@@ -777,52 +990,222 @@ async function ensureLoaderForOffline(version, modLoader, javaPath, sendProgress
   return { installed: false, id: null };
 }
 
-ipcMain.handle('profile-download-offline', async (event, payload) => {
-  const profile = payload && payload.profile;
-  const clientMods = (payload && payload.clientMods) || [];
-  const sendProgress = (msg) => { try { mainWindow.webContents.send('download-offline-progress', msg); } catch {} };
-  try {
-    if (!profile) return { ok:false, error:'Kein Profil.' };
-    const version = resolveConcreteVersion(profile.mcVersion);
-    if (!version) return { ok:false, error:'Keine Minecraft-Version gefunden.' };
-    const modLoader = profile.modLoader || 'fabric';
+// ── Offline-Cache (automatisch im Hintergrund) ──────────────────────────────────
+// Solange der Launcher offen ist, werden nach und nach für ALLE Java-Profile
+// alle Assets gecacht, die für einen Start ohne Internet nötig sind:
+// Spieldateien, Loader, Mods und Ressourcenpakete. Bereits vorhandene Dateien
+// werden von den bestehenden Download-Helfern übersprungen.
 
-    sendProgress('Starte Offline-Download…');
+const autoPrecache = {
+  profiles: [],
+  mods: [],
+  clientMods: [],
+  clientRPs: [],
+  done: new Map(),      // profileId -> Hash der Eingaben (nur bei Erfolg)
+  gameDone: new Set(),  // "version|loader" (geteilt zwischen Profilen)
+  busy: false,
+  abort: false,         // Spielstart bricht den Hintergrund-Cache sofort ab
+  timer: null,
+};
 
-    // 1. All mods
-    sendProgress('Lade Mods herunter…');
-    const modCount = await downloadProfileMods(profile, clientMods, version, modLoader, sendProgress);
+// Der Cache läuft im Hauptprozess, darf dort aber nie die Event-Loop blockieren.
+// Nach jedem Arbeitsschritt bekommt Electron/IPC wieder Luft (Klicks reagieren).
+const yieldToUi = () => new Promise(r => setImmediate(r));
 
-    // 2. Game files (vanilla base)
-    let gameOk = { jsonOk:false, jarOk:false, assetsOk:false };
-    let loaderId = null;
+function autoPrecacheHash(profile, version, loader, mods, rps) {
+  return crypto.createHash('md5').update(JSON.stringify({
+    version, loader,
+    useClientMods: profile.useClientMods !== false,
+    useClientRPs: profile.useClientRPs !== false,
+    useCruxMod: profile.useCruxMod === true,
+    profileMods: profile.mods || [],
+    mrpackMods: profile.mrpackMods || [],
+    mrpackRPs: profile.mrpackRPs || [],
+    profileRPs: profile.resourcePacks || [],
+    mods: mods || [],
+    rps: rps || [],
+  })).digest('hex');
+}
+
+function precacheLog(msg) {
+  console.log('[OFFLINE-CACHE] ' + msg);
+  // Massen-Fortschritt (einzelne Spieldateien) nicht an die UI weiterreichen.
+  if (/^(Spieldatei|Spieldateien):/.test(msg)) return;
+  try { if (mainWindow) mainWindow.webContents.send('auto-precache-progress', msg); } catch {}
+}
+
+// Genau die Ressourcenpakete, die der Launch auch deployen würde, lokal bereitstellen.
+async function precacheResourcePacks(profile, version, send) {
+  const rpDir = path.join(instanceDir(profile.id), 'resourcepacks');
+  await fs.promises.mkdir(rpDir, { recursive: true });
+  const lists = [];
+  if (profile.useClientRPs !== false) lists.push(autoPrecache.clientRPs || []);
+  lists.push(profile.resourcePacks || [], profile.mrpackRPs || []);
+
+  for (const list of lists) {
+    for (const rp of list) {
+      if (autoPrecache.abort) return;
+      await yieldToUi();
+      try {
+        if (!rp || rp.disabled) continue;
+        const name = typeof rp === 'string' ? rp : (rp.name || rp.fileName || '');
+        const mcV = typeof rp === 'object' ? (rp.mcVersion || 'all') : 'all';
+        if (mcV !== 'all' && mcV !== version) continue;
+
+        if (typeof rp === 'object' && rp.diskPath && fs.existsSync(rp.diskPath)) {
+          const dest = path.join(rpDir, rp.fileName || path.basename(rp.diskPath));
+          if (!fs.existsSync(dest)) await fs.promises.copyFile(rp.diskPath, dest);
+          continue;
+        }
+        if (typeof rp === 'object' && rp.data && rp.data.length) {
+          const dest = path.join(rpDir, rp.fileName || `rp-${Date.now()}.zip`);
+          if (!fs.existsSync(dest)) await fs.promises.writeFile(dest, Buffer.from(rp.data));
+          continue;
+        }
+        if (typeof name === 'string' && name.startsWith('file://')) {
+          const src = name.slice('file://'.length);
+          if (fs.existsSync(src)) {
+            const dest = path.join(rpDir, path.basename(src));
+            if (!fs.existsSync(dest)) await fs.promises.copyFile(src, dest);
+          }
+          continue;
+        }
+
+        let downloadUrl = null, fname = null, packName = name;
+        if (typeof rp === 'object' && rp.modrinthId) {
+          const vd = await fetchJson(`https://api.modrinth.com/v2/project/${rp.modrinthId}/version`).catch(() => null);
+          if (vd && vd.length) {
+            const chosen = vd.find(v => (v.game_versions || []).includes(version)) || vd[0];
+            const file = chosen.files?.find(f => f.primary) || chosen.files?.[0];
+            if (file) { downloadUrl = file.url; fname = file.filename; }
+          }
+        } else if (typeof name === 'string' && /^https?:\/\//i.test(name)) {
+          downloadUrl = name;
+          fname = path.basename(name.split('?')[0]) || `rp-${Date.now()}.zip`;
+        }
+        if (!downloadUrl) continue; // Namens-basierte Packs liegen schon im Instance-Ordner
+        fname = fname || path.basename(downloadUrl.split('?')[0]) || `rp-${Date.now()}.zip`;
+        send('Ressourcenpaket: ' + (packName || fname));
+        await deployResourcePack({
+          rpDir, version, packName: packName || fname,
+          tempDest: path.join(rpDir, fname), downloadUrl,
+          onDownload: () => send('Ressourcenpaket: ' + (packName || fname))
+        });
+        await yieldToUi();
+      } catch (e) {
+        console.error('[OFFLINE-CACHE] RP failed:', e.message);
+      }
+    }
+  }
+}
+
+// Alles, was ein Profil für den Offline-Start braucht (einmalig pro Profil).
+// Version, Loader, Mods und Packs kommen immer aus dem jeweiligen Profil.
+async function precacheProfileAssets(profile, mods, rps, send) {
+  if (!profile) return { ok:false, error:'Kein Profil.' };
+  const version = resolveConcreteVersion(profile.mcVersion);
+  if (!version) return { ok:false, error:'Keine Minecraft-Version gefunden.' };
+  const loader = profile.modLoader || 'fabric';
+
+  send(`Starte Offline-Cache: ${profile.name || profile.id} (${version}, ${loader})`);
+  await yieldToUi();
+  if (autoPrecache.abort) return { ok:false, aborted:true };
+
+  // Spieldateien teilen sich alle Profile mit gleicher Version/Loader.
+  const gameKey = `${version}|${loader}`;
+  if (!autoPrecache.gameDone.has(gameKey)) {
     try {
       const javas = await findInstalledJavas();
+      await yieldToUi();
+      if (autoPrecache.abort) return { ok:false, aborted:true };
       const javaPath = javas[0]?.path || null;
       if (javaPath) {
-        // Fabric/Quilt loader pre-install so the loader is cached too
-        if (modLoader === 'fabric' || modLoader === 'quilt') {
-          const loaderRes = await ensureLoaderForOffline(version, modLoader, javaPath, sendProgress).catch(() => ({ installed:false, id:null }));
-          loaderId = loaderRes.id;
+        let loaderId = null;
+        if (loader === 'fabric' || loader === 'quilt') {
+          const r = await ensureLoaderForOffline(version, loader, javaPath, send).catch(() => ({ installed:false, id:null }));
+          loaderId = r.id;
         }
-        sendProgress('Lade Spieldateien herunter (Version, Libraries, Assets)…');
-        gameOk = await predownloadVanillaGameFiles(version, javaPath, sendProgress, loaderId || undefined);
+        await yieldToUi();
+        if (autoPrecache.abort) return { ok:false, aborted:true };
+        send('Spieldateien (Version, Libraries, Assets)…');
+        const g = await predownloadVanillaGameFiles(version, javaPath, send, loaderId || undefined);
+        if (g && g.jsonOk && g.jarOk) autoPrecache.gameDone.add(gameKey);
       }
     } catch (e) {
-      console.error('[OFFLINE-DL] Game files:', e.message);
+      console.error('[OFFLINE-CACHE] Game files:', e.message);
     }
-
-    return {
-      ok: true,
-      version,
-      modsDownloaded: modCount,
-      gameFiles: gameOk,
-      loaderId,
-    };
-  } catch (e) {
-    return { ok:false, error: e.message };
   }
+
+  await yieldToUi();
+  if (autoPrecache.abort) return { ok:false, aborted:true };
+  send('Mods…');
+  const modsDownloaded = await downloadProfileMods(profile, mods, version, loader, send);
+  await yieldToUi();
+  if (autoPrecache.abort) return { ok:false, aborted:true };
+  await precacheResourcePacks(profile, version, send);
+  await yieldToUi();
+  if (autoPrecache.abort) return { ok:false, aborted:true };
+  send(`Fertig: ${profile.name || profile.id}`);
+  return { ok:true, version, modsDownloaded };
+}
+
+// Manueller Handler bleibt für die API erhalten (die UI hat keinen Button mehr).
+ipcMain.handle('profile-download-offline', async (event, payload) => {
+  try {
+    const r = await precacheProfileAssets(payload && payload.profile,
+      (payload && payload.clientMods) || [], [], precacheLog);
+    return { ok:r.ok, error:r.error, version:r.version, modsDownloaded:r.modsDownloaded || 0,
+      gameFiles:{ jsonOk:true, jarOk:true, assetsOk:true } };
+  } catch (e) { return { ok:false, error:e.message }; }
 });
+
+function scheduleAutoPrecache(delay = 4000) {
+  if (autoPrecache.timer) clearTimeout(autoPrecache.timer);
+  autoPrecache.timer = setTimeout(() => {
+    autoPrecache.timer = null;
+    runAutoPrecache().catch(e => console.error('[OFFLINE-CACHE]', e.message));
+  }, delay);
+}
+
+async function runAutoPrecache() {
+  if (autoPrecache.busy || !mainWindow) return;
+  const profiles = autoPrecache.profiles.filter(p => p && p.id && p.modLoader !== 'bedrock');
+  if (!profiles.length) return;
+  // Keine Änderungen an einem laufenden Spiel vornehmen.
+  try { if (Object.keys(instances).length) { scheduleAutoPrecache(60000); return; } } catch {}
+
+  autoPrecache.busy = true;
+  autoPrecache.abort = false;
+  const mods = [...(autoPrecache.mods || []), ...(autoPrecache.clientMods || [])];
+  const rps = autoPrecache.clientRPs || [];
+  try {
+    for (const p of profiles) {
+      await yieldToUi();
+      if (autoPrecache.abort) break;
+      const version = resolveConcreteVersion(p.mcVersion);
+      if (!version) continue;
+      const loader = p.modLoader || 'fabric';
+      const hash = autoPrecacheHash(p, version, loader, mods, rps);
+      const gameReady = autoPrecache.gameDone.has(`${version}|${loader}`);
+      // Erst fertig, wenn auch die Spieldateien da sind (sonst alle 5 Min erneut).
+      if (autoPrecache.done.get(p.id) === hash && gameReady) continue;
+      try {
+        const r = await precacheProfileAssets(p, mods, rps, precacheLog);
+        if (r.aborted) break;
+        if (r.ok) autoPrecache.done.set(p.id, hash);
+      } catch (e) {
+        console.error('[OFFLINE-CACHE] Profile failed:', p.name || p.id, e.message);
+      }
+      await yieldToUi();
+    }
+  } finally {
+    autoPrecache.busy = false;
+    autoPrecache.abort = false;
+  }
+}
+
+// Fehlgeschlagene Downloads werden nachgeholt, erfolgreiche per Hash übersprungen.
+setInterval(() => scheduleAutoPrecache(0), 5 * 60 * 1000).unref?.();
 
 ipcMain.handle('copy-mod-to-profile', async (event, { profileId, sourcePath, fileName }) => { console.log("[COPY-MOD] profileId:", profileId, "sourcePath:", sourcePath, "fileName:", fileName);
   try {
@@ -1360,18 +1743,9 @@ ipcMain.handle('import-mrpack-from-url', async (event, url) => {
 });
 
 
-ipcMain.handle('choose-norisk-export', async () => {
+// Gemeinsamer Parser fuer Datei-Dialog UND Drag & Drop.
+async function readNoriskExportFile(file){
   try {
-    const res = await dialog.showOpenDialog(mainWindow, {
-      title: 'Select a NoRisk Client export',
-      properties: ['openFile'],
-      filters: [
-        { name: 'NoRisk Export', extensions: ['noriskpack','zip','json'] },
-        { name: 'All Files', extensions: ['*'] }
-      ]
-    });
-    if (res.canceled || !res.filePaths || !res.filePaths.length) return { ok:true, canceled:true };
-    const file = res.filePaths[0];
     const stat = await fs.promises.stat(file);
 
     // Detect ZIP by magic bytes ("PK").
@@ -1404,6 +1778,26 @@ ipcMain.handle('choose-norisk-export', async () => {
     if (!profiles.length) return { ok:false, error:'No importable profile found in this file.' };
     return { ok:true, canceled:false, file, isZip, hasOverrides, sizeBytes: stat.size, profiles, skippedMods };
   } catch (e) { return { ok:false, error: e.message }; }
+}
+
+ipcMain.handle('choose-norisk-export', async () => {
+  try {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select a NoRisk Client export',
+      properties: ['openFile'],
+      filters: [
+        { name: 'NoRisk Export', extensions: ['noriskpack','zip','json'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+    if (res.canceled || !res.filePaths || !res.filePaths.length) return { ok:true, canceled:true };
+    return await readNoriskExportFile(res.filePaths[0]);
+  } catch (e) { return { ok:false, error: e.message }; }
+});
+
+ipcMain.handle('read-norisk-export', async (event, filePath) => {
+  if (!filePath || typeof filePath !== 'string') return { ok:false, error:'Kein Pfad angegeben' };
+  return readNoriskExportFile(filePath);
 });
 
 // Extract the export's overrides/ game files straight into the imported
@@ -1438,6 +1832,8 @@ ipcMain.on('save-launched-versions', async (e,d) => save(P.launched, d));
 ipcMain.on('show-launcher', () => { if(mainWindow) mainWindow.show(); });
 ipcMain.on('save-mods', async (e, data) => {
   save(P.mods, data);
+  autoPrecache.mods = Array.isArray(data) ? data : [];
+  scheduleAutoPrecache();
   const byVer = {};
   for (const m of data) { if (!byVer[m.mcVersion]) byVer[m.mcVersion]=[]; byVer[m.mcVersion].push(m); }
   for (const [ver,mods] of Object.entries(byVer)) {
@@ -1452,6 +1848,15 @@ ipcMain.on('save-mods', async (e, data) => {
 // options.txt under groups/<group>/, like NoRisk Client does.
 function groupDirName(group){
   return sanitizeFileName(String(group || 'default').trim()) || 'default';
+}
+// Importierte Profile haben nach aussen die normale Gruppe "default", behalten
+// aber intern ihre eigene Gruppe, damit sich ihre Einstellungen nicht gegenseitig
+// ueberschreiben. Nur die Datenhaltung nutzt dataGroup, die UI zeigt group.
+function effectiveDataGroup(profile){
+  const internal = profile && profile.dataGroup && String(profile.dataGroup).trim();
+  if (internal) return String(internal);
+  const own = profile && profile.group && String(profile.group).trim();
+  return own ? String(own) : 'default';
 }
 function groupOptionsPath(group){
   return path.join(P.groups, groupDirName(group), 'options.txt');
@@ -1710,6 +2115,268 @@ ipcMain.handle('import-mc-settings', async (e, { group, sourcePath }) => {
   return { group: g, copiedTo: gFile };
 });
 
+// ── Offizieller Minecraft Launcher: Instanzen komplett importieren ────────────
+// Der Original-Launcher legt seine Profile in launcher_profiles.json ab. Jedes
+// dieser Profile ist eine Instanz mit eigener Version und (optional) eigenem
+// Spielordner. Wir lesen die Liste und zeigen Anzahl Welten/Server/Einstellungen.
+function officialMcDirs(){
+  const appData = process.env.APPDATA || '';
+  const localAppData = process.env.LOCALAPPDATA || '';
+  const found = [];
+  const seen = new Set();
+  const add = (dir) => {
+    if (!dir) return;
+    const abs = path.resolve(dir);
+    if (seen.has(abs)) return;
+    seen.add(abs);
+    if (fs.existsSync(path.join(abs, 'launcher_profiles.json'))) found.push(abs);
+  };
+  add(path.join(appData, '.minecraft'));
+  add(path.join(localAppData, '.minecraft'));
+  // Portable/andere Launcher-Installationen: eine Ebene unter APPDATA suchen.
+  try {
+    for (const en of fs.readdirSync(appData, { withFileTypes: true })) {
+      if (!en.isDirectory() || en.name === path.basename(base)) continue;
+      add(path.join(appData, en.name, '.minecraft'));
+    }
+  } catch {}
+  return found;
+}
+
+function countWorlds(gameDir){
+  try {
+    return fs.readdirSync(path.join(gameDir, 'saves'), { withFileTypes: true })
+      .filter(e => e.isDirectory() && fs.existsSync(path.join(gameDir, 'saves', e.name, 'level.dat'))).length;
+  } catch { return 0; }
+}
+function countResourcePacks(gameDir, mcDir){
+  try {
+    const rpDir = fs.existsSync(path.join(gameDir, 'resourcepacks')) ? path.join(gameDir, 'resourcepacks') : path.join(mcDir, 'resourcepacks');
+    return fs.readdirSync(rpDir, { withFileTypes: true }).filter(e =>
+      (e.isFile() && /\.zip$/i.test(e.name)) ||
+      (e.isDirectory() && fs.existsSync(path.join(rpDir, e.name, 'pack.mcmeta')))
+    ).length;
+  } catch { return 0; }
+}
+
+// Der Original-Launcher speichert bei vielen Profilen einen leeren Namen und
+// benutzt nur den 32-Zeichen-Hash als JSON-Key. Dann lieber Typ/Version als
+// Namen anzeigen statt des kryptischen Keys.
+function launcherProfileName(key, pr){
+  const own = typeof pr.name === 'string' ? pr.name.trim() : '';
+  if (own) return own;
+  const type = String(pr.type || '').toLowerCase();
+  const lv = String(pr.lastVersionId || pr.version || '').toLowerCase();
+  if (type === 'latest-release' || lv === 'latest-release' || lv === 'release' || lv === 'latest') return 'Latest Release';
+  if (type === 'latest-snapshot' || lv === 'latest-snapshot' || lv === 'snapshot') return 'Latest Snapshot';
+  const version = String(pr.lastVersionId || pr.version || '').trim();
+  if (version) return version;
+  if (pr.gameDir) return path.basename(String(pr.gameDir)) || 'Minecraft';
+  return 'Minecraft';
+}
+function launcherProfileTime(value){
+  if (typeof value === 'number' && isFinite(value)) return value;
+  const n = Number(value);
+  if (isFinite(n) && n > 0) return n;
+  const t = Date.parse(String(value || ''));
+  return isFinite(t) ? t : 0;
+}
+
+ipcMain.handle('scan-mc-launcher-instances', async () => {
+  try {
+    const dirs = officialMcDirs();
+    const instances = [];
+    for (const mcDir of dirs) {
+      let data;
+      try { data = JSON.parse(fs.readFileSync(path.join(mcDir, 'launcher_profiles.json'), 'utf8')); }
+      catch { continue; }
+      const entries = (data && data.profiles) || {};
+      for (const [key, pr] of Object.entries(entries)) {
+        if (!pr || typeof pr !== 'object') continue;
+        const rawVersion = String(pr.lastVersionId || pr.version || '');
+        // Leer = neueste Release (so wie das Standardprofil des Launchers),
+        // __latest_snapshot__ = neueste Snapshot. Alles andere ist eine konkrete
+        // Versions-ID und wird unveraendert uebernommen.
+        let version = rawVersion;
+        if (/^latest[-_]?release$/i.test(rawVersion) || /^release$/i.test(rawVersion) || /^latest$/i.test(rawVersion)) version = '';
+        else if (/^latest[-_]?snapshot$/i.test(rawVersion) || /^snapshot$/i.test(rawVersion)) version = '__latest_snapshot__';
+        let gameDir = mcDir;
+        if (pr.gameDir && typeof pr.gameDir === 'string') {
+          const gd = path.isAbsolute(pr.gameDir) ? pr.gameDir : path.resolve(mcDir, pr.gameDir);
+          if (fs.existsSync(gd)) gameDir = gd;
+        }
+        // Loader aus der Versions-ID bzw. den installierten Jars erraten.
+        let loader = 'vanilla';
+        const vlow = rawVersion.toLowerCase();
+        if (/quilt/.test(vlow)) loader = 'quilt';
+        else if (/fabric/.test(vlow)) loader = 'fabric';
+        else if (/neoforge/.test(vlow)) loader = 'neoforge';
+        else if (/forge/.test(vlow)) loader = 'forge';
+        else {
+          try {
+            const jarNames = fs.readdirSync(path.join(gameDir, 'mods')).filter(f => /\.jar$/i.test(f)).join(' ').toLowerCase();
+            if (/quilt/.test(jarNames)) loader = 'quilt';
+            else if (/fabric/.test(jarNames)) loader = 'fabric';
+            else if (/neoforge/.test(jarNames)) loader = 'neoforge';
+            else if (/forge/.test(jarNames)) loader = 'forge';
+          } catch {}
+        }
+        const hasOptions = fs.existsSync(path.join(gameDir, 'options.txt')) || fs.existsSync(path.join(mcDir, 'options.txt'));
+        const hasServers = fs.existsSync(path.join(gameDir, 'servers.dat')) || fs.existsSync(path.join(mcDir, 'servers.dat'));
+        instances.push({
+          key: String(key),
+          name: launcherProfileName(key, pr),
+          version,
+          rawVersion,
+          loader,
+          mcDir,
+          gameDir,
+          customGameDir: path.resolve(gameDir) !== path.resolve(mcDir),
+          worlds: countWorlds(gameDir) || countWorlds(mcDir),
+          packs: countResourcePacks(gameDir, mcDir),
+          hasOptions,
+          hasServers,
+          hasConfig: fs.existsSync(path.join(gameDir, 'config')),
+          lastUsed: launcherProfileTime(pr.lastUsed)
+        });
+      }
+    }
+    instances.sort((a, b) => (b.lastUsed || 0) - (a.lastUsed || 0));
+    return { ok: true, instances, dirs };
+  } catch (e) {
+    return { ok: false, error: e.message || String(e), instances: [], dirs: [] };
+  }
+});
+
+// Kopiert die Daten der ausgewaehlten Launcher-Instanzen in eigene Crux-Profile.
+// Einstellungen und Serverliste liegen zusaetzlich in der Settings-Group, damit
+// sie von allen Profilen dieser Gruppe genutzt werden koennen.
+ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
+  try {
+    const list = Array.isArray(selected) ? selected : [];
+    if (!list.length) return { ok: false, error: 'Keine Instanz ausgewaehlt.' };
+    const profiles = await load(P.profiles, []);
+    const created = [];
+
+    const copyFileTo = async (src, targets) => {
+      if (!src || !fs.existsSync(src)) return false;
+      for (const dst of targets) {
+        try {
+          await fs.promises.mkdir(path.dirname(dst), { recursive: true });
+          await fs.promises.copyFile(src, dst);
+        } catch {}
+      }
+      return true;
+    };
+
+    // Registriert mitkopierte Packs im Profil, damit sie beim Start auch
+    // tatsaechlich aktiviert werden (die Dateien liegen danach im Instance-Ordner).
+    const packEntries = async (dir, folder, kind) => {
+      const out = [];
+      try {
+        for (const en of await fs.promises.readdir(dir, { withFileTypes: true })) {
+          const full = path.join(dir, en.name);
+          const isZip = en.isFile() && /\.zip$/i.test(en.name);
+          const isFolderPack = en.isDirectory() && fs.existsSync(path.join(full, kind === 'shaderpacks' ? 'shaders' : 'pack.mcmeta'));
+          if (!isZip && !isFolderPack) continue;
+          out.push({
+            name: en.name,
+            path: folder + '/' + en.name,
+            source: 'Minecraft Launcher',
+            diskPath: full,
+            enabled: true,
+            mcVersion: 'all'
+          });
+        }
+      } catch {}
+      return out;
+    };
+
+    for (const item of list) {
+      const key = String(item.key || '');
+      const mcDir = String(item.mcDir || '');
+      let gameDir = String(item.gameDir || mcDir);
+      if (!fs.existsSync(gameDir)) gameDir = mcDir;
+      let name = String(item.name || key || 'Minecraft').slice(0, 120);
+      if (profiles.some(p => p && p.name === name)) {
+        let n = 2;
+        while (profiles.some(p => p && p.name === name + ' (' + n + ')')) n++;
+        name = name + ' (' + n + ')';
+      }
+      const id = 'mc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+      // Nach aussen "default" (gleiche Kartenoptik wie alle anderen Profile),
+      // intern aber eine eigene Gruppe fuer options.txt/Server/Welten.
+      const dataGroup = 'mc-' + (sanitizeFileName(name) || id);
+      const gDir = path.join(P.groups, groupDirName(dataGroup));
+      const dest = instanceDir(id);
+      await fs.promises.mkdir(dest, { recursive: true });
+
+      // Einstellungen: options.txt (Keybinds/Video/...) plus optionale
+      // OptiFine-/Shader-Optionen. Serverliste: servers.dat. Beides liegt im
+      // Custom-GameDir, falls vorhanden, sonst im .minecraft-Hauptordner.
+      const srcOptions = fs.existsSync(path.join(gameDir, 'options.txt')) ? path.join(gameDir, 'options.txt') : path.join(mcDir, 'options.txt');
+      const srcServers = fs.existsSync(path.join(gameDir, 'servers.dat')) ? path.join(gameDir, 'servers.dat') : path.join(mcDir, 'servers.dat');
+      const settings = await copyFileTo(srcOptions, [path.join(gDir, 'options.txt'), path.join(dest, 'options.txt')]);
+      const servers = await copyFileTo(srcServers, [path.join(gDir, 'servers.dat'), path.join(dest, 'servers.dat')]);
+      for (const extra of ['optionsof.txt', 'optionsshaders.txt']) {
+        const src = fs.existsSync(path.join(gameDir, extra)) ? path.join(gameDir, extra) : path.join(mcDir, extra);
+        await copyFileTo(src, [path.join(gDir, extra), path.join(dest, extra)]);
+      }
+
+      let worlds = 0;
+      const savesRoot = fs.existsSync(path.join(gameDir, 'saves')) ? path.join(gameDir, 'saves') : path.join(mcDir, 'saves');
+      if (fs.existsSync(savesRoot)) {
+        for (const en of await fs.promises.readdir(savesRoot, { withFileTypes: true })) {
+          if (!en.isDirectory()) continue;
+          const src = path.join(savesRoot, en.name);
+          if (!fs.existsSync(path.join(src, 'level.dat'))) continue;
+          for (const dst of [path.join(dest, 'saves', en.name), path.join(gDir, 'saves', en.name)]) {
+            try { await fs.promises.mkdir(path.dirname(dst), { recursive: true }); await fs.promises.cp(src, dst, { recursive: true }); } catch {}
+          }
+          worlds++;
+        }
+      }
+      // Weitere spielrelevante Ordner mitnehmen. Packs werden zusaetzlich im
+      // Profil registriert, damit der Launcher sie beim Start aktiviert.
+      const importedPacks = { datapacks: [], resourcePacks: [], shaderPacks: [] };
+      for (const folder of ['config', 'resourcepacks', 'datapacks', 'shaderpacks']) {
+        const src = fs.existsSync(path.join(gameDir, folder)) ? path.join(gameDir, folder) : path.join(mcDir, folder);
+        if (!fs.existsSync(src)) continue;
+        const target = path.join(dest, folder);
+        try { await fs.promises.cp(src, target, { recursive: true }); } catch {}
+        const key = folder === 'resourcepacks' ? 'resourcePacks' : folder === 'shaderpacks' ? 'shaderPacks' : folder;
+        if (importedPacks[key]) importedPacks[key] = await packEntries(target, folder, folder);
+      }
+      const packCount = importedPacks.resourcePacks.length;
+
+      const prof = {
+        id, name, group:'default', dataGroup,
+        // '' bleibt '' (= neueste Release), '__latest_snapshot__' bleibt erhalten.
+        mcVersion: item.version != null ? String(item.version) : '',
+        modLoader: String(item.loader || 'vanilla'),
+        mods: [],
+        datapacks: importedPacks.datapacks,
+        resourcePacks: importedPacks.resourcePacks,
+        shaderPacks: importedPacks.shaderPacks,
+        lastUsed: Date.now(),
+        isMcLauncherImport: true,
+        mcLauncherKey: key,
+        mcLauncherDir: gameDir,
+        importedWorlds: worlds,
+        importedSettings: settings,
+        importedServers: servers,
+        importedPacks: packCount
+      };
+      profiles.push(prof);
+      created.push({ profile: prof, worlds, settings, servers, packs: packCount });
+    }
+    await save(P.profiles, profiles);
+    return { ok: true, created };
+  } catch (e) {
+    return { ok: false, error: e.message || String(e) };
+  }
+});
+
 // ── Skin List ──────────────────────────────────────────────────────────────────
 const skinListPath = path.join(base, 'skin-list.json');
 ipcMain.handle('load-skin-list', async () => load(skinListPath, []));
@@ -1843,6 +2510,9 @@ ipcMain.on('save-friends', async (e, d) => save(friendsPath, d));
 
 let myPresence = null;
 let presenceTimer = null;
+// Letzter Owner-Viewer-Eintrag, damit er beim Verlassen des Tabs/Accountwechsel
+// zuverlaessig auf offline gesetzt werden kann.
+let lastOwnerViewerUuid = '';
 
 // Generic HTTP(S) request helper (returns { status, data, headers })
 function genericHttp(url, { method = 'GET', headers = {}, body = null, timeout = 8000 } = {}) {
@@ -1864,13 +2534,47 @@ async function postPresence() {
   try {
     const settings = await load(P.settings, {});
     const srv = String(settings.presenceServer || '').trim();
-    if (!srv || !myPresence || !myPresence.uuid) return;
+    if (!srv || !myPresence) return;
     const url = srv.replace(/\/+$/, '') + '/v1/status';
-    await genericHttp(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(myPresence)
-    });
+    if (myPresence.uuid) {
+      await genericHttp(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(myPresence)
+      });
+    }
+    // Eigener Presence-Eintrag pro Geraet und Account: so sieht der Owner
+    // live, wer den Tab gerade offen hat. Beim Accountwechsel muss der alte
+    // Eintrag sofort offline gesetzt werden, sonst bleibt er bis zum Timeout
+    // als Zuschauer haengen.
+    const prevUuid = normUuidArg(lastOwnerViewerUuid);
+    const viewerUuid = normUuidArg(myPresence.viewerUuid || prevUuid);
+    const viewing = !!myPresence.ownerView && !!myPresence.uuid;
+    if (prevUuid && prevUuid !== viewerUuid) {
+      await genericHttp(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uuid: prevUuid, online: false, inGame: false, instanceName: null })
+      });
+    }
+    if (viewerUuid) {
+      const viewerBody = {
+        uuid: viewerUuid,
+        username: String(myPresence.deviceName || myPresence.username || 'Owner'),
+        // Das Geraet ist online, sobald der Account angemeldet ist. Ob der
+        // Owner-Tab offen ist, steht im Marker (instanceName).
+        online: !!myPresence.online,
+        inGame: false,
+        server: String(myPresence.deviceId || ''),
+        instanceName: viewing ? String(myPresence.instanceName || '') : null
+      };
+      const res = await genericHttp(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(viewerBody)
+      });
+      if (res.status === 200) lastOwnerViewerUuid = viewing ? viewerUuid : '';
+    }
   } catch {}
 }
 
@@ -1887,9 +2591,13 @@ ipcMain.on('presence-update', (e, data) => {
     online: !!data.online,
     inGame: !!data.inGame,
     server: data.server || null,
-    instanceName: data.instanceName || null
+    instanceName: data.instanceName || null,
+    ownerView: !!data.ownerView,
+    deviceId: String(data.deviceId || ''),
+    deviceName: String(data.deviceName || ''),
+    viewerUuid: normUuidArg(data && data.viewerUuid)
   };
-  if (myPresence.uuid) schedulePresence();
+  if (myPresence.uuid || lastOwnerViewerUuid) schedulePresence();
 });
 
 ipcMain.handle('presence-fetch', async (e, uuids) => {
@@ -2002,6 +2710,106 @@ async function loginServerUrl() {
   return v || DEFAULT_PRESENCE_SERVER;
 }
 
+// ── Owner: Geraete-Tokens ─────────────────────────────────────────────────────
+// Nur der Hash des Tokens liegt auf dem Server; das Token selbst bleibt auf
+// dem Geraet. Owner-Befehle werden in main.js gegen diesen Hash geprueft,
+// damit ein Eingriff im Renderer (DevTools/IPC) nicht ausreicht.
+const OWNER_DEVICE_MARKER = '__owner_device__';
+const OWNER_DEVICE_REQ_MARKER = '__owner_device_req__';
+function ownerHash(s) { return crypto.createHash('sha256').update(String(s || '')).digest('hex'); }
+function ownerTokenKey(accountKey, deviceId) { return 'ot:' + accountKey + '|' + deviceId; }
+function ownerReqKey(accountKey, deviceId) { return 'or:' + accountKey + '|' + deviceId; }
+function parseOwnerScopedKey(key, prefix) {
+  if (!key || String(key).indexOf(prefix) !== 0) return null;
+  const rest = String(key).slice(prefix.length);
+  const i = rest.indexOf('|');
+  if (i < 0) return null;
+  return { accountKey: rest.slice(0, i), deviceId: rest.slice(i + 1) };
+}
+function isOwnerTokenRecord(b) {
+  return !!(b && Array.isArray(b.disabled) && b.disabled.includes(OWNER_DEVICE_MARKER));
+}
+function isOwnerDeviceRequest(b) {
+  return !!(b && Array.isArray(b.disabled) && b.disabled.includes(OWNER_DEVICE_REQ_MARKER));
+}
+function ownerViewerUuid(uuid, name, deviceId) {
+  const seed = String(uuid || name || '_onlysams').replace(/-/g, '').toLowerCase() + '|' + String(deviceId || '');
+  return 'ov_' + ownerHash(seed).slice(0, 32);
+}
+async function fetchOwnerBans(srv) {
+  try {
+    const res = await genericHttp(srv + '/v1/bans', {});
+    if (res.status !== 200) return [];
+    const j = JSON.parse(res.data);
+    return Array.isArray(j.bans) ? j.bans : [];
+  } catch { return []; }
+}
+async function postOwnerRecord(srv, record) {
+  const res = await genericHttp(srv + '/v1/bans', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(record)
+  });
+  return res.status === 200;
+}
+async function deleteOwnerRecord(srv, key) {
+  try {
+    const res = await genericHttp(srv + '/v1/bans/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key })
+    });
+    return res.status === 200;
+  } catch { return false; }
+}
+async function ownerDeviceOnlineMap(srv, records) {
+  const out = {};
+  const uuids = [];
+  records.forEach(r => {
+    const p = parseOwnerScopedKey(r.key, 'ot:');
+    if (!p || !p.deviceId) return;
+    uuids.push(ownerViewerUuid(r.uuid, r.name, p.deviceId));
+  });
+  if (!uuids.length) return out;
+  try {
+    const res = await genericHttp(srv + '/v1/status?friends=' + uuids.map(encodeURIComponent).join(','), {});
+    if (res.status !== 200) return out;
+    const statuses = (JSON.parse(res.data) || {}).friends || {};
+    records.forEach(r => {
+      const p = parseOwnerScopedKey(r.key, 'ot:');
+      if (!p) return;
+      const st = statuses[ownerViewerUuid(r.uuid, r.name, p.deviceId)];
+      out[p.deviceId] = !!(st && st.online && Date.now() - Number(st.lastSeen || 0) <= 120000);
+    });
+  } catch {}
+  return out;
+}
+async function ownerAccountState(srv, accountKey, token, deviceId) {
+  const list = await fetchOwnerBans(srv);
+  const tokens = list.filter(b => isOwnerTokenRecord(b) &&
+    (parseOwnerScopedKey(b.key, 'ot:') || {}).accountKey === accountKey);
+  const requests = list.filter(b => isOwnerDeviceRequest(b) &&
+    (parseOwnerScopedKey(b.key, 'or:') || {}).accountKey === accountKey);
+  const own = tokens.find(b => b.key === ownerTokenKey(accountKey, deviceId));
+  const approved = !!(own && own.reason === ownerHash(token) && !(own.end && own.end <= Date.now()));
+  const online = await ownerDeviceOnlineMap(srv, tokens);
+  const oldest = tokens.slice().sort((a, b) => (a.start || 0) - (b.start || 0))
+    .find(r => online[(parseOwnerScopedKey(r.key, 'ot:') || {}).deviceId]);
+  return {
+    list, tokens, requests, approved, online,
+    hasAny: tokens.length > 0,
+    oldestOnlineDeviceId: oldest ? (parseOwnerScopedKey(oldest.key, 'ot:') || {}).deviceId : ''
+  };
+}
+async function ownerCommandAllowed(accountKey, deviceId, token) {
+  if (!accountKey || !deviceId || !token) return false;
+  const srv = await loginServerUrl();
+  const state = await ownerAccountState(srv, accountKey, token, deviceId);
+  if (state.approved) return true;
+  // Erstes Geraet eines Accounts darf sich selbst registrieren.
+  return !state.hasAny;
+}
+
 ipcMain.handle('logins-post', async (e, data) => {
   try {
     const srv = await loginServerUrl();
@@ -2037,6 +2845,9 @@ ipcMain.handle('logins-fetch', async () => {
 
 ipcMain.handle('bans-post', async (e, data) => {
   try {
+    if (!(await ownerCommandAllowed(data && data.ownerAccountKey, data && data.ownerDeviceId, data && data.ownerToken))) {
+      return { ok: false, error: 'unauthorized' };
+    }
     const srv = await loginServerUrl();
     if (!srv) return { ok: false, error: 'no-server' };
     const res = await genericHttp(srv + '/v1/bans', {
@@ -2060,6 +2871,9 @@ ipcMain.handle('bans-post', async (e, data) => {
 
 ipcMain.handle('bans-remove', async (e, data) => {
   try {
+    if (!(await ownerCommandAllowed(data && data.ownerAccountKey, data && data.ownerDeviceId, data && data.ownerToken))) {
+      return { ok: false, error: 'unauthorized' };
+    }
     const srv = await loginServerUrl();
     if (!srv) return { ok: false, error: 'no-server' };
     const res = await genericHttp(srv + '/v1/bans/remove', {
@@ -2081,6 +2895,128 @@ ipcMain.handle('bans-fetch', async () => {
     try { const j = JSON.parse(res.data); return Array.isArray(j.bans) ? j : null; }
     catch { return null; }
   } catch { return null; }
+});
+
+// Status eines Geraet-Tokens + aeltestes gerade onlinees Geraet
+ipcMain.handle('owner-token-state', async (e, data) => {
+  try {
+    const srv = await loginServerUrl();
+    if (!srv) return { ok: false, error: 'no-server' };
+    const st = await ownerAccountState(srv,
+      String((data && data.accountKey) || ''),
+      String((data && data.token) || ''),
+      String((data && data.deviceId) || ''));
+    return {
+      ok: true,
+      approved: st.approved,
+      hasAny: st.hasAny,
+      oldestOnlineDeviceId: st.oldestOnlineDeviceId,
+      tokens: st.tokens.length,
+      requests: st.requests.map(r => ({
+        key: r.key,
+        deviceId: (parseOwnerScopedKey(r.key, 'or:') || {}).deviceId || '',
+        deviceName: String(r.name || ''),
+        tokenHash: String(r.reason || ''),
+        uuid: String(r.uuid || ''),
+        start: Number(r.start || 0)
+      }))
+    };
+  } catch { return { ok: false, error: 'network' }; }
+});
+
+// Erstes Geraet eines Accounts registrieren (nur solange noch keins da ist)
+ipcMain.handle('owner-token-bootstrap', async (e, data) => {
+  try {
+    const srv = await loginServerUrl();
+    if (!srv) return { ok: false, error: 'no-server' };
+    const accountKey = String((data && data.accountKey) || '');
+    const deviceId = String((data && data.deviceId) || '');
+    const token = String((data && data.token) || '');
+    if (!accountKey || !deviceId || !token) return { ok: false, error: 'invalid' };
+    const st = await ownerAccountState(srv, accountKey, token, deviceId);
+    if (st.hasAny) return { ok: false, error: 'exists' };
+    const ok = await postOwnerRecord(srv, {
+      key: ownerTokenKey(accountKey, deviceId),
+      uuid: normUuidArg(data && data.uuid),
+      name: String((data && data.deviceName) || ''),
+      reason: ownerHash(token),
+      by: '_onlysams',
+      start: Date.now(),
+      end: null,
+      disabled: [OWNER_DEVICE_MARKER]
+    });
+    return ok ? { ok: true } : { ok: false, error: 'http' };
+  } catch { return { ok: false, error: 'network' }; }
+});
+
+// Neues Geraet beantragt einen Token (nur der Hash geht an den Server)
+ipcMain.handle('owner-device-request', async (e, data) => {
+  try {
+    const srv = await loginServerUrl();
+    if (!srv) return { ok: false, error: 'no-server' };
+    const accountKey = String((data && data.accountKey) || '');
+    const deviceId = String((data && data.deviceId) || '');
+    const token = String((data && data.token) || '');
+    if (!accountKey || !deviceId || !token) return { ok: false, error: 'invalid' };
+    const st = await ownerAccountState(srv, accountKey, token, deviceId);
+    if (st.approved) return { ok: true, approved: true };
+    const ok = await postOwnerRecord(srv, {
+      key: ownerReqKey(accountKey, deviceId),
+      uuid: normUuidArg(data && data.uuid),
+      name: String((data && data.deviceName) || ''),
+      reason: ownerHash(token),
+      by: String((data && data.deviceName) || ''),
+      start: Date.now(),
+      end: null,
+      disabled: [OWNER_DEVICE_REQ_MARKER]
+    });
+    return ok ? { ok: true, approved: false } : { ok: false, error: 'http' };
+  } catch { return { ok: false, error: 'network' }; }
+});
+
+async function ownerApprovalGuard(data) {
+  const srv = await loginServerUrl();
+  const accountKey = String((data && data.accountKey) || '');
+  const approverDeviceId = String((data && data.approverDeviceId) || '');
+  const approverToken = String((data && data.approverToken) || '');
+  const st = await ownerAccountState(srv, accountKey, approverToken, approverDeviceId);
+  if (!st.approved) return { error: 'unauthorized' };
+  if (st.oldestOnlineDeviceId !== approverDeviceId) return { error: 'not-oldest' };
+  return { srv };
+}
+
+ipcMain.handle('owner-device-approve', async (e, data) => {
+  try {
+    const guard = await ownerApprovalGuard(data);
+    if (guard.error) return { ok: false, error: guard.error };
+    const accountKey = String(data.accountKey || '');
+    const deviceId = String(data.deviceId || '');
+    const st = await fetchOwnerBans(guard.srv);
+    const req = st.find(b => b.key === ownerReqKey(accountKey, deviceId) && isOwnerDeviceRequest(b));
+    if (!req || !req.reason) return { ok: false, error: 'request-gone' };
+    const ok = await postOwnerRecord(guard.srv, {
+      key: ownerTokenKey(accountKey, deviceId),
+      uuid: normUuidArg(req.uuid),
+      name: String(req.name || ''),
+      reason: String(req.reason),
+      by: '_onlysams',
+      start: Date.now(),
+      end: null,
+      disabled: [OWNER_DEVICE_MARKER]
+    });
+    if (!ok) return { ok: false, error: 'http' };
+    await deleteOwnerRecord(guard.srv, req.key);
+    return { ok: true };
+  } catch { return { ok: false, error: 'network' }; }
+});
+
+ipcMain.handle('owner-device-reject', async (e, data) => {
+  try {
+    const guard = await ownerApprovalGuard(data);
+    if (guard.error) return { ok: false, error: guard.error };
+    const ok = await deleteOwnerRecord(guard.srv, ownerReqKey(String(data.accountKey || ''), String(data.deviceId || '')));
+    return ok ? { ok: true } : { ok: false, error: 'http' };
+  } catch { return { ok: false, error: 'network' }; }
 });
 
 // ── Chat (friends messaging) ────────────────────────────────────────────────
@@ -2333,222 +3269,6 @@ Format your response clearly with headings.`;
   }
 });
 
-// ── AI: local Ollama first (free/unlimited), Anthropic as fallback ────────────
-const AI_SYSTEM_PROMPT = [
-  'You are a Minecraft Java Edition modpack assistant inside the Crux Client launcher.',
-  'Recommend a realistic setup: loader (fabric, quilt, forge or neoforge), a stable Minecraft version and well-known mods that really exist on Modrinth.',
-  'Answer briefly in friendly Markdown. Finish with exactly ONE fenced json code block and nothing after it, in this shape:',
-  '```json',
-  '{"name":"...","mcVersion":"1.21.1","loader":"fabric","mods":["Fabric API","JEI"]}',
-  '```',
-  'Use 3 to 12 real Modrinth mod names.'
-].join('\n');
-
-function preferredOllamaModel(models, budgetBytes){
-  // Nur Modelle waehlen, die in 1/4 des RAM passen. Wenn keines passt, das kleinste.
-  const fits = models.filter(m => Number(m.size || 0) <= budgetBytes);
-  const pool = fits.length ? fits : models;
-  const preferred = ['llama3.2','llama3.1','llama3','qwen2.5','qwen2','mistral','gemma2','gemma','phi4','deepseek-r1'];
-  const matches = pool.filter(x => preferred.some(p => String(x.name).toLowerCase().includes(p)));
-  // Groesstes passendes Modell = meiste Qualitaet innerhalb des RAM-Budgets.
-  const sorted = (matches.length ? matches : pool).sort((a, b) => Number(b.size || 0) - Number(a.size || 0));
-  return sorted[0] ? sorted[0].name : '';
-}
-async function detectOllama(){
-  const budgetBytes = Math.floor(os.totalmem() * 0.25);
-  try {
-    const res = await genericHttp('http://127.0.0.1:11434/api/tags', { timeout: 1500 });
-    if (res.status >= 200 && res.status < 300){
-      const d = JSON.parse(res.data);
-      const models = (Array.isArray(d.models) ? d.models : [])
-        .filter(m => m && m.name)
-        .map(m => ({ name: m.name, size: Number(m.size || 0), family: (m.details && m.details.family) || '' }));
-      return {
-        available: true,
-        models,
-        names: models.map(m => m.name),
-        recommended: preferredOllamaModel(models, budgetBytes),
-        budgetBytes,
-        totalBytes: os.totalmem()
-      };
-    }
-  } catch {}
-  return { available: false, models: [], names: [], recommended: '', budgetBytes, totalBytes: os.totalmem() };
-}
-
-// Ollama nur laufen lassen, solange der AI-Dialog offen ist.
-let ollamaChild = null;
-async function findOllamaExe(){
-  const candidates = [
-    path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Ollama', 'ollama.exe'),
-    'C:\\Program Files\\Ollama\\ollama.exe',
-    path.join(process.env.USERPROFILE || '', 'AppData', 'Local', 'Programs', 'Ollama', 'ollama.exe')
-  ];
-  for (const p of candidates){ if (p && fs.existsSync(p)) return p; }
-  try {
-    const found = await new Promise((resolve) => {
-      execFile('where', ['ollama'], { windowsHide: true }, (err, stdout) => resolve(err ? '' : String(stdout).split(/\r?\n/)[0].trim()));
-    });
-    if (found && fs.existsSync(found)) return found;
-  } catch {}
-  return '';
-}
-async function startOllama(){
-  if ((await detectOllama()).available) return { started: false, alreadyRunning: true };
-  const exe = await findOllamaExe();
-  if (!exe) return { started: false, error: 'OLLAMA_NOT_INSTALLED' };
-  try {
-    ollamaChild = spawn(exe, ['serve'], {
-      detached: true, windowsHide: true, stdio: 'ignore',
-      env: { ...process.env, OLLAMA_HOST: '127.0.0.1:11434' }
-    });
-    ollamaChild.on('error', () => {});
-    for (let i = 0; i < 40; i++){
-      await new Promise(r => setTimeout(r, 250));
-      const info = await detectOllama();
-      if (info.available) return { started: true, info };
-      if (ollamaChild && ollamaChild.exitCode !== null) break;
-    }
-    return { started: false, error: 'OLLAMA_START_TIMEOUT' };
-  } catch (e){
-    return { started: false, error: e.message };
-  }
-}
-// Modelle entladen, auch wenn Ollama schon vor dem Launcher lief (Tray-App).
-// keep_alive:0 ist der offizielle Weg, den RAM sofort freizugeben, ohne den
-// Server anderer Programme zu beenden.
-async function unloadOllamaModels(){
-  const unloaded = [];
-  try {
-    const res = await genericHttp('http://127.0.0.1:11434/api/ps', { timeout: 2000 });
-    if (res.status >= 200 && res.status < 300){
-      let data = {};
-      try { data = JSON.parse(res.data); } catch {}
-      const names = (Array.isArray(data.models) ? data.models : []).map(m => m.name).filter(Boolean);
-      for (const model of names){
-        try {
-          await genericHttp('http://127.0.0.1:11434/api/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model, keep_alive: 0 }),
-            timeout: 5000
-          });
-          unloaded.push(model);
-        } catch {}
-      }
-    }
-  } catch {}
-  return unloaded;
-}
-async function stopOllama(){
-  const unloaded = await unloadOllamaModels();
-  if (!ollamaChild) return { stopped: false, unloaded };
-  const pid = ollamaChild.pid;
-  ollamaChild = null;
-  if (pid){
-    try { execSync(`taskkill /PID ${pid} /F /T`, { windowsHide: true, stdio: 'ignore' }); }
-    catch { try { process.kill(pid); } catch {} }
-  }
-  return { stopped: true, unloaded };
-}
-app.on('before-quit', () => { try { stopOllama(); } catch {} });
-
-ipcMain.handle('ai-ollama-start', async () => startOllama());
-ipcMain.handle('ai-ollama-stop',  async () => stopOllama());
-ipcMain.handle('ai-backend', async () => {
-  const ollama = await detectOllama();
-  const settings = await load(P.settings, {});
-  return { ollama, hasKey: !!String(settings.anthropicApiKey || '').trim() };
-});
-
-ipcMain.handle('ai-modpack-chat', async (e, messages) => {
-  try {
-    const settings = await load(P.settings, {});
-    const history = (Array.isArray(messages) ? messages : [])
-      .slice(-12)
-      .map(m => ({
-        role: m && m.role === 'assistant' ? 'assistant' : 'user',
-        content: String((m && m.content) || '').slice(0, 8000)
-      }))
-      .filter(m => m.content.trim());
-    if (!history.length) return { ok: false, error: 'EMPTY_MESSAGE' };
-
-    // 1) Ollama: no key, no costs, no limits beyond the user's own hardware.
-    let ollamaError = '';
-    const ollama = await detectOllama();
-    if (ollama.available && ollama.models.length){
-      const saved = String(settings.ollamaModel || '').trim();
-      const savedModel = ollama.models.find(m => m.name === saved);
-      const fits = savedModel && (savedModel.size <= ollama.budgetBytes || savedModel.size === 0);
-      const model = (fits && saved) || ollama.recommended;
-      if (model){
-        try {
-          const res = await genericHttp('http://127.0.0.1:11434/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              model, stream: false,
-              messages: [{ role: 'system', content: AI_SYSTEM_PROMPT }, ...history],
-              options: { num_ctx: 2048 },
-              keep_alive: '5m'
-            }),
-            timeout: 180000
-          });
-          if (res.status >= 200 && res.status < 300){
-            let data = {};
-            try { data = JSON.parse(res.data); } catch {}
-            const text = String((data.message || {}).content || '').trim();
-            if (text) return { ok: true, text, backend: 'ollama', model };
-            ollamaError = 'EMPTY_RESPONSE';
-          } else {
-            let detail = '';
-            try { detail = (JSON.parse(res.data).error || {}).message || ''; } catch {}
-            ollamaError = 'Ollama HTTP ' + res.status + (detail ? ': ' + detail : '');
-          }
-        } catch (err){
-          ollamaError = 'Ollama: ' + err.message;
-        }
-      }
-    }
-
-    // 2) Fallback: Anthropic with the existing API key.
-    const apiKey = String(settings.anthropicApiKey || '').trim();
-    if (!apiKey) return { ok: false, error: ollamaError || 'NO_API_KEY' };
-
-    const res = await genericHttp('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 3000,
-        system: AI_SYSTEM_PROMPT,
-        messages: history
-      }),
-      timeout: 60000
-    });
-
-    if (res.status >= 200 && res.status < 300) {
-      let data = {};
-      try { data = JSON.parse(res.data); } catch {}
-      const text = (Array.isArray(data.content) ? data.content : [])
-        .filter(c => c && c.type === 'text')
-        .map(c => c.text)
-        .join('\n')
-        .trim();
-      return text ? { ok: true, text, backend: 'anthropic', model: 'claude-3-5-sonnet-20241022' } : { ok: false, error: 'EMPTY_RESPONSE' };
-    }
-    let detail = '';
-    try { detail = (JSON.parse(res.data).error || {}).message || ''; } catch {}
-    return { ok: false, error: 'HTTP ' + res.status + (detail ? ': ' + detail : '') };
-  } catch (err) {
-    return { ok: false, error: err.message };
-  }
-});
-
 let mcVersionList = [];
 
 // ── MC Versions ────────────────────────────────────────────────────────────────
@@ -2585,12 +3305,16 @@ async function fetchVersionsWithCache() {
 
 ipcMain.handle('get-versions', async () => {
   try {
-    return await fetchVersionsWithCache();
+    const versions = await fetchVersionsWithCache();
+    // „Latest"-Profile haben erst jetzt eine konkrete Version.
+    scheduleAutoPrecache(3000);
+    return versions;
   } catch(e) {
     // If network fails, try stale cache
     try {
       const cached = JSON.parse(await fs.promises.readFile(versionCachePath, 'utf8'));
       mcVersionList = cached;
+      scheduleAutoPrecache(3000);
       return cached;
     } catch { throw e; }
   }
@@ -2731,6 +3455,203 @@ async function deployCruxMod(modsDir, crux) {
     }
   } catch {}
   return true;
+}
+
+// ── Auto-Fix: kaputte Mixin-Mods vor dem Start erkennen ────────────────────────
+// Beispiel bringbacknightmares: die mixins.json haengt das Package doppelt an
+// ("com.x.mixin.com.x.mixin.MixinTitleScreen"), wodurch der whole Launch an
+// preLaunch scheitert. Solche JARs werden deaktiviert statt abstuerzen zu lassen.
+function jarMatchesMod(file, mod){
+  if (!mod || !file) return false;
+  const base = String(file).replace(/\.jar$/i, '');
+  if (String(mod.fileName || '') === file) return true;
+  if (mod.modrinthId && base.startsWith(String(mod.modrinthId) + '-')) return true;
+  if (mod.curseforgeId && base.startsWith(`cf-${mod.curseforgeId}-`)) return true;
+  const byName = String(mod.name || '').replace(/[^a-zA-Z0-9._-]/g, '_');
+  return !!byName && base === byName;
+}
+
+// Mods, die zur Kombination MC/Loader nachweislich crashen, werden gemerkt und
+// beim spaeteren Generieren gar nicht erst in den Plan aufgenommen.
+async function rememberBrokenMods(version, loader, ids, reason){
+  const list = await load(P.broken, []);
+  const clean = [...new Set((ids || []).map(x => String(x || '').trim().toLowerCase()).filter(Boolean))];
+  if (!clean.length) return;
+  let entry = list.find(x => x && x.v === version && x.l === loader);
+  if (!entry) { entry = { v: version, l: loader, ids: [] }; list.push(entry); }
+  for (const id of clean) if (!entry.ids.includes(id)) entry.ids.push(id);
+  entry.reason = String(reason || '').slice(0, 300);
+  entry.at = Date.now();
+  await save(P.broken, list);
+}
+
+function normalizeBrokenId(v){
+  return String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+async function brokenIdsFor(version, loader){
+  const list = await load(P.broken, []);
+  const keys = new Set();
+  for (const entry of list) {
+    if (!entry || entry.v !== version || entry.l !== loader) continue;
+    for (const id of (Array.isArray(entry.ids) ? entry.ids : [])) {
+      const key = normalizeBrokenId(id);
+      if (key) keys.add(key);
+    }
+  }
+  return keys;
+}
+function modHasBrokenId(mod, keys){
+  if (!mod || !keys || !keys.size) return false;
+  return [mod.name, mod.title, mod.modrinthId, mod.curseforgeId, mod.curseforgeSlug]
+    .some(v => { const key = normalizeBrokenId(v); return !!key && keys.has(key); });
+}
+
+async function findJarByFabricModId(modsDir, modId){
+  let Zip;
+  try { Zip = getJszip(); } catch { return null; }
+  let files;
+  try { files = fs.readdirSync(modsDir).filter(f => /\.jar$/i.test(f)); } catch { return null; }
+  const want = String(modId || '').trim().toLowerCase();
+  if (!want) return null;
+  for (const file of files) {
+    try {
+      const zip = await Zip.loadAsync(await fs.promises.readFile(path.join(modsDir, file)));
+      const metaFile = zip.file('fabric.mod.json') || zip.file('META-INF/fabric.mod.json');
+      if (!metaFile) continue;
+      const meta = JSON.parse(await metaFile.async('string'));
+      if (String(meta.id || '').toLowerCase() === want) return file;
+    } catch {}
+  }
+  return null;
+}
+
+// Aus einem echten Crash-Log die mods ziehen, deren Mixin fehlgeschlagen ist.
+// Fabric schreibt z.B. "Mixin [x.mixins.json:Foo from mod distantdread] ... FAILED".
+function extractMixinCrashMods(lines){
+  const found = new Map();
+  for (const raw of (Array.isArray(lines) ? lines : [])) {
+    const s = String(raw || '');
+    if (!/mixin/i.test(s)) continue;
+    let m = s.match(/Mixin apply for mod\s+([A-Za-z0-9_.-]+)\s+failed/i);
+    if (!m) m = s.match(/Mixin\s*\[[^\]]*?\bfrom mod\s+([A-Za-z0-9_.-]+)\][^\n]*\bFAILED\b/i);
+    if (!m && /\bInvalidMixinException\b|\bMixinApplyError\b|\bMixinTransformerError\b/i.test(s)) {
+      m = s.match(/\bfrom mod\s+([A-Za-z0-9_.-]+)/i);
+    }
+    if (!m) continue;
+    const id = m[1].replace(/[)\],.;:]+$/, '');
+    if (id && !found.has(id)) found.set(id, s.slice(0, 300));
+  }
+  return [...found.entries()].map(([id, reason]) => ({ id, reason }));
+}
+
+// Manche Mixin-Fehler stehen nur im crash-report, nicht im stdout.
+async function collectMixinCrashMods(gameDir, logs, since){
+  const fromLogs = extractMixinCrashMods(logs || []);
+  if (fromLogs.length) return fromLogs;
+  try {
+    const dir = path.join(gameDir, 'crash-reports');
+    const reports = fs.readdirSync(dir)
+      .filter(f => f.endsWith('.txt'))
+      .map(f => ({ f, t: fs.statSync(path.join(dir, f)).mtimeMs }))
+      .filter(x => !since || x.t >= since)
+      .sort((a, b) => b.t - a.t)
+      .slice(0, 3);
+    for (const { f } of reports) {
+      const text = await fs.promises.readFile(path.join(dir, f), 'utf8');
+      const found = extractMixinCrashMods(text.split(/\r?\n/));
+      if (found.length) return found;
+    }
+  } catch {}
+  return [];
+}
+
+async function disableCrashModPersistent(modsDir, modId, profileId, profileMods, clientMods, mrpackMods, version, loader, reason){
+  const file = await findJarByFabricModId(modsDir, modId);
+  if (!file) return null;
+  const ids = [modId];
+  for (const m of [...(profileMods || []), ...(clientMods || []), ...(mrpackMods || [])]) {
+    if (!jarMatchesMod(file, m)) continue;
+    if (m.modrinthId) ids.push(String(m.modrinthId));
+    if (m.curseforgeId) ids.push(String(m.curseforgeId));
+    if (m.name) ids.push(String(m.name));
+  }
+  await disableBrokenModPersistent(file, profileId, profileMods, clientMods, mrpackMods);
+  try { await fs.promises.rename(path.join(modsDir, file), path.join(modsDir, file + '.disabled')); } catch {}
+  await rememberBrokenMods(version, loader, ids, reason);
+  return { file, ids: [...new Set(ids.map(x => String(x || '').toLowerCase()).filter(Boolean))] };
+}
+
+async function disableBrokenModPersistent(file, profileId, profileMods, clientMods, mrpackMods){
+  for (const m of [...(profileMods || []), ...(clientMods || []), ...(mrpackMods || [])]) if (jarMatchesMod(file, m)) m.disabled = true;
+  let changedProfile = false;
+  try {
+    const profiles = await load(P.profiles, []);
+    const prof = profiles.find(p => p.id === profileId);
+    for (const key of ['mods','mrpackMods']){
+      if (prof && Array.isArray(prof[key])) for (const m of prof[key]) if (jarMatchesMod(file, m)){ m.disabled = true; changedProfile = true; }
+    }
+    if (changedProfile) await save(P.profiles, profiles);
+  } catch {}
+  let changedClient = false;
+  try {
+    const mods = await load(P.mods, []);
+    for (const m of mods) if (jarMatchesMod(file, m)){ m.disabled = true; changedClient = true; }
+    if (changedClient) await save(P.mods, mods);
+  } catch {}
+  return changedProfile || changedClient;
+}
+
+async function autoFixBrokenMixinMods(modsDir, send, instanceId, profileId, profileMods, clientMods, mrpackMods, version, loader){
+  let Zip;
+  try { Zip = getJszip(); } catch { return []; }
+  let files = [];
+  try { files = fs.readdirSync(modsDir).filter(f => /\.jar$/i.test(f)); } catch { return []; }
+  const fixed = [];
+  for (const file of files){
+    let reason = null;
+    try {
+      const zip = await Zip.loadAsync(await fs.promises.readFile(path.join(modsDir, file)));
+      const configs = Object.keys(zip.files).filter(n => /mixins[^/]*\.json$/i.test(n) && !zip.files[n].dir);
+      for (const cfgName of configs){
+        let cfg = null;
+        try { cfg = JSON.parse(await zip.file(cfgName).async('string')); } catch { continue; }
+        const pkg = String(cfg.package || '').trim();
+        const entries = ['mixins','client','server'].flatMap(k => Array.isArray(cfg[k]) ? cfg[k] : []);
+        for (const raw of entries){
+          if (typeof raw !== 'string' || !raw.trim()) continue;
+          const entry = raw.trim();
+          // Mixin haengt cfg.package IMMER vor - ein bereits qualifizierter Name
+          // fuehrt zum ClassNotFoundException (genau dieser Crash).
+          if (pkg && (entry === pkg || entry.startsWith(pkg + '.'))){
+            reason = 'Mixin-Package doppelt: ' + entry;
+            break;
+          }
+          const rel = entry.replace(/\./g, '/') + '.class';
+          const expected = (pkg ? pkg.replace(/\./g, '/') + '/' : '') + rel;
+          if (!zip.files[expected] && !Object.keys(zip.files).some(p => p.endsWith('/' + rel))){
+            reason = 'Mixin-Klasse fehlt: ' + expected;
+            break;
+          }
+        }
+        if (reason) break;
+      }
+    } catch { continue; }
+    if (!reason) continue;
+    const ids = [file];
+    for (const m of [...(profileMods || []), ...(clientMods || []), ...(mrpackMods || [])]) {
+      if (!jarMatchesMod(file, m)) continue;
+      if (m.modrinthId) ids.push(String(m.modrinthId));
+      if (m.curseforgeId) ids.push(String(m.curseforgeId));
+      if (m.name) ids.push(String(m.name));
+    }
+    await disableBrokenModPersistent(file, profileId, profileMods, clientMods, mrpackMods);
+    try { await fs.promises.rename(path.join(modsDir, file), path.join(modsDir, file + '.disabled')); } catch {}
+    await rememberBrokenMods(version, loader, ids, reason);
+    fixed.push(file);
+    send('instance-log', { instanceId, line:`[AUTO-FIX] ${file} deaktiviert (${reason}). Der Mod wird beim nächsten Start nicht mehr geladen.` });
+  }
+  if (fixed.length) send('launch-progress', { instanceId, percent:47, message:`${fixed.length} defekte Mod(s) automatisch deaktiviert.` });
+  return fixed;
 }
 
 // Fragt die neueste GitHub-Release ab und meldet, ob es eine Mod-JAR für die
@@ -3168,6 +4089,7 @@ try {
 `.trim();
 
 async function launchBedrock(aumid, send, instanceId) {
+  autoPrecache.abort = true; // Spielstart hat Vorrang vor dem Hintergrund-Cache
   const scriptPath = path.join(os.tmpdir(), 'crux-activate-app.ps1');
   try {
     fs.writeFileSync(scriptPath, '\uFEFF' + BEDROCK_ACTIVATE_PS, 'utf8');
@@ -3188,6 +4110,116 @@ async function launchBedrock(aumid, send, instanceId) {
   }
   send('instance-log', { instanceId, line: `[BEDROCK] Activated ${aumid} (pid ${m[1]})` });
   return Number(m[1]);
+}
+
+// ── GPU/renderer history (per PC) ─────────────────────────────────────────────
+// Der Launcher merkt sich pro Rechner, welcher Render-Modus gecrasht ist, und
+// probiert beim nächsten Start zuerst die anderen. Das ist bewusst NICHT in
+// settings.json (die Whitelist würde das Feld verwerfen) und nicht pro Profil.
+const GPU_MODES = [
+  { id:'native',   label:'Native GPU (OpenGL)', software:false, gallium:'' },
+  { id:'zink',     label:'Mesa3D / Zink',       software:true,  gallium:'zink' },
+  { id:'llvmpipe', label:'Mesa3D / llvmpipe',   software:true,  gallium:'llvmpipe' },
+];
+const GPU_CRASH_MEMORY_MS = 30 * 24 * 60 * 60 * 1000; // alte Crashes vergessen
+// hs_err-Dateien nennen den Treiber (AMD/NVIDIA/Intel/Mesa/Vulkan) und die
+// Exception in getrennten Zeilen — beides zusammen gilt als GPU-Crash.
+const GPU_DRIVER_HINT = /(?:atio6axx|amdvlk64|nvoglv64|nvwgf2umx|ig9icd64|opengl32|vulkan-1)\.dll/i;
+
+function gpuModeById(id){
+  return GPU_MODES.find(m => m.id === id) || GPU_MODES[0];
+}
+async function gpuMachineKey(){
+  try {
+    const s = await load(P.settings, {});
+    if (s && s.deviceId) return String(s.deviceId);
+  } catch {}
+  try {
+    const id = fs.readFileSync(DEVICE_ID_FILE, 'utf8').trim();
+    if (id) return id;
+  } catch {}
+  return String(os.hostname() || 'pc') + ':' + String(os.userInfo?.().username || process.env.USERNAME || 'user');
+}
+async function loadGpuHistory(){
+  const all = await load(P.gpuDrivers, {});
+  return all && typeof all === 'object' ? all : {};
+}
+async function gpuModeOrder(){
+  const key = await gpuMachineKey();
+  const all = await loadGpuHistory();
+  const h = all[key] || {};
+  const modes = (h && h.modes) || {};
+  const now = Date.now();
+
+  // Frühere Auto-Fixes haben nur global forceSoftwareGL gesetzt. Das als
+  // "native gecrasht" übernehmen, damit genau dieses PC-Verhalten erhalten bleibt.
+  try {
+    const s = await load(P.settings, {});
+    if (s && s.forceSoftwareGL === true && !modes.native?.lastCrash && h.preferred !== 'zink') {
+      modes.native = Object.assign({}, modes.native, {
+        crashes: Math.max(1, Number(modes.native?.crashes) || 1),
+        lastCrash: now, reason: 'legacy forceSoftwareGL'
+      });
+      h.preferred = null;
+      all[key] = Object.assign({}, h, { modes, updated: now });
+      await save(P.gpuDrivers, all);
+    }
+  } catch {}
+
+  const isRecent = (id) => {
+    const e = modes[id];
+    return !!(e && e.lastCrash && (now - Number(e.lastCrash)) < GPU_CRASH_MEMORY_MS);
+  };
+  const preferred = h.preferred && GPU_MODES.some(m => m.id === h.preferred) && !isRecent(h.preferred)
+    ? h.preferred : null;
+
+  // Sortierung: zuerst der zuletzt funktionierende, dann unauffällige Modi,
+  // dann die mit den wenigsten (recenten) Crashes. Native bleibt Standard,
+  // wenn alles unauffällig ist (beste Performance, korrekte Texturen).
+  return [...GPU_MODES].sort((a, b) => {
+    const ra = isRecent(a.id) ? 1 : 0, rb = isRecent(b.id) ? 1 : 0;
+    if (ra !== rb) return ra - rb;
+    const ca = ra ? (Number(modes[a.id]?.crashes) || 0) : 0;
+    const cb = rb ? (Number(modes[b.id]?.crashes) || 0) : 0;
+    if (ca !== cb) return ca - cb;
+    if (preferred) {
+      if (a.id === preferred) return -1;
+      if (b.id === preferred) return 1;
+    }
+    return GPU_MODES.indexOf(a) - GPU_MODES.indexOf(b);
+  });
+}
+let _gpuHistoryWrite = Promise.resolve();
+async function markGpuModeResult(modeId, crashed, reason){
+  // Erfolg und Crash können kurz hintereinander kommen (Spiel startet, crasht
+  // später) — die Schreibzugriffe müssen nacheinander laufen, sonst überschreibt
+  // einer den anderen. Die Historie wird deshalb serialisiert geschrieben.
+  const apply = async () => {
+    const key = await gpuMachineKey();
+    const all = await loadGpuHistory();
+    const h = Object.assign({ modes:{}, preferred:null }, all[key]);
+    h.modes = Object.assign({}, h.modes);
+    const e = Object.assign({}, h.modes[modeId]);
+    if (crashed) {
+      e.crashes = (Number(e.crashes) || 0) + 1;
+      e.lastCrash = Date.now();
+      e.lastSuccess = 0;
+      e.reason = String(reason || '').slice(0, 240);
+      if (h.preferred === modeId) h.preferred = null;
+    } else {
+      e.crashes = 0;
+      e.lastCrash = 0;
+      e.lastSuccess = Date.now();
+      e.reason = '';
+      h.preferred = modeId;
+    }
+    h.modes[modeId] = e;
+    h.updated = Date.now();
+    all[key] = h;
+    await save(P.gpuDrivers, all);
+  };
+  _gpuHistoryWrite = _gpuHistoryWrite.then(apply, apply);
+  return _gpuHistoryWrite;
 }
 
 // ── Launch ─────────────────────────────────────────────────────────────────────
@@ -3222,7 +4254,15 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     }
   } catch (e) { /* bei Fehler nicht blockieren */ }
 
-  const { version, javaPath, ram, ramUnit, profileMods, clientMods, clientResourcePacks, profileResourcePacks, useClientMods, useClientRPs, accessToken, uuid, playerName: rawPlayerName, modLoader, useOriginalLauncher, profileId, profileName, mrpackMods, mrpackRPs, renderApi, useCruxClientMod } = data;
+  const { version, javaPath, ram, ramUnit, clientMods, clientResourcePacks, profileResourcePacks, useClientMods, useClientRPs, accessToken, uuid, playerName: rawPlayerName, modLoader, useOriginalLauncher, profileId, profileName, mrpackMods, mrpackRPs, renderApi, useCruxClientMod } = data;
+  let profileMods = data.profileMods || [];
+  // Der Renderer kann noch einen alten Profil-Stand im Speicher haben (z. B.
+  // nach einer Auto-Reparatur). Die gespeicherten Mods sind massgeblich.
+  try {
+    const savedProfiles = await load(P.profiles, []);
+    const savedProfile = savedProfiles.find(p => p.id === profileId);
+    if (savedProfile && Array.isArray(savedProfile.mods)) profileMods = savedProfile.mods;
+  } catch {}
 
   // Valid Minecraft username (no spaces / invalid chars)
   const playerName = (rawPlayerName || 'Player').replace(/[^a-zA-Z0-9_.-]/g, '_').slice(0, 16);
@@ -3241,6 +4281,11 @@ ipcMain.on('launch-minecraft', async (event, data) => {
   const gameDir = instanceDir(profileId);
   try { await fs.promises.mkdir(gameDir, { recursive: true }); } catch {}
   instances[instanceId] = { id:instanceId, version, profileId, gameDir, startTime:Date.now(), logs:[], crashed:false, process:null, sessionRetried:false };
+  // Wird vor dem ersten Start aus der pro-PC-Historie gesetzt und bei jedem
+  // GPU-Auto-Retry auf den nächsten Modus gewechselt.
+  let currentGpuMode = 'native';
+  // Ein Spielstart hat Vorrang: laufende Hintergrund-Downloads sofort stoppen.
+  autoPrecache.abort = true;
   mainWindow.webContents.send('instance-started', { id:instanceId, version, profileId, profileName, startTime:instances[instanceId].startTime, serverAddress: data.serverAddress||null, serverPort: data.serverPort||null, serverName: data.serverName||null });
 
   const send = (ch,...a) => { try { if (ch === 'launch-progress' && a[0] && a[0].instanceId && stoppedInstances.has(a[0].instanceId)) return; mainWindow.webContents.send(ch,...a); } catch {} };
@@ -3517,13 +4562,13 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       const versionsDir = path.join(P.mc, 'versions');
       let fabricId = null;
 
-      if (fs.existsSync(versionsDir)) {
-        const dirs = fs.readdirSync(versionsDir);
-        // Match pattern: fabric-loader-*-{mcVersion}
-        fabricId = dirs.find(d => {
-          const lower = d.toLowerCase();
-          return lower.startsWith('fabric-loader-') && (d.endsWith(`-${version}`) || d.endsWith(version));
-        }) || null;
+      fabricId = newestLoaderId(version, 'fabric-loader-');
+      // Automatisch auf den neuesten Loader aktualisieren: alte Loader (z. B.
+      // 0.19.5) bleiben sonst erhalten, obwohl neue Mods 0.20.1 verlangen.
+      if (fabricId){
+        const freshId = await refreshLoaderIfOutdated(version, 'fabric', resolvedJava,
+          (msg) => send('launch-progress', { instanceId, percent:6, message: msg }));
+        if (freshId) fabricId = freshId;
       }
 
       if (fabricId && fs.existsSync(path.join(versionsDir, fabricId, `${fabricId}.json`))) {
@@ -3595,13 +4640,11 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     // ── Quilt ──────────────────────────────────────────────────────────────────
     if (modLoader === 'quilt') {
       const versionsDir = path.join(P.mc, 'versions');
-      let quiltId = null;
-      if (fs.existsSync(versionsDir)) {
-        const dirs = fs.readdirSync(versionsDir);
-        quiltId = dirs.find(d => {
-          const lower = d.toLowerCase();
-          return lower.startsWith('quilt-loader-') && d.includes(version);
-        }) || null;
+      let quiltId = newestLoaderId(version, 'quilt-loader-');
+      if (quiltId){
+        const freshId = await refreshLoaderIfOutdated(version, 'quilt', resolvedJava,
+          (msg) => send('launch-progress', { instanceId, percent:6, message: msg }));
+        if (freshId) quiltId = freshId;
       }
       if (quiltId && fs.existsSync(path.join(versionsDir, quiltId, `${quiltId}.json`))) {
         versionObj.custom = quiltId;
@@ -3857,7 +4900,10 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     try {
       const profs = await load(P.profiles, []);
       const prof = profs.find(p => p.id === data.profileId);
-      if (prof && prof.group && String(prof.group).trim()) settingsGroup = String(prof.group).trim();
+      if (prof) {
+        const g = effectiveDataGroup(prof);
+        if (prof.group && String(prof.group).trim()) settingsGroup = g;
+      }
     } catch {}
     if (settingsGroup) await applyGroupSettings(settingsGroup, gameDir);
     send('instance-log', { instanceId, line: settingsGroup ? `[GROUP] Shared settings group: "${settingsGroup}"` : `[INSTANCE] Eigener Spielordner: ${gameDir}` });
@@ -3869,6 +4915,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       await fs.promises.mkdir(modsDir, { recursive: true });
       let deployed = 0;
       for (const mod of mrpackMods) {
+        if (mod.disabled) continue;
         try {
           if (mod.diskPath && fs.existsSync(mod.diskPath)) {
             const dest = path.join(modsDir, mod.fileName || `mod-${deployed}.jar`);
@@ -3884,8 +4931,19 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             if (vd && vd.length) {
               const file = vd[0].files?.find(f=>f.primary) || vd[0].files?.[0];
               if (file) {
-                const dest = path.join(modsDir, `${mod.modrinthId}-${file.filename}`);
-                if (!fs.existsSync(dest)) await downloadFile(file.url, dest);
+                const destName = `${mod.modrinthId}-${file.filename}`;
+                // Merken, damit der Eintrag nach dem Mods-Ordner-Cleanup aus
+                // dem gleichen Cache-Eintrag wiederhergestellt werden kann.
+                mod._cacheUrl = file.url;
+                mod._cacheName = modrinthCacheName(mod.modrinthId, vd[0], file);
+                mod._cacheDestName = destName;
+                await deployModCachedOrDownload({
+                  url: file.url,
+                  cacheName: mod._cacheName,
+                  dest: path.join(modsDir, destName),
+                  label: mod.name || mod.modrinthId,
+                  log: line => send('instance-log', { instanceId, line })
+                });
                 deployed++;
               }
             }
@@ -3903,8 +4961,63 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       await fs.promises.mkdir(modsDir, { recursive: true });
 
       const clientModsRaw  = (data.useClientMods !== false) ? (data.clientMods || []) : [];
-      const profileModsRaw = data.profileMods || [];
+      // WICHTIG: nicht data.profileMods verwenden — der Renderer kann einen
+      // veralteten Stand haben. profileMods wurde oben aus profiles.json gelesen.
+      const profileModsRaw = profileMods;
       const normalMods = clientModsRaw.filter(mod => mod.type !== 'jar');
+
+      // Bereits bekannte Mixin-Crasher gar nicht erst deployen — das ist der
+      // "immer automatisch" Teil: einmal erkannt, dauerhaft fuer MC/Loader aus.
+      const broken = await brokenIdsFor(version, modLoader);
+      if (broken.size) {
+        const disableKnown = (m) => {
+          if (!m || m.disabled || !modHasBrokenId(m, broken)) return false;
+          m.disabled = true;
+          send('instance-log', { instanceId, line:`[AUTO-FIX] ${m.name || m.modrinthId || 'Mod'} ist für MC ${version}/${modLoader} als Mixin-Crasher bekannt und bleibt deaktiviert.` });
+          return true;
+        };
+        let profileChanged = false;
+        let clientChanged = false;
+        for (const m of profileModsRaw) profileChanged = disableKnown(m) || profileChanged;
+        for (const m of clientModsRaw) clientChanged = disableKnown(m) || clientChanged;
+        for (const m of (mrpackMods || [])) disableKnown(m);
+        if (profileChanged) await persistProfileMods(profileId, profileModsRaw);
+        if (clientChanged) {
+          const mods = await load(P.mods, []);
+          for (const m of mods) if (modHasBrokenId(m, broken)) m.disabled = true;
+          await save(P.mods, mods);
+        }
+      }
+
+      // Offline-Status vor dem Nachschlagen der Profil-Mods feststellen.
+      const offline = !(await isNetworkAvailable());
+      if (offline) {
+        send('instance-log', { instanceId, line:'[OFFLINE] Keine Verbindung — überspringe Mod-Update-Prüfung, nutze gecachte Mods' });
+      }
+
+      // Aktive Profil-Mods ohne Quelle (z. B. aus dem KI-Plan) jetzt auflösen.
+      // Was weder auf Modrinth noch CurseForge existiert, kann nicht starten und
+      // wird deaktiviert, damit "aktiv" immer gleich "wird geladen" bedeutet.
+      if (!offline && profileModsRaw.length) {
+        await Promise.all(profileModsRaw
+          .filter(m => !m.disabled && !m.modrinthId && !m.curseforgeId && !m.diskPath && !(m.data && m.data.length))
+          .map(m => resolveProfileModIdentity(m, version, modLoader)));
+        const fixes = await Promise.all(profileModsRaw
+          .filter(m => !m.disabled)
+          .map(m => ensureProfileModCompatible(m, version, modLoader,
+            (line) => send('instance-log', { instanceId, line }))));
+        const unresolved = profileModsRaw.filter(m =>
+          !m.disabled && !m.modrinthId && !m.curseforgeId &&
+          !(m.diskPath && fs.existsSync(m.diskPath)) && !(m.data && m.data.length));
+        for (const m of unresolved) {
+          m.disabled = true;
+          m.unresolved = true;
+          send('instance-log', { instanceId, line:`[AUTO-FIX] ${m.name} ist weder auf Modrinth noch CurseForge auffindbar und wurde deaktiviert.` });
+        }
+        if (fixes.some(f => f && (f.changed || f.disabled)) || unresolved.length) {
+          await persistProfileMods(profileId, profileModsRaw);
+        }
+      }
 
       let toDeploy = [];
       for (const mod of normalMods) {
@@ -3917,7 +5030,9 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       for (const mod of profileModsRaw) {
         if (mod.disabled) continue;
         if (mod.loader && mod.loader !== 'any' && mod.loader !== modLoader) continue;
-        if (!toDeploy.some(m => m.modrinthId && m.modrinthId === mod.modrinthId)) {
+        const duplicate = (mod.modrinthId && toDeploy.some(m => m.modrinthId === mod.modrinthId)) ||
+          (mod.curseforgeId && toDeploy.some(m => m.curseforgeId === mod.curseforgeId));
+        if (!duplicate) {
           mod._isProfileMod = true;
           toDeploy.push(mod);
         }
@@ -3937,11 +5052,8 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         }
       }
 
-      // ── Offline mode: no network → keep cached mods, skip update checks ──
-      const offline = !(await isNetworkAvailable());
-      if (offline) {
-        send('instance-log', { instanceId, line:'[OFFLINE] Keine Verbindung — überspringe Mod-Update-Prüfung, nutze gecachte Mods' });
-      }
+      const depCount = await addRequiredDependencies(toDeploy, version, modLoader, offline, broken);
+      if (depCount) send('instance-log', { instanceId, line:`[MODS] ${depCount} erforderliche Abhängigkeit(en) der Profil-Mods hinzugefügt` });
 
       send('launch-progress', { instanceId, percent:23, message: offline ? 'Mods offline (gecacht)' : 'Checking for mod updates...' });
 
@@ -4047,6 +5159,15 @@ ipcMain.on('launch-minecraft', async (event, data) => {
               const buf = Buffer.from(mod.data);
               const dest = path.join(modsDir, mod.fileName || `mod-${(mod.name||'unknown').replace(/[^a-zA-Z0-9._-]/g,'_')}.jar`);
               if (!fs.existsSync(dest)) await fs.promises.writeFile(dest, buf);
+            } else if (mod.modrinthId && mod._cacheUrl && mod._cacheName) {
+              const dest = path.join(modsDir, mod._cacheDestName || `${mod.modrinthId}-mod.jar`);
+              await deployModCachedOrDownload({
+                url: mod._cacheUrl,
+                cacheName: mod._cacheName,
+                dest,
+                label: mod.name || mod.modrinthId,
+                log: line => send('instance-log', { instanceId, line })
+              });
             }
           } catch(e) { send('instance-log', { instanceId, line:`[MODPACK] Re-deploy failed ${mod.name}: ${e.message}` }); }
         }
@@ -4070,21 +5191,30 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       // First pass: count already-downloaded mods
       let needsDownload = 0;
       for (const mod of toDeploy) {
-        if (!mod.modrinthId) continue;
-        const hasJar = existingFiles.some(f => f.startsWith(mod.modrinthId + '-') && f.endsWith('.jar'));
-        if (!hasJar) needsDownload++;
+        if (!mod.modrinthId && !mod.curseforgeId) continue;
+        if (!modHasJar(mod, existingFiles)) needsDownload++;
       }
 
       if (needsDownload === 0) {
         send('launch-progress', { instanceId, percent:45, message:`${toDeploy.length} mods ready.` });
       } else {
-        send('launch-progress', { instanceId, percent:24, message:`Downloading ${needsDownload}/${toDeploy.length} mods...` });
+        send('launch-progress', { instanceId, percent:24, message:`Mods vorbereiten: ${needsDownload}/${toDeploy.length} (Cache wird geprüft)...` });
       }
 
       let deployed = 0;
       const totalDeploy = toDeploy.length;
       for (const mod of toDeploy) {
-        // Local mod from disk (no Modrinth id) — copy the jar directly
+        // CurseForge-Mod: Jar ueber cfwidget + Forge-CDN holen
+        if (!mod.modrinthId && mod.curseforgeId) {
+          if (offline) {
+            if (modHasJar(mod, existingFiles)) deployed++;
+            else send('instance-log', { instanceId, line:`[OFFLINE] ${mod.name} (CurseForge) ist nicht gecacht` });
+          } else if (await deployCurseforgeMod(mod, modsDir, version, modLoader, (line) => send('instance-log', { instanceId, line }))) {
+            deployed++;
+          }
+          continue;
+        }
+        // Local mod from disk (no download id) — copy the jar directly
         if (!mod.modrinthId) {
           try {
             if (mod.diskPath && fs.existsSync(mod.diskPath)) {
@@ -4095,35 +5225,62 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           } catch(e) { send('instance-log', { instanceId, line:`[MODS] Failed to copy local mod ${mod.name}: ${e.message}` }); }
           continue;
         }
+        // Ein Eintrag kann beide Quellen haben (z. B. CurseForge-Name mit
+        // Modrinth-Icon). Wenn Modrinth keine passende Datei hat, muss die
+        // CurseForge-Version her - sonst fehlt ein aktiver Profil-Mod.
+        const tryCurseforgeFallback = async () => {
+          if (offline || !mod.curseforgeId || mod._cfFallbackTried) return false;
+          mod._cfFallbackTried = true;
+          return await deployCurseforgeMod(mod, modsDir, version, modLoader,
+            (line) => send('instance-log', { instanceId, line }));
+        };
         try {
-          const hasJar = existingFiles.some(f => f.startsWith(mod.modrinthId + '-') && f.endsWith('.jar'));
+          const hasJar = modHasJar(mod, existingFiles);
           if (hasJar) { deployed++; continue; }
+          if (offline) {
+            send('instance-log', { instanceId, line:`[OFFLINE] ${mod.name} ist nicht gecacht` });
+            continue;
+          }
 
           const cached = versionCache.get(mod.modrinthId);
           let versionData = cached;
           if (!versionData) {
             const allVersions = await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version`).catch(() => null);
-            if (!allVersions || !allVersions.length) continue;
+            if (!allVersions || !allVersions.length) {
+              if (await tryCurseforgeFallback()) deployed++;
+              continue;
+            }
             // Pick the newest version that supports this MC version AND the profile's mod loader.
             // Deploying a wrong-loader jar (e.g. a NeoForge build into a Fabric profile) makes
             // Fabric Loader crash at startup on an unparseable fabric.mod.json.
             versionData = allVersions.find(v => (v.game_versions || []).includes(version) && (v.loaders || []).includes(modLoader));
             if (!versionData) {
-              send('instance-log', { instanceId, line:`[MODS] ${mod.name} — no ${modLoader} version supports MC ${version}, disabled` });
+              send('instance-log', { instanceId, line:`[MODS] ${mod.name} — no ${modLoader} version supports MC ${version}, trying CurseForge` });
+              if (await tryCurseforgeFallback()) deployed++;
               continue;
             }
           }
           if (!versionData) continue;
 
           const file = versionData.files.find(f => f.primary) || versionData.files[0];
-          if (!file) continue;
+          if (!file) {
+            if (await tryCurseforgeFallback()) deployed++;
+            continue;
+          }
 
           const jarPath = path.join(modsDir, `${mod.modrinthId}-${file.filename}`);
-          if (!fs.existsSync(jarPath)) await downloadFile(file.url, jarPath);
+          const cacheSource = await deployModCachedOrDownload({
+            url: file.url,
+            cacheName: modrinthCacheName(mod.modrinthId, versionData, file),
+            dest: jarPath,
+            label: mod.name || mod.modrinthId,
+            log: line => send('instance-log', { instanceId, line })
+          });
           deployed++;
-          send('launch-progress', { instanceId, percent:Math.min(45,24+Math.round(deployed/totalDeploy*21)), message:`Downloaded: ${mod.name}` });
+          send('launch-progress', { instanceId, percent:Math.min(45,24+Math.round(deployed/totalDeploy*21)), message:`${cacheSource==='cache'?'Aus Cache':'Downloaded'}: ${mod.name}` });
         } catch(e) {
           send('instance-log', { instanceId, line:`[MODS] Failed ${mod.name}: ${e.message}` });
+          if (await tryCurseforgeFallback()) deployed++;
         }
       }
       if (needsDownload > 0) {
@@ -4134,6 +5291,13 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         send('launch-progress', { instanceId, percent:46, message:`Updated ${modsUpdated.length} mod(s)...` });
         send('mods-updated', modsUpdated);
       }
+    }
+
+    // ── Auto-Fix: defekte Mixin-Mods entfernen, bevor Fabric sie laedt ────────
+    try {
+      await autoFixBrokenMixinMods(path.join(gameDir, 'mods'), send, instanceId, profileId, profileMods, clientMods, mrpackMods, version, modLoader);
+    } catch (e){
+      send('instance-log', { instanceId, line:`[AUTO-FIX] Mixin-Pruefung fehlgeschlagen: ${e.message}` });
     }
 
     // ── Deploy mrpack resource packs ──────────────────────────────────────────
@@ -4169,7 +5333,9 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       if (rp && typeof rp === 'object' && rp.disabled) return false;
       return v === 'all' || v === version;
     });
-    const rpList = [...((data.useClientRPs !== false) ? (data.clientResourcePacks || []) : []), ...profileRPs];
+    const clientRPs = (data.clientResourcePacks || []).filter(rp =>
+      !(rp && typeof rp === 'object' && rp.disabled));
+    const rpList = [...((data.useClientRPs !== false) ? clientRPs : []), ...profileRPs];
 
     // Reset ALL resource packs first, then the launcher re-enables the needed ones.
     // This prevents leftover packs from other profiles/groups staying enabled in-game.
@@ -4715,15 +5881,15 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         jvmArgs.push('-Dforge.eagerGlVersion=4.5');
       }
       jvmArgs.push('-Dminecraft.window.title=Crux Client');
-      // Mesa3D software OpenGL only when forceSoftwareGL is set (broken GPU drivers).
-      // By default use the native GPU driver for best performance & correct textures.
-      const launchSettings = await load(P.settings, {}).catch(()=>({}));
+      // Render-Modus kommt aus der pro-PC-Historie: gecrashte Treiber werden
+      // gemerkt und beim nächsten Start übersprungen.
+      const gpuMode = gpuModeById(currentGpuMode);
       let mesaGL = null;
-      if (launchSettings.forceSoftwareGL) {
-        send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL aktiv — verwende Mesa3D Software-OpenGL' });
+      if (gpuMode.software) {
+        send('instance-log', { instanceId, line: `[GPU] Render-Modus ${gpuMode.label} (pro PC gemerkt)` });
         mesaGL = await ensureMesa();
         if (!mesaGL) {
-          send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL gesetzt — versuche Mesa3D-Setup erneut...' });
+          send('instance-log', { instanceId, line: '[GPU] Mesa3D-Setup erneut versuchen...' });
           mesaGL = await ensureMesa();
         }
         if (mesaGL) {
@@ -4737,19 +5903,31 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             jvmArgs.unshift(`-javaagent:${agentJar}=${mesaGL}`);
             send('instance-log', { instanceId, line: `[LAUNCH] Java Agent: preloads Mesa opengl32.dll via premain()` });
           }
-          send('instance-log', { instanceId, line: `[LAUNCH] Using Mesa3D software OpenGL from: ${mesaDir}` });
+          send('instance-log', { instanceId, line: `[GPU] Mesa3D von ${mesaDir} (${gpuMode.label})` });
         }
         jvmArgs.push('-Dorg.lwjgl.opengl.allowSoftwareOpenGL=true');
-        if (!mesaGL) send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL gesetzt aber Mesa3D nicht verfügbar — AMD-Treiber kann weiterhin crashen!' });
+        if (!mesaGL) send('instance-log', { instanceId, line: `[GPU] ${gpuMode.label} nicht verfügbar — GPU-Crash kann nicht automatisch umgangen werden` });
       } else {
-        send('instance-log', { instanceId, line: '[LAUNCH] Native GPU-Treiber (Mesa3D nicht aktiv, da forceSoftwareGL aus)' });
+        send('instance-log', { instanceId, line: '[GPU] Render-Modus Native GPU (OpenGL)' });
       }
       if (data.renderApi === 'vulkan') jvmArgs.push('-Dorg.lwjgl.vulkan.libname=vulkan-1');
 
-      return { javaPath: resolvedJava, mainClass, jvmArgs, gameArgs, mesaActive: !!mesaGL };
+      return { javaPath: resolvedJava, mainClass, jvmArgs, gameArgs, mesaActive: !!mesaGL, gallium: gpuMode.gallium };
+
+    }
+
+    // Kurzer Grund aus dem echten Crash-Log, damit der PC die Ursache merkt.
+    function gpuCrashReason(){
+      const allLogs = instances[instanceId].logs || [];
+      const start = instances[instanceId].gpuLogStart || 0;
+      const lines = allLogs.slice(start).filter(l =>
+        GPU_DRIVER_HINT.test(l) || String(l).includes('EXCEPTION_ACCESS_VIOLATION'));
+      return lines.slice(-4).join(' | ').slice(0, 220);
     }
 
     async function mclcLaunchOnce() {
+      // Nur die Zeilen dieses Laufs dürfen als Crash-Grund gemerkt werden.
+      instances[instanceId].gpuLogStart = (instances[instanceId].logs || []).length;
       // For Forge/NeoForge: manual launch with resolved version JSON
       if ((modLoader === 'forge' || modLoader === 'neoforge') && versionObj.custom) {
         const loaderTag = modLoader === 'forge' ? 'FORGE' : 'NEOFORGE';
@@ -4796,7 +5974,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             return { code: 0, modCrash: false };
           }
 
-          const { javaPath, mainClass, jvmArgs, gameArgs, mesaActive } = await buildModernLoaderLaunch();
+          const { javaPath, mainClass, jvmArgs, gameArgs, mesaActive, gallium } = await buildModernLoaderLaunch();
           send('launch-progress', { instanceId, percent:20, message:`Launching ${loaderTag === 'FORGE' ? 'Forge' : 'NeoForge'} with ${mainClass}...` });
           send('instance-log', { instanceId, line: `[${loaderTag}] Java: ${javaPath}` });
 
@@ -4805,29 +5983,36 @@ ipcMain.on('launch-minecraft', async (event, data) => {
 
           const spawnOpts = { cwd: gameDir, detached: false, stdio: ['ignore', 'pipe', 'pipe'] };
           if (mesaActive) {
-            spawnOpts.env = { ...process.env, GALLIUM_DRIVER: 'zink' };
-            send('instance-log', { instanceId, line: `[LAUNCH] GALLIUM_DRIVER=zink (OpenGL→Vulkan via Zink)` });
+            const driver = gallium || 'zink';
+            spawnOpts.env = { ...process.env, GALLIUM_DRIVER: driver };
+            send('instance-log', { instanceId, line: `[GPU] GALLIUM_DRIVER=${driver} (${gpuModeById(currentGpuMode).label})` });
           }
           const proc = spawn(javaPath, allArgs, spawnOpts);
           if (proc) instances[instanceId].process = proc;
 
           let modCrash = false;
           let gpuDriverCrash = false;
+          // Die hs_err-Zeilen kommen einzeln: "EXCEPTION_ACCESS_VIOLATION" und
+          // der Treiber-DLL-Name stehen NICHT in derselben Zeile. Deshalb Total
+          // merken statt pro Zeile zu prüfen.
+          let sawGpuDriver = false, sawAccessViolation = false;
           const handleLine = (line) => {
             const s = String(line).trim(); if (!s) return;
             instances[instanceId].logs.push(s);
             send('instance-log', { instanceId, line: s });
             if (s.toLowerCase().includes('setting user')) {
               instances[instanceId].gameStartedAt = Date.now();
+              // Der Modus hat das Spiel gestartet -> für diesen PC als funktionierend merken.
+              markGpuModeResult(currentGpuMode, false, '').catch(()=>{});
               send('launch-progress', { instanceId, percent:100, message:'Minecraft running!' });
               send('mc-launched', instanceId);
             }
             if (s.toLowerCase().includes('incompatible mods found') || s.toLowerCase().includes('some of your mods are incompatible') || s.includes('FormattedException') || s.includes('Mod resolution failed') || s.toLowerCase().includes('error loading mod') || s.toLowerCase().includes('failed to load mod') || s.toLowerCase().includes('uncaught exception')) {
               modCrash = true;
             }
-            if ((s.includes('atio6axx.dll') || s.includes('EXCEPTION_ACCESS_VIOLATION')) && (s.includes('crash') || s.includes('Video') || s.includes('VideoContext'))) {
-              gpuDriverCrash = true;
-            }
+            if (GPU_DRIVER_HINT.test(s)) sawGpuDriver = true;
+            if (s.includes('EXCEPTION_ACCESS_VIOLATION')) sawAccessViolation = true;
+            if (sawGpuDriver && sawAccessViolation) gpuDriverCrash = true;
           };
           proc.stdout.on('data', d => d.toString().split('\n').forEach(handleLine));
           proc.stderr.on('data', d => d.toString().split('\n').forEach(handleLine));
@@ -4841,28 +6026,14 @@ ipcMain.on('launch-minecraft', async (event, data) => {
                   }
                 } catch {}
                 cleanupMesaFromGameDir(gameDir);
-                if (gpuDriverCrash) {
-                send('launch-error', 'GPU-Treiber-Problem: atio6axx.dll crasht bei OpenGL. Bitte aktualisiere deinen AMD Radeon Treiber auf Version 26.6.4 oder neuer: https://www.amd.com/en/support/download/drivers.html');
-                try {
-                  const cur = await load(P.settings, {});
-                  if (!cur.forceSoftwareGL) {
-                    cur.forceSoftwareGL = true;
-                    await save(P.settings, cur);
-                    send('instance-log', { instanceId, line: '[LAUNCH] AMD GPU-Treiber-Crash erkannt — Software-Rendering wird für zukünftige Starts automatisch aktiviert.' });
-                  }
-                } catch {}
-                // Kickstart Mesa3D download so it's cached for the next launch
-                ensureMesa().then(mesaPath => {
-                  if (mesaPath) send('instance-log', { instanceId, line: `[LAUNCH] Mesa3D wurde heruntergeladen — nächster Start sollte stabil sein.` });
-                }).catch(() => {});
-              }
-              resolve({ code, modCrash });
+                // Der Auto-Retry passiert zentral nach mclcLaunchOnce().
+                resolve({ code, modCrash, gpuDriverCrash, softwareAttempt: !!mesaActive });
             });
             proc.on('error', (err) => {
               try { if (earlyDisplayDisabled && fs.existsSync(earlyDisplayDisabled)) fs.renameSync(earlyDisplayDisabled, earlyDisplayJar); } catch {}
               cleanupMesaFromGameDir(gameDir);
               send('instance-log', { instanceId, line:`[LAUNCH ERROR] ${err.message}` });
-              resolve({ code: -1, modCrash: false });
+              resolve({ code: -1, modCrash: false, gpuDriverCrash: false, softwareAttempt: !!mesaActive });
             });
           });
         } catch(neErr) {
@@ -4872,14 +6043,14 @@ ipcMain.on('launch-minecraft', async (event, data) => {
       }
 
       // For other loaders: use mclc
-      const mclcSettings = await load(P.settings, {}).catch(()=>({}));
+      const mclcMode = gpuModeById(currentGpuMode);
       let mclcMesaGL = null;
       const mclcCustomArgs = ['-Dminecraft.window.title=Crux Client'];
-      if (mclcSettings.forceSoftwareGL) {
-        send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL aktiv — verwende Mesa3D Software-OpenGL' });
+      if (mclcMode.software) {
+        send('instance-log', { instanceId, line: `[GPU] Render-Modus ${mclcMode.label} (pro PC gemerkt)` });
         mclcMesaGL = await ensureMesa();
         if (!mclcMesaGL) {
-          send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL gesetzt — versuche Mesa3D-Setup erneut...' });
+          send('instance-log', { instanceId, line: '[GPU] Mesa3D-Setup erneut versuchen...' });
           mclcMesaGL = await ensureMesa();
         }
         if (mclcMesaGL) {
@@ -4892,12 +6063,12 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             mclcCustomArgs.unshift(`-javaagent:${agentJar}=${mclcMesaGL}`);
             send('instance-log', { instanceId, line: `[LAUNCH] Java Agent: preloads Mesa opengl32.dll via premain()` });
           }
-          send('instance-log', { instanceId, line: `[LAUNCH] Using Mesa3D software OpenGL from: ${mclcMesaDir}` });
+          send('instance-log', { instanceId, line: `[GPU] Mesa3D von ${mclcMesaDir} (${mclcMode.label})` });
         }
         mclcCustomArgs.push('-Dorg.lwjgl.opengl.allowSoftwareOpenGL=true');
-        if (!mclcMesaGL) send('instance-log', { instanceId, line: '[LAUNCH] forceSoftwareGL gesetzt aber Mesa3D nicht verfügbar — AMD-Treiber kann weiterhin crashen!' });
+        if (!mclcMesaGL) send('instance-log', { instanceId, line: `[GPU] ${mclcMode.label} nicht verfügbar — GPU-Crash kann nicht automatisch umgangen werden` });
       } else {
-        send('instance-log', { instanceId, line: '[LAUNCH] Native GPU-Treiber (Mesa3D nicht aktiv, da forceSoftwareGL aus)' });
+        send('instance-log', { instanceId, line: '[GPU] Render-Modus Native GPU (OpenGL)' });
       }
       // Direct server connect from Recent
       const mclcVersionObj = JSON.parse(JSON.stringify(versionObj));
@@ -4915,7 +6086,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         if (!mclcVersionObj.arguments.game) mclcVersionObj.arguments.game = [];
         mclcVersionObj.arguments.game.push(...mclcWorldArgs);
       }
-      if (stoppedInstances.has(instanceId)) return { code: 0, modCrash: false };
+      if (stoppedInstances.has(instanceId)) return { code: 0, modCrash: false, gpuDriverCrash: false, softwareAttempt: !!mclcMesaGL };
       return new Promise((resolve) => {
         const launcher = new Client();
         const launchOpts = {
@@ -4929,10 +6100,12 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           overrides: { 
             detached: false,
             gameDirectory: gameDir,
-            ...(mclcMesaGL ? { env: { ...process.env, GALLIUM_DRIVER: 'zink' } } : {}),
+            ...(mclcMesaGL ? { env: { ...process.env, GALLIUM_DRIVER: mclcMode.gallium || 'zink' } } : {}),
           },
         };
         let modCrash = false;
+        let gpuDriverCrash = false;
+        let sawGpuDriver = false, sawAccessViolation = false;
 
         launcher.on('download-status', s => {
           const pct = s.total>0 ? Math.round(s.current/s.total*100) : 0;
@@ -4948,12 +6121,18 @@ ipcMain.on('launch-minecraft', async (event, data) => {
           send('instance-log', { instanceId, line: s });
           if (s.toLowerCase().includes('setting user')) {
             instances[instanceId].gameStartedAt = Date.now();
+            // Modus hat das Spiel gestartet -> für diesen PC als gut merken.
+            markGpuModeResult(currentGpuMode, false, '').catch(()=>{});
             send('launch-progress', { instanceId, percent:100, message:'Minecraft running!' });
             send('mc-launched', instanceId);
           }
           if (s.toLowerCase().includes('incompatible mods found') || s.toLowerCase().includes('some of your mods are incompatible') || s.includes('FormattedException') || s.includes('Mod resolution failed') || s.toLowerCase().includes('error loading mod') || s.toLowerCase().includes('failed to load mod') || s.toLowerCase().includes('uncaught exception')) {
             modCrash = true;
           }
+          // hs_err verteilt die Hinweise auf mehrere Zeilen - nicht pro Zeile filtern.
+          if (GPU_DRIVER_HINT.test(s)) sawGpuDriver = true;
+          if (s.includes('EXCEPTION_ACCESS_VIOLATION')) sawAccessViolation = true;
+          if (sawGpuDriver && sawAccessViolation) gpuDriverCrash = true;
           if ((s.toLowerCase().includes('invalid session') || s.toLowerCase().includes('failed to authenticate the session')) && !instances[instanceId].sessionRetried) {
             instances[instanceId].sessionRetried = true;
             send('instance-log', { instanceId, line: '[AUTH] Invalid session detected, refreshing token and relaunching...' });
@@ -4975,7 +6154,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         });
         launcher.on('close', (code) => {
           cleanupMesaFromGameDir(gameDir);
-          resolve({ code, modCrash });
+          resolve({ code, modCrash, gpuDriverCrash, softwareAttempt: !!mclcMesaGL });
         });
 
         launcher.launch(launchOpts).then(proc => {
@@ -4983,7 +6162,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
         }).catch(err => {
           cleanupMesaFromGameDir(gameDir);
           send('instance-log', { instanceId, line:`[LAUNCH ERROR] ${err.message}` });
-          resolve({ code: -1, modCrash: false });
+          resolve({ code: -1, modCrash: false, gpuDriverCrash: false, softwareAttempt: !!mclcMesaGL });
         });
       });
     }
@@ -4991,7 +6170,75 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     send('launch-status', 'Preparing Minecraft...');
     send('launch-progress', { instanceId, percent:20, message:'Starting Minecraft...' });
 
-    const mclcResult = await mclcLaunchOnce();
+    // Pro-PC-Reihenfolge der Render-Modi: zuerst der zuletzt funktionierende,
+    // dann alle, die auf diesem Rechner noch nicht gecrasht sind.
+    const gpuPlan = await gpuModeOrder();
+    let gpuIdx = 0;
+    currentGpuMode = gpuPlan[0]?.id || 'native';
+    send('instance-log', { instanceId, line:`[GPU] Treiber-Reihenfolge (dieser PC): ${gpuPlan.map(m => m.label).join(' → ')}` });
+
+    let mclcResult = await mclcLaunchOnce();
+
+    // Mixin-Crashes werden IMMER automatisch behoben: verantwortliche Mod
+    // deaktivieren, fuer MC/Loader merken, neu starten — auch mehrfach hinter-
+    // einander, wenn eine weitere Mod denselben Fehler verursacht.
+    const fixMixinCrashes = async (result) => {
+      let out = result;
+      const handledMixinMods = new Set();
+      let mixinFixRuns = 0;
+      const MAX_MIXIN_FIX_RUNS = 8;
+      while (out.code !== 0 && out.code !== null &&
+             !stoppedInstances.has(instanceId) && mixinFixRuns < MAX_MIXIN_FIX_RUNS) {
+        const crashMods = await collectMixinCrashMods(gameDir, instances[instanceId].logs || [], instances[instanceId].startTime);
+        const fresh = crashMods.filter(x => {
+          const key = normalizeBrokenId(x.id);
+          return key && !handledMixinMods.has(key);
+        });
+        if (!fresh.length) break;
+        let fixedAny = false;
+        for (const { id, reason } of fresh) {
+          handledMixinMods.add(normalizeBrokenId(id));
+          const fixed = await disableCrashModPersistent(
+            path.join(gameDir, 'mods'), id, profileId, profileMods, clientMods,
+            mrpackMods, version, modLoader, reason);
+          if (!fixed) continue;
+          fixedAny = true;
+          send('instance-log', { instanceId, line:`[AUTO-FIX ${mixinFixRuns + 1}] Mixin-Crash durch ${id} — Mod dauerhaft deaktiviert und für MC ${version}/${modLoader} gemerkt.` });
+        }
+        mixinFixRuns++;
+        if (!fixedAny) break;
+        send('launch-status', 'Mixin-Crash erkannt — Neustart ohne defekte Mods...');
+        send('launch-progress', { instanceId, percent:20, message:`Neustart ohne defekte Mod (${mixinFixRuns})...` });
+        clearTimeout(safetyTimer);
+        safetyTimer = setTimeout(fireSafetyTimeout, 5 * 60 * 1000);
+        out = await mclcLaunchOnce();
+      }
+      return out;
+    };
+    mclcResult = await fixMixinCrashes(mclcResult);
+
+    // GPU-Crash: Treiber für DIESEN PC merken und mit dem nächsten Modus
+    // automatisch neu starten. Beim nächsten Launch wird er dann zuerst
+    // übersprungen — auch wenn der User das Profil wechselt.
+    while (mclcResult.gpuDriverCrash && mclcResult.code !== 0 && mclcResult.code !== null &&
+           !stoppedInstances.has(instanceId) && gpuIdx + 1 < gpuPlan.length) {
+      const crashed = gpuModeById(currentGpuMode);
+      await markGpuModeResult(crashed.id, true, gpuCrashReason());
+      const next = gpuPlan[++gpuIdx];
+      currentGpuMode = next.id;
+      send('instance-log', { instanceId, line:`[GPU-AUTO-FIX] ${crashed.label} gecrasht — für diesen PC gemerkt. Neustart mit ${next.label}.` });
+      send('launch-status', `GPU-Treiber-Crash — Neustart mit ${next.label}...`);
+      send('launch-progress', { instanceId, percent:20, message:`Neustart mit ${next.label}...` });
+      clearTimeout(safetyTimer);
+      safetyTimer = setTimeout(fireSafetyTimeout, 5 * 60 * 1000);
+      mclcResult = await mclcLaunchOnce();
+      mclcResult = await fixMixinCrashes(mclcResult);
+    }
+    // Auch der letzte Modus gecrasht und kein Alternativmodus mehr übrig.
+    if (mclcResult.gpuDriverCrash && mclcResult.code !== 0 && mclcResult.code !== null &&
+        !stoppedInstances.has(instanceId)) {
+      await markGpuModeResult(currentGpuMode, true, gpuCrashReason());
+    }
     clearTimeout(safetyTimer);
 
     // Save the group's settings back after the game wrote options.txt on exit
@@ -5576,7 +6823,7 @@ ipcMain.on('start-server', async (event, serverConfig) => {
     await fs.promises.mkdir(modsDir, { recursive: true }).catch(() => {});
     for (const mod of plugins) {
       try {
-        mainWindow.webContents.send('server-log', { id, line: `[SERVER] Downloading ${isPlugin ? 'plugin' : 'mod'}: ${mod.name}...` });
+        mainWindow.webContents.send('server-log', { id, line: `[SERVER] ${isPlugin ? 'Plugin' : 'Mod'}: ${mod.name}...` });
         const loader = isPlugin ? 'paper' : type;
         const gv = mcVersion ? `[\"${mcVersion}\"]` : '[]';
         const ld = loader ? `[\"${loader}\"]` : '[]';
@@ -5585,7 +6832,13 @@ ipcMain.on('start-server', async (event, serverConfig) => {
         if (versions && versions.length && versions[0].files && versions[0].files.length) {
           const file = versions[0].files[0];
           const dest = path.join(modsDir, file.filename);
-          if (!fs.existsSync(dest)) await downloadFile(file.url, dest);
+          await deployModCachedOrDownload({
+            url: file.url,
+            cacheName: modrinthCacheName(mod.id, versions[0], file),
+            dest,
+            label: mod.name || mod.id,
+            log: line => mainWindow.webContents.send('server-log', { id, line: line.replace(/^\[CACHE\]\s*/, '[SERVER] Cache: ') })
+          });
         } else {
           mainWindow.webContents.send('server-log', { id, line: `[SERVER] ⚠ No compatible version found for ${mod.name}, skipping.` });
         }
@@ -5904,6 +7157,19 @@ function fetchJsonNoCors(url) {
   });
 }
 ipcMain.handle('fetch-json-no-cors', async (e, url) => { logDebug('fetchJsonNoCors: ' + url); return fetchJsonNoCors(url); });
+// Bekannt kaputte Mods (MC-Version + Loader) — der Plan-Generator filtert sie.
+ipcMain.handle('get-broken-mods', async (e, version, loader) => {
+  const list = await load(P.broken, []);
+  const ids = [];
+  for (const entry of list) {
+    if (!entry || entry.v !== version || entry.l !== loader) continue;
+    for (const id of (Array.isArray(entry.ids) ? entry.ids : [])) {
+      const s = String(id || '').trim();
+      if (s && !ids.includes(s)) ids.push(s);
+    }
+  }
+  return ids;
+});
 ipcMain.handle('check-online', () => isNetworkAvailable());
 ipcMain.handle('fetch-image-dataurl', async (e, url) => {
   logDebug('fetchImageDataUrl: ' + url);
@@ -6475,6 +7741,20 @@ function fetchJson(url) {
     req.setTimeout(15000, () => { req.destroy(); rj(new Error('Timeout: '+url.slice(0,80))); });
   });
 }
+// ── Hang-Erkennung ─────────────────────────────────────────────────────────────
+// Wenn der Event-Loop haengt (Mod-Scan, Installer, Updates), laufen alle
+// HTTP-Probes gleichzeitig in ein Timeout. Das ist kein Internetausfall und darf
+// weder das Offline-Banner noch "alle Dienste down" ausloesen.
+let _hangUntil = 0;
+let _lastLoopTick = Date.now();
+setInterval(() => {
+  const now = Date.now();
+  const drift = now - _lastLoopTick - 1000;
+  _lastLoopTick = now;
+  if (drift > 1500) _hangUntil = now + Math.min(drift, 20000);
+}, 1000).unref?.();
+function launcherHanging(){ return Date.now() < _hangUntil; }
+
 // ── Service health monitoring ──────────────────────────────────────────────────
 // Each entry is probed with a plain HEAD/GET. Any 2xx/3xx counts as up; a 4xx from
 // CurseForge means the host answered, so it counts as up too — we only care about
@@ -6510,22 +7790,30 @@ function probeService(svc) {
 }
 
 async function checkServices() {
+  // Waehrend eines Haengers sind alle Probes wertlos - Zustand nicht antasten.
+  if (launcherHanging()) return [];
   const results = await Promise.all(SERVICE_PROBES.map(probeService));
+  if (launcherHanging()) return [];
   const changed = [];
   for (const r of results) {
     const prev = _svcState[r.id];
     if (!prev) {
-      // First probe: record the state without emitting a change event, so a cold
-      // start does not fire a burst of toasts for services that are merely slow
-      // to answer. The broadcast after it still carries the real state, so a
-      // service that is genuinely down right now does show a toast.
-      _svcState[r.id] = { up: r.up, dismissed: false, at: Date.now() };
+      // Erster Probe: nur merken, nie sofort "down" - ein kalter Start ist oft langsam.
+      _svcState[r.id] = { up: r.up, down: false, misses: r.up ? 0 : 1, dismissed: false, at: Date.now() };
       continue;
     }
-    const wasDown = !prev.up;
-    prev.up = r.up; prev.at = Date.now();
-    if (r.up && wasDown) changed.push({ ...r, recovered: true });
-    else if (!r.up && !wasDown) { prev.dismissed = false; changed.push({ ...r, recovered: false }); }
+    if (r.up){
+      prev.misses = 0;
+      if (prev.down){ prev.down = false; changed.push({ ...r, recovered: true }); }
+    } else {
+      // Erst nach 3 aufeinanderfolgenden Fehlschlaegen wirklich "down" melden.
+      // Ein einzelner Timeout (z.B. durch einen kurz blockierten Event-Loop)
+      // soll keine Warnung ausloesen.
+      prev.misses = (prev.misses || 0) + 1;
+      if (prev.misses >= 3 && !prev.down){ prev.down = true; prev.dismissed = false; changed.push({ ...r, recovered: false }); }
+    }
+    prev.up = r.up;
+    prev.at = Date.now();
   }
   return changed;
 }
@@ -6533,7 +7821,7 @@ async function checkServices() {
 function broadcastServices() {
   const list = Object.entries(_svcState).map(([id, s]) => ({
     id, name: (SERVICE_PROBES.find(p => p.id === id) || {}).name || id,
-    up: s.up, dismissed: s.dismissed,
+    up: s.down === undefined ? s.up !== false : !s.down, dismissed: s.dismissed,
   }));
   // mainWindow may not exist yet (first probe runs right after createWindow) and
   // webContents is briefly undefined while the window initialises
@@ -6563,18 +7851,32 @@ ipcMain.handle('service-dismiss', (e, id) => {
 // ── Offline detection ──────────────────────────────────────────────────────────
 let _netOnline = null;
 let _netCheckAt = 0;
+let _netFails = 0;
 function isNetworkAvailable() {
   return new Promise((resolve) => {
     const now = Date.now();
+    // Bei einem Haenger liefert der Check kein belastbares Ergebnis - lieber
+    // optimistisch "online" als ein falsches Offline-Banner.
+    if (launcherHanging()) return resolve(_netOnline !== false);
     if (_netOnline !== null && now - _netCheckAt < 15000) return resolve(_netOnline);
+    let settled = false;
+    const fail = () => {
+      if (settled) return;
+      settled = true;
+      _netFails++;
+      _netCheckAt = Date.now();
+      if (_netFails >= 3) _netOnline = false;
+      resolve(_netOnline !== false);
+    };
     const req = https.get('https://api.modrinth.com/v2/tag/loader', { timeout: 5000 }, res => {
       _netOnline = res.statusCode >= 200 && res.statusCode < 500;
+      if (_netOnline) _netFails = 0;
       _netCheckAt = Date.now();
       res.resume();
       resolve(_netOnline);
     });
-    req.on('error', () => { _netOnline = false; _netCheckAt = Date.now(); resolve(false); });
-    req.setTimeout(5000, () => { req.destroy(); _netOnline = false; _netCheckAt = Date.now(); resolve(false); });
+    req.on('error', fail);
+    req.setTimeout(5000, () => { req.destroy(); fail(); });
   });
 }
 
@@ -6614,6 +7916,423 @@ function downloadFile(url, dest, progressCallback) {
     };
     go(url);
   });
+}
+
+// ── Profil-Mods: Identität + CurseForge-Download ────────────────────────────────
+// Ein aktiver Profil-Mod muss immer eine Quelle haben: Modrinth-ID,
+// CurseForge-ID oder eine lokale Datei. Namen-only Einträge aus dem KI-Plan
+// werden beim Start nachgeschlagen und persistent gespeichert. Damit startet
+// jedes Profil mit genau den Mods, die dort aktiviert sind.
+const _profileIdentityCache = new Map();
+const _cfFileCache = new Map();
+
+function cfSlugCandidates(name) {
+  const base = String(name || '').toLowerCase()
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+  if (!base) return [];
+  return [...new Set([
+    base, 'the-' + base, base.replace(/^the-/, ''),
+    base.replace(/-/g, ''), base.replace(/^the-/, '').replace(/-/g, '')
+  ])];
+}
+
+function modNameScore(a, b) {
+  const clean = (s) => String(s || '').toLowerCase()
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9]+/g, ' ').trim();
+  const na = clean(a), nb = clean(b);
+  if (!na || !nb) return -1;
+  if (na === nb) return 1000;
+  const ca = na.replace(/ /g, ''), cb = nb.replace(/ /g, '');
+  if (ca === cb) return 900;
+  if (ca && cb && (ca.includes(cb) || cb.includes(ca))) return 600;
+  const wa = na.split(' ').filter(w => w.length > 2);
+  const wb = nb.split(' ').filter(w => w.length > 2);
+  if (!wa.length || !wb.length) return 0;
+  const hits = wa.filter(w => wb.includes(w)).length;
+  return Math.round(hits / Math.max(wa.length, wb.length) * 100);
+}
+
+async function resolveProfileModIdentity(mod, version, modLoader) {
+  if (!mod || mod.disabled) return mod;
+  if (mod.modrinthId || mod.curseforgeId || mod.diskPath || (mod.data && mod.data.length)) return mod;
+  const name = String(mod.name || '').trim();
+  if (!name) return mod;
+  const key = [name, version, modLoader].join('|');
+  if (_profileIdentityCache.has(key)) {
+    const cached = _profileIdentityCache.get(key);
+    if (cached && Object.keys(cached).length) Object.assign(mod, cached);
+    return mod;
+  }
+
+  let found = null;
+  const search = async (strict) => {
+    const facet = strict
+      ? '&facets=' + encodeURIComponent(JSON.stringify([
+          ['project_type:mod'], ['versions:' + version], ['categories:' + modLoader]
+        ]))
+      : '';
+    const d = await fetchJson(`https://api.modrinth.com/v2/search?query=${encodeURIComponent(name)}${facet}&limit=8`);
+    let best = null, bestScore = -1;
+    for (const h of (d && d.hits) || []) {
+      const score = modNameScore(name, h.title || h.name || '');
+      if (score > bestScore) { bestScore = score; best = h; }
+    }
+    if (!best || bestScore < 40) return null;
+    // Ein Treffer ohne Loader/MC-Filter darf nur uebernommen werden, wenn die
+    // Projektversionen wirklich zu dieser Kombination passen. Sonst landet ein
+    // Forge-/Server-Mod in einem Fabric-Profil und wird nicht geladen.
+    if (!strict) {
+      const gv = encodeURIComponent(`["${version}"]`);
+      const ld = encodeURIComponent(`["${modLoader}"]`);
+      const vs = await fetchJson(`https://api.modrinth.com/v2/project/${best.project_id}/version?game_versions=${gv}&loaders=${ld}`).catch(() => []);
+      if (!vs || !vs.length) return null;
+    }
+    return best;
+  };
+  try {
+    const hit = await search(true) || await search(false);
+    if (hit) found = {
+      modrinthId: String(hit.project_id),
+      title: hit.title || name,
+      iconUrl: hit.icon_url || mod.iconUrl || ''
+    };
+  } catch {}
+
+  if (!found) {
+    const cfVersionsOf = (d) => [
+      ...((d && d.download && d.download.versions) || []),
+      ...((d && Array.isArray(d.files)) ? d.files.flatMap(f => f.versions || []) : [])
+    ].map(String);
+    const cfCompatible = (d) => {
+      const vals = cfVersionsOf(d);
+      const v = String(version || '');
+      const okVersion = !v || v === 'latest' || vals.some(x =>
+        x === v || v.startsWith(x + '.') || x.startsWith(v + '.'));
+      const ld = String(modLoader || '').toLowerCase();
+      const okLoader = !ld || ld === 'any' || ld === 'vanilla' ||
+        vals.some(x => x.toLowerCase() === ld);
+      return okVersion && okLoader;
+    };
+    for (const slug of cfSlugCandidates(name)) {
+      try {
+        const d = await fetchJsonNoCors(`https://api.cfwidget.com/minecraft/mc-mods/${slug}`);
+        if (!d || !d.id || !cfCompatible(d)) continue;
+        const score = modNameScore(name, d.title || '');
+        if (score >= 40 || !found) {
+          found = {
+            curseforgeId: String(d.id), curseforgeSlug: slug,
+            title: d.title || name, iconUrl: d.thumbnail || mod.iconUrl || ''
+          };
+          if (score >= 40) break;
+        }
+      } catch {}
+    }
+  }
+
+  if (found) {
+    Object.assign(mod, found);
+    _profileIdentityCache.set(key, found);
+  } else {
+    _profileIdentityCache.set(key, {});
+  }
+  return mod;
+}
+
+async function curseforgeFileFor(mod, version, modLoader) {
+  const id = String(mod.curseforgeId || '');
+  if (!id) return null;
+  const key = [id, version, modLoader].join('|');
+  if (_cfFileCache.has(key)) return _cfFileCache.get(key);
+
+  let data = null;
+  const slugs = [mod.curseforgeSlug, id, ...cfSlugCandidates(mod.name)].filter(Boolean);
+  for (const slug of [...new Set(slugs)]) {
+    try {
+      const d = await fetchJsonNoCors(`https://api.cfwidget.com/minecraft/mc-mods/${encodeURIComponent(slug)}`);
+      if (d && Array.isArray(d.files) && d.files.length) { data = d; break; }
+    } catch {}
+  }
+  if (!data) { _cfFileCache.set(key, null); return null; }
+
+  const wantVersion = (versions) => {
+    const arr = Array.isArray(versions) ? versions : [versions];
+    const v = String(version || '');
+    return !v || v === 'latest' || arr.some(x => {
+      const s = String(x);
+      return s === v || v.startsWith(s + '.') || s.startsWith(v + '.');
+    });
+  };
+  const wantLoader = (versions) => {
+    const arr = Array.isArray(versions) ? versions : [versions];
+    return !modLoader || modLoader === 'any' || modLoader === 'vanilla' ||
+      arr.some(v => String(v).toLowerCase() === String(modLoader).toLowerCase());
+  };
+  const jars = data.files.filter(f => /\.jar$/i.test(String(f.name || '')));
+  const exact = jars.filter(f => wantVersion(f.versions) && wantLoader(f.versions));
+  const loaderOnly = jars.filter(f => wantLoader(f.versions));
+  // Falsche MC-Version wuerde den Launcher direkt wieder crashed - daher nur
+  // bei explizitem "latest" auf loader-only zurueckfallen.
+  const pool = (!version || version === 'latest')
+    ? (loaderOnly.length ? loaderOnly : jars)
+    : exact;
+  const pick = pool.sort((a, b) =>
+    ((a.type === 'release' ? 0 : 1) - (b.type === 'release' ? 0 : 1)) ||
+    ((Date.parse(b.uploaded_at) || 0) - (Date.parse(a.uploaded_at) || 0))
+  )[0];
+  let result = null;
+  if (pick && pick.id) {
+    const fileId = Number(pick.id);
+    result = {
+      fileId,
+      fileName: String(pick.name),
+      url: `https://mediafilez.forgecdn.net/files/${Math.floor(fileId / 1000)}/${fileId % 1000}/${encodeURIComponent(String(pick.name))}`
+    };
+  }
+  _cfFileCache.set(key, result);
+  return result;
+}
+
+// Aktive Profil-Mods muessen zur gewaehlten MC-Version UND zum Loader passen.
+// Ein Eintrag, den die KI erfunden hat oder der nur fuer einen anderen Loader
+// existiert, wird nicht still uebersprungen, sondern sichtbar deaktiviert.
+async function ensureProfileModCompatible(mod, version, modLoader, log) {
+  if (!mod || mod.disabled) return { changed:false, disabled:false };
+  const disable = (reason) => {
+    mod.disabled = true;
+    mod.unresolved = true;
+    log(`[AUTO-FIX] ${mod.name} — ${reason}; Mod wurde deaktiviert.`);
+    return { changed:true, disabled:true };
+  };
+
+  if (mod.modrinthId) {
+    const gv = encodeURIComponent(`["${version}"]`);
+    const ld = encodeURIComponent(`["${modLoader}"]`);
+    const vs = await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version?game_versions=${gv}&loaders=${ld}`).catch(() => []);
+    if (vs && vs.length) return { changed:false, disabled:false };
+  }
+  if (mod.curseforgeId) {
+    const file = await curseforgeFileFor(mod, version, modLoader);
+    if (file) return { changed:false, disabled:false };
+  }
+  if (!mod.modrinthId && !mod.curseforgeId) return { changed:false, disabled:false };
+
+  // Letzter Versuch: ein echtes Projekt mit demselben Namen, das exakt zur
+  // Kombination passt (die relaxierte Suche liefert oft falsche Loader).
+  if (mod.name) {
+    try {
+      const facets = encodeURIComponent(JSON.stringify([
+        ['project_type:mod'], ['versions:' + version], ['categories:' + modLoader]
+      ]));
+      const d = await fetchJson(`https://api.modrinth.com/v2/search?query=${encodeURIComponent(mod.name)}&facets=${facets}&limit=5`);
+      let best = null, bestScore = -1;
+      for (const h of (d && d.hits) || []) {
+        const score = modNameScore(mod.name, h.title || h.name || '');
+        if (score > bestScore) { bestScore = score; best = h; }
+      }
+      if (best && bestScore >= 40) {
+        const old = mod.modrinthId;
+        mod.modrinthId = String(best.project_id);
+        mod.title = best.title || mod.name;
+        mod.iconUrl = best.icon_url || mod.iconUrl || '';
+        delete mod.curseforgeId;
+        delete mod.curseforgeSlug;
+        log(`[AUTO-FIX] ${mod.name} — inkompatibles Projekt ${old} durch ${mod.modrinthId} ersetzt.`);
+        return { changed:true, disabled:false };
+      }
+    } catch {}
+  }
+  return disable(`keine Version für MC ${version} / ${modLoader} gefunden`);
+}
+
+// ── Globaler Mod-Cache ────────────────────────────────────────────────────────
+// Jede vom Launcher heruntergeladene Mod-JAR bleibt in %APPDATA%\Crux Client\
+// mod-cache liegen. Wird genau diese Version wieder benoetigt, wird die Datei
+// von dort kopiert statt erneut aus dem Internet zu kommen. Der Cache-Key
+// enthaelt die Modrinth-Versions-ID bzw. die CurseForge-File-ID plus Dateiname
+// — eine andere Mod-Version trifft den Eintrag nicht.
+function modCacheFileName(prefix, parts) {
+  const safe = s => String(s == null ? '' : s).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 40);
+  const hash = crypto.createHash('sha256')
+    .update(parts.map(p => String(p == null ? '' : p)).join('|'))
+    .digest('hex').slice(0, 20);
+  return `${prefix}-${safe(parts[0])}-${hash}.jar`;
+}
+// Versions-ID bzw. File-ID reichen als Identitaet: dieselbe Mod-Version kann
+// mehrere MC-Versionen/Loader tragen und muss dann nur einmal im Cache liegen.
+function modrinthCacheName(projectId, versionData, file) {
+  return modCacheFileName('mr', [
+    projectId,
+    (versionData && (versionData.id || versionData.version_number)) || '',
+    (file && file.filename) || ''
+  ]);
+}
+function curseforgeCacheName(projectId, file) {
+  return modCacheFileName('cf', [
+    projectId,
+    (file && file.fileId) || (file && file.fileName) || '',
+    (file && file.fileName) || ''
+  ]);
+}
+async function deployModCachedOrDownload({ url, cacheName, dest, label, log, progress }) {
+  if (!url || !cacheName) throw new Error('Kein Cache-Key fuer ' + (label || dest));
+  await fs.promises.mkdir(P.modCache, { recursive: true });
+  await fs.promises.mkdir(path.dirname(dest), { recursive: true });
+  const cachePath = path.join(P.modCache, cacheName);
+  const say = line => { if (typeof log === 'function') log(line); };
+  let cached = false;
+  try { cached = fs.statSync(cachePath).size > 0; } catch {}
+  if (cached) {
+    try {
+      await fs.promises.copyFile(cachePath, dest);
+      say(`[CACHE] ${label || cacheName} aus dem Mod-Cache (gleiche Version)`);
+      return 'cache';
+    } catch (e) {
+      say(`[CACHE] ${label || cacheName}: Kopie fehlgeschlagen (${e.message}) — lade neu`);
+    }
+  }
+  const temp = path.join(P.modCache, `${cacheName}.part-${process.pid}-${Date.now()}`);
+  try {
+    await downloadFile(url, temp, progress);
+    try {
+      await fs.promises.rename(temp, cachePath);
+    } catch (e) {
+      // Zwei Instanzen koennen gleichzeitig denselben Eintrag schreiben.
+      let existing = false;
+      try { existing = fs.statSync(cachePath).size > 0; } catch {}
+      if (!existing) throw e;
+      try { fs.unlinkSync(temp); } catch {}
+      await fs.promises.copyFile(cachePath, dest);
+      say(`[CACHE] ${label || cacheName} aus dem Mod-Cache (parallele Instanz)`);
+      return 'cache';
+    }
+    await fs.promises.copyFile(cachePath, dest);
+    say(`[CACHE] ${label || cacheName} heruntergeladen und gecacht`);
+    return 'download';
+  } catch (e) {
+    try { if (fs.existsSync(temp)) fs.unlinkSync(temp); } catch {}
+    throw e;
+  }
+}
+
+async function deployCurseforgeMod(mod, modsDir, version, modLoader, log) {
+  try {
+    const prefix = `cf-${mod.curseforgeId}-`;
+    if (fs.readdirSync(modsDir).some(f => f.startsWith(prefix) && f.endsWith('.jar'))) return true;
+    const file = await curseforgeFileFor(mod, version, modLoader);
+    if (!file) {
+      log(`[MODS] ${mod.name} — keine CurseForge-Datei für MC ${version} / ${modLoader} gefunden`);
+      return false;
+    }
+    const source = await deployModCachedOrDownload({
+      url: file.url,
+      cacheName: curseforgeCacheName(mod.curseforgeId, file),
+      dest: path.join(modsDir, `${prefix}${file.fileName}`),
+      label: `${mod.name} (${file.fileName})`,
+      log
+    });
+    log(`[MODS] ${mod.name} — CurseForge ${file.fileName} ${source==='cache'?'aus dem Cache':'heruntergeladen'}`);
+    return true;
+  } catch (e) {
+    log(`[MODS] ${mod.name} (CurseForge) fehlgeschlagen: ${e.message}`);
+    return false;
+  }
+}
+
+function modHasJar(mod, files) {
+  if (!mod || !Array.isArray(files)) return false;
+  if (mod.modrinthId && files.some(f => f.startsWith(String(mod.modrinthId) + '-') && f.endsWith('.jar'))) return true;
+  if (mod.curseforgeId && files.some(f => f.startsWith(`cf-${mod.curseforgeId}-`) && f.endsWith('.jar'))) return true;
+  return false;
+}
+
+// Erforderliche Abhaengigkeiten aktiver Profil-Mods mitdeployen. Ohne das
+// startet ein Profil zwar, aber einzelne Mods scheitern an fehlenden Libs.
+async function addRequiredDependencies(toDeploy, version, modLoader, offline, exclude) {
+  if (offline) return 0;
+  const blocked = exclude || new Set();
+  const seen = new Set(toDeploy.map(m => m && m.modrinthId).filter(Boolean).map(String));
+  const processed = new Set();
+  const wanted = new Set();
+  for (const mod of toDeploy) {
+    if (!mod || mod._isProfileMod !== true) continue;
+    // seen enthaelt bereits ALLE deployten Mods — damit durfte die Mod selbst
+    // nicht uebersprungen werden. Extra processed-Set verhindert nur Duplikate.
+    if (!mod.modrinthId || processed.has(String(mod.modrinthId))) continue;
+    processed.add(String(mod.modrinthId));
+    try {
+      const gv = encodeURIComponent(`["${version}"]`);
+      const ld = encodeURIComponent(`["${modLoader}"]`);
+      const vs = await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version?game_versions=${gv}&loaders=${ld}`).catch(() => []);
+      for (const dep of ((vs && vs[0] && vs[0].dependencies) || [])) {
+        if (dep.dependency_type !== 'required') continue;
+        let id = dep.project_id ? String(dep.project_id) : null;
+        if (!id && dep.name) {
+          try {
+            const facets = encodeURIComponent(JSON.stringify([
+              ['project_type:mod'], ['versions:' + version], ['categories:' + modLoader]
+            ]));
+            const d = await fetchJson(`https://api.modrinth.com/v2/search?query=${encodeURIComponent(dep.name)}&facets=${facets}&limit=3`).catch(() => null);
+            const h = (d && d.hits || [])[0];
+            if (h && modNameScore(dep.name, h.title || h.name || '') >= 40) id = String(h.project_id);
+          } catch {}
+        }
+        if (id && !seen.has(id) && !blocked.has(normalizeBrokenId(id))) wanted.add(id);
+      }
+    } catch {}
+  }
+  let added = 0;
+  for (const id of wanted) {
+    try {
+      const info = await fetchJson(`https://api.modrinth.com/v2/project/${id}`).catch(() => null);
+      seen.add(id);
+      toDeploy.push({
+        name: (info && info.title) || id,
+        modrinthId: id,
+        version: 'latest', mcVersion: version,
+        source: 'Modrinth', iconUrl: (info && info.icon_url) || '',
+        downloadAllVersions: false, disabled: false, loader: modLoader,
+        _isDependency: true
+      });
+      added++;
+    } catch {}
+  }
+  return added;
+}
+
+async function persistProfileMods(profileId, profileMods) {
+  try {
+    const profiles = await load(P.profiles, []);
+    const prof = profiles.find(p => p.id === profileId);
+    if (!prof) return false;
+    const byName = new Map();
+    for (const m of Array.isArray(profileMods) ? profileMods : []) {
+      if (!m || !m.name) continue;
+      const key = String(m.name).toLowerCase();
+      const old = byName.get(key);
+      const hasSource = !!(m.modrinthId || m.curseforgeId || m.diskPath || (m.data && m.data.length));
+      if (!old || (hasSource && !(old.modrinthId || old.curseforgeId || old.diskPath))) byName.set(key, m);
+    }
+    const fields = ['modrinthId', 'curseforgeId', 'curseforgeSlug', 'iconUrl', 'title',
+      'version', 'downloadUrl', 'disabled', 'unresolved', 'fileName', 'diskPath'];
+    let changed = false;
+    for (const m of Array.isArray(prof.mods) ? prof.mods : []) {
+      const src = byName.get(String(m.name || '').toLowerCase());
+      if (!src) continue;
+      for (const field of fields) {
+        if (src[field] !== undefined && m[field] !== src[field]) { m[field] = src[field]; changed = true; }
+      }
+    }
+    if (changed) {
+      await save(P.profiles, profiles);
+      try { mainWindow && mainWindow.webContents.send('profile-mods-updated', { profileId, mods: prof.mods }); } catch {}
+    }
+    return changed;
+  } catch (e) {
+    console.error('[PROFILE MODS] Persistieren fehlgeschlagen:', e.message);
+    return false;
+  }
 }
 
 function packFormatForVersion(version) {
@@ -6779,47 +8498,76 @@ function cleanupMesaFromGameDir(gameDir) {
 }
 
 // ── Mesa3D Java Agent ─────────────────────────────────────────────────────────
-// Creates a Java agent JAR that calls System.load(Mesa's opengl32.dll) in
-// premain(), BEFORE any Minecraft/GLFW code runs. This pre-loads Mesa's
-// opengl32.dll into the process, so GLFW's later LoadLibrary("opengl32.dll")
-// finds the already-loaded Mesa version instead of the system one.
+// Der Agent laedt in premain() Mesa's opengl32.dll, BEVOR GLFW die System-DLL
+// laedt. Windows muss dabei libgallium_wgl.dll zuerst laden - sonst scheitert
+// System.load() mit "Can't find dependent libraries" (MesaAgent.java).
 const MESA_AGENT_DIR = path.join(__dirname, 'mesa-agent');
+// Fallback-Quelle: das Verzeichnis ist gitignored und liegt nicht in build.files.
+const MESA_AGENT_SOURCE = `import java.lang.instrument.Instrumentation;
+import java.io.File;
+
+public class MesaAgent {
+  public static void premain(String args, Instrumentation inst) {
+    if (args == null || args.isEmpty()) {
+      System.err.println("[MESA_AGENT] No Mesa DLL path specified");
+      return;
+    }
+    File dll = new File(args);
+    File dir = dll.getParentFile();
+    if (dir != null) preload(new File(dir, "libgallium_wgl.dll").getAbsolutePath());
+    preload(dll.getAbsolutePath());
+  }
+
+  private static void preload(String path) {
+    try {
+      System.load(path);
+      System.out.println("[MESA_AGENT] Loaded " + path);
+    } catch (Throwable t) {
+      System.err.println("[MESA_AGENT] Failed to preload " + path + ": " + t);
+    }
+  }
+}
+`;
 let _cachedMesaAgentJar = null;
+let _mesaJdkTools = null;
+function findMesaJdkTools(javaPath) {
+  if (_mesaJdkTools) return _mesaJdkTools;
+  const roots = [path.dirname(javaPath)];
+  if (process.env.JAVA_HOME) roots.push(path.join(process.env.JAVA_HOME, 'bin'));
+  try {
+    const jdks = path.join(os.homedir(), '.jdks');
+    for (const d of fs.readdirSync(jdks)) roots.push(path.join(jdks, d, 'bin'));
+  } catch {}
+  for (const bin of roots) {
+    const javac = path.join(bin, 'javac.exe');
+    const jar = path.join(bin, 'jar.exe');
+    if (fs.existsSync(javac) && fs.existsSync(jar)) return (_mesaJdkTools = { javac, jar });
+  }
+  return null;
+}
 async function ensureMesaAgent(mesaGL, javaPath) {
-  if (_cachedMesaAgentJar && fs.existsSync(_cachedMesaAgentJar)) return _cachedMesaAgentJar;
   try {
     const agentDir = MESA_AGENT_DIR;
-    await fs.promises.mkdir(agentDir, { recursive: true });
     const javaFile = path.join(agentDir, 'MesaAgent.java');
-    const classFile = path.join(agentDir, 'MesaAgent.class');
     const jarFile = path.join(agentDir, 'MesaAgent.jar');
     const manifestFile = path.join(agentDir, 'MANIFEST.MF');
+    const stampFile = path.join(agentDir, 'MesaAgent.version');
+    await fs.promises.mkdir(agentDir, { recursive: true });
 
-    if (!fs.existsSync(jarFile)) {
-      const code = [
-        'import java.lang.instrument.Instrumentation;',
-        'public class MesaAgent {',
-        '  public static void premain(String args, Instrumentation inst) {',
-        '    if (args == null || args.isEmpty()) {',
-        '      System.err.println("[MESA_AGENT] No Mesa DLL path specified");',
-        '      return;',
-        '    }',
-        '    try {',
-        '      System.load(args);',
-        '    } catch (Throwable t) {',
-        '      System.err.println("[MESA_AGENT] Failed to preload Mesa: " + t);',
-        '    }',
-        '  }',
-        '}',
-      ].join('\n');
-      await fs.promises.writeFile(javaFile, code, 'utf8');
+    let source = MESA_AGENT_SOURCE;
+    try { source = (await fs.promises.readFile(javaFile, 'utf8')).replace(/^\uFEFF/, ''); }
+    catch { await fs.promises.writeFile(javaFile, source, 'utf8'); }
+    const version = 'v2-' + crypto.createHash('sha1').update(source).digest('hex').slice(0, 10);
+    const upToDate = fs.existsSync(jarFile) && fs.existsSync(stampFile) &&
+      fs.readFileSync(stampFile, 'utf8').trim() === version;
+    if (!upToDate) {
+      const tools = findMesaJdkTools(javaPath);
+      if (!tools) throw new Error('Kein JDK mit javac.exe/jar.exe gefunden');
       await fs.promises.writeFile(manifestFile, 'Premain-Class: MesaAgent\n', 'utf8');
-
-      const jdkDir = path.dirname(javaPath);
-      const javacPath = path.join(jdkDir, 'javac.exe');
-      const jarPath = path.join(jdkDir, 'jar.exe');
-      execSync(`"${javacPath}" MesaAgent.java`, { cwd: agentDir, stdio: 'ignore' });
-      execSync(`"${jarPath}" cfm MesaAgent.jar MANIFEST.MF MesaAgent.class`, { cwd: agentDir, stdio: 'ignore' });
+      execSync(`"${tools.javac}" MesaAgent.java`, { cwd: agentDir, stdio: 'ignore' });
+      execSync(`"${tools.jar}" cfm MesaAgent.jar MANIFEST.MF MesaAgent.class`, { cwd: agentDir, stdio: 'ignore' });
+      await fs.promises.writeFile(stampFile, version, 'utf8');
+      console.log('[MESA_AGENT] Agent neu kompiliert (libgallium_wgl.dll zuerst).');
     }
     _cachedMesaAgentJar = jarFile;
     return jarFile;
@@ -7046,6 +8794,12 @@ async function getNeoForgeLatestVersion(mcVersion) {
   });
   return pool[0];
 }
+
+
+
+
+
+
 
 
 

@@ -50,6 +50,7 @@
                                 "Crux-Client.png",
                                 "cape_template.png",
                                 "icons/**/*",
+                                 "fonts/**/*",
                                 "!node_modules/jszip/dist/*.map"
                             ],
                   "win":  {

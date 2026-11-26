@@ -21,6 +21,14 @@
      17  Responsive
    ============================================================ */
 
+/* Minecraft-Schrift fuer die Appearance-Option "Minecraft". Normale Metriken
+   (xHeight .5em, capHeight .7em) -> gleiche Groesse wie die Systemschrift. */
+@font-face {
+  font-family: "Minecraft Seven";
+  src: url("fonts/Minecraft-Seven_v2.ttf") format("truetype");
+  font-display: swap;
+}
+
 /* ── 01  TOKENS ─────────────────────────────────────────────── */
 /* Farbwelt, Typo und Formsprache sind identisch zur Website
    (cruxclient.net) — Launcher und Seite sollen wie ein Produkt wirken. */
@@ -68,7 +76,7 @@
   /* Hoehe der Toolbar (Tab-Leiste) */
   --tb: 6.2vh;
 
-  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;  --mono: "JetBrains Mono", "Cascadia Code", Consolas, "SF Mono", monospace;
+  --font: "Minecraft Seven", "Courier New", monospace;  --mono: "JetBrains Mono", "Cascadia Code", Consolas, "SF Mono", monospace;
   --fs-xs: .72rem;
   --fs-sm: .8rem;
   --fs-md: .88rem;
@@ -130,6 +138,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; }
 
 body {
   font-family: var(--font);
+  /* Gleiche x-Height fuer System-, Minecraft- und Custom-Fonts: beim Wechsel
+     bleiben Textgroesse und Grundlinie erhalten. */
+  font-size-adjust: 0.5;
   font-size: 1rem;
   line-height: 1.55;
   color: var(--text);
@@ -271,7 +282,6 @@ body:not(.tabs-left):not(.tabs-right) .toolbar > .tb-btn[data-page="logs-page"] 
 .tb-btn .tb-ic { width: 1.1em; height: 1.1em; flex: none; opacity: .85; }
 .tb-btn .tb-fic { width: 0.95em; height: 0.95em; flex: none; opacity: .85; }
 .tb-btn.active .tb-ic { opacity: 1; color: var(--acc-on); }
-.tb-btn .tb-head { width: 1.2em; height: 1.2em; border-radius: 6px; image-rendering: pixelated; display: none; }
 .tb-btn.tb-disabled { opacity: .4; pointer-events: none; cursor: not-allowed; }
 /* Settings-Button Positionen */
 #settings-fab.fab-position-toolbar { position: static; left: auto; top: auto; right: auto; bottom: auto; width: auto; height: auto; border-radius: var(--r-sm); z-index: auto; box-shadow: none; }
@@ -824,6 +834,13 @@ hr { border: none; border-top: 1px solid var(--border); margin: var(--sp-4) 0; }
 .bugreport-panel .form-row { max-width: 100%; }
 .bugreport-panel #bugreport-send-btn { width: 100%; }
 
+/* Servers + Bug Report nutzen die volle Seitenbreite (wie der Owner-Tab). */
+#servers-page > *, #bugreport-page > * { max-width: none; width: 100%; }
+#servers-page .form-row, #servers-page .form-row--narrow,
+#servers-page .form-grid, #bugreport-page .form-row { max-width: none; width: 100%; }
+#servers-page #server-advanced-settings > div:first-child { max-width: none !important; }
+#bugreport-page #bugreport-send-btn { width: 100%; }
+
 input[type=text], input[type=url], input[type=number], input[type=password], input[type=email],
 input[type=search], select, textarea {
   padding: .68rem .9rem;
@@ -920,6 +937,19 @@ input[type=range]::-webkit-slider-thumb {
 .server-list, .friend-list { background: none; border: none; border-radius: 0; overflow: visible; }
 .server-list { gap: .5rem; margin-bottom: 1rem; }
 .friend-list { gap: .5rem; }
+
+/* Leere Zustaende komplett entfernen: wenn nichts vorhanden ist, wird gar
+   keine Platzhalter-Box angezeigt (Recent Played, Server, Mods, Accounts,
+   Skins, Capes, Owner ...). Gilt auch fuer nachtraeglich per JS gesetzte
+   Inline-Styles. */
+.mod-list-empty,
+.owner-info-empty,
+.rail-empty,
+.recent-empty,
+#owner-account-empty,
+#custom-cape-list-empty,
+#capes-empty,
+#skin-list-empty { display: none !important; }
 
 .mod-list-empty {
   padding: 2.25rem 1.25rem;
@@ -1120,23 +1150,38 @@ input[type=range]::-webkit-slider-thumb {
 .launch-hero .status-text.err::before { background: var(--danger); box-shadow: 0 0 10px color-mix(in srgb, var(--danger) 65%, transparent); }
 .launch-hero .lp-wrap { align-self: stretch; width: 100%; max-width: none; }
 
-/* Recent */
-.launch-recent {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--glass-shadow);
-  padding: var(--sp-4);
-  margin-top: var(--sp-2);
-  max-width: 40rem;
-}
-.launch-recent__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-3); flex-wrap: wrap; gap: var(--sp-2); }
-.launch-recent h2 { font-size: var(--fs-lg); color: var(--text-2); }
+/* Recent Played — rechts unter den Skin-Karten, eine Zeile pro Eintrag
+   mit dem Icon des zugehörigen Profils. */
 .launch-recent__tools { display: flex; align-items: center; gap: .5rem; }
-.launch-recent__count { font-size: var(--fs-xs); color: var(--muted-2); }
-.recent-empty { padding: 1.5rem; text-align: center; color: var(--muted-2); font-size: var(--fs-sm); }
+.launch-recent__count { font-size: var(--fs-xs); color: var(--muted-2); white-space: nowrap; }
+.recent-section + .recent-section { margin-top: var(--sp-3); }
+.recent-section__title {
+  display: flex; align-items: center; gap: .35rem;
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-xs); font-weight: 700; color: var(--text-2);
+}
+.recent-section__count { color: var(--muted-2); font-weight: 400; }
+.recent-section__empty { font-size: var(--fs-xs); }
+.recent-list { display: flex; flex-direction: column; gap: .35rem; }
+.recent-item {
+  display: flex; align-items: center; gap: .5rem;
+  min-width: 0; padding: .4rem .45rem;
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+.recent-item .rail-profile__avatar { width: 1.5rem; height: 1.5rem; flex: none; border-radius: 8px; font-size: .62rem; }
+.recent-item .rail-profile__avatar--custom { border-radius: 8px; }
+.recent-item__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .08rem; }
+.recent-item__name {
+  font-size: .82rem; font-weight: 650; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.recent-item__meta {
+  font-size: var(--fs-xs); color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.recent-join-btn, .recent-launch-btn { flex: none; width: auto; padding: .22rem .5rem; font-size: var(--fs-xs); }
+.recent-remove-btn { flex: none; width: auto; padding: .2rem .4rem; font-size: var(--fs-xs); color: var(--danger); }
 
 /* Skin-Panel */
 .skin-panel {
@@ -1440,6 +1485,63 @@ input[type=range]::-webkit-slider-thumb {
   background: var(--acc-softer);
 }
 #client-rp-list, .pack-list { transition: outline-color .15s, background .15s; }
+
+/* Universaler Datei-Drop ueberall (Seiten, Modals, Editoren) */
+[data-drop-kind].file-drop-active {
+  outline: 2px dashed var(--acc);
+  outline-offset: -3px;
+  background: var(--acc-softer);
+  border-radius: var(--r-lg);
+}
+.mod-dropzone {
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--r);
+  padding: 1.2rem .8rem;
+  text-align: center;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.mod-dropzone:hover, .mod-dropzone.file-drop-active { border-color: var(--acc); background: var(--acc-softer); }
+.drop-toast {
+  position: fixed; left: 50%; bottom: 1.5rem; transform: translate(-50%, 1rem);
+  z-index: 9999; max-width: min(34rem, 90vw); padding: .6rem 1rem;
+  border: 1px solid var(--acc); border-radius: var(--r);
+  background: var(--surface-2); color: var(--text); box-shadow: var(--shadow);
+  font-size: var(--fs-sm); opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s;
+}
+.drop-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.drop-toast.bad { border-color: var(--danger); }
+body.glass .drop-toast { background: var(--gs-panel) !important; border-color: var(--gs-bd) !important; }
+body.glass .drop-toast.bad { color: #c92a2a !important; }
+
+/* Bestaetigung vor dem Hinzufuegen gedroppter Dateien */
+.drop-confirm-modal .modal { width: min(92vw, 30rem); }
+.drop-confirm-dest { color: var(--acc); font-weight: 700; font-size: var(--fs-sm); }
+.drop-confirm-list { display: flex; flex-direction: column; gap: .35rem; max-height: 14rem; overflow-y: auto; margin: .8rem 0; }
+.drop-confirm-file { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .45rem .65rem; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface-2); font-size: var(--fs-sm); }
+.drop-confirm-file__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drop-confirm-file__size { color: var(--muted); flex: none; font-size: var(--fs-xs); }
+.drop-confirm-modal .modal-actions { padding: 0 1.2rem 1rem; }
+
+/* Minecraft-Launcher-Import: Instanz-Auswahl */
+.mcimp-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.mcimp-toolbar .btn { width: auto; }
+.mcimp-list { display: flex; flex-direction: column; gap: .35rem; max-height: 38vh; overflow-y: auto; }
+.mcimp-row { display: flex; align-items: flex-start; gap: .6rem; padding: .5rem .6rem; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface-2); cursor: pointer; }
+.mcimp-row:hover { border-color: var(--acc); }
+.mcimp-row input { width: 1.1em; height: 1.1em; flex: none; margin-top: .1rem; }
+.mcimp-row__main { flex: 1; min-width: 0; }
+.mcimp-row__name { font-weight: 700; font-size: var(--fs-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mcimp-row__meta { color: var(--muted); font-size: var(--fs-xs); margin-top: .1rem; }
+.mcimp-row__flags { color: var(--acc); font-size: var(--fs-xs); margin-top: .15rem; }
+body.glass .mcimp-row { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; }
+body.glass .mcimp-row__flags { color: var(--acc) !important; }
+
+body.glass .drop-confirm-file { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; }
+body.glass .drop-confirm-dest { color: var(--acc) !important; }
+
 .pack-list { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .4rem; min-height: 1.5em; }
 #profile-mods-list {
   display: grid;
@@ -1896,7 +1998,9 @@ body.glass .profile-card.is-active .profile-card__avatar {
 .profile-modal .form-row {
   display: flex; flex-direction: column; gap: .35rem;
 }
-.profile-modal .form-row--wide { width: 100%; }
+/* Die globale 30rem-Grenze der Formulare würde alle Steuerelemente des
+   Profil-Modals auf die linke Hälfte zwingen. Hier gilt die volle Modalbreite. */
+.profile-modal .form-row--wide { width: 100%; max-width: none; }
 .profile-modal label {
   font-size: var(--fs-xs);
   text-transform: uppercase;
@@ -2111,6 +2215,7 @@ body.glass .profile-card.is-active .profile-card__avatar {
 .mod-info { flex: 1; min-width: 0; }
 .mod-name { font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); }
 .mod-meta { font-size: var(--fs-xs); color: var(--muted); margin-top: .1rem; }
+.rp-disabled-hint { color: var(--muted-2); font-weight: 400; font-size: .76em; }
 /* Profile mod list buttons - prevent overlap */
 .profile-modal .mod-btns {
   display: flex;
@@ -2142,7 +2247,8 @@ body.glass .profile-card.is-active .profile-card__avatar {
 
 /* Client options mod list buttons - prevent overlap */
 .client-options .mod-btns,
-#mod-list .mod-btns {
+#mod-list .mod-btns,
+#client-rp-list .mod-btns {
   display: flex;
   align-items: center;
   gap: .6rem;
@@ -2161,13 +2267,15 @@ body.glass .profile-card.is-active .profile-card__avatar {
   flex-shrink: 1;
 }
 .client-options .mod-btns .mod-switch,
-#mod-list .mod-btns .mod-switch {
+#mod-list .mod-btns .mod-switch,
+#client-rp-list .mod-btns .mod-switch {
   transform: scale(.9);
   margin: 0;
   flex-shrink: 0;
 }
 .client-options .mod-btns .mod-remove,
-#mod-list .mod-btns .mod-remove {
+#mod-list .mod-btns .mod-remove,
+#client-rp-list .mod-btns .mod-remove {
   padding: .22rem .5rem;
   font-size: var(--fs-xs);
   flex-shrink: 0;
@@ -2223,7 +2331,15 @@ body.glass .profile-card.is-active .profile-card__avatar {
 .profile-icon-preview.has-image .preview-placeholder { display: none; }
 .profile-icon-controls { display: flex; gap: .5rem; }
 .profile-icon-controls .btn { white-space: nowrap; }
-.profile-sec-btn { flex: 1; min-width: 0; padding: .4rem .5rem; border: 1px solid transparent; border-radius: var(--r-sm); background: transparent; color: var(--muted); font-family: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; transition: background .14s, color .14s, border-color .14s; }
+/* sectional tabs: volle Modalbreite, Buttons nur so breit wie ihr Text */
+.profile-sec-bar {
+  display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: space-between; gap: .4rem;
+  width: 100%; padding: .3rem;
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+  background: var(--surface-1);
+}
+.profile-sec-btn { flex: 0 1 auto; min-width: 0; padding: .4rem .7rem; border: 1px solid transparent; border-radius: var(--r-sm); background: transparent; color: var(--muted); font-family: inherit; font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; cursor: pointer; transition: background .14s, color .14s, border-color .14s; }
 .profile-sec-btn:hover { background: var(--surface-3); color: var(--text-2); }
 .profile-sec-btn.active { background: var(--acc-soft); border-color: var(--acc-line); color: var(--text); }
 .profile-split { display: flex; align-items: stretch; gap: .6rem; min-height: 14rem; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface-1); overflow: hidden; }
@@ -2284,6 +2400,77 @@ body.glass .profile-card.is-active .profile-card__avatar {
 .account-del { width: auto; padding: .2rem .55rem; font-size: var(--fs-xs); background: transparent; border-color: var(--border); color: var(--muted); border-radius: var(--r-sm); }
 .account-del:hover { border-color: var(--danger); color: var(--danger); }
 .account-add-btns { display: flex; gap: .5rem; margin-top: .5rem; }
+
+/* Owner-Tab: Zugriffsliste + Live-Viewer nebeneinander über die ganze Breite */
+.owner-info-card { max-width: none; width: 100%; }
+.owner-info-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem 1.2rem; width: 100%; }
+.owner-info-cell { min-width: 0; }
+.owner-info-label {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--acc);
+  margin-bottom: .45rem;
+}
+.owner-info-label #owner-access-add { margin-left: auto; letter-spacing: normal; text-transform: none; font-weight: 600; }
+.owner-info-row__btn { margin-left: .5rem; flex: 0 0 auto; }
+.owner-device-approval {
+  position: fixed;
+  right: 1.2rem;
+  bottom: 1.2rem;
+  z-index: 2900;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  max-width: 28rem;
+  padding: .7rem .9rem;
+  background: var(--surface-2);
+  border: 1px solid var(--acc);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  font-size: var(--fs-sm);
+}
+.owner-device-approval .btn { flex: 0 0 auto; }
+.owner-info-cell .hint { margin: 0 0 .45rem; }
+.owner-info-list { display: flex; flex-direction: column; gap: .45rem; }
+.owner-info-row {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .55rem .8rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  font-size: .85rem;
+}
+.owner-info-dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.owner-info-dot.is-online { background: var(--ok); box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--ok) 20%, transparent); }
+.owner-info-row__name { font-weight: 650; color: var(--text); }
+.owner-info-row__meta { margin-left: auto; text-align: right; color: var(--muted); font-size: var(--fs-xs); }
+.owner-info-empty { padding: .55rem .8rem; color: var(--muted); font-size: var(--fs-sm); }
+
+/* Owner-Aktionen + Nachrichten-Popup */
+.owner-action { margin-left: .35rem; flex: 0 0 auto; }
+.owner-action--msg { border-color: color-mix(in srgb, var(--acc) 45%, transparent); color: var(--acc); }
+.owner-action--danger { border-color: rgba(244, 68, 68, .28); color: #f44; }
+.owner-action--ok { border-color: rgba(27, 217, 106, .4); color: #1bd96a; }
+.notice-send-modal { z-index: 2750; }
+.notice-modal { z-index: 2850; }
+.notice-send-modal .modal, .notice-modal .modal { max-width: 30rem; }
+.notice-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: .9rem 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  font-size: .95rem;
+  line-height: 1.55;
+}
 
 /* Instanzen */
 .instance-badge { padding: .15rem .55rem; border-radius: var(--r-pill); font-size: var(--fs-xs); font-weight: 600; }
@@ -2479,6 +2666,22 @@ body.glass .profile-card.is-active .profile-card__avatar {
 .bg-color-reset { flex: none; }
 .bg-color-reset:disabled { opacity: .45; cursor: default; }
 
+/* Schrift-Vorschau in den Appearance-Einstellungen */
+.font-preview {
+  margin: 0;
+  padding: .65rem .8rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs-lg);
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Eigene Hintergrundfarbe: Text, der DIREKT auf dem Seiten-Hintergrund
    liegt (Headline, Untertitel), muss zum Hintergrund passen. Die Panels
    (Cards) behalten ihre Theme-Farben. */
@@ -2544,6 +2747,13 @@ body:not(.light):not(.glass).bg-light .page-head__sub { color: rgba(23, 18, 31, 
 #mod-modal .modal-tab-row { flex-wrap: wrap; }
 .modal-header { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); padding: .95rem 1.2rem; border-bottom: 1px solid var(--border); background: var(--surface-2); }
 .modal-header h2 { font-size: 1rem; }
+.ai-plan-card { display: flex; flex-direction: column; gap: .55rem; padding: .75rem .85rem; border: 1px solid var(--glass-border-2); border-radius: 12px; background: var(--glass-bg-2); }
+.ai-plan-card__title { font-weight: 800; color: var(--text); }
+.ai-plan-card__meta { font-size: .82rem; color: var(--muted); }
+.ai-plan-card__mods { display: flex; flex-wrap: wrap; gap: .35rem; }
+.ai-plan-card__mod { display: inline-flex; align-items: center; gap: .3rem; font-size: .78rem; padding: .15rem .45rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2); color: var(--text-2); }
+.ai-plan-card__mod-icon { width: .95rem; height: .95rem; border-radius: 3px; object-fit: contain; flex: none; }
+.ai-plan-card__actions { display: flex; gap: .45rem; flex-wrap: wrap; }
 .modal-close { width: auto; padding: .2rem .55rem; background: transparent; border: 1px solid var(--border-strong); color: var(--muted); border-radius: 10px; font-size: 1.1rem; line-height: 1; cursor: pointer; transition: color .18s, border-color .18s, background .18s; }
 .modal-close:hover { color: var(--text); border-color: rgba(255, 255, 255, .3); background: rgba(255, 255, 255, .06); }
 .modal-body { padding: 1rem 1.2rem; overflow-y: auto; overflow-x: hidden; flex: 1; }
@@ -2925,6 +3135,7 @@ body.glass .profile-chip--quilt { color: #a83a72 !important; }
 body.glass .profile-chip--forge { color: #a83500 !important; }
 body.glass .profile-chip--neoforge { color: #a35c00 !important; }
 body.glass .profile-chip--bedrock { color: #1668b8 !important; }
+body.glass .profile-chip--group { color: var(--gs-mut) !important; }
 body.glass .profile-chip--group-custom { color: #0a7a3d !important; }
 body.glass .profile-card__avatar { color: #fff !important; }
 body.glass .profile-card__avatar[data-loader="vanilla"] { color: var(--gs-tx) !important; }
@@ -2976,6 +3187,30 @@ body.glass #update-overlay.update-themed .btn:not(.btn-primary) { color: #14171c
 body.glass #update-overlay.update-themed .btn:not(.btn-primary):hover { background: rgba(255, 255, 255, .85) !important; }
 body.glass #update-overlay.update-themed #update-bugreport-btn { color: #d33 !important; border-color: #d33 !important; }
 
+/* Recent Played: eigene Glasflaechen statt fester Panel-Farben */
+body.glass .recent-item { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; }
+body.glass .recent-item:hover { background: rgba(255, 255, 255, .45) !important; }
+body.glass .recent-item__name { color: var(--gs-strong) !important; }
+body.glass .recent-item__meta, body.glass .recent-section__count, body.glass .launch-recent__count { color: var(--gs-mut) !important; }
+body.glass .recent-remove-btn { color: #c92a2a !important; }
+
+/* Client-RPs: gleiche Glasflaechen wie die Mod-Liste */
+body.glass #client-rp-list .mod-item { background: var(--gs-panel) !important; border-color: var(--gs-bd) !important; }
+body.glass #client-rp-list .mod-item:hover { background: var(--gs-list) !important; }
+body.glass .rp-disabled-hint { color: var(--gs-mut) !important; }
+
+/* Owner-Tab: eigene Glasflaechen statt fester Panel-Farben */
+body.glass .owner-info-row { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; }
+body.glass .owner-info-row__name { color: var(--gs-tx) !important; }
+body.glass .owner-info-row__meta, body.glass .owner-info-empty { color: var(--gs-mut) !important; }
+body.glass .owner-info-label { color: var(--acc) !important; }
+body.glass .owner-device-approval { background: var(--gs-panel) !important; border-color: var(--gs-bd) !important; color: var(--gs-tx) !important; }
+body.glass .font-preview { background: var(--gs-panel); border-color: var(--gs-bd); }
+body.glass .owner-action--msg { color: var(--acc) !important; }
+body.glass .owner-action--danger { color: #c92a2a !important; }
+body.glass .owner-action--ok { color: #0d7a3d !important; }
+body.glass .notice-text { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; color: var(--gs-tx) !important; }
+
 /* Glas-Sicherheitsnetz: hart kodierte Textfarben aus JS-Markup auf die Theme-Farbe ziehen */
 body.glass, body.glass *, body.glass *::before, body.glass *::after { color: var(--gs-tx) !important; }
 body.glass .btn-primary, body.glass .mod-install-btn, body.glass .profile-sec-btn.active,
@@ -3012,6 +3247,7 @@ body.glass .settings-accent-dot { color: #0d7a3d !important; }
   .page { padding: var(--sp-4) var(--sp-3); }
   .modal { width: 96vw; }
   .profile-grid { grid-template-columns: 1fr; }
+  .owner-info-bar { grid-template-columns: 1fr; }
 }
 
 /* Safety: ensure UI remains clickable */
