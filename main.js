@@ -853,17 +853,43 @@ async function predownloadVanillaGameFiles(version, javaPath, sendProgress, cust
     const next = downloadQueue.shift();
     if (next) next();
   };
+  const patchedHandlers = [];
   const cacheGate = async () => {
-    if (autoPrecache.abort) { interrupted = true; throw new Error('OFFLINE_CACHE_PAUSED'); }
+    if (autoPrecache.abort || autoPrecache.userInterrupted) { interrupted = true; return false; }
     await waitForPrecacheIdle();
-    if (autoPrecache.abort) { interrupted = true; throw new Error('OFFLINE_CACHE_PAUSED'); }
+    if (autoPrecache.abort || autoPrecache.userInterrupted) { interrupted = true; return false; }
+    return true;
   };
   const patchedDownload = function (...args) {
     return (async () => {
+      if (!(await cacheGate())) return false;
       await waitForSlot();
       try {
-        await cacheGate();
-        return await origDownload.apply(this, args);
+        if (!(await cacheGate())) return false;
+        // MCLC ruft intern this.baseRequest() auf. Wir registrieren jeden
+        // Request mit seinem Zielpfad, damit abortPrecacheDownloads() ihn bei
+        // der nächsten Nutzeraktion sofort abbrechen und die Teildatei löschen kann.
+        if (!this.__cacheBasePatched) {
+          this.__cacheBasePatched = true;
+          this.__cacheOrigBase = this.baseRequest;
+          patchedHandlers.push(this);
+          this.baseRequest = function (...a) {
+            const req = this.__cacheOrigBase.apply(this, a);
+            const item = { req, dest: this.__cacheDest || null };
+            precacheActiveDownloads.add(item);
+            const clear = () => precacheActiveDownloads.delete(item);
+            req.once('complete', clear);
+            req.once('error', clear);
+            req.once('abort', clear);
+            return req;
+          };
+        }
+        this.__cacheDest = (typeof name === 'string' && name) ? path.join(directory, name) : null;
+        try {
+          return await origDownload.apply(this, args);
+        } finally {
+          this.__cacheDest = null;
+        }
       } finally {
         releaseSlot();
       }
@@ -873,6 +899,15 @@ async function predownloadVanillaGameFiles(version, javaPath, sendProgress, cust
     if (HandlerClass.prototype.downloadAsync === patchedDownload) {
       HandlerClass.prototype.downloadAsync = origDownload;
     }
+    for (const h of patchedHandlers) {
+      try {
+        h.baseRequest = h.__cacheOrigBase;
+        delete h.__cacheBasePatched;
+        delete h.__cacheOrigBase;
+        delete h.__cacheDest;
+      } catch {}
+    }
+    patchedHandlers.length = 0;
     precacheRestorers.delete(restoreDownload);
   };
   HandlerClass.prototype.downloadAsync = patchedDownload;
@@ -1060,10 +1095,24 @@ const autoPrecache = {
   abort: false,         // Spielstart bricht den Hintergrund-Cache sofort ab
   timer: null,
   userBusy: false,      // Nutzer arbeitet gerade im Launcher -> Cache pausiert
+  userInterrupted: false, // Nutzeraktion hat laufende Cache-Downloads abgebrochen
   idleWaiters: [],      // warten auf "Nutzer wieder untätig"
 };
 // Temporäre MCLC-Download-Patches des Caches (siehe predownloadVanillaGameFiles).
 const precacheRestorers = new Set();
+// Aktive Cache-Requests mit Zielpfad, damit eine Nutzeraktion sie sofort
+// abbrechen und halb geschriebene Dateien entfernen kann.
+const precacheActiveDownloads = new Set();
+function abortPrecacheDownloads() {
+  for (const item of [...precacheActiveDownloads]) {
+    try { item.req.abort(); } catch {}
+    if (item.dest) {
+      // Erst löschen, wenn der Write-Stream des abgebrochenen Requests zu ist.
+      setTimeout(() => { try { fs.unlinkSync(item.dest); } catch {} }, 250).unref?.();
+    }
+  }
+  precacheActiveDownloads.clear();
+}
 
 // Der Cache läuft im Hauptprozess, darf dort aber nie die Event-Loop blockieren.
 // Nach jedem Arbeitsschritt bekommt Electron/IPC wieder Luft (Klicks reagieren).
@@ -1075,7 +1124,12 @@ function setPrecacheUserBusy(active) {
   const next = !!active;
   if (autoPrecache.userBusy === next) return;
   autoPrecache.userBusy = next;
-  if (!next) {
+  if (next) {
+    // Erste Aktion: alles, was gerade läuft, sofort stoppen. Der Cache startet
+    // danach komplett neu (siehe userInterrupted in predownloadVanillaGameFiles).
+    autoPrecache.userInterrupted = true;
+    abortPrecacheDownloads();
+  } else {
     const waiters = autoPrecache.idleWaiters.splice(0);
     for (const resolve of waiters) resolve();
     // Der Nutzer ist fertig: Cache nach kurzer Ruhe weiterplanen, statt auf
@@ -1094,6 +1148,7 @@ function waitForPrecacheIdle() {
 // gewartet wird (sonst haengen die wartenden Downloads bis zur Ruhe fest).
 function abortPrecache() {
   autoPrecache.abort = true;
+  abortPrecacheDownloads();
   const waiters = autoPrecache.idleWaiters.splice(0);
   for (const resolve of waiters) resolve();
   // Kein Cache-Patch darf in einen Spielstart hinein laufen.
@@ -1275,6 +1330,7 @@ async function runAutoPrecache() {
 
   autoPrecache.busy = true;
   autoPrecache.abort = false;
+  autoPrecache.userInterrupted = false;
   const mods = [...(autoPrecache.mods || []), ...(autoPrecache.clientMods || [])];
   const rps = autoPrecache.clientRPs || [];
   try {
@@ -1300,6 +1356,8 @@ async function runAutoPrecache() {
   } finally {
     autoPrecache.busy = false;
     autoPrecache.abort = false;
+    // Der nächste Lauf startet wieder frisch, sobald der Nutzer fertig ist.
+    autoPrecache.userInterrupted = false;
   }
 }
 

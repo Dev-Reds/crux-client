@@ -511,16 +511,21 @@ Nutzeraktion konkurrieren:
   geht `false` raus. Zusätzlich hält der `ipcRenderer.invoke`-Wrapper den
   Busy-Zustand, bis die aufgerufene Funktion zurückkehrt — die Aktion des
   Users läuft also immer vor dem Cache fertig.
-- Hauptprozess: `setPrecacheUserBusy()` setzt `autoPrecache.userBusy`; alle
-  Cache-Schritte laufen über `precacheStep()` → `waitForPrecacheIdle()`.
-  Ein bereits gestarteter Schritt wird nicht mitten unterbrochen.
+- Hauptprozess: `setPrecacheUserBusy()` setzt beim ersten Klick
+  `autoPrecache.userInterrupted` und ruft `abortPrecacheDownloads()`. Damit
+  werden laufende Requests **sofort** abgebrochen (nicht erst am Ende des
+  aktuellen Downloads) und halb geschriebene Zieldateien gelöscht. Alle
+  Cache-Schritte laufen zusätzlich über `precacheStep()` →
+  `waitForPrecacheIdle()`.
 - `predownloadVanillaGameFiles()` patcht `Handler.prototype.downloadAsync`
-  nur während seines Laufs: maximal 8 parallele Downloads und vor jedem
-  Download `cacheGate()`. `abortPrecache()` (Spielstart) bricht sofort ab und
-  entfernt den Patch über `precacheRestorers` wieder, damit ein Spielstart
-  nie in den Cache-Patch läuft.
-- Beim Übergang auf `false` wird der Cache nach 1500 ms neu eingeplant;
-  ansonsten greift der 5-Minuten-Tick.
+  nur während seines Laufs: maximal 8 parallele Downloads, vor jedem Download
+  `cacheGate()`. Der Patch registriert über `this.baseRequest()` jeden
+  Request in `precacheActiveDownloads` und entfernt den Patch am Ende wieder.
+  `abortPrecache()` (Spielstart) bricht ebenfalls sofort ab.
+- Nach dem Abbruch liefert der Lauf `{paused:true}`; `runAutoPrecache()` setzt
+  `userInterrupted` zurück. Beim Übergang auf `false` wird der Cache nach
+  1500 ms **neu** gestartet (nicht mitten im alten Lauf fortgesetzt) —
+  bereits vorhandene Dateien werden dabei übersprungen.
 
 ### Stats
 
