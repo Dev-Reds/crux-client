@@ -57,8 +57,7 @@
                               "icon":  "icons/icon.ico",
                               "signAndEditExecutable":  true,
                               "target":  [
-                                             "nsis",
-                                             "portable"
+                                             "nsis"
                                          ]
                           },
                   "nsis":  {
@@ -75,9 +74,6 @@
                                "uninstallerIcon":  "icons/icon.ico",
                                "include":  "installer/custom-shortcuts.nsh"
                            },
-                  "portable":  {
-                                   "artifactName":  "Crux-Client-Portable-x64.${ext}"
-                               },
                   "linux":  {
                                 "icon":  "icons/icon.png",
                                 "target":  [

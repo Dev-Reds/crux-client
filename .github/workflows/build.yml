@@ -33,7 +33,6 @@ jobs:
           name: Crux-Client-Windows
           path: |
             installer/Crux-Client-Installer.exe
-            installer/Crux-Client-Portable-x64.exe
 
   build-linux:
     runs-on: ubuntu-latest
