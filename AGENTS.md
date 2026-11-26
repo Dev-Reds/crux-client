@@ -262,26 +262,71 @@ AMD-Treiber (`atio6axx.dll`) stürzt Minecraft mit `EXCEPTION_ACCESS_VIOLATION` 
    - **Native GPU ist der Standard** — Mesa/Zink wird NUR geladen, wenn `forceSoftwareGL` gesetzt ist
    - Läuft ein AMD-Treiber-Crash ohne `forceSoftwareGL`, wird der Flag automatisch gesetzt (nächster Start nutzt Mesa)
 
-### Release-Prozess
+### Release-Prozess (gültig ab v1.2.1 — IMMER so machen)
+
+**Pflicht-Asset-Satz = exakt die 9 Dateien aus v1.1.79** (inhaltlich immer der aktuelle
+Code, nur die Formate/Namen bleiben gleich). **Kein Portable-Build.**
+
+1. `Crux-Client-Installer-All.zip`
+2. `Crux-Client-Installer.exe`
+3. `Crux-Client-Linux-x64.AppImage`
+4. `Crux-Client-Linux-x64.deb`
+5. `Crux-Client-Linux-x64.rpm`
+6. `Crux-Client-Linux-x64.tar.gz`
+7. `Crux-Client-Linux-x64.zip`
+8. `Crux-Client-Mac-x64.dmg`
+9. `Crux-Client-Mac-x64.zip`
+
+Das macht **`.github/workflows/build.yml`** automatisch:
+
+- `build-windows` / `build-linux` / `build-macos` bauen je auf dem nativen Runner.
+- `create-release-zip` baut `Crux-Client-Installer-All.zip`.
+- `upload-to-release` (`softprops/action-gh-release@v2`) lädt **alle 9** hoch.
+- `upload-crux-code-zip` lädt `crux_code.zip` zu `Dev-Reds/crux-code`.
+- **`verify-release-assets` ist das Tor:** der Lauf gilt nur als erfolgreich, wenn
+  alle 9 Namen per `gh release view … --json assets` auf dem Tag liegen. Fehlt einer,
+  failt der Job — nie wieder nur die `.exe` veröffentlichen.
+- Linux-Job **fest auf `ubuntu-24.04`** (nicht `ubuntu-latest`): auf dem neueren
+  Runner bricht `rpmbuild` an `/opt/Crux Client` (Leerzeichen → `?`) ab, alle
+  Dateien werden als "File not found" gemeldet. Zusätzlich `apt install rpm` und
+  `rpm.compression = "bzip2"` in `package.json` (`gz`/`gzip` lehnt electron-builder ab).
+- `build.win.target` in `package.json` ist `["nsis"]` — Portable nie wieder aktivieren.
+
+Ablauf für ein neues Release:
 
 ```powershell
-# Version in package.json erhöhen
-# Commit + Tag
-git add . && git commit -m "Nachricht"
-git push origin main
-git tag v1.1.xx
-git push origin v1.1.xx
+# 1. Version in package.json UND package-lock.json erhöhen (kein -dev), committen, pushen
+# 2. Release + Tag anlegen (gh CLI ist nicht installiert -> REST API)
+$tok='<PAT>'
+$h=@{ 'User-Agent'='CruxClient'; 'Authorization'="Bearer $tok"; 'Accept'='application/vnd.github+json' }
+$body=@{
+  tag_name='v1.2.xx'; name='Crux Client v1.2.xx'; body='Release notes...'; draft=$false; prerelease=$false
+} | ConvertTo-Json -Depth 5
+Invoke-RestMethod -Method Post -Uri 'https://api.github.com/repos/Dev-Reds/crux-client/releases' `
+  -Headers $h -Body ([Text.Encoding]::UTF8.GetBytes($body)) -ContentType 'application/json'
 
-# GitHub Release erstellen + Assets hochladen
-gh release create v1.1.xx --title "Crux Client v1.1.xx" --notes "Release notes..."
-gh release upload v1.1.xx installer/Crux-Client-Installer.exe --clobber
+# 3. CI triggern — danach laufen Build + Upload + Asset-Prüfung automatisch
+$body=@{ ref='main'; inputs=@{ tag='v1.2.xx' } } | ConvertTo-Json -Depth 5
+Invoke-RestMethod -Method Post -Uri 'https://api.github.com/repos/Dev-Reds/crux-client/actions/workflows/build.yml/dispatches' `
+  -Headers $h -Body ([Text.Encoding]::UTF8.GetBytes($body)) -ContentType 'application/json'
 
-# crux_code.zip bauen (Node.js archiver)
-node -e "..."   # siehe main.js oder Skripte
+# 4. NACH erfolgreichem Lauf: CI-.exe (unsigniert) durch den lokal signierten Build ersetzen
+#    (auch die .exe INNERHALB der All.zip), sonst ist das Update nicht signiert.
+npm run build-installer
+Get-AuthenticodeSignature installer\Crux-Client-Installer.exe | Select-Object Status  # muss "Valid" sein
+# DELETE + UPLOAD via https://uploads.github.com/repos/Dev-Reds/crux-client/releases/<id>/assets?name=...
+# (Token NUR pro Befehl, nie .git/config — siehe Abschnitt "Push ohne persistierten Token")
 
-# Upload zu crux-code repo
-gh release upload v1.1.xx crux_code.zip --clobber -R Dev-Reds/crux-code
+# 5. Tag auf den finalen Commit setzen und die 9 Assets nochmal per API auflisten
+git tag -f v1.2.xx
+git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $pair" -c credential.helper= push origin v1.2.xx --force
 ```
+
+- Die Einträge **„Source code (zip)" / „Source code (tar.gz)"** oben im Release sind
+  **von GitHub automatisch erzeugt** (`/archive/refs/tags/<tag>.*`), haben keine
+  Asset-ID und lassen sich bei öffentlichen Repos **nicht** abschalten oder löschen.
+  Nicht mit unseren Linux-`zip`/`tar.gz` verwechseln — die sind echte App-Bundles
+  (Electron-Binaries + `app.asar`) und bleiben Pflicht.
 
 ### Mod-Loading Bug
 
