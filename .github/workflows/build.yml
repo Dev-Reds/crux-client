@@ -44,19 +44,26 @@ jobs:
       - name: Install rpm build tools (fpm needs rpmbuild)
         run: sudo apt-get update -qq && sudo apt-get install -y rpm
       - run: npm ci
-      - name: Show rpmbuild version
-        run: rpmbuild --version || true
+      - name: Capture rpmbuild errors
+        run: |
+          rpmbuild --version || true
+          REAL=$(command -v rpmbuild)
+          echo "rpmbuild at $REAL"
+          sudo mv "$REAL" "${REAL}.real"
+          sudo tee "$REAL" >/dev/null <<EOF
+          #!/bin/bash
+          "${REAL}.real" "\$@" 2>&1 | tee /tmp/rpmbuild-debug.log
+          exit \${PIPESTATUS[0]}
+          EOF
+          sudo chmod +x "$REAL"
       - run: npx electron-builder --linux --publish=never
       - name: Debug rpmbuild failure
         if: failure()
         run: |
+          echo "=== rpmbuild stderr ==="
+          cat /tmp/rpmbuild-debug.log 2>/dev/null || echo "no debug log"
           echo "=== leftover spec files ==="
           find /tmp -name '*.spec' -print 2>/dev/null | head -20
-          echo "=== direct rpmbuild attempt ==="
-          for spec in $(find /tmp -name '*.spec' 2>/dev/null | head -3); do
-            echo "--- $spec ---"
-            rpmbuild -bb --target x86_64-unknown-linux "$spec" 2>&1 | tail -30 || true
-          done
       - uses: actions/upload-artifact@v4
         with:
           name: Crux-Client-Linux
