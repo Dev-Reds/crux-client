@@ -142,6 +142,45 @@ jobs:
             *.rpm
           fail_on_unmatched_files: false
 
+  verify-release-assets:
+    needs: [upload-to-release]
+    if: github.event_name == 'release' || inputs.tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+    steps:
+      - name: Verify the full v1.1.79 asset set is present
+        run: |
+          expected=(
+            "Crux-Client-Installer-All.zip"
+            "Crux-Client-Installer.exe"
+            "Crux-Client-Linux-x64.AppImage"
+            "Crux-Client-Linux-x64.deb"
+            "Crux-Client-Linux-x64.rpm"
+            "Crux-Client-Linux-x64.tar.gz"
+            "Crux-Client-Linux-x64.zip"
+            "Crux-Client-Mac-x64.dmg"
+            "Crux-Client-Mac-x64.zip"
+          )
+          actual=$(gh release view "$TAG" --repo Dev-Reds/crux-client --json assets --jq '.assets[].name')
+          missing=0
+          for a in "${expected[@]}"; do
+            if echo "$actual" | grep -Fxq "$a"; then
+              echo "OK   $a"
+            else
+              echo "MISS $a"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Release $TAG is missing required assets"
+            exit 1
+          fi
+          echo "All v1.1.79 assets present on $TAG"
+
   upload-to-website-nuxt:
     needs: [build-windows, build-linux, build-macos]
     if: github.event_name == 'workflow_dispatch' && inputs.upload-to != ''
