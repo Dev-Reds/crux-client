@@ -529,6 +529,24 @@ Nutzeraktion konkurrieren:
   Der Gate prüft nur die Flags und gibt alle 200 Aufrufe per `setImmediate`
   die Event-Loop frei. `waitForPrecacheIdle()` (nur zwischen Phasen) hat
   zusätzlich einen 10-Sekunden-Watchdog.
+- **Retry-Deadlock:** MCLC ruft bei einem Download-Fehler `this.downloadAsync()`
+  erneut auf, *solange der erste Download noch läuft*. Läuft dieser Retry durch
+  den Slot-Patch, wartet er auf einen Slot, den sein Elternteil noch hält — bei
+  8 Timeouts ist der Cache festgefahren. Der Patch erkennt das über
+  `this.__cacheInside` und lässt den Retry **ohne neuen Slot** direkt laufen
+  (nur wenn keine Nutzeraktion/Abbruch vorliegt). `this.__cacheDest` kommt
+  aus `args[1]`/`args[2]` (`directory`, `name`) — nicht aus nicht existierenden
+  Variablen —, sonst löscht der Abbruch keine Teildatei.
+- **SHA1-Stau:** MCLC prüft vor jedem der ~5000 Assets die Datei mit
+  `checksum.file()`; alle gleichzeitig sättigen den libuv-Threadpool, die UI
+  hängt, obwohl nichts geladen wird. Der Cache patcht `checkSum` deshalb nur
+  während seines Laufs auf `fs.existsSync(file)` und stellt es am Ende wieder
+  her. Der echte Spielstart prüft weiterhin die Hashs.
+- **Grosse Profile:** `downloadProfileMods()` arbeitet in Batches von 4 statt
+  257 Requests nacheinander (Create+ hat 257 Mods) und meldet alle 8 Mods
+  `Mods n/…` an die Konsole. Sonst steht das Cmd-Feld zwischen „Starte…" und
+  „Fertig…" minutenlang still. `precacheTime()` loggt mit `CRX_CACHE_DEBUG=1`
+  die Dauer von Spieldateien/Mods/Ressourcenpaketen.
 - Nach dem Abbruch liefert der Lauf `{paused:true}`; `runAutoPrecache()` setzt
   `userInterrupted` zurück. Beim Übergang auf `false` wird der Cache nach
   1500 ms **neu** gestartet (nicht mitten im alten Lauf fortgesetzt) —

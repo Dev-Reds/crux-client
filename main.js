@@ -741,7 +741,9 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
 
   const versionCache = new Map();
   let done = 0;
-  for (const mod of toDeploy) {
+  let lastModLog = Date.now();
+  const processMod = async (mod) => {
+    if (autoPrecache.busy && (autoPrecache.abort || autoPrecache.userInterrupted)) return;
     const tryCurseforgeFallback = async () => {
       if (!mod.curseforgeId || mod._cfFallbackTried) return false;
       mod._cfFallbackTried = true;
@@ -752,8 +754,7 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
       if (!mod.modrinthId) {
         if (mod.curseforgeId) {
           await deployCurseforgeMod(mod, modsDir, version, modLoader, (line) => sendProgress(line.replace(/^\[MODS\]\s*/, '')));
-          done++;
-          continue;
+          return;
         }
         if (mod.diskPath && fs.existsSync(mod.diskPath)) {
           const dest = path.join(modsDir, mod.fileName || (String(mod.name||'mod').replace(/[^a-zA-Z0-9._-]/g,'_') + '.jar'));
@@ -762,19 +763,18 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
           const dest = path.join(modsDir, mod.fileName || `mod-${done}.jar`);
           if (!fs.existsSync(dest)) await fs.promises.writeFile(dest, Buffer.from(mod.data));
         }
-        done++;
-        continue;
+        return;
       }
 
       const hasJar = modHasJar(mod, existingFiles);
-      if (hasJar) { done++; continue; }
+      if (hasJar) { return; }
 
       let versionData = versionCache.get(mod.modrinthId);
       if (!versionData) {
         const allVersions = await fetchJson(`https://api.modrinth.com/v2/project/${mod.modrinthId}/version`).catch(() => null);
         if (!allVersions || !allVersions.length) {
           await tryCurseforgeFallback();
-          done++; continue;
+          return;
         }
         if (mod._mrpack) {
           // mrpack mods are deployed as the first listed version (same as launch)
@@ -784,15 +784,15 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
           versionData = allVersions.find(v => (v.game_versions || []).includes(version) && (v.loaders || []).includes(modLoader)) || null;
           if (!versionData) {
             await tryCurseforgeFallback();
-            done++; continue;
+            return;
           }
         }
         versionCache.set(mod.modrinthId, versionData);
       }
-      if (!versionData) { done++; continue; }
+      if (!versionData) { return; }
 
       const file = versionData.files.find(f => f.primary) || versionData.files[0];
-      if (!file) { await tryCurseforgeFallback(); done++; continue; }
+      if (!file) { await tryCurseforgeFallback(); return; }
       const dest = path.join(modsDir, `${mod.modrinthId}-${file.filename}`);
       await deployModCachedOrDownload({
         url: file.url,
@@ -806,7 +806,18 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
       console.error('[OFFLINE-DL] Mod failed:', mod.name, e.message);
       if (mod.modrinthId) await tryCurseforgeFallback();
     }
-    done++;
+  };
+  // Batches statt 257 einzelner Requests: sonst steht die Konsole zwischen
+  // "Starte…" und "Fertig…" minutenlang still.
+  for (let i = 0; i < toDeploy.length; i += 4) {
+    if (autoPrecache.busy && (autoPrecache.abort || autoPrecache.userInterrupted)) break;
+    await Promise.all(toDeploy.slice(i, i + 4).map(processMod));
+    done = Math.min(i + 4, toDeploy.length);
+    if (done % 8 === 0 || Date.now() - lastModLog > 5000) {
+      sendProgress(`Mods ${done}/${toDeploy.length}…`);
+      lastModLog = Date.now();
+    }
+    await new Promise(r => setImmediate(r));
   }
   await persistProfileMods(profile.id, profile.mods);
   return toDeploy.length;
@@ -819,6 +830,12 @@ async function downloadProfileMods(profile, clientMods, version, modLoader, send
 async function predownloadVanillaGameFiles(version, javaPath, sendProgress, customId) {
   const { Client } = require('minecraft-launcher-core');
   const launcher = new Client();
+  if (process.env.CRX_CACHE_DEBUG) {
+    launcher.on('debug', m => console.log('[MCLC] ' + m));
+    launcher.on('progress', p => {
+      if (p.type !== 'assets' || p.task % 500 === 0) console.log(`[MCLC-PROG] ${p.type} ${p.task}/${p.total}`);
+    });
+  }
   // Patch: do NOT spawn the game — download only.
   launcher.startMinecraft = () => new (require('events').EventEmitter)();
 
@@ -841,6 +858,15 @@ async function predownloadVanillaGameFiles(version, javaPath, sendProgress, cust
   // Nur für diesen Hintergrund-Lauf: Downloads begrenzen und vor jedem neuen
   // Download auf Nutzer-Ruhe warten. Nach dem Lauf wird das Patch entfernt.
   const HandlerClass = require('minecraft-launcher-core/components/handler');
+  const origCheckSum = HandlerClass.prototype.checkSum;
+  // MCLC prueft vor JEDEM Asset die SHA1 - bei 5000 Dateien gleichzeitig ein
+  // Stau im libuv-Threadpool: die UI haengt, obwohl nichts heruntergeladen wird.
+  // Im Hintergrund-Cache reicht die Existenz; die Dateien stammen vom
+  // offiziellen CDN und wurden beim letzten Lauf bereits geprueft.
+  const patchedCheckSum = function (hash, file) {
+    return Promise.resolve(fs.existsSync(file));
+  };
+  HandlerClass.prototype.checkSum = patchedCheckSum;
   const origDownload = HandlerClass.prototype.downloadAsync;
   let activeDownloads = 0;
   const downloadQueue = [];
@@ -868,6 +894,17 @@ async function predownloadVanillaGameFiles(version, javaPath, sendProgress, cust
   };
   const patchedDownload = function (...args) {
     return (async () => {
+      // MCLC ruft bei einem Download-Fehler this.downloadAsync() erneut auf,
+      // solange der erste Download noch laeuft. Dieser Retry darf KEINEN
+      // zweiten Slot nehmen: er wartet sonst auf einen Slot, den sein
+      // Eltern-Download noch haelt -> Deadlock bei mehreren Timeouts.
+      if (this.__cacheInside) {
+        if (autoPrecache.abort || autoPrecache.userInterrupted || autoPrecache.userBusy) {
+          interrupted = true;
+          return false;
+        }
+        return origDownload.apply(this, args);
+      }
       if (!(await cacheGate())) return false;
       await waitForSlot();
       try {
@@ -890,10 +927,14 @@ async function predownloadVanillaGameFiles(version, javaPath, sendProgress, cust
             return req;
           };
         }
-        this.__cacheDest = (typeof name === 'string' && name) ? path.join(directory, name) : null;
+        const dlDir = args[1], dlName = args[2];
+        this.__cacheDest = (typeof dlDir === 'string' && typeof dlName === 'string')
+          ? path.join(dlDir, dlName) : null;
+        this.__cacheInside = true;
         try {
           return await origDownload.apply(this, args);
         } finally {
+          this.__cacheInside = false;
           this.__cacheDest = null;
         }
       } finally {
@@ -905,12 +946,16 @@ async function predownloadVanillaGameFiles(version, javaPath, sendProgress, cust
     if (HandlerClass.prototype.downloadAsync === patchedDownload) {
       HandlerClass.prototype.downloadAsync = origDownload;
     }
+    if (HandlerClass.prototype.checkSum === patchedCheckSum) {
+      HandlerClass.prototype.checkSum = origCheckSum;
+    }
     for (const h of patchedHandlers) {
       try {
         h.baseRequest = h.__cacheOrigBase;
         delete h.__cacheBasePatched;
         delete h.__cacheOrigBase;
         delete h.__cacheDest;
+        delete h.__cacheInside;
       } catch {}
     }
     patchedHandlers.length = 0;
@@ -918,12 +963,17 @@ async function predownloadVanillaGameFiles(version, javaPath, sendProgress, cust
   };
   HandlerClass.prototype.downloadAsync = patchedDownload;
   precacheRestorers.add(restoreDownload);
+  const dbgTimer = process.env.CRX_CACHE_DEBUG
+    ? setInterval(() => console.log(`[CACHE-STATE] active=${activeDownloads} queue=${downloadQueue.length} gate=${gateCalls} interrupted=${interrupted}`), 5000)
+    : null;
+  dbgTimer?.unref?.();
   try {
     await launcher.launch(opts);
   } catch (e) {
     // MCLC bricht bei einer abgebrochenen Hintergrund-Download-Kette ab.
     if (!interrupted) throw e;
   } finally {
+    dbgTimer && clearInterval(dbgTimer);
     restoreDownload();
   }
   if (interrupted) return { paused: true, jsonOk: false, jarOk: false, assetsOk: false };
@@ -1203,6 +1253,9 @@ function precacheLog(msg) {
   console.log('[OFFLINE-CACHE] ' + msg);
   try { if (mainWindow) mainWindow.webContents.send('auto-precache-progress', msg); } catch {}
 }
+function precacheTime(phase, started) {
+  if (process.env.CRX_CACHE_DEBUG) console.log(`[CACHE-TIME] ${phase}: ${Date.now() - started}ms`);
+}
 
 // Genau die Ressourcenpakete, die der Launch auch deployen würde, lokal bereitstellen.
 async function precacheResourcePacks(profile, version, send) {
@@ -1276,6 +1329,7 @@ async function precacheProfileAssets(profile, mods, rps, send) {
   const version = resolveConcreteVersion(profile.mcVersion);
   if (!version) return { ok:false, error:'Keine Minecraft-Version gefunden.' };
   const loader = profile.modLoader || 'fabric';
+  const phaseStart = { game: Date.now(), mods: 0, rps: 0 };
 
   send(`Starte Offline-Cache: ${profile.name || profile.id} (${version}, ${loader})`);
   await precacheStep();
@@ -1307,14 +1361,19 @@ async function precacheProfileAssets(profile, mods, rps, send) {
       console.error('[OFFLINE-CACHE] Game files:', e.message);
     }
   }
+  precacheTime(`Spieldateien ${profile.name || profile.id}`, phaseStart.game);
 
   await precacheStep();
   if (autoPrecache.abort) return { ok:false, aborted:true };
   send('Mods…');
+  phaseStart.mods = Date.now();
   const modsDownloaded = await downloadProfileMods(profile, mods, version, loader, send);
+  precacheTime(`Mods ${profile.name || profile.id}`, phaseStart.mods);
   await precacheStep();
   if (autoPrecache.abort) return { ok:false, aborted:true };
+  phaseStart.rps = Date.now();
   await precacheResourcePacks(profile, version, send);
+  precacheTime(`Ressourcenpakete ${profile.name || profile.id}`, phaseStart.rps);
   await precacheStep();
   if (autoPrecache.abort) return { ok:false, aborted:true };
   send(`Fertig: ${profile.name || profile.id}`);
