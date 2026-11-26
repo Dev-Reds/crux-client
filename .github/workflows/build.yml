@@ -131,7 +131,7 @@ jobs:
           fail_on_unmatched_files: false
 
   verify-release-assets:
-    needs: [upload-to-release]
+    needs: [upload-to-release, upload-crux-code-zip]
     if: github.event_name == 'release' || inputs.tag != ''
     runs-on: ubuntu-latest
     permissions:
