@@ -114,6 +114,7 @@
                           },
                   "rpm":  {
                               "artifactName":  "Crux-Client-Linux-x64.rpm",
+                               "compression":  "gz",
                               "depends":  [
                                               "gtk3",
                                               "libnotify",
