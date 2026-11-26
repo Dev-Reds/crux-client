@@ -57,11 +57,14 @@ let yauzl = null;
 try { yauzl = require('yauzl'); } catch (e) { logDebug('yauzl not available: ' + e.message); }
 
 // ── Launcher RAM limit ────────────────────────────────────────────────────────
+// Der Launcher bekommt nur die Haelfte des eingestellten RAMs. Die andere
+// Haelfte bleibt frei, damit das System und die Bedienung fluessig bleiben.
 try {
   const settingsFile = path.join(process.env.APPDATA || process.env.LOCALAPPDATA || '', 'Crux Client', 'settings.json');
   const saved = JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
   const launcherRam = parseInt(saved.launcherRam, 10) || 2;
-  const mb = Math.max(256, Math.min(8192, launcherRam * 1024));
+  const halfMb = Math.floor(launcherRam * 1024 / 2);
+  const mb = Math.max(512, Math.min(8192, halfMb));
   app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${mb}`);
 } catch {}
 
