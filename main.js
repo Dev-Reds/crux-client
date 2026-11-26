@@ -855,10 +855,15 @@ async function predownloadVanillaGameFiles(version, javaPath, sendProgress, cust
     if (next) next();
   };
   const patchedHandlers = [];
+  let gateCalls = 0;
   const cacheGate = async () => {
-    if (autoPrecache.abort || autoPrecache.userInterrupted) { interrupted = true; return false; }
-    await waitForPrecacheIdle();
-    if (autoPrecache.abort || autoPrecache.userInterrupted) { interrupted = true; return false; }
+    gateCalls++;
+    // Kein waitForPrecacheIdle() pro Asset: eine haengende Busy-Meldung darf
+    // die 5000 Downloads nicht blockieren. Der Klick bricht laufende Requests
+    // sofort ab (abortPrecacheDownloads); neue starten erst nach der Ruhe.
+    if (autoPrecache.abort || autoPrecache.userInterrupted || autoPrecache.userBusy) { interrupted = true; return false; }
+    // Regelmässig die Event-Loop freigeben, damit Klicks sofort ankommen.
+    if (gateCalls % 200 === 0) await new Promise(r => setImmediate(r));
     return true;
   };
   const patchedDownload = function (...args) {
@@ -1142,7 +1147,21 @@ ipcMain.on('cache-user-active', (event, active) => setPrecacheUserBusy(active));
 
 function waitForPrecacheIdle() {
   if (!autoPrecache.userBusy) return Promise.resolve();
-  return new Promise(resolve => autoPrecache.idleWaiters.push(resolve));
+  // Never block forever: a stuck renderer busy flag must not stall the cache.
+  return new Promise(resolve => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      const i = autoPrecache.idleWaiters.indexOf(finish);
+      if (i >= 0) autoPrecache.idleWaiters.splice(i, 1);
+      resolve();
+    };
+    const timer = setTimeout(finish, 10000);
+    timer.unref?.();
+    autoPrecache.idleWaiters.push(finish);
+  });
 }
 
 // Spielstart bricht den Cache sofort ab - auch wenn gerade auf Nutzer-Ruhe

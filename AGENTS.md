@@ -508,9 +508,11 @@ Nutzeraktion konkurrieren:
 - Renderer (`index.html`, direkt nach dem Drop-Fix): `pointerdown`,
   `pointermove` (nur mit gedrückter Taste), `keydown`, `wheel`, `dragover` und
   `drop` senden `cache-user-active = true`. Nach 3500 ms ohne weitere Eingabe
-  geht `false` raus. Zusätzlich hält der `ipcRenderer.invoke`-Wrapper den
-  Busy-Zustand, bis die aufgerufene Funktion zurückkehrt — die Aktion des
-  Users läuft also immer vor dem Cache fertig.
+  geht `false` raus. **NUR echte Nutzereingaben zählen — kein
+  `ipcRenderer.invoke`-Wrapper!** Automatische Hintergrund-Invokes (Polling,
+  Service-Checks, Ladevorgänge) setzen sonst ständig `busy`, brechen laufende
+  Downloads ab und starten den Cache immer wieder neu — er kommt dann nie
+  mehr in Ruhe und läuft gar nicht erst durch ("geht nix mehr").
 - Hauptprozess: `setPrecacheUserBusy()` setzt beim ersten Klick
   `autoPrecache.userInterrupted` und ruft `abortPrecacheDownloads()`. Damit
   werden laufende Requests **sofort** abgebrochen (nicht erst am Ende des
@@ -522,6 +524,11 @@ Nutzeraktion konkurrieren:
   `cacheGate()`. Der Patch registriert über `this.baseRequest()` jeden
   Request in `precacheActiveDownloads` und entfernt den Patch am Ende wieder.
   `abortPrecache()` (Spielstart) bricht ebenfalls sofort ab.
+  **`cacheGate()` darf kein `waitForPrecacheIdle()` aufrufen** — bei 5000
+  Assets hängt der Lauf sonst am ersten Gate, wenn `userBusy` hängen bleibt.
+  Der Gate prüft nur die Flags und gibt alle 200 Aufrufe per `setImmediate`
+  die Event-Loop frei. `waitForPrecacheIdle()` (nur zwischen Phasen) hat
+  zusätzlich einen 10-Sekunden-Watchdog.
 - Nach dem Abbruch liefert der Lauf `{paused:true}`; `runAutoPrecache()` setzt
   `userInterrupted` zurück. Beim Übergang auf `false` wird der Cache nach
   1500 ms **neu** gestartet (nicht mitten im alten Lauf fortgesetzt) —
