@@ -341,13 +341,12 @@ body:not(.tabs-left):not(.tabs-right) .toolbar > .tb-btn[data-page="logs-page"] 
   box-shadow: 0 0 8px color-mix(in srgb, var(--acc) 70%, transparent);
 }
 
-/* Nachrichten-Glocke: steht ueber dem Settings-Button oder unten rechts. */
+/* Nachrichten-Glocke: ueber dem Settings-Button, unten rechts oder frei
+   positionierbar (X/Y von unten links). */
 .message-bell-btn { position: relative; padding: 0; display: grid; place-items: center; }
 .message-bell-btn .tb-ic { width: 1.15em; height: 1.15em; }
-.message-bell--corner {
+.message-bell--corner, .message-bell--custom {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -357,7 +356,8 @@ body:not(.tabs-left):not(.tabs-right) .toolbar > .tb-btn[data-page="logs-page"] 
   border: 1px solid var(--border);
   color: var(--muted);
 }
-.message-bell--corner:hover { background: rgba(255, 255, 255, .09); color: var(--text); border-color: var(--border-strong); }
+.message-bell--corner { right: 20px; bottom: 20px; }
+.message-bell--corner:hover, .message-bell--custom:hover { background: rgba(255, 255, 255, .09); color: var(--text); border-color: var(--border-strong); }
 .message-bell--above-fab { bottom: 88px; }
 body.tabs-left .message-bell--toolbar,
 body.tabs-right .message-bell--toolbar {
@@ -1266,39 +1266,63 @@ body.tabs-right .launch-recent-col {
 .skin-name-display--action { cursor: pointer; text-decoration: underline dotted transparent; }
 .skin-name-display--action:hover { text-decoration-color: var(--acc); color: var(--acc-2); }
 
-/* Recent Played — ganz linke Spalte, eine Zeile pro Eintrag untereinander
-   mit dem Icon des zugehörigen Profils. */
+/* Recent Played — ganz linke Spalte. Kompakte Ein-Zeilen-Einträge: Avatar,
+   Name + kurze Meta, Aktionen als Icon-Buttons. Nichts bricht in der schmalen
+   Spalte in eine zweite Zeile um. */
 .launch-recent-col #launch-recent-card { flex: 1 1 auto; min-height: 0; }
 .launch-recent-col #launch-recent-card .rail-card__body { flex: 1 1 auto; max-height: none; overflow-y: auto; }
-#launch-recent-card .recent-list { gap: .25rem; }
-.launch-recent__tools { display: flex; align-items: center; gap: .5rem; }
-.launch-recent__count { font-size: var(--fs-xs); color: var(--muted-2); white-space: nowrap; }
-.recent-section + .recent-section { margin-top: var(--sp-3); }
-.recent-section__title {
-  display: flex; align-items: center; gap: .35rem;
-  margin: 0 0 var(--sp-2);
-  font-size: var(--fs-xs); font-weight: 700; color: var(--text-2);
+#launch-recent-card .rail-card__head { padding-bottom: .45rem; border-bottom: 1px solid var(--line); }
+.launch-recent__tools { display: flex; align-items: center; gap: .35rem; }
+.launch-recent__count {
+  padding: .1rem .45rem; border-radius: 999px;
+  background: var(--surface-2); font-size: var(--fs-xs);
+  color: var(--muted-2); white-space: nowrap;
 }
-.recent-section__count { color: var(--muted-2); font-weight: 400; }
-.recent-section__empty { font-size: var(--fs-xs); }
+/* Kleine Icon-Buttons (Clear History, Join/Launch/Play, Remove) */
+.recent-icon-btn {
+  display: grid; place-items: center; flex: none;
+  width: 1.5rem; height: 1.5rem; padding: 0;
+  border: 1px solid var(--line); border-radius: 9px;
+  background: var(--surface-2); color: var(--text-2);
+  font-size: .72rem; line-height: 1; cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.recent-icon-btn:hover {
+  background: color-mix(in srgb, var(--acc) 16%, transparent);
+  border-color: var(--acc); color: var(--acc-2); transform: none;
+}
+.recent-icon-btn--danger { color: var(--muted-2); opacity: .7; }
+.recent-icon-btn--danger:hover {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  border-color: var(--danger); color: var(--danger); opacity: 1;
+}
 #recent-sections { display: flex; flex-direction: column; min-width: 0; }
+.recent-section + .recent-section { margin-top: .65rem; }
+.recent-section__head { display: flex; align-items: center; justify-content: space-between; gap: .4rem; margin-bottom: .35rem; }
+.recent-section__title {
+  margin: 0; font-size: var(--fs-xs); font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted-2);
+}
+.recent-section__count {
+  padding: .05rem .4rem; border-radius: 999px;
+  background: var(--surface-2); font-size: var(--fs-xs);
+  color: var(--muted-2); font-weight: 600;
+}
+.recent-section__empty { font-size: var(--fs-xs); }
+#launch-recent-card .recent-list { gap: .25rem; }
 .recent-list { display: flex; flex-direction: column; gap: .35rem; }
 .recent-item {
-  display: flex; align-items: center; flex-wrap: wrap; gap: .4rem;
-  min-width: 0; padding: .4rem .45rem;
-  border: 1px solid var(--line); border-radius: var(--r-sm);
-  background: var(--surface-2);
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center; gap: .5rem; min-width: 0; padding: .4rem .45rem;
+  border: 1px solid transparent; border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  transition: border-color .15s ease, background .15s ease;
 }
-/* Was in der schmalen Spalte nicht nebeneinander passt, rutscht in eine
-   neue Zeile — zuerst der Text, darunter die Aktionen. */
-.recent-item__body { flex: 1 1 7.5rem; }
-.recent-item__actions { display: flex; flex-wrap: wrap; gap: .35rem; margin-left: auto; }
-.recent-item__actions .recent-launch-btn,
-.recent-item__actions .recent-join-btn { flex: 1 1 auto; }
-.recent-item__actions .recent-remove-btn { flex: 0 0 auto; }
+.recent-item:hover { border-color: var(--line-strong); background: var(--surface-2); }
+.recent-item__body { min-width: 0; display: flex; flex-direction: column; gap: .05rem; }
+.recent-item__actions { display: flex; align-items: center; gap: .25rem; }
 .recent-item .rail-profile__avatar { width: 1.5rem; height: 1.5rem; flex: none; border-radius: 8px; font-size: .62rem; }
 .recent-item .rail-profile__avatar--custom { border-radius: 8px; }
-.recent-item__body { flex: 1 1 7.5rem; min-width: 0; display: flex; flex-direction: column; gap: .08rem; }
 .recent-item__name {
   font-size: .82rem; font-weight: 650; color: var(--text);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -1307,8 +1331,6 @@ body.tabs-right .launch-recent-col {
   font-size: var(--fs-xs); color: var(--muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.recent-join-btn, .recent-launch-btn { flex: none; width: auto; padding: .22rem .5rem; font-size: var(--fs-xs); }
-.recent-remove-btn { flex: none; width: auto; padding: .2rem .4rem; font-size: var(--fs-xs); color: var(--danger); }
 
 /* Skin-Panel */
 .skin-panel {
@@ -3112,6 +3134,7 @@ body.light .tb-btn:hover { background: rgba(21, 10, 42, .05); color: var(--text-
 body.light .tb-btn.active { background: var(--acc-soft) padding-box; border-color: transparent; color: var(--text); }
 body.light .tb-btn.active .tb-ic { color: var(--acc); }
 body.light #settings-fab { background: rgba(255, 255, 255, .82); border-color: var(--border-strong); color: var(--text-2); box-shadow: var(--sh-1); }
+body.light .message-bell--corner, body.light .message-bell--custom { background: rgba(255, 255, 255, .82); border-color: var(--border-strong); color: var(--text-2); box-shadow: var(--sh-1); }
 body.light select { color-scheme: light; }
 body.light select option { background: #fff; color: var(--text); }
 body.light .btn { background: rgba(21, 10, 42, .03); color: var(--text-2); border-color: var(--border-strong); }
@@ -3363,12 +3386,17 @@ body.glass #update-overlay.update-themed .btn:not(.btn-primary) { color: #14171c
 body.glass #update-overlay.update-themed .btn:not(.btn-primary):hover { background: rgba(255, 255, 255, .85) !important; }
 body.glass #update-overlay.update-themed #update-bugreport-btn { color: #d33 !important; border-color: #d33 !important; }
 
+body.glass .message-bell--corner, body.glass .message-bell--custom { background: var(--gs-panel) !important; border-color: var(--gs-bd) !important; color: var(--gs-tx) !important; backdrop-filter: var(--gs-blur); -webkit-backdrop-filter: var(--gs-blur); }
+
 /* Recent Played: eigene Glasflaechen statt fester Panel-Farben */
-body.glass .recent-item { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; }
-body.glass .recent-item:hover { background: rgba(255, 255, 255, .45) !important; }
+body.glass .recent-item { background: var(--gs-list) !important; border-color: transparent !important; }
+body.glass .recent-item:hover { background: var(--gs-panel) !important; border-color: var(--gs-bd) !important; }
 body.glass .recent-item__name { color: var(--gs-strong) !important; }
-body.glass .recent-item__meta, body.glass .recent-section__count, body.glass .launch-recent__count { color: var(--gs-mut) !important; }
-body.glass .recent-remove-btn { color: #c92a2a !important; }
+body.glass .recent-item__meta, body.glass .recent-section__count, body.glass .launch-recent__count, body.glass .recent-section__title { color: var(--gs-mut) !important; }
+body.glass .recent-section__count, body.glass .launch-recent__count { background: var(--gs-list) !important; }
+body.glass .recent-icon-btn { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; color: var(--gs-tx) !important; }
+body.glass .recent-icon-btn--danger { color: #c92a2a !important; }
+body.glass #launch-recent-card .rail-card__head { border-bottom-color: var(--gs-bd) !important; }
 
 /* Client-RPs: gleiche Glasflaechen wie die Mod-Liste */
 body.glass #client-rp-list .mod-item { background: var(--gs-panel) !important; border-color: var(--gs-bd) !important; }

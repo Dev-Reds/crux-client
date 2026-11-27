@@ -37,7 +37,7 @@
           <span class="rail-card__title" data-i18n="h_recent">Recent Played</span>
           <div class="launch-recent__tools">
             <span class="launch-recent__count" id="recent-count"></span>
-            <button class="btn btn-sm btn-ghost rail-card__action" id="recent-clear-btn" data-i18n="btn_clear_history">Clear History</button>
+            <button class="recent-icon-btn recent-icon-btn--danger" id="recent-clear-btn" type="button" title="Clear History" aria-label="Clear History" data-i18n-title="btn_clear_history" data-i18n-aria="btn_clear_history" hidden>🗑</button>
           </div>
         </header>
         <div class="rail-card__body">
@@ -443,7 +443,14 @@
             <select id="bell-position-select">
               <option value="settings" data-i18n="bell_pos_settings">Above settings</option>
               <option value="corner" data-i18n="bell_pos_corner">Bottom right</option>
+              <option value="custom" data-i18n="bell_pos_custom">Custom (pixels, from bottom left)</option>
             </select>
+          </div>
+          <div class="form-row form-row--narrow" id="bell-custom-position" style="display:none">
+            <label data-i18n="lbl_bell_x">X from left (px):</label>
+            <input type="number" id="bell-x-input" min="0" max="4000" value="20">
+            <label data-i18n="lbl_bell_y">Y from bottom (px):</label>
+            <input type="number" id="bell-y-input" min="0" max="4000" value="20">
           </div>
         </div>
         </div>
@@ -2126,8 +2133,7 @@ async function bootLauncher(){
     } catch {}
     applyTabBarPosition();
     applyFabPosition();
-    const bellSel = document.getElementById('bell-position-select');
-    if(bellSel) bellSel.value = settings.bellPosition || 'settings';
+    syncBellPositionUI();
     renderModList();
     fetchMissingModIcons();
     renderAccountList();
@@ -2418,7 +2424,7 @@ const LANGS={
   sub_cape:'Minecraft capes and your own designs', sub_servers:'Run your own server and share it with friends',
   sub_features:'Everything Crux Client can do', sub_logs:'Live output of your running instances',
   sub_account:'Your Microsoft and offline accounts', sub_bugreport:'Send a report with your logs',
-    h_logs:'Logs', h_account:'Account', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends',
+    h_logs:'Logs', h_account:'Account', h_cape:'Capes', h_recent:'Recent Played', h_servers:'Servers', h_bugreport:'Bug Report', h_friends:'Friends', recent_cat_server:'Servers', recent_cat_instance:'Instances', recent_cat_world:'Worlds', recent_join:'Join', recent_launch:'Launch', recent_play:'Play', recent_remove:'Remove',
     acct_required_title:'Account required', acct_required_msg:'Please link your Microsoft account first before opening Bug Reports.', acct_required_cancel:'Cancel', acct_required_goto:'Link account',
     lbl_profile:'Profile:', lbl_version:'Version:', lbl_change_skin:'Change Skin', lbl_actions:'Actions:', lbl_ram:'RAM:', lbl_instance:'Instance:',
     lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod Loader', lbl_render_api:'Rendering API:', lbl_added:'Added:',
@@ -2470,7 +2476,7 @@ const LANGS={
     sec_corner_radius:'Corner Radius', lbl_corner_radius:'Roundness', corner_small:'Small', corner_medium:'Medium', corner_large:'Large', corner_round:'Round',
     sec_font:'Font', lbl_font_style:'Style', font_system:'System', font_minecraft:'Minecraft', font_custom:'Custom', lbl_font_family:'Font family',
     sec_fab_position:'Settings Button Position', lbl_fab_position:'Position:', fab_pos_toolbar:'In Tab Bar', fab_pos_corner:'Bottom Right (Circle)', fab_pos_custom:'Custom (Pixels)', lbl_fab_x:'X (Pixel):', lbl_fab_y:'Y (Pixel):',
-    sec_bell_position:'Message bell position', lbl_bell_position:'Position:', bell_pos_settings:'Above settings', bell_pos_corner:'Bottom right',
+    sec_bell_position:'Message bell position', lbl_bell_position:'Position:', bell_pos_settings:'Above settings', bell_pos_corner:'Bottom right', bell_pos_custom:'Custom (from bottom left)', lbl_bell_x:'X from left (px):', lbl_bell_y:'Y from bottom (px):',
     sec_reset:'Reset', desc_reset:'Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.',
     btn_reset:'Reset Launcher', sec_updates:'Updates', btn_check_update:'Check for Updates',
     desc_current_version:'Current version:',
@@ -2577,7 +2583,7 @@ const LANGS={
   sub_cape:'Minecraft-Capes und eigene Designs', sub_servers:'Eigenen Server starten und mit Freunden teilen',
   sub_features:'Alles, was Crux Client kann', sub_logs:'Live-Ausgabe deiner laufenden Instanzen',
   sub_account:'Deine Microsoft- und Offline-Konten', sub_bugreport:'Fehlerbericht mit deinen Logs senden',
-    h_logs:'Protokolle', h_account:'Account', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde',
+    h_logs:'Protokolle', h_account:'Account', h_cape:'Capes', h_recent:'Zuletzt gespielt', h_servers:'Server', h_bugreport:'Fehler melden', h_friends:'Freunde', recent_cat_server:'Server', recent_cat_instance:'Instanzen', recent_cat_world:'Welten', recent_join:'Beitreten', recent_launch:'Starten', recent_play:'Spielen', recent_remove:'Entfernen',
     acct_required_title:'Account erforderlich', acct_required_msg:'Bitte verknüpfe zuerst deinen Microsoft-Account, bevor du Fehler melden kannst.', acct_required_cancel:'Abbrechen', acct_required_goto:'Account verknüpfen',
     lbl_profile:'Profil:', lbl_version:'Version:', lbl_change_skin:'Skin wechseln', lbl_actions:'Aktionen:', lbl_ram:'RAM:', lbl_instance:'Instanz:',
     lbl_launcher_ram:'Launcher RAM:', lbl_mod_loader:'Mod-Loader', lbl_render_api:'Rendering-API:', lbl_added:'Hinzugefügt:',
@@ -2629,7 +2635,7 @@ const LANGS={
     sec_corner_radius:'Eckenradius', lbl_corner_radius:'Abrundung', corner_small:'Klein', corner_medium:'Mittel', corner_large:'GroÎ', corner_round:'Rund',
     sec_font:'Schrift', lbl_font_style:'Stil', font_system:'System', font_minecraft:'Minecraft', font_custom:'Eigene', lbl_font_family:'Schriftart',
     sec_fab_position:'Position des Settings-Buttons', lbl_fab_position:'Position:', fab_pos_toolbar:'In der Tab-Leiste', fab_pos_corner:'Unten rechts (Kreis)', fab_pos_custom:'Benutzerdefiniert (Pixel)', lbl_fab_x:'X (Pixel):', lbl_fab_y:'Y (Pixel):',
-    sec_bell_position:'Position der Nachrichten-Glocke', lbl_bell_position:'Position:', bell_pos_settings:'Über den Einstellungen', bell_pos_corner:'Unten rechts',
+    sec_bell_position:'Position der Nachrichten-Glocke', lbl_bell_position:'Position:', bell_pos_settings:'Über den Einstellungen', bell_pos_corner:'Unten rechts', bell_pos_custom:'Benutzerdefiniert (von unten links)', lbl_bell_x:'X von links (px):', lbl_bell_y:'Y von unten (px):',
     sec_reset:'Zurücksetzen', desc_reset:'Löscht alle Konten, Profile, Einstellungen und Mods. Der Launcher startet wie beim ersten Mal.',
     btn_reset:'Launcher zurücksetzen', sec_updates:'Updates', btn_check_update:'Nach Updates suchen',
     desc_current_version:'Aktuelle Version:',
@@ -2736,7 +2742,7 @@ const LANGS={
   sub_cape:'Capes Minecraft et tes créations', sub_servers:'Lance ton propre serveur et partage-le',
   sub_features:'Tout ce que Crux Client sait faire', sub_logs:'Sortie en direct de tes instances',
   sub_account:'Tes comptes Microsoft et hors ligne', sub_bugreport:'Envoyer un rapport avec tes logs',
-    h_logs:'Journaux', h_account:'Account', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis',
+    h_logs:'Journaux', h_account:'Account', h_cape:'Capes', h_recent:'Joués récemment', h_servers:'Serveurs', h_bugreport:'Signaler un bug', h_friends:'Amis', recent_cat_server:'Serveurs', recent_cat_instance:'Instances', recent_cat_world:'Mondes', recent_join:'Rejoindre', recent_launch:'Lancer', recent_play:'Jouer', recent_remove:'Retirer',
     acct_required_title:'Compte requis', acct_required_msg:'Veuillez d\'abord lier votre compte Microsoft avant d\'ouvrir les rapports de bug.', acct_required_cancel:'Annuler', acct_required_goto:'Lier le compte',
     lbl_profile:'Profil :', lbl_version:'Version :', lbl_change_skin:'Changer de skin', lbl_actions:'Actions :', lbl_ram:'RAM :', lbl_instance:'Instance :',
     lbl_launcher_ram:'RAM du Lanceur :', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de rendu :', lbl_added:'Ajouté :',
@@ -2787,7 +2793,7 @@ const LANGS={
     sec_glass_bg:'Fond du verre', desc_glass_bg:'Fond personnalisé derrière le verre dépoli. Affiché uniquement dans le thème Verre.', btn_choose_bg:'Choisir une imageâ€¦', btn_remove_bg:'Retirer', lbl_bg_tint:'Teinter lâ€™image avec la couleur dâ€™accentuation',
     sec_corner_radius:'Rayon des coins', lbl_corner_radius:'Arrondi', corner_small:'Petit', corner_medium:'Moyen', corner_large:'Grand', corner_round:'Rond',
     sec_font:'Police', lbl_font_style:'Style', font_system:'Système', font_minecraft:'Minecraft', font_custom:'Personnalisée', lbl_font_family:'Famille de police',
-    sec_bell_position:'Position de la cloche de messages', lbl_bell_position:'Position :', bell_pos_settings:'Au-dessus des paramètres', bell_pos_corner:'En bas à droite',
+    sec_bell_position:'Position de la cloche de messages', lbl_bell_position:'Position :', bell_pos_settings:'Au-dessus des paramètres', bell_pos_corner:'En bas à droite', bell_pos_custom:'Personnalisé (depuis le bas à gauche)', lbl_bell_x:'X depuis la gauche (px) :', lbl_bell_y:'Y depuis le bas (px) :',
     sec_reset:'Réinitialiser', desc_reset:'Supprime tous les comptes, profils, paramètres et mods. Le lanceur redémarrera comme au premier lancement.',
     btn_reset:'Réinitialiser le Lanceur', sec_updates:'Mises à jour', btn_check_update:'Vérifier les mises à jour',
     desc_current_version:'Version actuelle :',
@@ -2892,7 +2898,7 @@ const LANGS={
   sub_cape:'Capas de Minecraft y tus diseños', sub_servers:'Ejecuta tu propio servidor y compártelo',
   sub_features:'Todo lo que Crux Client puede hacer', sub_logs:'Salida en vivo de tus instancias',
   sub_account:'Tus cuentas de Microsoft y sin conexión', sub_bugreport:'Envía un informe con tus registros',
-    h_logs:'Registros', h_account:'Account', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos',
+    h_logs:'Registros', h_account:'Account', h_cape:'Capas', h_recent:'Jugados recientemente', h_servers:'Servidores', h_bugreport:'Reportar bug', h_friends:'Amigos', recent_cat_server:'Servidores', recent_cat_instance:'Instancias', recent_cat_world:'Mundos', recent_join:'Unirse', recent_launch:'Iniciar', recent_play:'Jugar', recent_remove:'Eliminar',
     acct_required_title:'Cuenta requerida', acct_required_msg:'Vincula primero tu cuenta de Microsoft antes de abrir los informes de error.', acct_required_cancel:'Cancelar', acct_required_goto:'Vincular cuenta',
     lbl_profile:'Perfil:', lbl_version:'Versión:', lbl_change_skin:'Cambiar Skin', lbl_actions:'Acciones:', lbl_ram:'RAM:', lbl_instance:'Instancia:',
     lbl_launcher_ram:'RAM del Launcher:', lbl_mod_loader:'Mod Loader', lbl_render_api:'API de Renderizado:', lbl_added:'Añadido:',
@@ -2943,7 +2949,7 @@ const LANGS={
     sec_glass_bg:'Fondo de vidrio', desc_glass_bg:'Fondo personalizado detrás del vidrio esmerilado. Solo se muestra en el tema Vidrio.', btn_choose_bg:'Elegir imagenâ€¦', btn_remove_bg:'Quitar', lbl_bg_tint:'Teñir la imagen con el color de acento',
     sec_corner_radius:'Radio de esquinas', lbl_corner_radius:'Redondeo', corner_small:'Pequeño', corner_medium:'Medio', corner_large:'Grande', corner_round:'Redondo',
     sec_font:'Fuente', lbl_font_style:'Estilo', font_system:'Sistema', font_minecraft:'Minecraft', font_custom:'Personalizada', lbl_font_family:'Familia de fuente',
-    sec_bell_position:'Posición de la campana de mensajes', lbl_bell_position:'Posición:', bell_pos_settings:'Encima de ajustes', bell_pos_corner:'Abajo a la derecha',
+    sec_bell_position:'Posición de la campana de mensajes', lbl_bell_position:'Posición:', bell_pos_settings:'Encima de ajustes', bell_pos_corner:'Abajo a la derecha', bell_pos_custom:'Personalizada (desde abajo a la izquierda)', lbl_bell_x:'X desde la izquierda (px):', lbl_bell_y:'Y desde abajo (px):',
     sec_reset:'Restablecer', desc_reset:'Elimina todas las cuentas, perfiles, ajustes y mods. El launcher se reiniciará como si se abriera por primera vez.',
     btn_reset:'Restablecer Launcher', sec_updates:'Actualizaciones', btn_check_update:'Buscar actualizaciones',
     desc_current_version:'Versión actual:',
@@ -4015,6 +4021,30 @@ async function checkLoaderAvailability(mcVersion){
 // ── Recent Played ───────────────────────────────────────────────────
 // Jeder Eintrag zeigt das Icon des Profils, mit dem er entstanden ist
 // (eigenes Profilbild, sonst das Loader-Icon). Optik komplett in styles.css.
+// Kurze Zeitangabe statt des langen Locale-Datums in der schmalen Spalte.
+function recentTimeAgo(time){
+  const ms=Date.now()-Number(time||0);
+  if(!isFinite(ms)||ms<0) return '';
+  const min=Math.floor(ms/60000);
+  try{
+    const rtf=new Intl.RelativeTimeFormat(currentLang,{numeric:'auto',style:'narrow'});
+    if(min<1) return rtf.format(0,'minute');
+    if(min<60) return rtf.format(-min,'minute');
+    const hr=Math.floor(min/60);
+    if(hr<24) return rtf.format(-hr,'hour');
+    const days=Math.floor(hr/24);
+    if(days<7) return rtf.format(-days,'day');
+  }catch{}
+  return new Date(time).toLocaleDateString();
+}
+function recentMeta(r){
+  const ago=recentTimeAgo(r.time);
+  if(r.type==='server'){
+    const addr=r.serverAddress?`${r.serverAddress}:${r.serverPort||25565}`:'';
+    return [addr,ago].filter(Boolean).join(' · ');
+  }
+  return [r.version||'?',ago].filter(Boolean).join(' · ');
+}
 function recentProfileIcon(entry){
   const p = entry && entry.profileId ? profiles.find(x=>x.id===entry.profileId) : null;
   const loader = profileLoaderKey(p ? p.modLoader : (entry && entry.modLoader));
@@ -4031,9 +4061,9 @@ function renderRecentList(){
   if(!total) return;
 
   const categories=[
-    { type:'server', title:'Servers', icon:'🌐' },
-    { type:'instance', title:'Instances', icon:'📦' },
-    { type:'world', title:'Worlds', icon:'🌍' },
+    { type:'server', key:'recent_cat_server', action:'recent_join' },
+    { type:'instance', key:'recent_cat_instance', action:'recent_launch' },
+    { type:'world', key:'recent_cat_world', action:'recent_play' },
   ];
   const MAX_PER_CAT=6;
 
@@ -4043,7 +4073,7 @@ function renderRecentList(){
     const items=all.slice(0,MAX_PER_CAT);
     const section=document.createElement('div');
     section.className='recent-section';
-    section.innerHTML=`<h2 class="recent-section__title">${cat.icon} ${cat.title} <span class="recent-section__count">(${items.length}${all.length>MAX_PER_CAT?' of '+all.length:''})</span></h2>`;
+    section.innerHTML=`<div class="recent-section__head"><span class="recent-section__title">${escHtml(t(cat.key))}</span><span class="recent-section__count">${items.length}${all.length>MAX_PER_CAT?' / '+all.length:''}</span></div>`;
 
     const list=document.createElement('div');
     list.className='recent-list';
@@ -4051,23 +4081,20 @@ function renderRecentList(){
       const globalIdx=recentHistory.indexOf(r);
       const item=document.createElement('div');
       item.className='recent-item';
-      const date=new Date(r.time).toLocaleString();
+      const actionLabel=t(cat.action), removeLabel=t('recent_remove');
 
       if(cat.type==='server'){
         const addr=r.serverAddress?`${r.serverAddress}:${r.serverPort||25565}`:'';
-        const metaParts=[addr];
-        if(r.version) metaParts.push(r.version);
-        if(r.profileName) metaParts.push(r.profileName);
-        metaParts.push(date);
+        item.title=[r.serverName||r.profileName||'Server',addr,r.version,r.profileName,new Date(r.time).toLocaleString()].filter(Boolean).join(' · ');
         item.innerHTML=`
           ${recentProfileIcon(r)}
           <span class="recent-item__body">
             <span class="recent-item__name">${escHtml(r.serverName||r.profileName||'Server')}</span>
-            <span class="recent-item__meta">${escHtml(metaParts.join(' · '))}</span>
+            <span class="recent-item__meta">${escHtml(recentMeta(r))}</span>
           </span>
           <span class="recent-item__actions">
-            <button class="btn btn-sm recent-join-btn" type="button">▶ Join</button>
-            <button class="btn btn-sm recent-remove-btn" type="button" title="Remove">✕</button>
+            <button class="recent-icon-btn recent-join-btn" type="button" title="${escHtml(actionLabel)}" aria-label="${escHtml(actionLabel)}">▶</button>
+            <button class="recent-icon-btn recent-icon-btn--danger recent-remove-btn" type="button" title="${escHtml(removeLabel)}" aria-label="${escHtml(removeLabel)}">✕</button>
           </span>`;
         item.querySelector('.recent-join-btn').addEventListener('click',async()=>{
           // Check if local server is running, start if not
@@ -4089,15 +4116,16 @@ function renderRecentList(){
           setTimeout(()=>document.getElementById('launch-btn').click(),200);
         });
       } else if(cat.type==='instance'){
+        item.title=[r.profileName||'Instance',r.version,r.modLoader,new Date(r.time).toLocaleString()].filter(Boolean).join(' · ');
         item.innerHTML=`
           ${recentProfileIcon(r)}
           <span class="recent-item__body">
             <span class="recent-item__name">${escHtml(r.profileName||'Instance')}</span>
-            <span class="recent-item__meta">${escHtml([r.version||'?',r.modLoader,date].filter(Boolean).join(' · '))}</span>
+            <span class="recent-item__meta">${escHtml(recentMeta(r))}</span>
           </span>
           <span class="recent-item__actions">
-            <button class="btn btn-sm recent-launch-btn" type="button">▶ Launch</button>
-            <button class="btn btn-sm recent-remove-btn" type="button" title="Remove">✕</button>
+            <button class="recent-icon-btn recent-launch-btn" type="button" title="${escHtml(actionLabel)}" aria-label="${escHtml(actionLabel)}">▶</button>
+            <button class="recent-icon-btn recent-icon-btn--danger recent-remove-btn" type="button" title="${escHtml(removeLabel)}" aria-label="${escHtml(removeLabel)}">✕</button>
           </span>`;
         item.querySelector('.recent-launch-btn').addEventListener('click',()=>{
           const p=profiles.find(x=>x.id===r.profileId);
@@ -4110,15 +4138,16 @@ function renderRecentList(){
           }
         });
       } else { // world
+        item.title=[r.worldName||r.profileName||r.version||'Minecraft',r.version,r.modLoader,r.profileName,new Date(r.time).toLocaleString()].filter(Boolean).join(' · ');
         item.innerHTML=`
           ${recentProfileIcon(r)}
           <span class="recent-item__body">
             <span class="recent-item__name">${escHtml(r.worldName||r.profileName||r.version||'Minecraft')}</span>
-            <span class="recent-item__meta">${escHtml([r.version,r.modLoader,r.profileName,date].filter(Boolean).join(' · '))}</span>
+            <span class="recent-item__meta">${escHtml(recentMeta(r))}</span>
           </span>
           <span class="recent-item__actions">
-            <button class="btn btn-sm recent-launch-btn" type="button">▶ Play</button>
-            <button class="btn btn-sm recent-remove-btn" type="button" title="Remove">✕</button>
+            <button class="recent-icon-btn recent-launch-btn" type="button" title="${escHtml(actionLabel)}" aria-label="${escHtml(actionLabel)}">▶</button>
+            <button class="recent-icon-btn recent-icon-btn--danger recent-remove-btn" type="button" title="${escHtml(removeLabel)}" aria-label="${escHtml(removeLabel)}">✕</button>
           </span>`;
         item.querySelector('.recent-launch-btn').addEventListener('click',async()=>{
           const p=profiles.find(x=>x.id===r.profileId);
@@ -9990,8 +10019,9 @@ function applyFabPosition(){
   if(typeof applyBellPosition === 'function') applyBellPosition();
 }
 
-// Die Nachrichten-Glocke steht standardmaessig direkt ueber dem Settings-Button
-// und kann in den Einstellungen nach unten rechts gesetzt werden.
+// Die Nachrichten-Glocke steht standardmaessig direkt ueber dem Settings-Button.
+// In den Einstellungen kann sie nach unten rechts ODER frei (X/Y von unten
+// links, wie beim Settings-Button) gesetzt werden — z.B. unten links.
 function applyBellPosition(){
   const bell = document.getElementById('message-bell-btn');
   const screen = document.getElementById('launcher-screen');
@@ -10006,6 +10036,13 @@ function applyBellPosition(){
     fab.parentElement.insertBefore(bell, fab);
     return;
   }
+  if(pos === 'custom'){
+    bell.className = 'tb-btn message-bell--custom';
+    bell.style.left = (settings.bellX == null ? 20 : settings.bellX) + 'px';
+    bell.style.bottom = (settings.bellY == null ? 20 : settings.bellY) + 'px';
+    screen.appendChild(bell);
+    return;
+  }
   bell.className = 'tb-btn message-bell--corner';
   screen.appendChild(bell);
   if(fab && fab.classList.contains('fab-position-custom')){
@@ -10018,16 +10055,39 @@ function applyBellPosition(){
     bell.classList.add('message-bell--above-fab');
   }
 }
+function syncBellPositionUI(){
+  const sel = document.getElementById('bell-position-select');
+  const custom = document.getElementById('bell-custom-position');
+  const x = document.getElementById('bell-x-input');
+  const y = document.getElementById('bell-y-input');
+  if(sel) sel.value = settings.bellPosition || 'settings';
+  if(x) x.value = settings.bellX == null ? 20 : settings.bellX;
+  if(y) y.value = settings.bellY == null ? 20 : settings.bellY;
+  if(custom) custom.style.display = (sel && sel.value === 'custom') ? '' : 'none';
+}
 
 (function bindBellPositionUI(){
   const sel = document.getElementById('bell-position-select');
   if(!sel) return;
-  if(settings.bellPosition) sel.value = settings.bellPosition;
   sel.addEventListener('change', () => {
     settings.bellPosition = sel.value;
+    if(settings.bellPosition === 'custom'){
+      if(settings.bellX == null) settings.bellX = 20;
+      if(settings.bellY == null) settings.bellY = 20;
+    }
     saveSettings();
+    syncBellPositionUI();
     applyBellPosition();
   });
+  for(const [id,key] of [['bell-x-input','bellX'],['bell-y-input','bellY']]){
+    const input = document.getElementById(id);
+    if(!input) continue;
+    input.addEventListener('change', () => {
+      settings[key] = Math.max(0, parseInt(input.value, 10) || 0);
+      saveSettings();
+      applyBellPosition();
+    });
+  }
 })();
 
 (function bindFabPositionUI(){
