@@ -1005,6 +1005,25 @@
       </div>
     </div>
 
+    <!-- Erster Start: eigenes Login-Screen wie bei anderen Launchern -->
+    <div id="first-run-overlay" class="first-run-overlay" style="display:none">
+      <div class="first-run-card">
+        <div class="first-run-brand">
+          <img class="first-run-logo" src="./Crux-Client.png" alt="" aria-hidden="true">
+          <span class="first-run-eyebrow" data-i18n="first_run_eyebrow">WELCOME TO CRUX CLIENT</span>
+        </div>
+        <h1 class="first-run-title" data-i18n="first_run_title">Welcome to Crux Client</h1>
+        <p class="first-run-sub" data-i18n="first_run_desc">Link your Microsoft account to start playing. Profiles, skins and settings stay connected to it.</p>
+        <ol class="first-run-steps">
+          <li data-i18n="first_run_step1">Sign in with Microsoft</li>
+          <li data-i18n="first_run_step2">Pick or create a profile</li>
+          <li data-i18n="first_run_step3">Launch Minecraft</li>
+        </ol>
+        <button class="btn btn-ms btn-lg first-run-login" id="first-run-ms-btn" data-i18n="first_run_login">Sign in with Microsoft</button>
+        <p class="first-run-note" data-i18n="first_run_note">You can switch accounts later on the Account page.</p>
+      </div>
+    </div>
+
     <!-- â”€â”€ Owner: Ban overlay â”€â”€ -->
     <div id="ban-modal" class="modal-overlay" style="display:none;z-index:2700">
       <div class="modal" style="max-width:480px">
@@ -2080,6 +2099,28 @@ function prepareUpdateWindow(){
   });
 }
 
+// First-Run: solange kein Account hinterlegt ist, zeigt der Launcher nur den
+// Login-Screen. Nach dem ersten Microsoft-Login verschwindet er dauerhaft,
+// weil die Accounts persistiert werden.
+function firstRunNeeded(){
+  return !UPDATE_WINDOW_MODE && Array.isArray(accounts) && accounts.length === 0;
+}
+function showFirstRun(){
+  const ov = document.getElementById('first-run-overlay');
+  if(ov) ov.style.display = 'flex';
+}
+function hideFirstRun(){
+  const ov = document.getElementById('first-run-overlay');
+  if(ov) ov.style.display = 'none';
+}
+function syncFirstRun(){
+  if(firstRunNeeded()) showFirstRun();
+  else hideFirstRun();
+}
+function hideFirstRunAfterLogin(){
+  if(Array.isArray(accounts) && accounts.length) hideFirstRun();
+}
+
 async function bootLauncher(){
   try {
     // Update-Fenster: nur Theme laden und das Update-Panel zeigen, keine Launcher-UI.
@@ -2223,7 +2264,7 @@ async function bootLauncher(){
 
     // Show the launcher immediately
     document.getElementById('launcher-screen').style.display='flex';
-    if(!accounts.length) showPage('account-page');
+    syncFirstRun();
 
     document.getElementById('status').textContent='Loading versions...';
     loadVersions();
@@ -2481,6 +2522,7 @@ const LANGS={
     no_mods:'No mods installed yet.', no_profiles:'No profiles yet.', no_accounts:'No accounts added yet.', no_instances:'No instances launched yet.',
     no_custom_capes:'No custom capes saved yet.', no_servers:'No servers created yet. Click "+ New Server" to start.', skin_list_empty:'No skins saved yet.',
     add_ms:'+ Microsoft', add_offline:'+ Offline',
+    first_run_eyebrow:'WELCOME TO CRUX CLIENT', first_run_title:'Welcome to Crux Client', first_run_desc:'Link your Microsoft account to start playing. Profiles, skins and settings stay connected to it.', first_run_step1:'Sign in with Microsoft', first_run_step2:'Pick or create a profile', first_run_step3:'Launch Minecraft', first_run_login:'Sign in with Microsoft', first_run_note:'You can switch accounts later on the Account page.',
     ver_latest:'— Latest Release —', ver_latest_snap:'— Latest Snapshot —', ver_latest_prerelease:'— Latest Pre-release —', ver_releases:'Releases', ver_snapshots:'Snapshots', ver_other:'Other',
     profile_name:'Name:', profile_version:'Minecraft Version:', profile_section:'Section:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Resource Packs', profile_shaderpacks:'Shader Packs', profile_worlds:'Worlds',
@@ -2640,6 +2682,7 @@ const LANGS={
     no_mods:'Keine Mods installiert.', no_profiles:'Keine Profile vorhanden.', no_accounts:'Keine Konten vorhanden.', no_instances:'Keine Instanzen gestartet.',
     no_custom_capes:'Noch keine Custom Capes gespeichert.', no_servers:'Noch keine Server erstellt. Klicke auf "+ Neuer Server" zum Starten.', skin_list_empty:'Noch keine Skins gespeichert.',
     add_ms:'+ Microsoft', add_offline:'+ Offline',
+    first_run_eyebrow:'WILLKOMMEN BEI CRUX CLIENT', first_run_title:'Willkommen bei Crux Client', first_run_desc:'Verbinde deinen Microsoft-Account, um zu spielen. Profile, Skins und Einstellungen bleiben daran gekoppelt.', first_run_step1:'Mit Microsoft anmelden', first_run_step2:'Profil auswählen oder erstellen', first_run_step3:'Minecraft starten', first_run_login:'Mit Microsoft anmelden', first_run_note:'Du kannst den Account später auf der Account-Seite wechseln.',
     ver_latest:'— Neueste Version —', ver_latest_snap:'— Neuester Snapshot —', ver_latest_prerelease:'— Neueste Vorabversion —', ver_releases:'Vollversionen', ver_snapshots:'Snapshots', ver_other:'Sonstige',
     profile_name:'Name:', profile_version:'Minecraft-Version:', profile_section:'Bereich:', profile_mods:'Mods', profile_datapacks:'Datenpakete',
     profile_resourcepacks:'Ressourcenpakete', profile_shaderpacks:'Shaderpakete', profile_worlds:'Welten',
@@ -2799,6 +2842,7 @@ const LANGS={
     no_mods:'Aucun mod installé.', no_profiles:'Aucun profil.', no_accounts:'Aucun compte.', no_instances:'Aucune instance.',
     no_custom_capes:'Aucune cape custom sauvegardée.', no_servers:'Aucun serveur créé. Cliquez sur "+ Nouveau Serveur" pour commencer.', skin_list_empty:'Aucun skin sauvegardé.',
     add_ms:'+ Microsoft', add_offline:'+ Hors ligne',
+    first_run_eyebrow:'BIENVENUE SUR CRUX CLIENT', first_run_title:'Bienvenue sur Crux Client', first_run_desc:'Connecte ton compte Microsoft pour commencer à jouer. Profils, skins et paramètres y restent associés.', first_run_step1:'Se connecter avec Microsoft', first_run_step2:'Choisir ou créer un profil', first_run_step3:'Lancer Minecraft', first_run_login:'Se connecter avec Microsoft', first_run_note:'Tu pourras changer de compte plus tard dans l’onglet Compte.',
     ver_latest:'— Dernière version —', ver_latest_snap:'— Dernier instantané —', ver_latest_prerelease:'— Dernière préversion —', ver_releases:'Versions', ver_snapshots:'Instantanés', ver_other:'Autres',
     profile_name:'Nom :', profile_version:'Version Minecraft :', profile_section:'Section :', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Packs de ressources', profile_shaderpacks:'Packs de shaders', profile_worlds:'Mondes',
@@ -2955,6 +2999,7 @@ const LANGS={
     no_mods:'Sin mods instalados.', no_profiles:'Sin perfiles.', no_accounts:'Sin cuentas.', no_instances:'Sin instancias.',
     no_custom_capes:'No hay capas personalizadas guardadas.', no_servers:'No hay servidores creados. Haz clic en "+ Nuevo Servidor" para empezar.', skin_list_empty:'No hay skins guardados.',
     add_ms:'+ Microsoft', add_offline:'+ Sin conexión',
+    first_run_eyebrow:'BIENVENIDO A CRUX CLIENT', first_run_title:'Bienvenido a Crux Client', first_run_desc:'Vincula tu cuenta de Microsoft para empezar a jugar. Los perfiles, skins y ajustes quedan asociados a ella.', first_run_step1:'Iniciar sesión con Microsoft', first_run_step2:'Elegir o crear un perfil', first_run_step3:'Iniciar Minecraft', first_run_login:'Iniciar sesión con Microsoft', first_run_note:'Podrás cambiar de cuenta más tarde en la pestaña Cuenta.',
     ver_latest:'— Última versión —', ver_latest_snap:'— Último instantáneo —', ver_latest_prerelease:'— Última versión preliminar —', ver_releases:'Versiones', ver_snapshots:'Instantáneas', ver_other:'Otras',
     profile_name:'Nombre:', profile_version:'Versión de Minecraft:', profile_section:'Sección:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Paquetes de recursos', profile_shaderpacks:'Paquetes de shaders', profile_worlds:'Mundos',
@@ -5545,7 +5590,7 @@ function renderAccountList(){
     item.className='account-item'+(acc.id===settings.selectedAccount?' sel':'');
     item.innerHTML=`<canvas class="account-head-sm" width="32" height="32"></canvas><span class="account-name">${acc.name}</span><span class="account-type">${acc.type}</span><button class="btn account-del" data-id="${acc.id}">✕</button>`;
     item.addEventListener('click',e=>{ if(e.target.classList.contains('account-del'))return; settings.selectedAccount=acc.id; saveSettings(); renderAccountList(); updateSkinDisplay(); updateAccountTabHead(); });
-    item.querySelector('.account-del').addEventListener('click',()=>{ accounts=accounts.filter(a=>a.id!==acc.id); if(settings.selectedAccount===acc.id)settings.selectedAccount=accounts[0]?.id||null; ipcRenderer.send('save-accounts',accounts); saveSettings(); renderAccountList(); updateSkinDisplay(); updateAccountTabHead(); });
+    item.querySelector('.account-del').addEventListener('click',()=>{ accounts=accounts.filter(a=>a.id!==acc.id); if(settings.selectedAccount===acc.id)settings.selectedAccount=accounts[0]?.id||null; ipcRenderer.send('save-accounts',accounts); saveSettings(); renderAccountList(); updateSkinDisplay(); updateAccountTabHead(); syncFirstRun(); });
     drawHead2D(item.querySelector('canvas'),acc.skinUrl,acc.uuid);
     el.appendChild(item);
   });
@@ -6952,6 +6997,7 @@ function loadCrafatarHead(canvas,uuid){
 // Microsoft login
 async function loginMicrosoft(btn){
   btn=btn||document.getElementById('btn-add-ms');
+  const restLabel = btn.dataset.restLabel || btn.textContent || '+ Microsoft';
   btn.textContent='Opening login...'; btn.disabled=true;
   document.getElementById('status').textContent='Opening Microsoft login...';
   try {
@@ -6960,20 +7006,22 @@ async function loginMicrosoft(btn){
       const msg='Login failed: '+result.error;
       document.getElementById('status').textContent=msg;
       alert(msg);
-      btn.textContent='+ Microsoft'; btn.disabled=false;
+      btn.textContent=restLabel; btn.disabled=false;
       return;
     }
     const id='acc_'+Date.now();
     accounts.push({id,name:result.name,uuid:result.uuid,type:'Microsoft',accessToken:result.accessToken,refreshToken:result.refreshToken,skinUrl:result.skinUrl,skinModel:result.skinModel||'classic'});
     if(!settings.selectedAccount)settings.selectedAccount=id;
     ipcRenderer.send('save-accounts',accounts); saveSettings(); renderAccountList(); updateSkinDisplay();
+    hideFirstRunAfterLogin();
     document.getElementById('status').textContent='⍓ Logged in as '+result.name;
   } catch(e) {
     document.getElementById('status').textContent='Login error: '+e.message;
   }
-  btn.textContent='+ Microsoft'; btn.disabled=false;
+  btn.textContent=restLabel; btn.disabled=false;
 }
 document.getElementById('btn-add-ms').addEventListener('click',()=>loginMicrosoft(document.getElementById('btn-add-ms')));
+document.getElementById('first-run-ms-btn').addEventListener('click',(e)=>loginMicrosoft(e.currentTarget));
 
 function getSelectedAccount(){ return accounts.find(a=>a.id===settings.selectedAccount)||accounts[0]||null; }
 

@@ -2938,6 +2938,43 @@ body:not(.light):not(.glass).bg-light .page-head__sub { color: rgba(23, 18, 31, 
 .update-ready-modal { width: min(88vw, 30rem); }
 .update-ready-modal .modal-body { line-height: 1.6; }
 .update-ready-modal .modal-actions { justify-content: flex-end; }
+
+/* First-Run: eigener Login-Screen, der die normale UI komplett verdeckt */
+.first-run-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
+  background: radial-gradient(90% 80% at 50% -20%, color-mix(in srgb, var(--acc) 30%, transparent), transparent 70%), var(--bg);
+  color: var(--bg-on, var(--text));
+}
+.first-run-card {
+  width: min(92vw, 34rem);
+  padding: 2.2rem 2.4rem;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--glass-border-2);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--sh-3);
+  text-align: center;
+  color: var(--text);
+}
+.first-run-brand { display: flex; align-items: center; justify-content: center; gap: .7rem; margin-bottom: 1rem; }
+.first-run-logo { width: 2.5rem; height: 2.5rem; border-radius: .7rem; }
+.first-run-eyebrow { color: var(--acc); font-size: var(--fs-xs); font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+.first-run-title { margin: 0 0 .6rem; font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.12; }
+.first-run-sub { margin: 0 auto 1.4rem; max-width: 42ch; color: var(--muted); font-size: var(--fs-md); line-height: 1.6; }
+.first-run-steps { list-style: none; margin: 0 0 1.6rem; padding: 0; display: grid; gap: .5rem; text-align: left; counter-reset: firstRun; }
+.first-run-steps li { counter-increment: firstRun; display: flex; align-items: center; gap: .7rem; padding: .65rem .8rem; border-radius: var(--r); border: 1px solid var(--line); background: var(--glass-bg-2); color: var(--text-2); font-size: var(--fs-sm); }
+.first-run-steps li::before { content: counter(firstRun); flex: 0 0 1.6rem; width: 1.6rem; height: 1.6rem; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--acc) 22%, transparent); color: var(--acc2); font-weight: 800; font-size: var(--fs-xs); }
+.first-run-login { width: 100%; }
+.first-run-note { margin: 1rem 0 0; color: var(--muted); font-size: var(--fs-xs); }
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -3480,6 +3517,15 @@ body.glass .world-item { background: var(--gs-list) !important; border-color: va
 body.glass .world-item:hover { background: rgba(255, 255, 255, .38) !important; }
 body.glass .world-item__name { color: var(--gs-strong) !important; }
 body.glass .world-item__meta { color: var(--gs-mut) !important; }
+
+/* First-Run: eigene Glasflaechen, damit helle Hintergrundbilder lesbar bleiben */
+body.glass .first-run-overlay { background: var(--gs-scrim) !important; }
+body.glass .first-run-card { background: var(--gs-panel) !important; border-color: var(--gs-bd2) !important; }
+body.glass .first-run-steps li { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; color: var(--gs-tx) !important; }
+body.glass .first-run-sub, body.glass .first-run-note { color: var(--gs-mut) !important; }
+body.glass .first-run-eyebrow { color: var(--acc) !important; }
+body.glass .first-run-steps li::before { color: var(--gs-tx) !important; }
+body.glass #first-run-ms-btn { background: #0078d4 !important; border-color: #0078d4 !important; color: #fff !important; }
 
 /* Glas-Sicherheitsnetz: hart kodierte Textfarben aus JS-Markup auf die Theme-Farbe ziehen */
 body.glass, body.glass *, body.glass *::before, body.glass *::after { color: var(--gs-tx) !important; }
