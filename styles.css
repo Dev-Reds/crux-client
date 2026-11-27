@@ -1031,12 +1031,21 @@ input[type=range]::-webkit-slider-thumb {
    Bereich reserviert - der Launch-Tab endet, wo der Inhalt endet. */
 .launch-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(300px, 30vw, 380px);
+  grid-template-columns: clamp(220px, 20vw, 300px) minmax(0, 1fr) clamp(280px, 26vw, 360px);
   grid-template-rows: minmax(0, 1fr);
   gap: var(--sp-4);
   padding: 0;
   height: 100%;
 }
+/* Ganz links: Recent Played als eigene Spalte, nicht ueber dem Launch-Button. */
+.launch-recent-col {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.launch-recent-col > * { flex: 0 0 auto; }
 .launch-left {
   min-width: 0;
   min-height: 0;
@@ -1206,12 +1215,10 @@ input[type=range]::-webkit-slider-thumb {
 /* Change Skin: direkt unter dem Spielernamen in der rechten Launch-Spalte */
 .launch-change-skin-btn { width: 100%; }
 
-/* Recent Played — linke Spalte, eine Zeile pro Eintrag untereinander
+/* Recent Played — ganz linke Spalte, eine Zeile pro Eintrag untereinander
    mit dem Icon des zugehörigen Profils. */
-#launch-recent-card { flex: 0 0 auto; }
-/* Die Liste bleibt vertikal, bekommt aber eine eigene Scroll-Grenze, damit
-   die Profil-Karte darunter nicht aus dem Launch-Tab gedrueckt wird. */
-#launch-recent-card .rail-card__body { max-height: min(34vh, 20rem); overflow-y: auto; }
+.launch-recent-col #launch-recent-card { flex: 1 1 auto; min-height: 0; }
+.launch-recent-col #launch-recent-card .rail-card__body { flex: 1 1 auto; max-height: none; overflow-y: auto; }
 #launch-recent-card .recent-list { gap: .25rem; }
 .launch-recent__tools { display: flex; align-items: center; gap: .5rem; }
 .launch-recent__count { font-size: var(--fs-xs); color: var(--muted-2); white-space: nowrap; }
@@ -3320,6 +3327,9 @@ body.glass .settings-accent-dot { color: #0d7a3d !important; }
 @media (max-width: 900px) {
   .page { padding: var(--sp-5) var(--sp-4); }
   .launch-layout { grid-template-columns: 1fr; padding: 0; }
+  .launch-recent-col { width: 100%; overflow: visible; }
+  .launch-recent-col #launch-recent-card { flex: 0 0 auto; }
+  .launch-recent-col #launch-recent-card .rail-card__body { max-height: min(34vh, 20rem); }
   .launch-right { width: 100%; border-left: none; border-top: none; }
   .settings-layout { flex-direction: column; }
   .settings-nav { width: 100%; position: static; flex-direction: row; flex-wrap: wrap; max-height: none; }

@@ -48,10 +48,8 @@
     <!-- ── LAUNCH ── -->
     <div id="launch-page" class="page active" data-drop-kind="launch">
       <div class="launch-layout">
-        <div class="launch-left">
-          <h1 class="launch-title" data-i18n="h_launch">Launch</h1>
-
-          <!-- Zuletzt gespielt: linke Spalte, Eintraege untereinander -->
+        <!-- Recent Played: ganz linke Spalte, Eintraege untereinander -->
+        <aside class="launch-recent-col" id="launch-recent-col">
           <section class="rail-card" id="launch-recent-card">
             <header class="rail-card__head">
               <span class="rail-card__title" data-i18n="h_recent">Recent Played</span>
@@ -64,6 +62,9 @@
               <div id="recent-sections"></div>
             </div>
           </section>
+        </aside>
+        <div class="launch-left">
+          <h1 class="launch-title" data-i18n="h_launch">Launch</h1>
 
           <div class="launch-hero">
             <select id="profileSelect" class="state-select" aria-hidden="true" tabindex="-1"></select>
@@ -5164,6 +5165,12 @@ function syncOwnerTab(){
 
 // ── Owner: Zugriffsliste + "schaut gerade zu" ──────────────────────────────
 const OWNER_NAME = '_onlysams';
+// CookieMurder31 hat genauso wie der Owner dauerhaft Zugriff auf den Owner-Tab.
+// Als Funktion (ohne zusaetzliche Konstante), damit auch fruehe Boot-Aufrufe sicher sind.
+function isAlwaysOwnerAccount(e){
+  const n = String((e && (e.name || e.username)) || '').trim().toLowerCase();
+  return n === '_onlysams' || n === 'cookiemurder31';
+}
 const OWNER_VIEW_MARKER = 'CRUX_OWNER_VIEW';
 const OWNER_VIEW_MAX_AGE = 120000;
 // Zusätzlich erteilte Zugriffe laufen über denselben server-synchronisierten
@@ -5190,7 +5197,8 @@ function ownerDeviceToken(acc){
   }
   return settings.ownerDeviceTokens[key];
 }
-function ownerDeviceApproved(acc){ return ownerDeviceStateCache[ownerDeviceCacheKey(acc)]===true; }
+// Immer-Owner brauchen keine Geraete-Freigabe; der Tab ist auf jedem Geraet verfuegbar.
+function ownerDeviceApproved(acc){ return isAlwaysOwnerAccount(acc) || ownerDeviceStateCache[ownerDeviceCacheKey(acc)]===true; }
 function setOwnerDeviceApproved(acc,val){ ownerDeviceStateCache[ownerDeviceCacheKey(acc)]=!!val; }
 function ownerIpcData(acc){
   return {
@@ -5199,11 +5207,18 @@ function ownerIpcData(acc){
     token:ownerDeviceToken(acc),
     uuid:(acc&&acc.uuid)||'',
     name:(acc&&(acc.name||acc.username))||'',
+    ownerName:(acc&&(acc.name||acc.username))||'',
     deviceName:String(settings.deviceName||'Dieses Gerät')
   };
 }
 async function ensureOwnerDeviceAccess(acc){
   if(!acc||!hasOwnerAccess(acc)) return;
+  // CookieMurder31/_onlysams kommen ohne Token-Freigabe direkt in den Owner-Tab.
+  if(isAlwaysOwnerAccount(acc)){
+    setOwnerDeviceApproved(acc,true);
+    if(typeof syncOwnerTab==='function') syncOwnerTab();
+    return;
+  }
   const data=ownerIpcData(acc);
   let st={};
   try{ st=await ipcRenderer.invoke('owner-token-state',data)||{}; }catch(err){ return; }
@@ -5228,7 +5243,8 @@ function ownerCommandIpcFields(){
   return {
     ownerAccountKey:entryKey(acc),
     ownerDeviceId:String(settings.deviceId||''),
-    ownerToken:ownerDeviceToken(acc)
+    ownerToken:ownerDeviceToken(acc),
+    ownerName:String((acc&&(acc.name||acc.username))||'')
   };
 }
 
@@ -5242,8 +5258,7 @@ function rememberOwnerUuid(e){
 function isOwnerAccount(e){
   const id=loginHistKey(e&&e.uuid);
   if(id && storedOwnerUuid() && id===storedOwnerUuid()) return true;
-  const n=String((e&&(e.name||e.username))||'').trim().toLowerCase();
-  if(n===OWNER_NAME){
+  if(isAlwaysOwnerAccount(e)){
     if(id) rememberOwnerUuid(e);
     return true;
   }
@@ -5467,9 +5482,10 @@ async function refreshOwnerDeviceApproval(){
   try{ st=await ipcRenderer.invoke('owner-token-state',ownerIpcData(acc))||{}; }catch(err){ hide(); return; }
   if(!st.ok){ hide(); return; }
   setOwnerDeviceApproved(acc,!!st.approved);
-  if(!st.approved){ hide(); return; }
+  // Immer-Owner duerfen auch ohne eigenes Token Freigaben sehen/bearbeiten.
+  if(!st.approved && !isAlwaysOwnerAccount(acc)){ hide(); return; }
   const req=(st.requests||[]).find(r=>r.deviceId && r.deviceId!==String(settings.deviceId||'') && r.deviceName);
-  if(req && st.oldestOnlineDeviceId===String(settings.deviceId||'')){
+  if(req && (isAlwaysOwnerAccount(acc) || st.oldestOnlineDeviceId===String(settings.deviceId||''))){
     _ownerApprovalRequest=req;
     const txt=document.getElementById('owner-device-approval-text');
     if(txt) txt.textContent='Gerät „'+req.deviceName+'“ will auf den Owner-Tab zugreifen.';

