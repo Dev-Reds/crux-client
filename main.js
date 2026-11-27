@@ -2373,13 +2373,25 @@ function officialMcDirs(){
   };
   add(path.join(appData, '.minecraft'));
   add(path.join(localAppData, '.minecraft'));
-  // Portable/andere Launcher-Installationen: eine Ebene unter APPDATA suchen.
-  try {
-    for (const en of fs.readdirSync(appData, { withFileTypes: true })) {
-      if (!en.isDirectory() || en.name === path.basename(base)) continue;
-      add(path.join(appData, en.name, '.minecraft'));
-    }
-  } catch {}
+  // Portable/andere Launcher-Installationen und der Microsoft-Store-Launcher
+  // liegen eine oder mehrere Ebenen tiefer (auch unter LOCALAPPDATA\Packages).
+  const scanChildDirs = (root, depth) => {
+    if (!root || depth <= 0) return;
+    try {
+      for (const en of fs.readdirSync(root, { withFileTypes: true })) {
+        if (!en.isDirectory() || en.name === path.basename(base)) continue;
+        const dir = path.join(root, en.name);
+        add(dir);
+        add(path.join(dir, '.minecraft'));
+        add(path.join(dir, 'LocalCache', 'Roaming', '.minecraft'));
+        add(path.join(dir, 'LocalCache', 'Local', '.minecraft'));
+        if (depth > 1) scanChildDirs(dir, depth - 1);
+      }
+    } catch {}
+  };
+  scanChildDirs(appData, 1);
+  scanChildDirs(localAppData, 1);
+  scanChildDirs(path.join(localAppData, 'Packages'), 3);
   return found;
 }
 
@@ -2497,6 +2509,9 @@ ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
     if (!list.length) return { ok: false, error: 'Keine Instanz ausgewaehlt.' };
     const profiles = await load(P.profiles, []);
     const created = [];
+    const progress = (message, percent) => {
+      try { event.sender.send('mc-launcher-import-progress', { message, percent }); } catch {}
+    };
 
     const copyFileTo = async (src, targets) => {
       if (!src || !fs.existsSync(src)) return false;
@@ -2537,6 +2552,11 @@ ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
       const mcDir = String(item.mcDir || '');
       let gameDir = String(item.gameDir || mcDir);
       if (!fs.existsSync(gameDir)) gameDir = mcDir;
+      // Ohne Quellordner wuerde der Import still ein leeres Profil anlegen.
+      if (!gameDir || !fs.existsSync(gameDir)) {
+        return { ok: false, error: 'Minecraft Launcher source directory not found: ' + (gameDir || '(empty)') };
+      }
+      progress('Importing ' + (item.name || key || 'Minecraft') + '…', 0);
       let name = String(item.name || key || 'Minecraft').slice(0, 120);
       if (profiles.some(p => p && p.name === name)) {
         let n = 2;
@@ -2564,6 +2584,7 @@ ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
       }
 
       let worlds = 0;
+      progress('Copying worlds…', 35);
       const savesRoot = fs.existsSync(path.join(gameDir, 'saves')) ? path.join(gameDir, 'saves') : path.join(mcDir, 'saves');
       if (fs.existsSync(savesRoot)) {
         for (const en of await fs.promises.readdir(savesRoot, { withFileTypes: true })) {
@@ -2579,6 +2600,7 @@ ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
       // Weitere spielrelevante Ordner mitnehmen. Packs werden zusaetzlich im
       // Profil registriert, damit der Launcher sie beim Start aktiviert.
       const importedPacks = { datapacks: [], resourcePacks: [], shaderPacks: [] };
+      progress('Copying resource packs and settings…', 70);
       for (const folder of ['config', 'resourcepacks', 'datapacks', 'shaderpacks']) {
         const src = fs.existsSync(path.join(gameDir, folder)) ? path.join(gameDir, folder) : path.join(mcDir, folder);
         if (!fs.existsSync(src)) continue;
@@ -2610,7 +2632,9 @@ ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
       profiles.push(prof);
       created.push({ profile: prof, worlds, settings, servers, packs: packCount });
     }
-    await save(P.profiles, profiles);
+    // Direkt schreiben, damit ein Persistenzfehler nicht als Erfolg gemeldet wird.
+    await fs.promises.writeFile(P.profiles, JSON.stringify(profiles, null, 2));
+    progress('Import complete', 100);
     return { ok: true, created };
   } catch (e) {
     return { ok: false, error: e.message || String(e) };
@@ -6502,20 +6526,178 @@ ipcMain.on('launch-minecraft', async (event, data) => {
   }
 });
 
+// ── Crash-Assistent (lokale Log-Analyse + ein-Klick-Reparatur) ───────────────
+// Kein externer KI-Dienst: bekannte Muster werden lokal erkannt und nur
+// repariert, wenn eine konkrete, ruecknehmbare Aktion dazu passt.
+function analyzeCrashLog(text){
+  const log = String(text || '');
+  const lower = log.toLowerCase();
+  const mods = new Set();
+  for(const m of log.matchAll(/(?:mods[\\/]|[\\/]mods[\\/])([^\\/\r\n"']+\.jar)/gi)) mods.add(m[1]);
+  if(!mods.size){
+    for(const m of log.matchAll(/\b([A-Za-z0-9._+\-]+\.jar)\b/g)){
+      if(!/^(java|jre|minecraft|client|server|launcher)/i.test(m[1])) mods.add(m[1]);
+    }
+  }
+  const modList = [...mods].slice(0, 4);
+  const gpu = GPU_DRIVER_HINT.test(log) && /exception_access_violation|access violation|hs_err|fatal error/i.test(log);
+  if(gpu){
+    const usingZink = /gallium_driver\s*=\s*zink|mesa3d\s*\/\s*zink/i.test(log);
+    const usingLlvm = /gallium_driver\s*=\s*llvmpipe|mesa3d\s*\/\s*llvmpipe/i.test(log);
+    const target = usingZink ? 'llvmpipe' : 'zink';
+    return {
+      kind: 'gpu',
+      summary: 'GPU driver crash',
+      details: 'A graphics driver (OpenGL/Vulkan DLL) crashed the JVM. The launcher can remember this and use a different render mode on the next start.',
+      fixes: [{ id:'gpu', label:'Use ' + gpuModeById(target).label, description:'Next launch switches the render mode for this PC.', target }]
+    };
+  }
+  if(modList.length){
+    return {
+      kind: 'mod',
+      summary: 'Mod-related crash',
+      details: 'Crash log mentions: ' + modList.join(', ') + '. Disabling them is reversible — the JARs are only renamed to *.disabled.',
+      fixes: [{ id:'mod', label:'Disable ' + (modList.length === 1 ? 'crashing mod' : modList.length + ' crashing mods'), description:'Disables the matching mod entries and renames their JAR files.', mods: modList }]
+    };
+  }
+  if(/outofmemoryerror|java heap space|gc overhead limit/i.test(lower)){
+    return {
+      kind: 'memory',
+      summary: 'Not enough memory',
+      details: 'Minecraft ran out of Java heap. Increase the RAM value in Settings → Launch or close other programs.',
+      fixes: []
+    };
+  }
+  if(/unsupportedclassversionerror|class file version|wrong java version/i.test(lower)){
+    return {
+      kind: 'java',
+      summary: 'Wrong Java version',
+      details: 'This Minecraft version / mod loader needs a different Java major version. Select another Java installation in Settings.',
+      fixes: []
+    };
+  }
+  return {
+    kind: 'unknown',
+    summary: 'No known pattern found',
+    details: 'The log does not contain a pattern the local analyzer knows. Check the full log above or the Logs tab.',
+    fixes: []
+  };
+}
+
+ipcMain.handle('crash-analyze', async (_e, instanceId) => {
+  const inst = instances[instanceId];
+  if(!inst) return { ok:false, error:'Instance not found.' };
+  const analysis = analyzeCrashLog((inst.logs || []).join('\n'));
+  return { ok:true, ...analysis };
+});
+
+ipcMain.handle('crash-apply-fix', async (_e, { instanceId, fix }) => {
+  const inst = instances[instanceId];
+  if(!inst) return { ok:false, error:'Instance not found.' };
+  if(!fix || !fix.id) return { ok:false, error:'No fix selected.' };
+  try {
+    if(fix.id === 'gpu'){
+      const target = GPU_MODES.some(m => m.id === fix.target) ? fix.target : 'zink';
+      await markGpuModeResult('native', true, 'Crash assistant: GPU crash');
+      await markGpuModeResult(target, false, '');
+      return { ok:true, message:'Done. The next launch will use ' + gpuModeById(target).label + '.' };
+    }
+    if(fix.id === 'mod'){
+      const modsDir = path.join(inst.gameDir || '', 'mods');
+      const profiles = await load(P.profiles, []);
+      const prof = profiles.find(p => p.id === inst.profileId);
+      const loader = String(prof?.modLoader || 'fabric');
+      let disabled = 0;
+      for(const name of (Array.isArray(fix.mods) ? fix.mods : []).slice(0, 4)){
+        const jar = path.basename(String(name));
+        if(!/\.jar$/i.test(jar)) continue;
+        await disableBrokenModPersistent(jar, inst.profileId, [], [], []);
+        try {
+          const src = path.join(modsDir, jar);
+          if(fs.existsSync(src)){ await fs.promises.rename(src, src + '.disabled'); disabled++; }
+        } catch {}
+        await rememberBrokenMods(inst.version, loader, [jar, jar.replace(/-\d[\w.+-]*\.jar$/i, '')], 'Crash assistant: mod crash');
+      }
+      return { ok:disabled > 0, message: disabled ? ('Disabled ' + disabled + ' mod JAR(s). Relaunch the profile to test.') : 'No matching JAR files were found in the mods folder.' };
+    }
+    return { ok:false, error:'Unknown fix.' };
+  } catch(e){
+    return { ok:false, error:e.message || String(e) };
+  }
+});
+
 // ── Crash window ───────────────────────────────────────────────────────────────
 function showCrashWindow(instanceId, code, log) {
   const cw = new BrowserWindow({ width:700, height:500, title:'Minecraft Crashed', parent:mainWindow, webPreferences:{ nodeIntegration:true, contextIsolation:false } });
   cw.setMenu(null);
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-    body{margin:0;background:#1a0000;color:#ff6b6b;font-family:monospace;font-size:12px;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
-    .header{padding:16px;background:#2a0000;border-bottom:1px solid #550000;flex-shrink:0;}
-    .header h2{margin:0;color:#ff4444;} .header p{margin:4px 0 0;color:#cc4444;font-size:12px;}
-    pre{flex:1;overflow:auto;padding:16px;margin:0;white-space:pre-wrap;word-break:break-all;line-height:1.4;}
-    .close-btn{padding:8px 20px;background:#550000;border:1px solid #880000;color:#ff6b6b;cursor:pointer;margin:12px;border-radius:4px;}
+    body{margin:0;background:#120e18;color:#eceaf5;font-family:Inter,system-ui,Arial,sans-serif;font-size:13px;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+    .header{padding:16px 18px;background:#1b1524;border-bottom:1px solid rgba(255,255,255,.09);flex-shrink:0;}
+    .header h2{margin:0;color:#ff6b6b;font-size:1.1rem;} .header p{margin:4px 0 0;color:#9b94af;font-size:12px;}
+    .ai-bar{display:flex;gap:.6rem;align-items:center;padding:10px 18px;background:#181320;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;flex-wrap:wrap;}
+    .btn{padding:8px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:#241d33;color:#eceaf5;cursor:pointer;font:inherit;}
+    .btn.ai{background:linear-gradient(135deg,#c9a6ff,#a06cff);border-color:transparent;color:#17121f;font-weight:700;}
+    .btn:disabled{opacity:.55;cursor:default;}
+    #ai-result{padding:0 18px;flex-shrink:0;max-height:34vh;overflow:auto;}
+    #ai-result:empty{display:none;}
+    .analysis{margin:10px 0;padding:12px 14px;border:1px solid rgba(160,108,255,.35);border-radius:12px;background:rgba(160,108,255,.09);}
+    .analysis h3{margin:0 0 6px;font-size:.95rem;color:#c9a6ff;} .analysis p{margin:0 0 10px;color:#c9c2dc;line-height:1.45;}
+    .analysis .fix-note{color:#8fe2b0;font-size:12px;}
+    pre{flex:1;overflow:auto;padding:16px 18px;margin:0;white-space:pre-wrap;word-break:break-all;line-height:1.4;color:#b9b2c9;background:#0e0b14;font-family:Consolas,monospace;font-size:11px;}
   </style></head><body>
     <div class="header"><h2>💥 Minecraft Crashed</h2><p>Exit code: ${code} · Instance: ${instanceId}</p></div>
+    <div class="ai-bar">
+      <button class="btn ai" id="ai-analyze">✨ Analyze with AI</button>
+      <button class="btn" onclick="window.close()">Close</button>
+      <span id="ai-status" style="color:#9b94af"></span>
+    </div>
+    <div id="ai-result"></div>
     <pre>${log.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
-    <button class="close-btn" onclick="window.close()">Close</button>
+    <script>
+      const { ipcRenderer } = require('electron');
+      const instanceId = ${JSON.stringify(String(instanceId))};
+      const statusEl = document.getElementById('ai-status');
+      const resultEl = document.getElementById('ai-result');
+      let current = null;
+      document.getElementById('ai-analyze').addEventListener('click', async (ev) => {
+        ev.currentTarget.disabled = true;
+        statusEl.textContent = 'Analyzing crash log…';
+        try {
+          const r = await ipcRenderer.invoke('crash-analyze', instanceId);
+          if (!r || !r.ok) throw new Error((r && r.error) || 'Analysis failed');
+          current = r;
+          resultEl.innerHTML = '';
+          const box = document.createElement('div');
+          box.className = 'analysis';
+          const h = document.createElement('h3');
+          h.textContent = r.summary;
+          const p = document.createElement('p');
+          p.textContent = r.details;
+          box.appendChild(h); box.appendChild(p);
+          if (r.fixes && r.fixes.length) {
+            const btn = document.createElement('button');
+            btn.className = 'btn ai';
+            btn.textContent = '🔧 Fix with AI: ' + r.fixes[0].label;
+            btn.addEventListener('click', async () => {
+              btn.disabled = true;
+              statusEl.textContent = 'Applying fix…';
+              try {
+                const f = await ipcRenderer.invoke('crash-apply-fix', { instanceId, fix: r.fixes[0] });
+                const note = document.createElement('div');
+                note.className = 'fix-note';
+                note.textContent = (f && f.ok ? '✅ ' : '⚠️ ') + ((f && f.message) || 'Fix failed.');
+                box.appendChild(note);
+                statusEl.textContent = f && f.ok ? 'Fixed.' : 'Fix failed.';
+              } catch (e) { statusEl.textContent = String(e && e.message || e); btn.disabled = false; }
+            });
+            box.appendChild(btn);
+          }
+          resultEl.appendChild(box);
+          statusEl.textContent = '';
+        } catch (e) { statusEl.textContent = String(e && e.message || e); }
+        ev.currentTarget.disabled = false;
+      });
+    <\/script>
   </body></html>`;
   cw.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
 }

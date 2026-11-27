@@ -325,6 +325,21 @@ body:not(.tabs-left):not(.tabs-right) .toolbar > .tb-btn[data-page="logs-page"] 
   background: var(--ok);
   box-shadow: 0 0 8px color-mix(in srgb, var(--ok) 70%, transparent);
 }
+/* Zaehler-Version (Nachrichten): zeigt die Anzahl ungelesener Meldungen. */
+.tb-badge--count {
+  display: grid;
+  place-items: center;
+  width: auto;
+  min-width: .95rem;
+  height: .95rem;
+  padding: 0 .2rem;
+  font-size: .6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--acc-on);
+  background: var(--acc);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--acc) 70%, transparent);
+}
 
 #settings-fab {
   margin-left: auto;
@@ -710,7 +725,14 @@ body.tabs-left .pages, body.tabs-right .pages { order: 0; }
 .wl-panel__row input { flex: 1; }
 .wl-list { max-height: 10rem; overflow-y: auto; }
 .brand-playit { color: #a78bfa; }
-.modal--narrow { max-width: 560px; }
+.modal--narrow { width: min(94vw, 34rem); max-width: none; }
+/* NRC-Import: Header + scrollbare Liste + feste Button-Leiste bleiben
+   auch auf kleinen Fenstern innerhalb des Overlays. */
+.nrc-import-body { display: flex; flex-direction: column; gap: .5rem; min-height: 0; overflow-y: auto; }
+.nrc-import-list { flex: 1 1 auto; min-height: 0; max-height: min(38vh, 22rem); overflow-y: auto; overflow-x: hidden; }
+.nrc-import-status { min-height: 1.2em; margin: 0; }
+.nrc-import-actions { flex: 0 0 auto; margin-top: 0; flex-wrap: wrap; }
+.nrc-import-actions .btn { flex: 0 1 auto; }
 
 /* Settings-Details */
 .preset-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .7rem; }
@@ -1181,8 +1203,16 @@ input[type=range]::-webkit-slider-thumb {
 .launch-hero .status-text.err::before { background: var(--danger); box-shadow: 0 0 10px color-mix(in srgb, var(--danger) 65%, transparent); }
 .launch-hero .lp-wrap { align-self: stretch; width: 100%; max-width: none; }
 
-/* Recent Played — rechts unter den Skin-Karten, eine Zeile pro Eintrag
+/* Change Skin: direkt unter dem Spielernamen in der rechten Launch-Spalte */
+.launch-change-skin-btn { width: 100%; }
+
+/* Recent Played — linke Spalte, eine Zeile pro Eintrag untereinander
    mit dem Icon des zugehörigen Profils. */
+#launch-recent-card { flex: 0 0 auto; }
+/* Die Liste bleibt vertikal, bekommt aber eine eigene Scroll-Grenze, damit
+   die Profil-Karte darunter nicht aus dem Launch-Tab gedrueckt wird. */
+#launch-recent-card .rail-card__body { max-height: min(34vh, 20rem); overflow-y: auto; }
+#launch-recent-card .recent-list { gap: .25rem; }
 .launch-recent__tools { display: flex; align-items: center; gap: .5rem; }
 .launch-recent__count { font-size: var(--fs-xs); color: var(--muted-2); white-space: nowrap; }
 .recent-section + .recent-section { margin-top: var(--sp-3); }
@@ -2750,6 +2780,7 @@ body:not(.light):not(.glass).bg-light .page-head__sub { color: rgba(23, 18, 31, 
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  overflow-y: auto;
   animation: modalOverlayIn .25s cubic-bezier(.2, .8, .3, 1) both;
 }
 @keyframes modalOverlayIn {
@@ -2879,6 +2910,20 @@ body:not(.light):not(.glass).bg-light .page-head__sub { color: rgba(23, 18, 31, 
 .svc-toast.toast-ok .svc-dot { background: var(--ok); }
 .svc-toast.toast-muted { border-color: var(--border-strong); background: color-mix(in srgb, var(--muted) 12%, var(--surface-1)); color: var(--text-2); }
 .svc-toast.toast-muted .svc-dot { background: var(--muted); }
+
+/* Nachrichten-Tab: Eine Meldung pro Zeile, ungelesene mit Akzentstreifen */
+.message-list { display: flex; flex-direction: column; gap: .5rem; }
+.message-item {
+  display: flex; align-items: center; gap: .7rem; min-width: 0;
+  padding: .65rem .8rem; border: 1px solid var(--line); border-left: 3px solid var(--line);
+  border-radius: var(--r-sm); background: var(--surface-2);
+}
+.message-item.is-unread { border-left-color: var(--acc); }
+.message-item--warn { border-left-color: var(--danger); }
+.message-item__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
+.message-item__text { color: var(--text); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.message-item__time { color: var(--muted); font-size: var(--fs-xs); }
+.message-item__remove { flex: none; width: auto; padding: .2rem .45rem; }
 
 .status-online, .running, .on { color: var(--ok); }
 .status-offline, .stopped, .off { color: var(--muted-2); }
