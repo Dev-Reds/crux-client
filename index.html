@@ -109,18 +109,7 @@
           </div>
           <div class="skin-name-display skin-name-display--action" id="skin-name-display" title="Change Skin">No account</div>
 
-          <!-- Konto-Karte -->
-          <section class="rail-card" id="rail-account">
-            <header class="rail-card__head">
-              <span class="rail-card__title" data-i18n="tab_account">Account</span>
-              <button class="btn btn-sm btn-ghost rail-card__action" id="rail-account-btn" data-i18n="btn_manage">Manage</button>
-            </header>
-            <div class="rail-body" id="rail-account-body"></div>
-          </section>
-
-
-
-          <!-- Skin-Werkzeuge (ausklappbar) -->
+          <!-- Skin-Werkzeuge (ausklappbar) — direkt über der Konto-Karte -->
           <section class="rail-card rail-card--fold" id="rail-skin">
             <button class="rail-card__head rail-card__head--toggle" id="rail-skin-toggle" type="button"
                     aria-expanded="false" aria-controls="rail-skin-body">
@@ -144,6 +133,15 @@
                 <button class="btn btn-sm btn-primary" id="skin-list-btn" data-i18n="btn_skin_list">📋 Skin List</button>
               </div>
             </div>
+          </section>
+
+          <!-- Konto-Karte -->
+          <section class="rail-card" id="rail-account">
+            <header class="rail-card__head">
+              <span class="rail-card__title" data-i18n="tab_account">Account</span>
+              <button class="btn btn-sm btn-ghost rail-card__action" id="rail-account-btn" data-i18n="btn_manage">Manage</button>
+            </header>
+            <div class="rail-body" id="rail-account-body"></div>
           </section>
         </div>
       </div>
@@ -1385,6 +1383,7 @@
           <button class="profile-sec-btn" data-section="datapacks">Datapacks</button>
           <button class="profile-sec-btn" data-section="resourcePacks">Resource Packs</button>
           <button class="profile-sec-btn" data-section="shaderPacks">Shader Packs</button>
+          <button class="profile-sec-btn" data-section="worlds" data-i18n="profile_worlds">Worlds</button>
         </div>
       </div>
       <!-- Mods section (split view: Mods left, packs right) -->
@@ -1445,6 +1444,23 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+      <!-- Welten: eigener Bereich mit lokalen Saves und Download/Import -->
+      <div class="profile-section" data-section="worlds" style="display:none">
+        <div class="pack-section" id="profile-worlds-section">
+          <div class="pack-section-header">
+            <h3 data-i18n="profile_worlds">Worlds</h3>
+            <div class="btn-row">
+              <button class="btn btn-sm btn-primary" id="profile-world-download-btn" data-i18n="btn_download_world">Download</button>
+              <button class="btn btn-sm" id="profile-world-add-btn" data-i18n="btn_add_world_zip">Add ZIP</button>
+              <button class="btn btn-sm btn-ghost" id="profile-world-folder-btn" data-i18n="btn_open_world_folder">Open Folder</button>
+            </div>
+          </div>
+          <p class="hint" data-i18n="desc_worlds">Worlds in this profile's saves folder. Download a world from CurseForge or Modrinth, or add an already downloaded .zip.</p>
+          <div class="status-text" id="profile-worlds-status"></div>
+          <div class="pack-list" id="profile-worlds-list"></div>
+          <input type="file" id="profile-world-file" accept=".zip" style="display:none">
         </div>
       </div>
       <div class="sub-section">
@@ -2426,7 +2442,15 @@ const LANGS={
     add_ms:'+ Microsoft', add_offline:'+ Offline',
     ver_latest:'— Latest Release —', ver_latest_snap:'— Latest Snapshot —', ver_latest_prerelease:'— Latest Pre-release —', ver_releases:'Releases', ver_snapshots:'Snapshots', ver_other:'Other',
     profile_name:'Name:', profile_version:'Minecraft Version:', profile_section:'Section:', profile_mods:'Mods', profile_datapacks:'Datapacks',
-    profile_resourcepacks:'Resource Packs', profile_shaderpacks:'Shader Packs',
+    profile_resourcepacks:'Resource Packs', profile_shaderpacks:'Shader Packs', profile_worlds:'Worlds',
+    btn_download_world:'Download', btn_add_world_zip:'Add ZIP', btn_open_world_folder:'Open folder',
+    desc_worlds:"Worlds in this profile's saves folder. Download one from CurseForge/Modrinth or add a downloaded .zip.",
+    world_empty:'No worlds yet. Download a world or add a .zip.', world_play:'Play', world_open:'Open', world_delete:'Delete',
+    world_dl_title:'Download World', world_dl_url:'Direct .zip download link:', world_dl_open_site:'Open website',
+    world_dl_add:'Download & Add', world_dl_hint_curseforge:'Find a world on CurseForge, copy the download link or the downloaded .zip and add it here.',
+    world_dl_hint_modrinth:'Modrinth has no separate world category. If a world project offers a direct .zip, paste its link here.',
+    world_downloading:'Downloading world...', world_added:'World added: {n}', world_dl_fail:'Could not add world: {e}', world_dl_invalid:'Please enter a direct http(s) link ending in .zip.',
+    world_deleted:'World deleted.', world_delete_fail:'Could not delete world: {e}',
     profile_active:'Active', profile_group:'Group', profile_latest:'Latest', profile_mod_one:'Mod',
     lbl_group:'Settings Group (keybinds & settings):', desc_group:'Profiles in the same group share the same Minecraft settings (keybinds, video settings, ...).',
     btn_import_settings:'Import MC Settings…', btn_done:'Done', btn_import:'Import',
@@ -2577,7 +2601,15 @@ const LANGS={
     add_ms:'+ Microsoft', add_offline:'+ Offline',
     ver_latest:'— Neueste Version —', ver_latest_snap:'— Neuester Snapshot —', ver_latest_prerelease:'— Neueste Vorabversion —', ver_releases:'Vollversionen', ver_snapshots:'Snapshots', ver_other:'Sonstige',
     profile_name:'Name:', profile_version:'Minecraft-Version:', profile_section:'Bereich:', profile_mods:'Mods', profile_datapacks:'Datenpakete',
-    profile_resourcepacks:'Ressourcenpakete', profile_shaderpacks:'Shaderpakete',
+    profile_resourcepacks:'Ressourcenpakete', profile_shaderpacks:'Shaderpakete', profile_worlds:'Welten',
+    btn_download_world:'Herunterladen', btn_add_world_zip:'ZIP hinzufügen', btn_open_world_folder:'Ordner öffnen',
+    desc_worlds:'Welten im saves-Ordner dieses Profils. Eine Welt von CurseForge/Modrinth herunterladen oder eine .zip hinzufügen.',
+    world_empty:'Noch keine Welten. Welt herunterladen oder .zip hinzufügen.', world_play:'Spielen', world_open:'Öffnen', world_delete:'Löschen',
+    world_dl_title:'Welt herunterladen', world_dl_url:'Direkter .zip-Downloadlink:', world_dl_open_site:'Website öffnen',
+    world_dl_add:'Herunterladen & hinzufügen', world_dl_hint_curseforge:'Welt auf CurseForge finden, Downloadlink kopieren oder die heruntergeladene .zip hier hinzufügen.',
+    world_dl_hint_modrinth:'Modrinth hat keine eigene Welt-Kategorie. Falls ein Weltprojekt eine direkte .zip anbietet, Link hier einfügen.',
+    world_downloading:'Welt wird heruntergeladen...', world_added:'Welt hinzugefügt: {n}', world_dl_fail:'Welt konnte nicht hinzugefügt werden: {e}', world_dl_invalid:'Bitte einen direkten http(s)-Link mit .zip angeben.',
+    world_deleted:'Welt gelöscht.', world_delete_fail:'Welt konnte nicht gelöscht werden: {e}',
     profile_active:'Aktiv', profile_group:'Gruppe', profile_latest:'Neueste', profile_mod_one:'Mod',
     lbl_group:'Einstellungs-Gruppe (Keybinds & Einstellungen):', desc_group:'Profile mit derselben Gruppe teilen sich dieselben Minecraft-Einstellungen (Keybinds, Video-Einstellungen, ...).',
     btn_import_settings:'MC-Einstellungen importieren…', btn_done:'Fertig', btn_import:'Importieren',
@@ -2728,7 +2760,15 @@ const LANGS={
     add_ms:'+ Microsoft', add_offline:'+ Hors ligne',
     ver_latest:'— Dernière version —', ver_latest_snap:'— Dernier instantané —', ver_latest_prerelease:'— Dernière préversion —', ver_releases:'Versions', ver_snapshots:'Instantanés', ver_other:'Autres',
     profile_name:'Nom :', profile_version:'Version Minecraft :', profile_section:'Section :', profile_mods:'Mods', profile_datapacks:'Datapacks',
-    profile_resourcepacks:'Packs de ressources', profile_shaderpacks:'Packs de shaders',
+    profile_resourcepacks:'Packs de ressources', profile_shaderpacks:'Packs de shaders', profile_worlds:'Mondes',
+    btn_download_world:'Télécharger', btn_add_world_zip:'Ajouter un ZIP', btn_open_world_folder:'Ouvrir le dossier',
+    desc_worlds:'Mondes du dossier saves de ce profil. Téléchargez un monde depuis CurseForge/Modrinth ou ajoutez un .zip.',
+    world_empty:'Aucun monde. Téléchargez un monde ou ajoutez un .zip.', world_play:'Jouer', world_open:'Ouvrir', world_delete:'Supprimer',
+    world_dl_title:'Télécharger un monde', world_dl_url:'Lien direct .zip :', world_dl_open_site:'Ouvrir le site',
+    world_dl_add:'Télécharger et ajouter', world_dl_hint_curseforge:'Trouvez un monde sur CurseForge, copiez le lien de téléchargement ou ajoutez le .zip téléchargé ici.',
+    world_dl_hint_modrinth:'Modrinth n’a pas de catégorie dédiée aux mondes. Si un projet propose un .zip direct, collez son lien ici.',
+    world_downloading:'Téléchargement du monde...', world_added:'Monde ajouté : {n}', world_dl_fail:'Impossible d’ajouter le monde : {e}', world_dl_invalid:'Veuillez saisir un lien http(s) direct se terminant par .zip.',
+    world_deleted:'Monde supprimé.', world_delete_fail:'Impossible de supprimer le monde : {e}',
     profile_active:'Actif', profile_group:'Groupe', profile_latest:'Recente', profile_mod_one:'Mod',
     lbl_group:'Groupe de réglages (touches & paramètres) :', desc_group:'Les profils du même groupe partagent les mêmes réglages Minecraft (touches, vidéo, ...).',
     btn_import_settings:'Importer les réglages MC…', btn_done:'Terminé', btn_import:'Importer',
@@ -2876,7 +2916,15 @@ const LANGS={
     add_ms:'+ Microsoft', add_offline:'+ Sin conexión',
     ver_latest:'— Última versión —', ver_latest_snap:'— Último instantáneo —', ver_latest_prerelease:'— Última versión preliminar —', ver_releases:'Versiones', ver_snapshots:'Instantáneas', ver_other:'Otras',
     profile_name:'Nombre:', profile_version:'Versión de Minecraft:', profile_section:'Sección:', profile_mods:'Mods', profile_datapacks:'Datapacks',
-    profile_resourcepacks:'Paquetes de recursos', profile_shaderpacks:'Paquetes de shaders',
+    profile_resourcepacks:'Paquetes de recursos', profile_shaderpacks:'Paquetes de shaders', profile_worlds:'Mundos',
+    btn_download_world:'Descargar', btn_add_world_zip:'Añadir ZIP', btn_open_world_folder:'Abrir carpeta',
+    desc_worlds:'Mundos en la carpeta saves de este perfil. Descarga un mundo desde CurseForge/Modrinth o añade un .zip.',
+    world_empty:'Aún no hay mundos. Descarga uno o añade un .zip.', world_play:'Jugar', world_open:'Abrir', world_delete:'Eliminar',
+    world_dl_title:'Descargar mundo', world_dl_url:'Enlace directo .zip:', world_dl_open_site:'Abrir sitio web',
+    world_dl_add:'Descargar y añadir', world_dl_hint_curseforge:'Busca un mundo en CurseForge, copia el enlace de descarga o añade aquí el .zip descargado.',
+    world_dl_hint_modrinth:'Modrinth no tiene una categoría propia de mundos. Si un proyecto ofrece un .zip directo, pega su enlace aquí.',
+    world_downloading:'Descargando mundo...', world_added:'Mundo añadido: {n}', world_dl_fail:'No se pudo añadir el mundo: {e}', world_dl_invalid:'Introduce un enlace http(s) directo que termine en .zip.',
+    world_deleted:'Mundo eliminado.', world_delete_fail:'No se pudo eliminar el mundo: {e}',
     profile_active:'Activo', profile_group:'Grupo', profile_latest:'Reciente', profile_mod_one:'Mod',
     lbl_group:'Grupo de ajustes (teclas y ajustes):', desc_group:'Los perfiles del mismo grupo comparten los mismos ajustes de Minecraft (teclas, vídeo, ...).',
     btn_import_settings:'Importar ajustes de MC…', btn_done:'Listo', btn_import:'Importar',
@@ -3797,7 +3845,7 @@ document.getElementById('rail-skin-toggle')?.addEventListener('click', () => {
   setSkinCardOpen(body.hasAttribute('hidden'));
 });
 // Statt eines Extra-Buttons oeffnet der Spielername das vorhandene
-// Change-Skin-Objekt unter der Konto-Karte.
+// Change-Skin-Objekt ueber der Konto-Karte.
 document.getElementById('skin-name-display')?.addEventListener('click', () => {
   setSkinCardOpen(true);
   document.getElementById('rail-skin')?.scrollIntoView({ block: 'nearest' });
@@ -3827,7 +3875,11 @@ function updateModLoaderVisibility(){
   const secImportSettings=document.getElementById('profile-import-settings-btn')?.closest('.form-row');
   const secClientMods=document.getElementById('profile-use-client-mods')?.closest('div');
   const secClientRPs=document.getElementById('profile-use-client-rps')?.closest('div');
-  [secBar,...secSections].forEach(el=>{ if(el) el.style.display=isBedrock?'none':''; });
+  // Beim Wechsel nicht alle Sections wieder einblenden: nur der aktive Bereich
+  // bleibt sichtbar (sonst ueberdeckt z. B. die Mods-Sektion die Welten-Liste).
+  if(secBar) secBar.style.display=isBedrock?'none':'';
+  const activeSection=document.querySelector('#profile-sec-bar .profile-sec-btn.active')?.dataset.section||'mods';
+  secSections.forEach(el=>{ if(el) el.style.display=isBedrock?'none':(el.dataset.section===activeSection?'':'none'); });
   [secRenderApi,secGroupInput,secImportSettings].forEach(el=>{ if(el) el.style.display=isBedrock?'none':''; });
   if(secClientMods) secClientMods.style.display=isBedrock?'none':'';
   if(secClientRPs) secClientRPs.style.display=isBedrock?'none':'';
@@ -4332,7 +4384,11 @@ function setProfileSection(section){
   const right=document.getElementById('profile-split-right');
   const modsHeader=document.querySelector('#profile-mods-section .pack-section-header');
   const isBedrock=(document.querySelector('input[name="modLoader"]:checked')?.value)==='bedrock';
-  if(!isBedrock) document.querySelectorAll('.profile-section').forEach(s=>{ s.style.display=''; });
+  // Nur der gewaehlte Bereich ist sichtbar (Worlds ist ein eigener Bereich
+  // ausserhalb der Mods/Datapacks-Split-Ansicht).
+  document.querySelectorAll('.profile-section').forEach(s=>{
+    s.style.display = isBedrock ? 'none' : (s.dataset.section===section ? '' : 'none');
+  });
   if(split&&left&&divider&&right){
     if(section==='mods'){
       // Mods full width — right side (Datapacks) hidden
@@ -4358,8 +4414,134 @@ function setProfileSection(section){
   else if(section==='datapacks') renderPackTags('profile-datapacks','datapacks');
   else if(section==='resourcePacks') renderPackTags('profile-resourcepacks','resourcePacks');
   else if(section==='shaderPacks') renderPackTags('profile-shaderpacks','shaderPacks');
+  else if(section==='worlds') renderProfileWorlds();
 }
 document.querySelectorAll('.profile-sec-btn').forEach(b=>b.addEventListener('click',()=>setProfileSection(b.dataset.section)));
+
+// ── Profile Worlds ──────────────────────────────────────────────────────────
+function setWorldStatus(text, kind){
+  const targets=['profile-worlds-status','status'];
+  for(const id of targets){
+    const el=document.getElementById(id);
+    if(!el) continue;
+    el.textContent=text||'';
+    el.className = id==='profile-worlds-status' ? `status-text${kind?' '+kind:''}` : el.className;
+    if(id==='status') el.style.color = kind==='err' ? 'var(--danger)' : (kind==='ok' ? 'var(--ok)' : '');
+  }
+}
+async function renderProfileWorlds(){
+  const list=document.getElementById('profile-worlds-list');
+  if(!list) return;
+  list.innerHTML='<div class="modal-loading">Loading worlds...</div>';
+  let worlds=[];
+  try{ worlds=await ipcRenderer.invoke('list-profile-worlds', editingProfileId)||[]; }catch(e){}
+  list.innerHTML='';
+  if(!worlds.length){ list.innerHTML='<div class="hint" data-i18n="world_empty">'+escHtml(t('world_empty'))+'</div>'; return; }
+  for(const w of worlds){
+    const item=document.createElement('div'); item.className='world-item';
+    item.innerHTML=`
+      <span class="world-item__icon" aria-hidden="true">🌍</span>
+      <span class="world-item__body">
+        <span class="world-item__name">${escHtml(w.name||w.folder)}</span>
+        <span class="world-item__meta">${escHtml(w.folder||'')}${w.lastPlayed?(' · '+new Date(w.lastPlayed).toLocaleString()):''}</span>
+      </span>
+      <span class="world-item__actions">
+        <button class="btn btn-sm btn-primary world-play-btn" type="button">${escHtml(t('world_play'))}</button>
+        <button class="btn btn-sm world-open-btn" type="button">${escHtml(t('world_open'))}</button>
+        <button class="btn btn-sm btn-ghost world-delete-btn" type="button">${escHtml(t('world_delete'))}</button>
+      </span>`;
+    item.querySelector('.world-play-btn').addEventListener('click',()=>{
+      pendingLaunchWorld=w.folder;
+      const p=profiles.find(x=>x.id===editingProfileId);
+      if(p){ document.getElementById('profileSelect').value=p.id; settings.selectedProfile=p.id; saveSettings(); }
+      document.getElementById('profile-modal').style.display='none';
+      showPage('launch-page');
+      setTimeout(()=>document.getElementById('launch-btn')?.click(),200);
+    });
+    item.querySelector('.world-open-btn').addEventListener('click',()=>{
+      ipcRenderer.invoke('open-profile-world-folder', editingProfileId, w.folder).catch(()=>{});
+    });
+    item.querySelector('.world-delete-btn').addEventListener('click',async()=>{
+      if(!confirm(t('world_delete')+': '+(w.name||w.folder))) return;
+      const r=await ipcRenderer.invoke('delete-profile-world', editingProfileId, w.folder).catch(()=>({ok:false}));
+      if(r&&r.ok){ setWorldStatus(t('world_deleted'),'ok'); renderProfileWorlds(); }
+      else setWorldStatus(t('world_delete_fail').replace('{e}',(r&&r.error)||''),'err');
+    });
+    list.appendChild(item);
+  }
+}
+
+let worldDlSource='curseforge';
+function openWorldDownloadModal(){
+  worldDlSource='curseforge';
+  document.getElementById('world-tab-curseforge').classList.add('active');
+  document.getElementById('world-tab-modrinth').classList.remove('active');
+  document.getElementById('world-dl-url').value='';
+  document.getElementById('world-dl-status').textContent='';
+  updateWorldDownloadHint();
+  document.getElementById('world-download-modal').style.display='flex';
+}
+function updateWorldDownloadHint(){
+  const hint=document.getElementById('world-dl-hint');
+  if(hint) hint.textContent=t(worldDlSource==='modrinth'?'world_dl_hint_modrinth':'world_dl_hint_curseforge');
+}
+// Das Download-Modal liegt im DOM NACH diesem Script-Block — die Listener
+// muessen daher nach dem Parsen des Dokuments gebunden werden.
+function bindWorldDownloadModal(){
+  document.getElementById('world-download-close')?.addEventListener('click',()=>{ document.getElementById('world-download-modal').style.display='none'; });
+  document.getElementById('world-download-modal')?.addEventListener('click',e=>{ if(e.target.id==='world-download-modal') e.currentTarget.style.display='none'; });
+  for(const [id,src] of [['world-tab-curseforge','curseforge'],['world-tab-modrinth','modrinth']]){
+    document.getElementById(id)?.addEventListener('click',()=>{
+      worldDlSource=src;
+      document.getElementById('world-tab-curseforge').classList.toggle('active',src==='curseforge');
+      document.getElementById('world-tab-modrinth').classList.toggle('active',src==='modrinth');
+      updateWorldDownloadHint();
+    });
+  }
+  document.getElementById('world-dl-open-site')?.addEventListener('click',()=>{
+    const url=worldDlSource==='modrinth'?'https://modrinth.com/':'https://www.curseforge.com/minecraft/worlds';
+    shell.openExternal(url).catch(()=>{});
+  });
+  document.getElementById('world-dl-add')?.addEventListener('click',async()=>{
+    const input=document.getElementById('world-dl-url');
+    const st=document.getElementById('world-dl-status');
+    const url=(input?.value||'').trim();
+    if(!/^https?:\/\//i.test(url) || !/\.zip($|\?)/i.test(url)){
+      if(st) st.textContent=t('world_dl_invalid');
+      return;
+    }
+    if(st) st.textContent=t('world_downloading');
+    const r=await ipcRenderer.invoke('import-world',{profileId:editingProfileId,url}).catch(e=>({ok:false,error:e.message||String(e)}));
+    if(r&&r.ok){
+      document.getElementById('world-download-modal').style.display='none';
+      setWorldStatus(t('world_added').replace('{n}',r.world?.name||r.world?.folder||''),'ok');
+      renderProfileWorlds();
+    } else {
+      if(st) st.textContent=t('world_dl_fail').replace('{e}',(r&&r.error)||'');
+    }
+  });
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bindWorldDownloadModal);
+else bindWorldDownloadModal();
+document.getElementById('profile-world-download-btn')?.addEventListener('click',openWorldDownloadModal);
+document.getElementById('profile-world-add-btn')?.addEventListener('click',()=>document.getElementById('profile-world-file')?.click());
+document.getElementById('profile-world-file')?.addEventListener('change',async e=>{
+  const file=e.target.files?.[0];
+  if(!file) return;
+  try{
+    // webUtils.getPathForFile ersetzt File.path in Electron 41 (siehe Drop-Fix).
+    let p=file.path;
+    try{ const wu=require('electron').webUtils; if(wu&&typeof wu.getPathForFile==='function') p=wu.getPathForFile(file)||p; }catch{}
+    if(!p) return;
+    const r=await ipcRenderer.invoke('import-world',{profileId:editingProfileId,zipPath:p});
+    if(r&&r.ok){ setWorldStatus(t('world_added').replace('{n}',r.world?.name||r.world?.folder||''),'ok'); renderProfileWorlds(); }
+    else setWorldStatus(t('world_dl_fail').replace('{e}',(r&&r.error)||''),'err');
+  }catch(err){ setWorldStatus(t('world_dl_fail').replace('{e}',err.message||String(err)),'err'); }
+  e.target.value='';
+});
+document.getElementById('profile-world-folder-btn')?.addEventListener('click',()=>{
+  ipcRenderer.invoke('open-profile-folder',editingProfileId).catch(()=>{});
+});
 
 // Profiles auto-save on every change — no Save button needed.
 function saveProfileEdits(){
@@ -12094,6 +12276,32 @@ function convert(sel){
         <button class="btn btn-sm btn-primary" id="import-mrpack-confirm-btn" style="width:auto" type="button">Import</button>
         <button class="btn btn-sm" id="import-mrpack-file-btn" style="width:auto" type="button">Choose .mrpack file</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- World download modal (CurseForge / Modrinth) -->
+<div id="world-download-modal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 data-i18n="world_dl_title">Download World</h2>
+      <button class="btn modal-close" id="world-download-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tabs">
+        <button class="modal-tab active" id="world-tab-curseforge" data-source="curseforge" data-i18n="btn_curseforge">CurseForge</button>
+        <button class="modal-tab" id="world-tab-modrinth" data-source="modrinth" data-i18n="btn_modrinth">Modrinth</button>
+      </div>
+      <p class="hint" id="world-dl-hint"></p>
+      <div class="form-row form-row--wide">
+        <label data-i18n="world_dl_url">Direct .zip download link:</label>
+        <input type="url" id="world-dl-url" class="pack-input" placeholder="https://...">
+      </div>
+      <div class="status-text" id="world-dl-status"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-sm" id="world-dl-open-site" data-i18n="world_dl_open_site">Open website</button>
+      <button class="btn btn-sm btn-primary" id="world-dl-add" data-i18n="world_dl_add">Download &amp; Add</button>
     </div>
   </div>
 </div>

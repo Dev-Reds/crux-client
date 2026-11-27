@@ -7572,6 +7572,93 @@ ipcMain.handle('resolve-save-folder', (event, worldName, profileId) => {
   try { return resolveSaveFolder(worldName, profileId ? instanceDir(profileId) : undefined); } catch { return null; }
 });
 
+// ── Worlds im Profil-Editor ─────────────────────────────────────────────────
+// Jedes Profil hat seinen eigenen Spielordner; die Welten liegen daher unter
+// instances/<profil>/saves. World-Zips (CurseForge/Modrinth oder lokal) werden
+// dorthin extrahiert, damit sie beim naechsten Start genau wie normale Saves
+// im Singleplayer-Menue erscheinen.
+function profileSavesDir(profileId){
+  return path.join(instanceDir(profileId), 'saves');
+}
+function worldRootIn(dir){
+  try {
+    if (fs.existsSync(path.join(dir, 'level.dat'))) return dir;
+    for (const en of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (!en.isDirectory()) continue;
+      const p = path.join(dir, en.name);
+      if (fs.existsSync(path.join(p, 'level.dat'))) return p;
+    }
+  } catch {}
+  return null;
+}
+ipcMain.handle('list-profile-worlds', async (event, profileId) => {
+  const saves = profileSavesDir(profileId);
+  const out = [];
+  try {
+    for (const en of await fs.promises.readdir(saves, { withFileTypes: true })) {
+      if (!en.isDirectory()) continue;
+      const dat = path.join(saves, en.name, 'level.dat');
+      if (!fs.existsSync(dat)) continue;
+      let mtime = 0;
+      try { mtime = (await fs.promises.stat(dat)).mtimeMs; } catch {}
+      out.push({ folder: en.name, name: readLevelNameFromDat(dat) || en.name, lastPlayed: mtime });
+    }
+  } catch {}
+  return out.sort((a, b) => b.lastPlayed - a.lastPlayed);
+});
+ipcMain.handle('import-world', async (event, { profileId, url, zipPath, name } = {}) => {
+  const cleanup = [];
+  try {
+    let src = zipPath;
+    if (url) {
+      if (!/^https?:\/\//i.test(String(url))) return { ok: false, error: 'Invalid download URL' };
+      const tmp = path.join(base, 'Cache', `worlddl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.zip`);
+      await fs.promises.mkdir(path.dirname(tmp), { recursive: true });
+      await fetchBufferToPath(String(url), tmp);
+      src = tmp;
+      cleanup.push(tmp);
+    }
+    if (!src || !fs.existsSync(src)) return { ok: false, error: 'World ZIP not found' };
+    const AdmZip = require('adm-zip');
+    const extractTo = path.join(base, 'Cache', `world_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+    await fs.promises.mkdir(extractTo, { recursive: true });
+    cleanup.push(extractTo);
+    new AdmZip(src).extractAllTo(extractTo, true);
+    const root = worldRootIn(extractTo);
+    if (!root) return { ok: false, error: 'No level.dat found in this archive' };
+    const saves = profileSavesDir(profileId);
+    await fs.promises.mkdir(saves, { recursive: true });
+    const wanted = sanitizeFileName(String(name || path.basename(root) || 'Imported World')) || 'Imported World';
+    let folder = wanted, n = 2;
+    while (fs.existsSync(path.join(saves, folder))) folder = `${wanted} (${n++})`;
+    await fs.promises.cp(root, path.join(saves, folder), { recursive: true });
+    const dat = path.join(saves, folder, 'level.dat');
+    return { ok: true, world: { folder, name: readLevelNameFromDat(dat) || folder } };
+  } catch (e) {
+    logDebug('[WORLD] import failed: ' + (e && e.message));
+    return { ok: false, error: e.message || String(e) };
+  } finally {
+    for (const p of cleanup.reverse()) { try { await fs.promises.rm(p, { recursive: true, force: true }); } catch {} }
+  }
+});
+ipcMain.handle('delete-profile-world', async (event, profileId, folder) => {
+  try {
+    const safe = sanitizeFileName(String(folder || ''));
+    if (!safe || safe === '.' || safe === '..') return { ok: false, error: 'Invalid world folder' };
+    await fs.promises.rm(path.join(profileSavesDir(profileId), safe), { recursive: true, force: true });
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e.message || String(e) }; }
+});
+ipcMain.handle('open-profile-world-folder', async (event, profileId, folder) => {
+  try {
+    const safe = sanitizeFileName(String(folder || ''));
+    const dir = safe ? path.join(profileSavesDir(profileId), safe) : profileSavesDir(profileId);
+    await fs.promises.mkdir(dir, { recursive: true });
+    await shell.openPath(dir);
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e.message || String(e) }; }
+});
+
 // ── Server Whitelist IPC ────────────────────────────────────────────────────────
 ipcMain.handle('get-server-whitelist', async (event, serverId) => {
   const wlPath = path.join(base, 'servers', `server-${serverId}`, 'whitelist.json');
@@ -7619,7 +7706,7 @@ function fetchBufferToPath(url, destPath) {
       if (hops > 5) return rj(new Error('Too many redirects'));
       const lib = u.startsWith('https') ? https : http;
       const reqUrl = new URL(u);
-      const opts = { hostname: reqUrl.hostname, path: reqUrl.pathname + reqUrl.search, method: 'GET',
+      const opts = { hostname: reqUrl.hostname, port: reqUrl.port || undefined, path: reqUrl.pathname + reqUrl.search, method: 'GET',
         headers: { 'User-Agent': 'CruxClient/1.0' }
       };
       const req = lib.request(opts, res => {

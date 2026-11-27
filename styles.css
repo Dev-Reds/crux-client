@@ -2479,6 +2479,17 @@ body.glass .profile-card.is-active .profile-card__avatar {
 .profile-split-right .pack-section { margin-bottom: .8rem; padding-bottom: .6rem; border-bottom: 1px solid var(--border); }
 .profile-split-right .pack-section:last-child { border-bottom: none; margin-bottom: 0; }
 
+/* Profile Worlds — Saves als eigene, full-width Zeilen statt Pack-Chips */
+#profile-worlds-list { display: flex; flex-direction: column; gap: .45rem; min-height: 3rem; }
+.world-item { display: flex; align-items: center; gap: .75rem; padding: .6rem .75rem; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface-1); }
+.world-item__icon { flex: none; font-size: 1.15rem; line-height: 1; }
+.world-item__body { display: flex; flex: 1; flex-direction: column; gap: .15rem; min-width: 0; }
+.world-item__name { color: var(--text); font-size: var(--fs-sm); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.world-item__meta { color: var(--muted); font-size: var(--fs-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.world-item__actions { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: flex-end; }
+.world-item__actions .btn { white-space: nowrap; }
+#profile-worlds-status:empty { display: none; }
+
 /* Mod-Loader-Auswahl (Radio-Pills) */
 .modloader-row { display: flex; gap: .4rem; flex-wrap: wrap; width: 100%; }
 .modloader-pick { display: flex; align-items: center; gap: .45rem; cursor: pointer; padding: .5rem .85rem; border: 1px solid var(--border); border-radius: var(--r-pill); background: var(--surface-2); color: var(--text-2); font-size: var(--fs-sm); font-weight: 600; transition: background .14s, border-color .14s, color .14s; }
@@ -3365,6 +3376,12 @@ body.glass .owner-action--ok { color: #0d7a3d !important; }
 body.glass .notice-text { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; color: var(--gs-tx) !important; }
 body.glass .launch-recent-col { background: transparent !important; border-color: var(--gs-bd) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 body.light .launch-recent-col { background: rgba(255, 255, 255, .78); }
+
+/* Profile Worlds: eigene Glasflaechen statt fester Panel-Farben */
+body.glass .world-item { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; }
+body.glass .world-item:hover { background: rgba(255, 255, 255, .38) !important; }
+body.glass .world-item__name { color: var(--gs-strong) !important; }
+body.glass .world-item__meta { color: var(--gs-mut) !important; }
 
 /* Glas-Sicherheitsnetz: hart kodierte Textfarben aus JS-Markup auf die Theme-Farbe ziehen */
 body.glass, body.glass *, body.glass *::before, body.glass *::after { color: var(--gs-tx) !important; }
