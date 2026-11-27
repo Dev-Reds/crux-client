@@ -405,7 +405,12 @@ const saveSettings = async (data) => {
       'fontMode','fontFamily',
       'glassBgPreset','glassBgTint',      'loginHistory','bans',
       'seenNotices','ownerDeviceTokens','ownerUuid',
-      'deviceId','deviceName','anthropicApiKey'
+      'deviceId','deviceName','anthropicApiKey',
+      // Positionen/Appearance muessen ueberleben — sonst springt die Glocke
+      // (und der Settings-Button) nach jedem Start zurueck.
+      'fabPosition','fabX','fabY',
+      'bellPosition','bellX','bellY',
+      'bgColor'
     ];
     const clean = {};
     for (const k of Object.keys(existing)) { if (KNOWN_KEYS.includes(k)) clean[k] = existing[k]; }
@@ -7692,6 +7697,105 @@ ipcMain.handle('open-profile-world-folder', async (event, profileId, folder) => 
     await shell.openPath(dir);
     return { ok: true };
   } catch (e) { return { ok: false, error: e.message || String(e) }; }
+});
+
+// ── Storage-Tab: exakte Groessen + gezieltes Loeschen ───────────────────────────
+// Alle Pfade kommen aus der Whitelist unten; der Renderer darf nie einen
+// Pfad selbst uebergeben. Grosse Ordner (instances/groups) werden asynchron
+// traversiert und zwischendurch die Event-Loop freigegeben.
+async function storagePathStats(target){
+  try {
+    const st = await fs.promises.lstat(target);
+    if (!st.isDirectory()) return { bytes: st.size, files: 1 };
+    let bytes = 0, files = 0, seen = 0;
+    const stack = [target];
+    while (stack.length) {
+      const dir = stack.pop();
+      let entries = [];
+      try { entries = await fs.promises.readdir(dir, { withFileTypes: true }); } catch { continue; }
+      for (const en of entries) {
+        if (en.isSymbolicLink()) continue; // keine Symlinks rauslaufen lassen
+        const full = path.join(dir, en.name);
+        try {
+          if (en.isDirectory()) { stack.push(full); continue; }
+          if (!en.isFile()) continue;
+          bytes += (await fs.promises.stat(full)).size;
+          files++;
+        } catch {}
+        if (++seen % 500 === 0) await new Promise(r => setImmediate(r));
+      }
+    }
+    return { bytes, files };
+  } catch { return { bytes: 0, files: 0 }; }
+}
+function storageDefs(){
+  return [
+    { key:'instances',  paths:[P.instances], detailRoot:P.instances, canDelete:true, needsStop:true, recreate:[P.instances] },
+    { key:'groups',     paths:[P.groups], detailRoot:P.groups, canDelete:true, needsStop:true, recreate:[P.groups] },
+    { key:'versions',   paths:[path.join(P.mc,'versions')], detailRoot:path.join(P.mc,'versions'), canDelete:true, needsStop:true },
+    { key:'assets',     paths:[path.join(P.mc,'assets')], canDelete:true },
+    { key:'libraries',  paths:[path.join(P.mc,'libraries')], canDelete:true, needsStop:true },
+    { key:'modCache',   paths:[P.modCache], canDelete:true, recreate:[P.modCache] },
+    { key:'modpacks',   paths:[path.join(base,'modpacks')], detailRoot:path.join(base,'modpacks'), canDelete:true },
+    { key:'clientMods', paths:[path.join(base,'client-mods'), P.clientMods], canDelete:true, recreate:[path.join(base,'client-mods')] },
+    { key:'capes',      paths:[customCapePath, customCapeZipPath], canDelete:true },
+    { key:'skins',      paths:[skinListPath], canDelete:true },
+    { key:'logs',       paths:[path.join(base,'crash.log')], canDelete:true },
+    // Electron haelt seine Caches geoeffnet — nur anzeigen, nicht loeschen.
+    { key:'caches',     paths:[path.join(base,'Cache'), path.join(base,'GPUCache'), path.join(base,'Code Cache')], canDelete:false },
+    { key:'settingsData', paths:[P.settings,P.accounts,P.profiles,P.mods,P.launched,P.servers,P.broken], canDelete:false },
+  ];
+}
+function storageRel(p){
+  const r = path.relative(base, p);
+  return (r && !r.startsWith('..')) ? r : p;
+}
+ipcMain.handle('get-storage-usage', async () => {
+  const items = [];
+  for (const def of storageDefs()) {
+    let bytes = 0, files = 0;
+    for (const p of def.paths) {
+      const s = await storagePathStats(p);
+      bytes += s.bytes; files += s.files;
+    }
+    const details = [];
+    if (def.detailRoot && fs.existsSync(def.detailRoot)) {
+      try {
+        for (const en of await fs.promises.readdir(def.detailRoot, { withFileTypes: true })) {
+          if (!en.isDirectory()) continue;
+          const s = await storagePathStats(path.join(def.detailRoot, en.name));
+          details.push({ name: en.name, bytes: s.bytes });
+        }
+        details.sort((a, b) => b.bytes - a.bytes);
+      } catch {}
+    }
+    items.push({ key:def.key, bytes, files, canDelete:!!def.canDelete, path:def.paths.map(storageRel).join(', '), details });
+    await new Promise(r => setImmediate(r));
+  }
+  return { items, total: items.reduce((sum, i) => sum + i.bytes, 0) };
+});
+ipcMain.handle('delete-storage-item', async (event, key) => {
+  const def = storageDefs().find(d => d.key === key && d.canDelete);
+  if (!def) return { ok:false, error:'Unknown or protected storage item' };
+  if (def.needsStop) {
+    const running = Object.values(instances || {}).filter(i =>
+      (i.process && i.process.pid && !i.process.killed) || i.bedrockPid || i.pid);
+    if (running.length) return { ok:false, error:'Close all running Minecraft instances first' };
+  }
+  try { if (typeof abortPrecache === 'function') abortPrecache(); } catch {}
+  if (key === 'instances' || key === 'groups') { try { stopAllServers(); } catch {} }
+  let freed = 0;
+  const errors = [];
+  for (const p of def.paths) {
+    try {
+      const s = await storagePathStats(p);
+      await fs.promises.rm(p, { recursive:true, force:true, maxRetries:3, retryDelay:500 });
+      freed += s.bytes;
+    } catch (e) { errors.push(e.message || String(e)); }
+  }
+  for (const dir of def.recreate || []) { try { await fs.promises.mkdir(dir, { recursive:true }); } catch {} }
+  if (errors.length) return { ok:false, error:errors.join('; '), freed };
+  return { ok:true, freed };
 });
 
 // ── Server Whitelist IPC ────────────────────────────────────────────────────────

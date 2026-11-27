@@ -527,6 +527,21 @@
         </div>
         </div>
       </section>
+      <section class="settings-group" id="setgrp-storage">
+        <h2 class="settings-group__title" data-i18n="grp_storage">Storage</h2>
+        <div class="settings-grid">
+        <div class="settings-section" id="storage-overview-section">
+          <h2 data-i18n="sec_storage_overview">Disk usage</h2>
+          <p class="hint" data-i18n="desc_storage">Shows how much space each part of the launcher uses. Deleting data cannot be undone.</p>
+          <div class="storage-toolbar">
+            <span class="storage-total" id="storage-total">—</span>
+            <button class="btn btn-sm" id="storage-refresh-btn" type="button" data-i18n="btn_storage_refresh">Refresh</button>
+          </div>
+          <div id="storage-list" class="storage-list"><span class="hint" data-i18n="storage_loading">Calculating sizes…</span></div>
+          <p class="hint storage-status" id="storage-status"></p>
+        </div>
+        </div>
+      </section>
       <section class="settings-group" id="setgrp-maintenance">
         <h2 class="settings-group__title" data-i18n="grp_maintenance">Maintenance</h2>
         <div class="settings-grid">
@@ -2420,7 +2435,7 @@ const LANGS={
     tab_settings:'Settings', tab_logs:'Logs', tab_account:'Account', tab_recent:'Recent', tab_servers:'Servers', tab_features:'Features', tab_bugreport:'Bug Report', tab_friends:'Friends', tab_chat:'Chat',
     tab_messages:'Messages', h_messages:'Messages', sub_messages:'Notifications from the launcher', btn_clear_messages:'Clear messages', msg_empty:'No messages yet.', msg_service_down:'{name} is down', msg_crash:'Minecraft crashed (exit code {code})',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profiles', h_settings:'Settings',
-  sub_mods:'Mods that run with every Minecraft version', grp_performance:'Performance', grp_appearance:'Appearance', sub_settings:'RAM, appearance, language and updates', grp_language:'Language', grp_behaviour:'Behaviour', grp_social:'Social', grp_updates:'Updates', grp_maintenance:'Maintenance', sub_profiles:'Your versions, mod loaders and mod lists',
+  sub_mods:'Mods that run with every Minecraft version', grp_performance:'Performance', grp_appearance:'Appearance', sub_settings:'RAM, appearance, language and updates', grp_language:'Language', grp_behaviour:'Behaviour', grp_social:'Social', grp_updates:'Updates', grp_maintenance:'Maintenance', grp_storage:'Storage', sec_storage_overview:'Disk usage', desc_storage:'How much space every part of the launcher uses. Deleting data cannot be undone.', btn_storage_refresh:'Refresh', storage_loading:'Calculating sizes…', storage_total:'Total: {n}', storage_delete:'Delete', storage_readonly:'Read only', storage_detail_more:'+ {n} more', storage_confirm:'Delete "{name}" ({size})? This cannot be undone.', storage_done:'Deleted {name} ({size} freed).', storage_fail:'Failed: {e}', storage_instances:'Profile data (worlds, mods, configs)', storage_groups:'Group data', storage_versions:'Minecraft versions', storage_assets:'Minecraft assets', storage_libraries:'Minecraft libraries', storage_modcache:'Mod download cache', storage_modpacks:'Downloaded modpacks', storage_clientmods:'Client mods', storage_capes:'Custom capes', storage_skins:'Saved skins', storage_logs:'Logs & crash reports', storage_caches:'App caches', storage_settings:'Settings & accounts', sub_profiles:'Your versions, mod loaders and mod lists',
   sub_cape:'Minecraft capes and your own designs', sub_servers:'Run your own server and share it with friends',
   sub_features:'Everything Crux Client can do', sub_logs:'Live output of your running instances',
   sub_account:'Your Microsoft and offline accounts', sub_bugreport:'Send a report with your logs',
@@ -2579,7 +2594,7 @@ const LANGS={
     tab_settings:'Einstellungen', tab_logs:'Protokolle', tab_account:'Account', tab_recent:'Zuletzt gespielt', tab_servers:'Server', tab_features:'Features', tab_bugreport:'Fehler melden', tab_friends:'Freunde', tab_chat:'Chat',
     tab_messages:'Nachrichten', h_messages:'Nachrichten', sub_messages:'Benachrichtigungen vom Launcher', btn_clear_messages:'Nachrichten löschen', msg_empty:'Noch keine Nachrichten.', msg_service_down:'{name} ist nicht erreichbar', msg_crash:'Minecraft ist abgestürzt (Exit-Code {code})',
     h_launch:'Launch', h_mods:'Client Options', h_profiles:'Profile', h_settings:'Einstellungen',
-  sub_mods:'Mods, die mit jeder Minecraft-Version laufen', grp_performance:'Leistung', grp_appearance:'Darstellung', sub_settings:'RAM, Darstellung, Sprache und Updates', grp_language:'Sprache', grp_behaviour:'Verhalten', grp_social:'Soziales', grp_updates:'Updates', grp_maintenance:'Wartung', sub_profiles:'Deine Versionen, Mod-Loader und Mod-Listen',
+  sub_mods:'Mods, die mit jeder Minecraft-Version laufen', grp_performance:'Leistung', grp_appearance:'Darstellung', sub_settings:'RAM, Darstellung, Sprache und Updates', grp_language:'Sprache', grp_behaviour:'Verhalten', grp_social:'Soziales', grp_updates:'Updates', grp_maintenance:'Wartung', grp_storage:'Speicher', sec_storage_overview:'Speicherverbrauch', desc_storage:'Zeigt, wie viel Speicher jeder Bereich des Launchers belegt. Gelöschte Daten können nicht wiederhergestellt werden.', btn_storage_refresh:'Aktualisieren', storage_loading:'Größen werden berechnet…', storage_total:'Gesamt: {n}', storage_delete:'Löschen', storage_readonly:'Nur lesen', storage_detail_more:'+ {n} weitere', storage_confirm:'"{name}" löschen ({size})? Das kann nicht rückgängig gemacht werden.', storage_done:'{name} gelöscht ({size} freigegeben).', storage_fail:'Fehlgeschlagen: {e}', storage_instances:'Profildaten (Welten, Mods, Configs)', storage_groups:'Gruppendaten', storage_versions:'Minecraft-Versionen', storage_assets:'Minecraft-Assets', storage_libraries:'Minecraft-Bibliotheken', storage_modcache:'Mod-Download-Cache', storage_modpacks:'Heruntergeladene Modpacks', storage_clientmods:'Client-Mods', storage_capes:'Eigene Capes', storage_skins:'Gespeicherte Skins', storage_logs:'Logs & Crash-Reports', storage_caches:'App-Caches', storage_settings:'Einstellungen & Konten', sub_profiles:'Deine Versionen, Mod-Loader und Mod-Listen',
   sub_cape:'Minecraft-Capes und eigene Designs', sub_servers:'Eigenen Server starten und mit Freunden teilen',
   sub_features:'Alles, was Crux Client kann', sub_logs:'Live-Ausgabe deiner laufenden Instanzen',
   sub_account:'Deine Microsoft- und Offline-Konten', sub_bugreport:'Fehlerbericht mit deinen Logs senden',
@@ -2738,7 +2753,7 @@ const LANGS={
     tab_settings:'Paramètres', tab_logs:'Journaux', tab_account:'Account', tab_recent:'Récents', tab_servers:'Serveurs', tab_features:'Fonctionnalités', tab_bugreport:'Signaler un bug', tab_friends:'Amis', tab_chat:'Discussion',
     tab_messages:'Messages', h_messages:'Messages', sub_messages:'Notifications du lanceur', btn_clear_messages:'Effacer les messages', msg_empty:'Aucun message.', msg_service_down:'{name} est indisponible', msg_crash:'Minecraft a planté (code {code})',
     h_launch:'Lancer', h_mods:'Options Client', h_profiles:'Profils', h_settings:'Paramètres',
-  sub_mods:'Des mods qui fonctionnent avec chaque version de Minecraft', grp_performance:'Performance', grp_appearance:'Apparence', sub_settings:'RAM, apparence, langue et mises à jour', grp_language:'Langue', grp_behaviour:'Comportement', grp_social:'Social', grp_updates:'Mises à jour', grp_maintenance:'Maintenance', sub_profiles:'Tes versions, chargeurs de mods et listes',
+  sub_mods:'Des mods qui fonctionnent avec chaque version de Minecraft', grp_performance:'Performance', grp_appearance:'Apparence', sub_settings:'RAM, apparence, langue et mises à jour', grp_language:'Langue', grp_behaviour:'Comportement', grp_social:'Social', grp_updates:'Mises à jour', grp_maintenance:'Maintenance', grp_storage:'Stockage', sec_storage_overview:'Utilisation du disque', desc_storage:'Affiche l’espace utilisé par chaque partie du lanceur. Les données supprimées ne peuvent pas être restaurées.', btn_storage_refresh:'Actualiser', storage_loading:'Calcul des tailles…', storage_total:'Total : {n}', storage_delete:'Supprimer', storage_readonly:'Lecture seule', storage_detail_more:'+ {n} de plus', storage_confirm:'Supprimer « {name} » ({size}) ? Cette action est irréversible.', storage_done:'{name} supprimé ({size} libéré).', storage_fail:'Échec : {e}', storage_instances:'Données de profil (mondes, mods, configs)', storage_groups:'Données de groupe', storage_versions:'Versions Minecraft', storage_assets:'Ressources Minecraft', storage_libraries:'Bibliothèques Minecraft', storage_modcache:'Cache de téléchargement des mods', storage_modpacks:'Modpacks téléchargés', storage_clientmods:'Mods client', storage_capes:'Capes personnalisés', storage_skins:'Skins enregistrés', storage_logs:'Journaux & rapports de plantage', storage_caches:'Caches de l’application', storage_settings:'Paramètres & comptes', sub_profiles:'Tes versions, chargeurs de mods et listes',
   sub_cape:'Capes Minecraft et tes créations', sub_servers:'Lance ton propre serveur et partage-le',
   sub_features:'Tout ce que Crux Client sait faire', sub_logs:'Sortie en direct de tes instances',
   sub_account:'Tes comptes Microsoft et hors ligne', sub_bugreport:'Envoyer un rapport avec tes logs',
@@ -2894,7 +2909,7 @@ const LANGS={
     tab_settings:'Ajustes', tab_logs:'Registros', tab_account:'Account', tab_recent:'Recientes', tab_servers:'Servidores', tab_features:'Funciones', tab_bugreport:'Reportar bug', tab_friends:'Amigos', tab_chat:'Chat',
     tab_messages:'Mensajes', h_messages:'Mensajes', sub_messages:'Notificaciones del lanzador', btn_clear_messages:'Borrar mensajes', msg_empty:'Todavía no hay mensajes.', msg_service_down:'{name} no está disponible', msg_crash:'Minecraft se cerró inesperadamente (código {code})',
     h_launch:'Iniciar', h_mods:'Opciones Cliente', h_profiles:'Perfiles', h_settings:'Ajustes',
-  sub_mods:'Mods que funcionan con cada versión de Minecraft', grp_performance:'Rendimiento', grp_appearance:'Apariencia', sub_settings:'RAM, apariencia, idioma y actualizaciones', grp_language:'Idioma', grp_behaviour:'Comportamiento', grp_social:'Social', grp_updates:'Actualizaciones', grp_maintenance:'Mantenimiento', sub_profiles:'Tus versiones, cargadores de mods y listas',
+  sub_mods:'Mods que funcionan con cada versión de Minecraft', grp_performance:'Rendimiento', grp_appearance:'Apariencia', sub_settings:'RAM, apariencia, idioma y actualizaciones', grp_language:'Idioma', grp_behaviour:'Comportamiento', grp_social:'Social', grp_updates:'Actualizaciones', grp_maintenance:'Mantenimiento', grp_storage:'Almacenamiento', sec_storage_overview:'Uso del disco', desc_storage:'Muestra cuánto espacio usa cada parte del lanzador. Los datos eliminados no se pueden recuperar.', btn_storage_refresh:'Actualizar', storage_loading:'Calculando tamaños…', storage_total:'Total: {n}', storage_delete:'Eliminar', storage_readonly:'Solo lectura', storage_detail_more:'+ {n} más', storage_confirm:'¿Eliminar "{name}" ({size})? No se puede deshacer.', storage_done:'{name} eliminado ({size} liberado).', storage_fail:'Error: {e}', storage_instances:'Datos de perfiles (mundos, mods, configs)', storage_groups:'Datos de grupos', storage_versions:'Versiones de Minecraft', storage_assets:'Recursos de Minecraft', storage_libraries:'Bibliotecas de Minecraft', storage_modcache:'Caché de descarga de mods', storage_modpacks:'Modpacks descargados', storage_clientmods:'Mods del cliente', storage_capes:'Capas personalizadas', storage_skins:'Skins guardados', storage_logs:'Registros e informes de error', storage_caches:'Cachés de la app', storage_settings:'Ajustes y cuentas', sub_profiles:'Tus versiones, cargadores de mods y listas',
   sub_cape:'Capas de Minecraft y tus diseños', sub_servers:'Ejecuta tu propio servidor y compártelo',
   sub_features:'Todo lo que Crux Client puede hacer', sub_logs:'Salida en vivo de tus instancias',
   sub_account:'Tus cuentas de Microsoft y sin conexión', sub_bugreport:'Envía un informe con tus registros',
@@ -3131,8 +3146,97 @@ function showSettingsGroup(id){
   if(nav) [...nav.children].forEach(b=>b.classList.toggle('active',b.dataset.group===target.id));
   const body=document.querySelector('#settings-page .settings-body');
   if(body) body.scrollTop=0;
+  if(target.id==='setgrp-storage' && typeof refreshStorage==='function') refreshStorage();
 }
 // (kein Scroll-Spy mehr: die Einstellungen sind Tabs, kein durchscrollendes Fenster)
+
+// ── Storage-Tab ────────────────────────────────────────────────────
+// Der Main-Prozess liefert die Groessen (und nur die Pfade aus seiner
+// Whitelist). Der Renderer zeigt sie und schickt zum Loeschen nur den Key.
+const STORAGE_LABELS={
+  instances:'storage_instances', groups:'storage_groups', versions:'storage_versions',
+  assets:'storage_assets', libraries:'storage_libraries', modCache:'storage_modcache',
+  modpacks:'storage_modpacks', clientMods:'storage_clientmods', capes:'storage_capes',
+  skins:'storage_skins', logs:'storage_logs', caches:'storage_caches', settingsData:'storage_settings'
+};
+let storageToken=0;
+function storageFormatBytes(n){
+  if(!isFinite(n)||n<=0) return '0 B';
+  const gb=1024**3, mb=1024**2;
+  if(n>=gb) return (n/gb).toFixed(n>=10*gb?1:2)+' GB';
+  if(n>=mb) return (n/mb).toFixed(n>=100*mb?0:1)+' MB';
+  return (n/1024).toFixed(0)+' KB';
+}
+async function refreshStorage(){
+  const list=document.getElementById('storage-list');
+  const totalEl=document.getElementById('storage-total');
+  if(!list) return;
+  const token=++storageToken;
+  list.innerHTML='<span class="hint">'+escHtml(t('storage_loading'))+'</span>';
+  try{
+    const r=await ipcRenderer.invoke('get-storage-usage');
+    if(token!==storageToken) return;
+    if(!r||!Array.isArray(r.items)) throw new Error((r&&r.error)||'Invalid response');
+    list.innerHTML='';
+    for(const it of r.items){
+      const label=t(STORAGE_LABELS[it.key]||it.key);
+      const row=document.createElement('div'); row.className='storage-row';
+      const main=document.createElement('div'); main.className='storage-row__main';
+      const name=document.createElement('div'); name.className='storage-row__name'; name.textContent=label;
+      const sub=document.createElement('div'); sub.className='storage-row__path'; sub.textContent=it.path||'';
+      main.append(name,sub);
+      if(Array.isArray(it.details)&&it.details.length){
+        const det=document.createElement('div'); det.className='storage-row__details';
+        for(const d of it.details.slice(0,5)){
+          const chip=document.createElement('span'); chip.className='storage-chip';
+          chip.textContent=`${d.name} · ${storageFormatBytes(d.bytes)}`; det.appendChild(chip);
+        }
+        if(it.details.length>5){
+          const more=document.createElement('span'); more.className='storage-chip storage-chip--more';
+          more.textContent=t('storage_detail_more').replace('{n}',it.details.length-5); det.appendChild(more);
+        }
+        main.appendChild(det);
+      }
+      const size=document.createElement('span'); size.className='storage-row__size'; size.textContent=storageFormatBytes(it.bytes);
+      row.append(main,size);
+      if(it.canDelete){
+        const btn=document.createElement('button');
+        btn.type='button'; btn.className='btn btn-sm btn-danger storage-row__delete';
+        btn.textContent=t('storage_delete'); btn.title=label;
+        btn.addEventListener('click',()=>deleteStorageItem(it,label,btn));
+        row.appendChild(btn);
+      } else {
+        const ro=document.createElement('span'); ro.className='storage-row__readonly'; ro.textContent=t('storage_readonly'); row.appendChild(ro);
+      }
+      list.appendChild(row);
+    }
+    if(totalEl) totalEl.textContent=t('storage_total').replace('{n}',storageFormatBytes(r.total||0));
+  }catch(e){
+    if(token!==storageToken) return;
+    list.innerHTML='';
+    const err=document.createElement('span'); err.className='hint storage-error';
+    err.textContent=t('storage_fail').replace('{e}',e.message||String(e)); list.appendChild(err);
+  }
+}
+async function deleteStorageItem(it,label,btn){
+  if(!confirm(t('storage_confirm').replace('{name}',label).replace('{size}',storageFormatBytes(it.bytes)))) return;
+  const st=document.getElementById('storage-status');
+  if(btn) btn.disabled=true;
+  try{
+    const r=await ipcRenderer.invoke('delete-storage-item',it.key);
+    if(r&&r.ok){
+      if(st){ st.textContent=t('storage_done').replace('{name}',label).replace('{size}',storageFormatBytes(r.freed||0)); st.className='hint storage-status ok'; }
+    } else if(st){
+      st.textContent=t('storage_fail').replace('{e}',(r&&r.error)||''); st.className='hint storage-status err';
+    }
+  }catch(e){
+    if(st){ st.textContent=t('storage_fail').replace('{e}',e.message||String(e)); st.className='hint storage-status err'; }
+  } finally {
+    if(btn) btn.disabled=false;
+    refreshStorage();
+  }
+}
+document.getElementById('storage-refresh-btn')?.addEventListener('click',()=>refreshStorage());
 
 function saveSettings(){ ipcRenderer.send('save-settings',settings); }
 
