@@ -340,10 +340,11 @@ app.whenReady().then(async () => {
   // Tell any leftover update-progress window that the client is up and running
   writeUpdateProgress('done', 100);
 
-  const preUpdate = await preLaunchUpdateCheck();
-  if (preUpdate) suppressMainWindowShow = true;
   createWindow();
-  if (preUpdate) createUpdateWindow(preUpdate);
+  // Stiller Update-Check beim Start: kein Update-Fenster und kein Overlay,
+  // solange der Installer noch nicht vollstaendig heruntergeladen ist. Der
+  // Renderer bekommt erst danach ein Signal fuer den Restart-Dialog.
+  setTimeout(() => { silentStartupUpdate(); }, 2500);
   startServiceMonitor();
   // Auto-scan Java in background after window loads
   mainWindow.webContents.on('did-finish-load', async () => {
@@ -6976,19 +6977,73 @@ function withTimeout(promise, ms) {
   });
 }
 
-async function preLaunchUpdateCheck() {
-  if (IS_DEV_BUILD) return null;
-  if (process.env.CRUX_NO_AUTO_UPDATE === '1') return null;
+// Installer-Download als gemeinsamer Baustein: der manuelle Pfad meldet
+// Fortschritt an den Renderer, der stille Start-Check meldet nichts.
+function downloadInstallerToFile(exeUrl, installerPath, onProgress) {
+  return new Promise((resolve, reject) => {
+    const doRequest = (reqUrl) => {
+      const lib = reqUrl.startsWith('https') ? https : http;
+      const req = lib.get(reqUrl, { headers: { 'User-Agent': 'CruxClient' } }, res => {
+        if (res.statusCode === 301 || res.statusCode === 302) return doRequest(res.headers.location);
+        if (res.statusCode !== 200) return reject(new Error('HTTP ' + res.statusCode));
+        const total = parseInt(res.headers['content-length'], 10) || 0;
+        let downloaded = 0;
+        const ws = fs.createWriteStream(installerPath);
+        res.on('data', chunk => {
+          ws.write(chunk);
+          downloaded += chunk.length;
+          if (onProgress) onProgress(downloaded, total);
+        });
+        res.on('end', () => ws.end(() => resolve()));
+        res.on('error', reject);
+      }).on('error', reject);
+      req.setTimeout(300000, () => { req.destroy(); reject(new Error('Download timeout')); });
+      req.on('timeout', () => { req.destroy(); reject(new Error('Download timeout')); });
+    };
+    doRequest(exeUrl);
+  });
+}
+async function unblockInstaller(installerPath) {
+  try {
+    await new Promise((resolve) => {
+      exec(`powershell -NoProfile -WindowStyle Hidden -Command "Unblock-File -Path '${installerPath}'"`, { timeout: 10000, shell: true }, () => resolve());
+    });
+  } catch {}
+}
+function installerUrlFromInfo(info) {
+  if (info && info.installerUrl) return info.installerUrl;
+  if (info && info.downloadUrl) return info.downloadUrl.replace(/Launcher\.zip$/i, 'Crux-Client-Installer.exe');
+  return null;
+}
+
+// Beim Start stil prüfen: gibt es ein Update und noch keinen Installer, wird
+// dieser im Hintergrund geladen. Erst wenn die Datei komplett ist, bekommt der
+// Renderer ein Signal und zeigt einen kleinen Restart-Dialog. Waerend des
+// Downloads gibt es bewusst KEIN Update-Fenster und KEIN Overlay.
+async function silentStartupUpdate() {
+  if (IS_DEV_BUILD || process.env.CRUX_NO_AUTO_UPDATE === '1') return;
+  const installerPath = path.join(base, 'Crux-Client-Installer.exe');
+  // Liegt schon ein Installer da, hat der Boot-Pfad den Auto-Update uebernommen.
+  if (fs.existsSync(installerPath)) return;
   try {
     const info = await withTimeout(fetchUpdateInfo(false), 15000);
-    if (!info || !info.updateAvailable) return null;
-    if (!info.installed) return null;
-    if (!info.downloadUrl && !info.installerUrl) return null;
-    updateLog(`Pre-launch update check: v${info.newVersion} verfügbar - öffne Update-Fenster.`);
-    return info;
+    if (!info || !info.updateAvailable || info.alreadyHandled) return;
+    const exeUrl = installerUrlFromInfo(info);
+    if (!exeUrl) return;
+    updateLog(`Silent startup update: downloading installer for v${info.newVersion}`);
+    await downloadInstallerToFile(exeUrl, installerPath, null);
+    await unblockInstaller(installerPath);
+    updateLog('Silent installer download complete — waiting for restart confirmation.');
+    sendToWindows('update-ready-to-restart', {
+      currentVersion: info.currentVersion,
+      newVersion: info.newVersion,
+      releaseNotes: info.releaseNotes,
+    });
   } catch (e) {
-    updateLog('Pre-launch update check failed: ' + (e && e.message));
-    return null;
+    updateLog('Silent startup update failed: ' + (e && e.message));
+    // Eine halb geschriebene Datei darf beim naechsten Start nicht als
+    // fertiger Installer erkannt werden.
+    try { await fs.promises.rm(installerPath, { force: true }); } catch {}
   }
 }
 
@@ -7077,41 +7132,15 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
     // installer file is completely on disk.
     // Download installer with progress
     try {
-      await new Promise((resolve, reject) => {
-        const doRequest = (reqUrl) => {
-          const lib = reqUrl.startsWith('https') ? https : http;
-          const req = lib.get(reqUrl, { headers: { 'User-Agent': 'CruxClient' } }, res => {
-            if (res.statusCode === 301 || res.statusCode === 302) return doRequest(res.headers.location);
-            if (res.statusCode !== 200) return reject(new Error('HTTP ' + res.statusCode));
-            const total = parseInt(res.headers['content-length'], 10) || 0;
-            let downloaded = 0;
-            const ws = fs.createWriteStream(installerPath);
-            res.on('data', chunk => {
-              ws.write(chunk);
-              downloaded += chunk.length;
-              send('update-download-progress', { downloaded, total });
-            });
-            res.on('end', () => { ws.end(() => resolve()); });
-            res.on('error', reject);
-          }).on('error', reject);
-          req.setTimeout(300000, () => { req.destroy(); reject(new Error('Download timeout')); });
-          req.on('timeout', () => { req.destroy(); reject(new Error('Download timeout')); });
-        };
-        doRequest(exeUrl);
+      await downloadInstallerToFile(exeUrl, installerPath, (downloaded, total) => {
+        send('update-download-progress', { downloaded, total });
       });
     } catch (err) {
       updateLog('Installer download failed: ' + (err && err.message));
       throw err;
     }
     updateLog('Installer downloaded. Removing security block (Zone.Identifier)...');
-    try {
-      await new Promise((resolve, reject) => {
-        exec(`powershell -NoProfile -WindowStyle Hidden -Command "Unblock-File -Path '${installerPath}'"`, { timeout: 10000, shell: true }, (err) => {
-          if (err) updateLog('Unblock-File warning: ' + (err.message || err));
-          resolve();
-        });
-      });
-    } catch {}
+    await unblockInstaller(installerPath);
 
     // Update file is complete - now the progress window may show up and take
     // over until the launcher comes back up
@@ -7190,6 +7219,15 @@ ipcMain.handle('download-and-install-update', async (e, downloadUrl, installerUr
 ipcMain.handle('update-window-skip', () => {
   try { if (updateWindow && !updateWindow.isDestroyed()) updateWindow.close(); } catch {}
   showMainWindow();
+  return { ok: true };
+});
+
+// Restart nach dem stillen Download: die neue Instanz erkennt den fertigen
+// Installer beim Boot und startet den In-Place-Update automatisch.
+ipcMain.handle('restart-for-update', () => {
+  try { updateLog('Restart confirmed by user — installer will be applied on next launch.'); } catch {}
+  app.relaunch();
+  app.quit();
   return { ok: true };
 });
 

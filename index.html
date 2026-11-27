@@ -987,6 +987,24 @@
       </div>
     </div>
 
+    <!-- Stiller Update-Download fertig: kleiner Restart-Dialog (kein Update-Screen) -->
+    <div id="update-ready-overlay" class="modal-overlay" style="display:none;z-index:2650">
+      <div class="modal update-ready-modal">
+        <div class="modal-header">
+          <h2 data-i18n="upd_ready_title">Update ready</h2>
+          <button class="btn modal-close" id="update-ready-close" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <p data-i18n="upd_ready_msg">A new version was downloaded in the background. Restart the launcher to install it.</p>
+          <p class="hint" id="update-ready-version"></p>
+          <div class="modal-actions">
+            <button class="btn" id="update-ready-later" data-i18n="upd_ready_later">Later</button>
+            <button class="btn btn-primary" id="update-ready-restart" data-i18n="upd_ready_restart">Confirm Restart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- â”€â”€ Owner: Ban overlay â”€â”€ -->
     <div id="ban-modal" class="modal-overlay" style="display:none;z-index:2700">
       <div class="modal" style="max-width:480px">
@@ -2495,7 +2513,7 @@ const LANGS={
     sec_fab_position:'Settings Button Position', lbl_fab_position:'Position:', fab_pos_toolbar:'In Tab Bar', fab_pos_corner:'Bottom Right (Circle)', fab_pos_custom:'Custom (Pixels)', lbl_fab_x:'X (Pixel):', lbl_fab_y:'Y (Pixel):',
     sec_bell_position:'Message bell position', lbl_bell_position:'Position:', bell_pos_settings:'Above settings', bell_pos_corner:'Bottom right', bell_pos_custom:'Custom (from bottom left)', lbl_bell_x:'X from left (px):', lbl_bell_y:'Y from bottom (px):',
     sec_reset:'Reset', desc_reset:'Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.',
-    btn_reset:'Reset Launcher', sec_updates:'Updates', btn_check_update:'Check for Updates',
+    btn_reset:'Reset Launcher', sec_updates:'Updates', btn_check_update:'Check for Updates', upd_ready_title:'Update ready', upd_ready_msg:'A new version was downloaded in the background. Restart the launcher to install it.', upd_ready_later:'Later', upd_ready_restart:'Confirm Restart',
     desc_current_version:'Current version:',
     sec_uninstall:'Uninstall', btn_uninstall:'Uninstall Crux Client', desc_uninstall:'Removes the launcher and all its data from your system.',
     btn_use_crux_mod:'Use Crux Client Features',
@@ -2654,7 +2672,7 @@ const LANGS={
     sec_fab_position:'Position des Settings-Buttons', lbl_fab_position:'Position:', fab_pos_toolbar:'In der Tab-Leiste', fab_pos_corner:'Unten rechts (Kreis)', fab_pos_custom:'Benutzerdefiniert (Pixel)', lbl_fab_x:'X (Pixel):', lbl_fab_y:'Y (Pixel):',
     sec_bell_position:'Position der Nachrichten-Glocke', lbl_bell_position:'Position:', bell_pos_settings:'Über den Einstellungen', bell_pos_corner:'Unten rechts', bell_pos_custom:'Benutzerdefiniert (von unten links)', lbl_bell_x:'X von links (px):', lbl_bell_y:'Y von unten (px):',
     sec_reset:'Zurücksetzen', desc_reset:'Löscht alle Konten, Profile, Einstellungen und Mods. Der Launcher startet wie beim ersten Mal.',
-    btn_reset:'Launcher zurücksetzen', sec_updates:'Updates', btn_check_update:'Nach Updates suchen',
+    btn_reset:'Launcher zurücksetzen', sec_updates:'Updates', btn_check_update:'Nach Updates suchen', upd_ready_title:'Update bereit', upd_ready_msg:'Eine neue Version wurde im Hintergrund heruntergeladen. Starte den Launcher neu, um sie zu installieren.', upd_ready_later:'Später', upd_ready_restart:'Neustart bestätigen',
     desc_current_version:'Aktuelle Version:',
     sec_uninstall:'Deinstallieren', btn_uninstall:'Crux Client deinstallieren', desc_uninstall:'Entfernt den Launcher und alle seine Daten von deinem System.',
     btn_use_crux_mod:'Crux Client Features verwenden',
@@ -2812,7 +2830,7 @@ const LANGS={
     sec_font:'Police', lbl_font_style:'Style', font_system:'Système', font_minecraft:'Minecraft', font_custom:'Personnalisée', lbl_font_family:'Famille de police',
     sec_bell_position:'Position de la cloche de messages', lbl_bell_position:'Position :', bell_pos_settings:'Au-dessus des paramètres', bell_pos_corner:'En bas à droite', bell_pos_custom:'Personnalisé (depuis le bas à gauche)', lbl_bell_x:'X depuis la gauche (px) :', lbl_bell_y:'Y depuis le bas (px) :',
     sec_reset:'Réinitialiser', desc_reset:'Supprime tous les comptes, profils, paramètres et mods. Le lanceur redémarrera comme au premier lancement.',
-    btn_reset:'Réinitialiser le Lanceur', sec_updates:'Mises à jour', btn_check_update:'Vérifier les mises à jour',
+    btn_reset:'Réinitialiser le Lanceur', sec_updates:'Mises à jour', btn_check_update:'Vérifier les mises à jour', upd_ready_title:'Mise à jour prête', upd_ready_msg:'Une nouvelle version a été téléchargée en arrière-plan. Redémarrez le lanceur pour l’installer.', upd_ready_later:'Plus tard', upd_ready_restart:'Confirmer le redémarrage',
     desc_current_version:'Version actuelle :',
     sec_uninstall:'Désinstaller', btn_uninstall:'Désinstaller Crux Client', desc_uninstall:'Supprime le lanceur et toutes ses données de votre système.',
     btn_use_crux_mod:'Utiliser les Fonctionnalités Crux Client',
@@ -2968,7 +2986,7 @@ const LANGS={
     sec_font:'Fuente', lbl_font_style:'Estilo', font_system:'Sistema', font_minecraft:'Minecraft', font_custom:'Personalizada', lbl_font_family:'Familia de fuente',
     sec_bell_position:'Posición de la campana de mensajes', lbl_bell_position:'Posición:', bell_pos_settings:'Encima de ajustes', bell_pos_corner:'Abajo a la derecha', bell_pos_custom:'Personalizada (desde abajo a la izquierda)', lbl_bell_x:'X desde la izquierda (px):', lbl_bell_y:'Y desde abajo (px):',
     sec_reset:'Restablecer', desc_reset:'Elimina todas las cuentas, perfiles, ajustes y mods. El launcher se reiniciará como si se abriera por primera vez.',
-    btn_reset:'Restablecer Launcher', sec_updates:'Actualizaciones', btn_check_update:'Buscar actualizaciones',
+    btn_reset:'Restablecer Launcher', sec_updates:'Actualizaciones', btn_check_update:'Buscar actualizaciones', upd_ready_title:'Actualización lista', upd_ready_msg:'Se descargó una versión nueva en segundo plano. Reinicia el lanzador para instalarla.', upd_ready_later:'Más tarde', upd_ready_restart:'Confirmar reinicio',
     desc_current_version:'Versión actual:',
     sec_uninstall:'Desinstalar', btn_uninstall:'Desinstalar Crux Client', desc_uninstall:'Elimina el launcher y todos sus datos del sistema.',
     btn_use_crux_mod:'Usar Funciones Crux Client',
@@ -12291,6 +12309,27 @@ if(DEV_BUILD){
   if(cub){ cub.disabled=true; cub.textContent='Updates disabled (dev build)'; cub.style.opacity=.5; cub.style.cursor='not-allowed'; }
 }
 ipcRenderer.on('update-log', (_, msg) => updateLog('[main] ' + msg));
+
+// Stiller Start-Check: Installer ist fertig — jetzt erst den Restart-Dialog
+// zeigen. Das groe Update-Overlay bleibt dabei unangetastet/unsichtbar.
+ipcRenderer.on('update-ready-to-restart', (_, info) => {
+  const ov = document.getElementById('update-ready-overlay');
+  if(!ov) return;
+  const v = document.getElementById('update-ready-version');
+  if(v && info) v.textContent = `v${info.currentVersion} → v${info.newVersion}`;
+  ov.style.display = 'flex';
+});
+for(const id of ['update-ready-close','update-ready-later']){
+  document.getElementById(id)?.addEventListener('click', () => {
+    const ov = document.getElementById('update-ready-overlay');
+    if(ov) ov.style.display = 'none';
+  });
+}
+document.getElementById('update-ready-restart')?.addEventListener('click', async (e) => {
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  try { await ipcRenderer.invoke('restart-for-update'); } catch { btn.disabled = false; }
+});
 </script>
 <script>
 /* â”€â”€ CUSTOM DROPDOWN: replaces every native <select> so it matches the theme â”€â”€ */

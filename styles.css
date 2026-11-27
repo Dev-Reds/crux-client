@@ -2934,6 +2934,10 @@ body:not(.light):not(.glass).bg-light .page-head__sub { color: rgba(23, 18, 31, 
 .rp-card, .bg-card, .presence-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: var(--r-lg); box-shadow: var(--glass-shadow); padding: var(--sp-4); }
 
 /* ── 11  MODALS / OVERLAYS / DROPDOWN ───────────────────────── */
+/* Kleiner Restart-Dialog nach dem stillen Update-Download */
+.update-ready-modal { width: min(88vw, 30rem); }
+.update-ready-modal .modal-body { line-height: 1.6; }
+.update-ready-modal .modal-actions { justify-content: flex-end; }
 .modal-overlay {
   position: fixed;
   inset: 0;
