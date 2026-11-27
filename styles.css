@@ -21,11 +21,37 @@
      17  Responsive
    ============================================================ */
 
-/* Minecraft-Schrift fuer die Appearance-Option "Minecraft". Normale Metriken
-   (xHeight .5em, capHeight .7em) -> gleiche Groesse wie die Systemschrift. */
+/* Minecraft-Schrift fuer die Appearance-Option "Minecraft".
+   Die TTFs liegen im App-Bundle (fonts/), damit die Option auf JEDEM PC
+   identisch aussieht - unabhaengig von installierten Systemschriften.
+   Quelle: tryashtar/minecraft-ttf v1.6, direkt aus den Vanilla-Assets erzeugt.
+   Vier Schnitte, damit <b>/<i> nicht kuenstlich verzerrt werden. */
 @font-face {
-  font-family: "Minecraft Seven";
-  src: url("fonts/Minecraft-Seven_v2.ttf") format("truetype");
+  font-family: "MinecraftDefault";
+  src: url("fonts/MinecraftDefault-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MinecraftDefault";
+  src: url("fonts/MinecraftDefault-Bold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MinecraftDefault";
+  src: url("fonts/MinecraftDefault-Italic.ttf") format("truetype");
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MinecraftDefault";
+  src: url("fonts/MinecraftDefault-BoldItalic.ttf") format("truetype");
+  font-style: italic;
+  font-weight: 700;
   font-display: swap;
 }
 
@@ -76,7 +102,8 @@
   /* Hoehe der Toolbar (Tab-Leiste) */
   --tb: 6.2vh;
 
-  --font: "Minecraft Seven", "Courier New", monospace;  --mono: "JetBrains Mono", "Cascadia Code", Consolas, "SF Mono", monospace;
+  --font: "MinecraftDefault", "Courier New", monospace;
+  --mono: "JetBrains Mono", "Cascadia Code", Consolas, "SF Mono", monospace;
   --fs-xs: .72rem;
   --fs-sm: .8rem;
   --fs-md: .88rem;
