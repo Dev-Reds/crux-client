@@ -3116,6 +3116,8 @@ body:not(.light):not(.glass).bg-light .page-head__sub { color: rgba(23, 18, 31, 
 .svc-toast.toast-ok .svc-dot { background: var(--ok); }
 .svc-toast.toast-muted { border-color: var(--border-strong); background: color-mix(in srgb, var(--muted) 12%, var(--surface-1)); color: var(--text-2); }
 .svc-toast.toast-muted .svc-dot { background: var(--muted); }
+.svc-toast.toast-error { border-color: color-mix(in srgb, var(--danger) 48%, transparent); background: color-mix(in srgb, var(--danger) 16%, var(--surface-1)); color: var(--danger); }
+.svc-toast.toast-error .svc-dot { background: var(--danger); }
 
 /* Nachrichten-Tab: Eine Meldung pro Zeile, ungelesene mit Akzentstreifen */
 .message-list { display: flex; flex-direction: column; gap: .5rem; }
@@ -3264,6 +3266,8 @@ body.light .server-console { background: var(--surface-sunken); border-color: va
 body.light .svc-toast { background: #fff0f0; border-color: color-mix(in srgb, var(--danger) 35%, transparent); color: #a11; }
 body.light .svc-toast.toast-ok { background: #eafaf0; border-color: color-mix(in srgb, var(--ok) 35%, transparent); color: #0a7a44; }
 body.light .svc-toast.toast-muted { background: #fff; border-color: var(--border-strong); color: var(--muted); }
+body.light .svc-toast.toast-error { background: #fff0f0; border-color: color-mix(in srgb, var(--danger) 45%, transparent); color: #a11; }
+body.light .svc-toast.toast-error .svc-dot { background: #a11; }
 body.light .status-text, body.light .lp-label, body.light .skin-change-label { color: var(--muted); }
 body.light .logs-container { background: #fff; border-color: var(--border); color: var(--text); }
 body.light .log-line { border-bottom-color: #efeaf7; }
@@ -3469,8 +3473,10 @@ body.glass .skin-editor-canvas { border-color: var(--gs-bd); }
 body.glass .svc-toast { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; backdrop-filter: var(--gs-blur); -webkit-backdrop-filter: var(--gs-blur); }
 body.glass .svc-toast.toast-ok { background: var(--gs-list) !important; border-color: color-mix(in srgb, var(--ok) 45%, var(--gs-bd)) !important; color: var(--gs-tx) !important; }
 body.glass .svc-toast.toast-muted { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; color: var(--gs-tx) !important; }
+body.glass .svc-toast.toast-error { background: var(--gs-list) !important; border-color: color-mix(in srgb, var(--danger) 55%, var(--gs-bd)) !important; color: var(--gs-tx) !important; }
 body.glass .svc-toast.toast-ok .svc-dot { background: var(--ok) !important; }
 body.glass .svc-toast.toast-muted .svc-dot { background: var(--muted) !important; }
+body.glass .svc-toast.toast-error .svc-dot { background: var(--danger) !important; }
 body.glass .gbg-preset { background: var(--gs-panel); border-color: var(--gs-bd); }
 body.glass #update-overlay.update-themed #update-content { background: var(--gs-list); border-color: var(--gs-bd); box-shadow: var(--gs-hl); color: var(--gs-tx); }
 body.glass #update-overlay.update-themed #update-title { color: #14171c !important; }

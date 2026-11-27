@@ -411,7 +411,7 @@ const saveSettings = async (data) => {
       // (und der Settings-Button) nach jedem Start zurueck.
       'fabPosition','fabX','fabY',
       'bellPosition','bellX','bellY',
-      'bgColor'
+      'bgColor','firstRunDone'
     ];
     const clean = {};
     for (const k of Object.keys(existing)) { if (KNOWN_KEYS.includes(k)) clean[k] = existing[k]; }
@@ -4182,7 +4182,7 @@ ipcMain.handle('get-skin-variant', async (e, accessToken) => {
 // ── Refresh account token (for profile/cape/skin API calls) ───────────────────
 ipcMain.handle('refresh-mc-token', async (e, acc) => {
   try {
-    if (!acc || !acc.accessToken) return { error: 'No account' };
+    if (!acc || !acc.accessToken) return { error: 'No account', invalid: true };
 
     if (acc.type === 'Mojang') {
       try {
@@ -4190,7 +4190,7 @@ ipcMain.handle('refresh-mc-token', async (e, acc) => {
           accessToken: acc.accessToken,
           clientToken: acc.clientToken || require('crypto').randomBytes(16).toString('hex')
         });
-        if (refreshRes.error || refreshRes.errorMessage) return { error: refreshRes.errorMessage || 'Mojang session expired' };
+        if (refreshRes.error || refreshRes.errorMessage) return { error: refreshRes.errorMessage || 'Mojang session expired', invalid: true };
         return { accessToken: refreshRes.accessToken, clientToken: refreshRes.clientToken, type: 'Mojang' };
       } catch (err) { return { error: err.message }; }
     }
@@ -4218,6 +4218,9 @@ ipcMain.handle('refresh-mc-token', async (e, acc) => {
           if (mcRes.access_token) {
             return { accessToken: mcRes.access_token, refreshToken: refreshed.refresh_token, type: 'Microsoft' };
           }
+        } else if (refreshed.error && /invalid_grant/i.test(String(refreshed.error))) {
+          // Refresh token wurde widerrufen — nur hier ist ein Neuloggen noetig.
+          return { error: 'Session expired. Please log in again in the MC-Account tab.', invalid: true };
         }
       } catch (err) {
         logDebug('[AUTH] Microsoft refresh failed: ' + err.message);
@@ -4225,12 +4228,16 @@ ipcMain.handle('refresh-mc-token', async (e, acc) => {
     }
 
     // Fallback: existing token still valid?
+    let networkError = '';
     try {
       const profile = await getJson('https://api.minecraftservices.com/minecraft/profile', acc.accessToken);
       if (profile && !profile.error) return { accessToken: acc.accessToken, type: acc.type };
-    } catch {}
+    } catch (err) { networkError = err && err.message ? err.message : 'network error'; }
 
-    return { error: 'Session expired. Please log in again in the MC-Account tab.' };
+    // Bei Netzwerkproblemen darf der Account NICHT geloescht werden — sonst
+    // muesste man nach jedem kurzen Ausfall neu einloggen.
+    if (networkError) return { error: 'Could not refresh session: ' + networkError, retry: true };
+    return { error: 'Session expired. Please log in again in the MC-Account tab.', invalid: true };
   } catch (err) { return { error: err.message }; }
 });
 

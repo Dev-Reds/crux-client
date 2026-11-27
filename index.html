@@ -1024,6 +1024,23 @@
       </div>
     </div>
 
+    <!-- Ablaufender Account: entfernen, Fehler-Toast und erneuter Login -->
+    <div id="relogin-overlay" class="modal-overlay" style="display:none;z-index:2700">
+      <div class="modal update-ready-modal">
+        <div class="modal-header">
+          <h2 data-i18n="relogin_title">Session expired</h2>
+          <button class="btn modal-close" id="relogin-close" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <p id="relogin-message" data-i18n="relogin_msg">The Microsoft account {name} is no longer valid and was removed. Please sign in again.</p>
+          <div class="modal-actions">
+            <button class="btn" id="relogin-later" data-i18n="relogin_later">Later</button>
+            <button class="btn btn-ms" id="relogin-ms-btn" data-i18n="relogin_login">Sign in again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- â”€â”€ Owner: Ban overlay â”€â”€ -->
     <div id="ban-modal" class="modal-overlay" style="display:none;z-index:2700">
       <div class="modal" style="max-width:480px">
@@ -1808,7 +1825,8 @@ function showToast(message, kind = 'ok', duration = 2600){
   // statt dass mehrere Dinge gleichzeitig einfliegen.
   box.querySelectorAll('.svc-toast.toast-transient').forEach(el => el.remove());
   const d = document.createElement('div');
-  d.className = 'svc-toast toast-transient ' + (kind === 'muted' ? 'toast-muted' : 'toast-ok');
+  const toastKind = kind === 'muted' ? 'toast-muted' : (kind === 'ok' ? 'toast-ok' : 'toast-error');
+  d.className = 'svc-toast toast-transient ' + toastKind;
   d.innerHTML = '<span class="svc-dot"></span>';
   const label = document.createElement('span');
   label.textContent = message;
@@ -2099,11 +2117,16 @@ function prepareUpdateWindow(){
   });
 }
 
-// First-Run: solange kein Account hinterlegt ist, zeigt der Launcher nur den
-// Login-Screen. Nach dem ersten Microsoft-Login verschwindet er dauerhaft,
-// weil die Accounts persistiert werden.
+// First-Run nur einmal: das Flag bleibt gesetzt, auch wenn spaeter alle
+// Accounts entfernt werden. Danach kommt stattdessen der Relogin-Dialog.
 function firstRunNeeded(){
-  return !UPDATE_WINDOW_MODE && Array.isArray(accounts) && accounts.length === 0;
+  return !UPDATE_WINDOW_MODE && !!settings && !settings.firstRunDone &&
+         Array.isArray(accounts) && accounts.length === 0;
+}
+function markFirstRunDone(){
+  if(!settings || settings.firstRunDone) return;
+  settings.firstRunDone = true;
+  saveSettings();
 }
 function showFirstRun(){
   const ov = document.getElementById('first-run-overlay');
@@ -2115,10 +2138,28 @@ function hideFirstRun(){
 }
 function syncFirstRun(){
   if(firstRunNeeded()) showFirstRun();
-  else hideFirstRun();
+  else {
+    hideFirstRun();
+    if(Array.isArray(accounts) && accounts.length) markFirstRunDone();
+  }
 }
-function hideFirstRunAfterLogin(){
-  if(Array.isArray(accounts) && accounts.length) hideFirstRun();
+function closeReloginPrompt(){
+  const ov = document.getElementById('relogin-overlay');
+  if(ov) ov.style.display = 'none';
+}
+function showReloginPrompt(acc){
+  const msg = document.getElementById('relogin-message');
+  if(msg){
+    delete msg.dataset.i18n;
+    msg.textContent = t('relogin_msg').replace('{name}', (acc && acc.name) || 'Account');
+  }
+  const ov = document.getElementById('relogin-overlay');
+  if(ov) ov.style.display = 'flex';
+}
+function afterMicrosoftLogin(){
+  markFirstRunDone();
+  hideFirstRun();
+  closeReloginPrompt();
 }
 
 async function bootLauncher(){
@@ -2231,11 +2272,15 @@ async function bootLauncher(){
     // skin changed, update it, equip it and add it to the skin list.
     let skinModelChanged=false;
     await loadSkinList();
-    for(const acc of accounts){
+    for(const acc of [...accounts]){
       if(!acc.skinModel){acc.skinModel='classic';skinModelChanged=true;}
       if(!acc.accessToken) continue;
       let token=acc.accessToken;
-      try{ const fresh=await refreshAccountToken(acc); if(fresh && fresh.accessToken) token=fresh.accessToken; }catch{}
+      try{
+        const fresh=await refreshAccountToken(acc);
+        if(!fresh) continue;
+        if(fresh.accessToken) token=fresh.accessToken;
+      }catch{}
       if(acc.type==='Microsoft'){
         try{
           const r=await ipcRenderer.invoke('get-skin-variant',token);
@@ -2522,7 +2567,7 @@ const LANGS={
     no_mods:'No mods installed yet.', no_profiles:'No profiles yet.', no_accounts:'No accounts added yet.', no_instances:'No instances launched yet.',
     no_custom_capes:'No custom capes saved yet.', no_servers:'No servers created yet. Click "+ New Server" to start.', skin_list_empty:'No skins saved yet.',
     add_ms:'+ Microsoft', add_offline:'+ Offline',
-    first_run_eyebrow:'WELCOME TO CRUX CLIENT', first_run_title:'Welcome to Crux Client', first_run_desc:'Link your Microsoft account to start playing. Profiles, skins and settings stay connected to it.', first_run_step1:'Sign in with Microsoft', first_run_step2:'Pick or create a profile', first_run_step3:'Launch Minecraft', first_run_login:'Sign in with Microsoft', first_run_note:'You can switch accounts later on the Account page.',
+    first_run_eyebrow:'WELCOME TO CRUX CLIENT', first_run_title:'Welcome to Crux Client', first_run_desc:'Link your Microsoft account to start playing. Profiles, skins and settings stay connected to it.', first_run_step1:'Sign in with Microsoft', first_run_step2:'Pick or create a profile', first_run_step3:'Launch Minecraft', first_run_login:'Sign in with Microsoft', first_run_note:'You can switch accounts later on the Account page.', relogin_title:'Session expired', relogin_msg:'The Microsoft account {name} is no longer valid and was removed. Please sign in again.', relogin_login:'Sign in again', relogin_later:'Later', toast_account_invalid:'Session expired for {name}. Please sign in again.',
     ver_latest:'— Latest Release —', ver_latest_snap:'— Latest Snapshot —', ver_latest_prerelease:'— Latest Pre-release —', ver_releases:'Releases', ver_snapshots:'Snapshots', ver_other:'Other',
     profile_name:'Name:', profile_version:'Minecraft Version:', profile_section:'Section:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Resource Packs', profile_shaderpacks:'Shader Packs', profile_worlds:'Worlds',
@@ -2682,7 +2727,7 @@ const LANGS={
     no_mods:'Keine Mods installiert.', no_profiles:'Keine Profile vorhanden.', no_accounts:'Keine Konten vorhanden.', no_instances:'Keine Instanzen gestartet.',
     no_custom_capes:'Noch keine Custom Capes gespeichert.', no_servers:'Noch keine Server erstellt. Klicke auf "+ Neuer Server" zum Starten.', skin_list_empty:'Noch keine Skins gespeichert.',
     add_ms:'+ Microsoft', add_offline:'+ Offline',
-    first_run_eyebrow:'WILLKOMMEN BEI CRUX CLIENT', first_run_title:'Willkommen bei Crux Client', first_run_desc:'Verbinde deinen Microsoft-Account, um zu spielen. Profile, Skins und Einstellungen bleiben daran gekoppelt.', first_run_step1:'Mit Microsoft anmelden', first_run_step2:'Profil auswählen oder erstellen', first_run_step3:'Minecraft starten', first_run_login:'Mit Microsoft anmelden', first_run_note:'Du kannst den Account später auf der Account-Seite wechseln.',
+    first_run_eyebrow:'WILLKOMMEN BEI CRUX CLIENT', first_run_title:'Willkommen bei Crux Client', first_run_desc:'Verbinde deinen Microsoft-Account, um zu spielen. Profile, Skins und Einstellungen bleiben daran gekoppelt.', first_run_step1:'Mit Microsoft anmelden', first_run_step2:'Profil auswählen oder erstellen', first_run_step3:'Minecraft starten', first_run_login:'Mit Microsoft anmelden', first_run_note:'Du kannst den Account später auf der Account-Seite wechseln.', relogin_title:'Sitzung abgelaufen', relogin_msg:'Der Microsoft-Account {name} ist nicht mehr gültig und wurde entfernt. Bitte melde dich erneut an.', relogin_login:'Erneut anmelden', relogin_later:'Später', toast_account_invalid:'Sitzung abgelaufen für {name}. Bitte erneut anmelden.',
     ver_latest:'— Neueste Version —', ver_latest_snap:'— Neuester Snapshot —', ver_latest_prerelease:'— Neueste Vorabversion —', ver_releases:'Vollversionen', ver_snapshots:'Snapshots', ver_other:'Sonstige',
     profile_name:'Name:', profile_version:'Minecraft-Version:', profile_section:'Bereich:', profile_mods:'Mods', profile_datapacks:'Datenpakete',
     profile_resourcepacks:'Ressourcenpakete', profile_shaderpacks:'Shaderpakete', profile_worlds:'Welten',
@@ -2842,7 +2887,7 @@ const LANGS={
     no_mods:'Aucun mod installé.', no_profiles:'Aucun profil.', no_accounts:'Aucun compte.', no_instances:'Aucune instance.',
     no_custom_capes:'Aucune cape custom sauvegardée.', no_servers:'Aucun serveur créé. Cliquez sur "+ Nouveau Serveur" pour commencer.', skin_list_empty:'Aucun skin sauvegardé.',
     add_ms:'+ Microsoft', add_offline:'+ Hors ligne',
-    first_run_eyebrow:'BIENVENUE SUR CRUX CLIENT', first_run_title:'Bienvenue sur Crux Client', first_run_desc:'Connecte ton compte Microsoft pour commencer à jouer. Profils, skins et paramètres y restent associés.', first_run_step1:'Se connecter avec Microsoft', first_run_step2:'Choisir ou créer un profil', first_run_step3:'Lancer Minecraft', first_run_login:'Se connecter avec Microsoft', first_run_note:'Tu pourras changer de compte plus tard dans l’onglet Compte.',
+    first_run_eyebrow:'BIENVENUE SUR CRUX CLIENT', first_run_title:'Bienvenue sur Crux Client', first_run_desc:'Connecte ton compte Microsoft pour commencer à jouer. Profils, skins et paramètres y restent associés.', first_run_step1:'Se connecter avec Microsoft', first_run_step2:'Choisir ou créer un profil', first_run_step3:'Lancer Minecraft', first_run_login:'Se connecter avec Microsoft', first_run_note:'Tu pourras changer de compte plus tard dans l’onglet Compte.', relogin_title:'Session expirée', relogin_msg:'Le compte Microsoft {name} n’est plus valide et a été supprimé. Connecte-toi à nouveau.', relogin_login:'Se connecter à nouveau', relogin_later:'Plus tard', toast_account_invalid:'Session expirée pour {name}. Connecte-toi à nouveau.',
     ver_latest:'— Dernière version —', ver_latest_snap:'— Dernier instantané —', ver_latest_prerelease:'— Dernière préversion —', ver_releases:'Versions', ver_snapshots:'Instantanés', ver_other:'Autres',
     profile_name:'Nom :', profile_version:'Version Minecraft :', profile_section:'Section :', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Packs de ressources', profile_shaderpacks:'Packs de shaders', profile_worlds:'Mondes',
@@ -2999,7 +3044,7 @@ const LANGS={
     no_mods:'Sin mods instalados.', no_profiles:'Sin perfiles.', no_accounts:'Sin cuentas.', no_instances:'Sin instancias.',
     no_custom_capes:'No hay capas personalizadas guardadas.', no_servers:'No hay servidores creados. Haz clic en "+ Nuevo Servidor" para empezar.', skin_list_empty:'No hay skins guardados.',
     add_ms:'+ Microsoft', add_offline:'+ Sin conexión',
-    first_run_eyebrow:'BIENVENIDO A CRUX CLIENT', first_run_title:'Bienvenido a Crux Client', first_run_desc:'Vincula tu cuenta de Microsoft para empezar a jugar. Los perfiles, skins y ajustes quedan asociados a ella.', first_run_step1:'Iniciar sesión con Microsoft', first_run_step2:'Elegir o crear un perfil', first_run_step3:'Iniciar Minecraft', first_run_login:'Iniciar sesión con Microsoft', first_run_note:'Podrás cambiar de cuenta más tarde en la pestaña Cuenta.',
+    first_run_eyebrow:'BIENVENIDO A CRUX CLIENT', first_run_title:'Bienvenido a Crux Client', first_run_desc:'Vincula tu cuenta de Microsoft para empezar a jugar. Los perfiles, skins y ajustes quedan asociados a ella.', first_run_step1:'Iniciar sesión con Microsoft', first_run_step2:'Elegir o crear un perfil', first_run_step3:'Iniciar Minecraft', first_run_login:'Iniciar sesión con Microsoft', first_run_note:'Podrás cambiar de cuenta más tarde en la pestaña Cuenta.', relogin_title:'Sesión caducada', relogin_msg:'La cuenta de Microsoft {name} ya no es válida y se eliminó. Inicia sesión de nuevo.', relogin_login:'Iniciar sesión de nuevo', relogin_later:'Más tarde', toast_account_invalid:'Sesión caducada para {name}. Inicia sesión de nuevo.',
     ver_latest:'— Última versión —', ver_latest_snap:'— Último instantáneo —', ver_latest_prerelease:'— Última versión preliminar —', ver_releases:'Versiones', ver_snapshots:'Instantáneas', ver_other:'Otras',
     profile_name:'Nombre:', profile_version:'Versión de Minecraft:', profile_section:'Sección:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Paquetes de recursos', profile_shaderpacks:'Paquetes de shaders', profile_worlds:'Mundos',
@@ -4346,6 +4391,25 @@ function renderRecentList(){
 document.getElementById('recent-clear-btn').addEventListener('click',()=>{ recentHistory=[]; settings.recentHistory=[]; saveSettings(); renderRecentList(); });
 
 // ── CAPES ──
+// Ein abgelaufener Account wird einmalig entfernt. Danach: Error-Toast unten
+// rechts + Relogin-Dialog. Der First-Run-Screen bleibt davon unberuehrt.
+const _invalidAccounts = new Set();
+async function handleInvalidAccount(acc, reason){
+  if(!acc || _invalidAccounts.has(acc.id)) return;
+  _invalidAccounts.add(acc.id);
+  console.warn('[AUTH] Removing invalid account:', acc.name || acc.id, reason || '');
+  const name = acc.name || 'Account';
+  accounts = accounts.filter(a => a.id !== acc.id);
+  if(settings && settings.selectedAccount === acc.id) settings.selectedAccount = accounts[0]?.id || null;
+  ipcRenderer.send('save-accounts', accounts);
+  saveSettings();
+  renderAccountList();
+  updateSkinDisplay();
+  if(typeof updateAccountTabHead === 'function') updateAccountTabHead();
+  showToast(t('toast_account_invalid').replace('{name}', name), 'error', 5000);
+  showReloginPrompt(acc);
+  setTimeout(() => _invalidAccounts.delete(acc.id), 1500);
+}
 async function refreshAccountToken(acc){
   if(!acc || !acc.accessToken) return acc;
   try {
@@ -4358,6 +4422,7 @@ async function refreshAccountToken(acc){
       if (changed) ipcRenderer.send('save-accounts', accounts);
       return acc;
     }
+    if (r && r.invalid) await handleInvalidAccount(acc, r.error);
     return null;
   } catch { return null; }
 }
@@ -7013,7 +7078,7 @@ async function loginMicrosoft(btn){
     accounts.push({id,name:result.name,uuid:result.uuid,type:'Microsoft',accessToken:result.accessToken,refreshToken:result.refreshToken,skinUrl:result.skinUrl,skinModel:result.skinModel||'classic'});
     if(!settings.selectedAccount)settings.selectedAccount=id;
     ipcRenderer.send('save-accounts',accounts); saveSettings(); renderAccountList(); updateSkinDisplay();
-    hideFirstRunAfterLogin();
+    afterMicrosoftLogin();
     document.getElementById('status').textContent='⍓ Logged in as '+result.name;
   } catch(e) {
     document.getElementById('status').textContent='Login error: '+e.message;
@@ -7022,6 +7087,9 @@ async function loginMicrosoft(btn){
 }
 document.getElementById('btn-add-ms').addEventListener('click',()=>loginMicrosoft(document.getElementById('btn-add-ms')));
 document.getElementById('first-run-ms-btn').addEventListener('click',(e)=>loginMicrosoft(e.currentTarget));
+document.getElementById('relogin-ms-btn').addEventListener('click',(e)=>loginMicrosoft(e.currentTarget));
+document.getElementById('relogin-close').addEventListener('click',closeReloginPrompt);
+document.getElementById('relogin-later').addEventListener('click',closeReloginPrompt);
 
 function getSelectedAccount(){ return accounts.find(a=>a.id===settings.selectedAccount)||accounts[0]||null; }
 
