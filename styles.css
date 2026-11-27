@@ -909,6 +909,17 @@ hr { border: none; border-top: 1px solid var(--border); margin: var(--sp-4) 0; }
 .btn-curseforge:hover { background: color-mix(in srgb, var(--curseforge) 16%, transparent); border-color: var(--curseforge); }
 .btn-ms { background: #0078d4; border-color: #0078d4; color: #fff; }
 .btn-ms:hover { background: #1a8ae0; border-color: #1a8ae0; }
+.btn-discord { background: #5865f2; border-color: #5865f2; color: #fff; }
+.btn-discord:hover { background: #4752c4; border-color: #4752c4; }
+.bugreport-community {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .6rem;
+}
 .btn-dlall { border-color: var(--border-strong); color: var(--muted); }
 .btn-dlall.on { border-color: color-mix(in srgb, var(--ok) 45%, transparent); color: var(--ok); }
 .btn-dlall:hover { border-color: var(--ok); color: var(--ok); }
@@ -3245,6 +3256,8 @@ body.light .btn-primary { background: linear-gradient(135deg, var(--acc-light), 
 body.light .btn-modrinth { background: #f0fff6; color: #0a6b34; border-color: var(--ok); }
 body.light .btn-curseforge { background: #fff5f0; color: #a83500; border-color: var(--curseforge); }
 body.light .btn-ms { background: #0078d4; color: #fff; border-color: #0078d4; }
+body.light .btn-discord { background: #5865f2; color: #fff; border-color: #5865f2; }
+body.light .bugreport-community { border-top-color: var(--border-strong); }
 body.light .rail-add { background: linear-gradient(135deg, var(--acc-light), var(--acc)); border: none; color: var(--acc-on); box-shadow: 0 4px 12px -6px var(--acc-glow); }
 body.light .rail-add:hover { background: linear-gradient(135deg, var(--acc), var(--acc-light)); box-shadow: 0 6px 16px -8px var(--acc-glow); transform: translateY(-1px); }
 body.light input, body.light textarea { background: var(--surface-1); color: var(--text); border-color: var(--border-strong); }
@@ -3532,12 +3545,15 @@ body.glass .first-run-sub, body.glass .first-run-note { color: var(--gs-mut) !im
 body.glass .first-run-eyebrow { color: var(--acc) !important; }
 body.glass .first-run-steps li::before { color: var(--gs-tx) !important; }
 body.glass #first-run-ms-btn { background: #0078d4 !important; border-color: #0078d4 !important; color: #fff !important; }
+body.glass .btn-discord { background: #5865f2 !important; border-color: #5865f2 !important; }
+body.glass .btn-discord:hover { background: #4752c4 !important; border-color: #4752c4 !important; }
+body.glass .bugreport-community { border-top-color: var(--gs-bd) !important; }
 
 /* Glas-Sicherheitsnetz: hart kodierte Textfarben aus JS-Markup auf die Theme-Farbe ziehen */
 body.glass, body.glass *, body.glass *::before, body.glass *::after { color: var(--gs-tx) !important; }
 body.glass .btn-primary, body.glass .mod-install-btn, body.glass .profile-sec-btn.active,
 body.glass .modal-tab.active, body.glass .tb-btn.active, body.glass .settings-nav button.active,
-body.glass .skin-editor-toolbar .tool-btn.active { color: #fff !important; }
+body.glass .skin-editor-toolbar .tool-btn.active, body.glass .btn-discord { color: #fff !important; }
 body.glass .status-online, body.glass .running, body.glass .online, body.glass .success-text,
 body.glass .profile-share-btn, body.glass .btn-dlall.on { color: #0d7a3d !important; }
 body.glass .status-offline, body.glass .stopped, body.glass .offline { color: #6b7684 !important; }

@@ -1273,6 +1273,10 @@
       </label>
       <button class="btn btn-primary" id="bugreport-send-btn" data-i18n="btn_report_send">Send Report</button>
       <p class="status-text" id="bugreport-status" style="min-height:1.2em"></p>
+      <div class="bugreport-community">
+        <button class="btn btn-discord" id="bugreport-discord-btn" data-i18n="btn_join_discord">Join our Discord</button>
+        <p class="hint" data-i18n="bugreport_discord_hint">Questions or just want to chat? Come say hi on Discord.</p>
+      </div>
     </div>
 
     <!-- ── FRIENDS & CHAT ── -->
@@ -1706,6 +1710,8 @@
 <script>
 const { ipcRenderer, shell } = require('electron');
 const path = require('path');
+// Ein Discord-Link fuer alle Stellen (Bug-Report, Ban-Appeal, ...).
+const CRUX_DISCORD = 'https://discord.gg/dd5R3nDQc';
 function rlog(msg){ try{ ipcRenderer.send('renderer-log', msg); }catch{} }
 window.onerror = (msg, src, line, col, err) => { rlog(`ERROR: ${msg} at ${src}:${line}:${col} ${err?.stack||''}`); };
 window.addEventListener('unhandledrejection', (e) => { rlog(`UNHANDLED PROMISE: ${e.reason?.stack||e.reason}`); });
@@ -2654,7 +2660,7 @@ const LANGS={
     bugreport_cat_mods:'Mods', bugreport_cat_skincape:'Skin / Cape', bugreport_cat_installer:'Installer',
     bugreport_cat_servers:'Servers', bugreport_cat_other:'Other',
     bugreport_title:'Title', bugreport_desc_label:'Description', bugreport_include_logs:'Attach launcher & game logs (recommended)',
-    btn_report_send:'📧 Send Report',
+    btn_report_send:'📧 Send Report', btn_join_discord:'💬 Join our Discord', bugreport_discord_hint:'Questions or just want to chat? Come say hi on Discord.',
     br_sending:'Sending report...', br_sent:'Report sent. Thank you!', br_no_webhook:'No webhook configured. Set it under Settings → Bug Reports.',
     br_failed:'Sending failed (HTTP {code}). Check the webhook URL in Settings.',
     sec_social:'Bug Reports',
@@ -2814,7 +2820,7 @@ const LANGS={
     bugreport_cat_mods:'Mods', bugreport_cat_skincape:'Skin / Cape', bugreport_cat_installer:'Installer',
     bugreport_cat_servers:'Server', bugreport_cat_other:'Sonstiges',
     bugreport_title:'Titel', bugreport_desc_label:'Beschreibung', bugreport_include_logs:'Launcher- & Spiellogs anhängen (empfohlen)',
-    btn_report_send:'📧 Report senden',
+    btn_report_send:'📧 Report senden', btn_join_discord:'💬 Unserem Discord beitreten', bugreport_discord_hint:'Fragen oder einfach ein bisschen chatten? Komm auf unseren Discord.',
     br_sending:'Report wird gesendet...', br_sent:'Report gesendet. Danke!', br_no_webhook:'Kein Webhook konfiguriert. Lege ihn unter Einstellungen → Bug-Reports fest.',
     br_failed:'Senden fehlgeschlagen (HTTP {code}). Íberprüfe die Webhook-URL in den Einstellungen.',
     sec_social:'Bug-Reports',
@@ -2971,7 +2977,7 @@ const LANGS={
     bugreport_cat_mods:'Mods', bugreport_cat_skincape:'Skin / Cape', bugreport_cat_installer:'Installer',
     bugreport_cat_servers:'Serveurs', bugreport_cat_other:'Autre',
     bugreport_title:'Titre', bugreport_desc_label:'Description', bugreport_include_logs:'Joindre les journaux du launcher et du jeu (recommandé)',
-    btn_report_send:'📧 Envoyer le rapport',
+    btn_report_send:'📧 Envoyer le rapport', btn_join_discord:'💬 Rejoindre notre Discord', bugreport_discord_hint:'Une question ou juste envie de discuter ? Rejoins-nous sur Discord.',
     br_sending:'Envoi du rapport...', br_sent:'Rapport envoyé. Merci !', br_no_webhook:'Aucun webhook configuré. Définissez-le dans Paramètres → Rapports de bugs.',
     br_failed:'Échec de l\'envoi (HTTP {code}). Vérifiez l\'URL du webhook dans les Paramètres.',
     sec_social:'Rapports de bugs',
@@ -3123,7 +3129,7 @@ const LANGS={
     bugreport_cat_mods:'Mods', bugreport_cat_skincape:'Skin / Cape', bugreport_cat_installer:'Instalador',
     bugreport_cat_servers:'Servidores', bugreport_cat_other:'Otro',
     bugreport_title:'Título', bugreport_desc_label:'Descripción', bugreport_include_logs:'Adjuntar registros del launcher y del juego (recomendado)',
-    btn_report_send:'📧 Enviar informe',
+    btn_report_send:'📧 Enviar informe', btn_join_discord:'💬 Únete a nuestro Discord', bugreport_discord_hint:'¿Dudas o solo quieres charlar? Pásate por nuestro Discord.',
     br_sending:'Enviando informe...', br_sent:'Informe enviado. ¡Gracias!', br_no_webhook:'No hay webhook configurado. Defínelo en Ajustes → Informes de errores.',
     br_failed:'Error al enviar (HTTP {code}). Comprueba la URL del webhook en Ajustes.',
     sec_social:'Informes de errores',
@@ -6779,7 +6785,7 @@ function applyNoticeState(){
 })();
 
 // Discord-Einladung für Bann-Appeals
-const BAN_APPEAL_DISCORD='https://discord.gg/dd5R3nDQc';
+const BAN_APPEAL_DISCORD=CRUX_DISCORD;
 var _banNoticeAcceptedKey=null;
 
 function selectedBan(){
@@ -12330,6 +12336,9 @@ async function chatLoop(){
 // ────────────────────────────────────────
 // BUG REPORT (no GitHub account required)
 // ────────────────────────────────────────
+document.getElementById('bugreport-discord-btn').addEventListener('click', () => {
+  try { shell.openExternal(CRUX_DISCORD); } catch (err) { console.error(err); }
+});
 document.getElementById('bugreport-send-btn').addEventListener('click', async () => {
   const titleEl=document.getElementById('bugreport-title');
   const descEl=document.getElementById('bugreport-desc');
