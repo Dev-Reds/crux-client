@@ -369,12 +369,6 @@ body:not(.tabs-left):not(.tabs-right) .toolbar > .tb-btn[data-page="logs-page"] 
 }
 .message-bell-btn.is-active .tb-ic { opacity: 1; }
 .message-bell--above-fab { bottom: 88px; }
-body.tabs-left .message-bell--toolbar,
-body.tabs-right .message-bell--toolbar {
-  width: 100%;
-  height: auto;
-  min-height: calc(var(--tb) * .8);
-}
 
 #settings-fab {
   margin-left: auto;
@@ -428,6 +422,20 @@ body.tabs-left .toolbar, body.tabs-right .toolbar {
 body.tabs-left .toolbar { border-right: 1px solid var(--glass-border); order: 0; justify-content: flex-start; }
 body.tabs-right .toolbar { border-left: 1px solid var(--glass-border); order: 99; justify-content: flex-start; }
 body.tabs-left .tb-btn, body.tabs-right .tb-btn { flex: 0 0 auto; width: 100%; height: auto; min-height: calc(var(--tb) * .8); }
+/* Die Glocke bleibt in der vertikalen Tab-Leiste kompakt (Quadrat) statt
+   die ganze Rail-Breite zu fuellen. Der schwebende Kreis (corner/custom)
+   darf von der Rail-Regel genauso wenig ueberschrieben werden wie beim
+   Settings-Button — sonst wird er zur gestreckten Pill. */
+body.tabs-left .message-bell--toolbar, body.tabs-right .message-bell--toolbar {
+  width: calc(var(--tb) * .74);
+  height: calc(var(--tb) * .74);
+  min-height: 0;
+  align-self: center;
+}
+body.tabs-left .message-bell--corner, body.tabs-left .message-bell--custom,
+body.tabs-right .message-bell--corner, body.tabs-right .message-bell--custom {
+  width: 56px; height: 56px; min-height: 0;
+}
 /* Nur der Button IN der Rail soll die volle Breite haben. Der schwebende
    Kreis (corner/custom) bleibt davon unberuehrt, sonst wird er zur
    gestreckten Pill ueber die ganze Fensterbreite. */
