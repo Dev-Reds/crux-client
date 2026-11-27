@@ -2401,6 +2401,20 @@ function countWorlds(gameDir){
       .filter(e => e.isDirectory() && fs.existsSync(path.join(gameDir, 'saves', e.name, 'level.dat'))).length;
   } catch { return 0; }
 }
+// Liefert die echten Welten eines Save-Ordners (Ordnername + LevelName aus
+// level.dat), damit der Import die Auswahl des Nutzers beruecksichtigen kann.
+function listWorldEntries(savesRoot){
+  const out = [];
+  try {
+    for (const en of fs.readdirSync(savesRoot, { withFileTypes: true })) {
+      if (!en.isDirectory()) continue;
+      const dat = path.join(savesRoot, en.name, 'level.dat');
+      if (!fs.existsSync(dat)) continue;
+      out.push({ folder: en.name, name: readLevelNameFromDat(dat) || en.name });
+    }
+  } catch {}
+  return out.sort((a, b) => String(a.name || a.folder).localeCompare(String(b.name || b.folder)));
+}
 function countResourcePacks(gameDir, mcDir){
   try {
     const rpDir = fs.existsSync(path.join(gameDir, 'resourcepacks')) ? path.join(gameDir, 'resourcepacks') : path.join(mcDir, 'resourcepacks');
@@ -2475,6 +2489,8 @@ ipcMain.handle('scan-mc-launcher-instances', async () => {
         }
         const hasOptions = fs.existsSync(path.join(gameDir, 'options.txt')) || fs.existsSync(path.join(mcDir, 'options.txt'));
         const hasServers = fs.existsSync(path.join(gameDir, 'servers.dat')) || fs.existsSync(path.join(mcDir, 'servers.dat'));
+        const savesRoot = fs.existsSync(path.join(gameDir, 'saves')) ? path.join(gameDir, 'saves') : path.join(mcDir, 'saves');
+        const worldList = listWorldEntries(savesRoot);
         instances.push({
           key: String(key),
           name: launcherProfileName(key, pr),
@@ -2484,7 +2500,8 @@ ipcMain.handle('scan-mc-launcher-instances', async () => {
           mcDir,
           gameDir,
           customGameDir: path.resolve(gameDir) !== path.resolve(mcDir),
-          worlds: countWorlds(gameDir) || countWorlds(mcDir),
+          worlds: worldList.length,
+          worldList,
           packs: countResourcePacks(gameDir, mcDir),
           hasOptions,
           hasServers,
@@ -2599,21 +2616,39 @@ ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
         await copyFileTo(src, [path.join(gDir, extra), path.join(dest, extra)]);
       }
 
-      let worlds = 0;
-      progress('Copying worlds…', 35);
       const savesRoot = fs.existsSync(path.join(gameDir, 'saves')) ? path.join(gameDir, 'saves') : path.join(mcDir, 'saves');
-      if (fs.existsSync(savesRoot)) {
-        for (const en of await fs.promises.readdir(savesRoot, { withFileTypes: true })) {
-          if (!en.isDirectory()) continue;
-          const src = path.join(savesRoot, en.name);
-          if (!fs.existsSync(path.join(src, 'level.dat'))) continue;
-          for (const dst of [path.join(dest, 'saves', en.name), path.join(gDir, 'saves', en.name)]) {
-            try { await fs.promises.mkdir(path.dirname(dst), { recursive: true }); await fs.promises.cp(src, dst, { recursive: true }); }
-            catch (e) { if (isNoSpaceError(e)) throw noSpaceError(dst, e); }
+      const availableWorlds = listWorldEntries(savesRoot);
+      // Alte Aufrufer ohne Auswahl behalten das Verhalten "alle Welten".
+      const wantedWorlds = Array.isArray(item.selectedWorlds)
+        ? availableWorlds.filter(w => item.selectedWorlds.includes(w.folder))
+        : availableWorlds;
+      const worldTotal = wantedWorlds.length;
+      const worldErrors = [];
+      let worlds = 0;
+      progress(worldTotal ? `Copying worlds… 0/${worldTotal}` : 'No worlds to copy', 35);
+      for (let wi = 0; wi < worldTotal; wi++) {
+        const w = wantedWorlds[wi];
+        const label = w.name && w.name !== w.folder ? `${w.name} (${w.folder})` : w.folder;
+        progress(`Copying world ${wi + 1}/${worldTotal}: ${label}`, 35 + Math.floor((wi / worldTotal) * 30));
+        const src = path.join(savesRoot, w.folder);
+        let copied = false;
+        for (const dst of [path.join(dest, 'saves', w.folder), path.join(gDir, 'saves', w.folder)]) {
+          try {
+            await fs.promises.mkdir(path.dirname(dst), { recursive: true });
+            await fs.promises.cp(src, dst, { recursive: true });
+            copied = true;
+          } catch (e) {
+            if (isNoSpaceError(e)) throw noSpaceError(dst, e);
+            const msg = `${w.folder}: ${e.message || e}`;
+            worldErrors.push(msg);
+            logDebug('[MC-IMPORT] world copy failed: ' + msg);
           }
-          worlds++;
         }
+        if (copied) worlds++;
+        // Event-Loop freigeben, damit die Progress-Nachricht sichtbar wird.
+        await new Promise(resolve => setImmediate(resolve));
       }
+      progress(`Worlds copied (${worlds}/${worldTotal})`, 70);
       // Weitere spielrelevante Ordner mitnehmen. Packs werden zusaetzlich im
       // Profil registriert, damit der Launcher sie beim Start aktiviert.
       const importedPacks = { datapacks: [], resourcePacks: [], shaderPacks: [] };
@@ -2648,7 +2683,7 @@ ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
         importedPacks: packCount
       };
       profiles.push(prof);
-      created.push({ profile: prof, worlds, settings, servers, packs: packCount });
+      created.push({ profile: prof, worlds, worldErrors, settings, servers, packs: packCount });
     }
     // Direkt schreiben, damit ein Persistenzfehler nicht als Erfolg gemeldet wird.
     try {

@@ -1656,15 +1656,27 @@ body.glass .drop-toast.bad { color: #c92a2a !important; }
 .mcimp-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
 .mcimp-toolbar .btn { width: auto; }
 .mcimp-list { display: flex; flex-direction: column; gap: .35rem; max-height: 38vh; overflow-y: auto; }
-.mcimp-row { display: flex; align-items: flex-start; gap: .6rem; padding: .5rem .6rem; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface-2); cursor: pointer; }
+.mcimp-row { display: flex; flex-wrap: wrap; align-items: flex-start; gap: .6rem; padding: .5rem .6rem; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface-2); }
 .mcimp-row:hover { border-color: var(--acc); }
+.mcimp-row__pick { display: flex; flex: 1 1 auto; align-items: flex-start; gap: .6rem; min-width: 0; cursor: pointer; }
 .mcimp-row input { width: 1.1em; height: 1.1em; flex: none; margin-top: .1rem; }
 .mcimp-row__main { flex: 1; min-width: 0; }
 .mcimp-row__name { font-weight: 700; font-size: var(--fs-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mcimp-row__meta { color: var(--muted); font-size: var(--fs-xs); margin-top: .1rem; }
 .mcimp-row__flags { color: var(--acc); font-size: var(--fs-xs); margin-top: .15rem; }
+.mcimp-worlds-toggle { flex: none; align-self: flex-start; white-space: nowrap; }
+.mcimp-worlds { display: flex; flex: 1 1 100%; flex-direction: column; gap: .35rem; margin-top: .2rem; padding: .55rem; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface-1); }
+.mcimp-worlds[hidden] { display: none; }
+.mcimp-worlds-actions { display: flex; flex-wrap: wrap; gap: .35rem; }
+.mcimp-worlds-actions .btn { width: auto; }
+.mcimp-world-row { display: flex; align-items: center; gap: .45rem; min-width: 0; cursor: pointer; }
+.mcimp-world-row input { width: 1em; height: 1em; margin-top: 0; }
+.mcimp-world-row__name { font-size: var(--fs-xs); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mcimp-world-row__folder { color: var(--muted); font-size: var(--fs-xs); margin-left: auto; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 body.glass .mcimp-row { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; }
 body.glass .mcimp-row__flags { color: var(--acc) !important; }
+body.glass .mcimp-worlds { background: var(--gs-panel) !important; border-color: var(--gs-bd) !important; }
+body.glass .mcimp-world-row__folder { color: var(--gs-mut) !important; }
 
 body.glass .drop-confirm-file { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; }
 body.glass .drop-confirm-dest { color: var(--acc) !important; }
