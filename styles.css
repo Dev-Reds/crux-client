@@ -3214,9 +3214,9 @@ body.glass .skin-editor-toolbar .tool-btn { background: rgba(255, 255, 255, .3);
 body.glass .skin-editor-toolbar .tool-btn:hover { background: rgba(255, 255, 255, .48); }
 body.glass .skin-editor-toolbar .sep { background: var(--gs-bd); }
 body.glass .skin-editor-canvas { border-color: var(--gs-bd); }
-body.glass .svc-toast { background: rgba(255, 255, 255, .6) !important; border-color: rgba(255, 90, 90, .35); backdrop-filter: var(--gs-blur); -webkit-backdrop-filter: var(--gs-blur); }
-body.glass .svc-toast.toast-ok { background: rgba(255, 255, 255, .68) !important; border-color: rgba(53, 208, 127, .35) !important; color: #0a5c36 !important; }
-body.glass .svc-toast.toast-muted { background: rgba(255, 255, 255, .6) !important; border-color: rgba(0, 0, 0, .14) !important; color: #14171c !important; }
+body.glass .svc-toast { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; backdrop-filter: var(--gs-blur); -webkit-backdrop-filter: var(--gs-blur); }
+body.glass .svc-toast.toast-ok { background: var(--gs-list) !important; border-color: color-mix(in srgb, var(--ok) 45%, var(--gs-bd)) !important; color: var(--gs-tx) !important; }
+body.glass .svc-toast.toast-muted { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; color: var(--gs-tx) !important; }
 body.glass .svc-toast.toast-ok .svc-dot { background: var(--ok) !important; }
 body.glass .svc-toast.toast-muted .svc-dot { background: var(--muted) !important; }
 body.glass .gbg-preset { background: var(--gs-panel); border-color: var(--gs-bd); }

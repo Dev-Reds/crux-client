@@ -1681,6 +1681,9 @@ document.addEventListener('drop', _cacheUserActivity, true);
 function showToast(message, kind = 'ok', duration = 2600){
   const box = document.getElementById('svc-toasts');
   if(!box) return null;
+  // Immer nur EIN kurzer Toast: ein neuer ersetzt den alten sofort,
+  // statt dass mehrere Dinge gleichzeitig einfliegen.
+  box.querySelectorAll('.svc-toast.toast-transient').forEach(el => el.remove());
   const d = document.createElement('div');
   d.className = 'svc-toast toast-transient ' + (kind === 'muted' ? 'toast-muted' : 'toast-ok');
   d.innerHTML = '<span class="svc-dot"></span>';
