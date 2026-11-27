@@ -23,7 +23,6 @@
     <button class="tb-btn" data-page="cape-page" data-i18n="tab_cape"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 5.5 6 10l2-1v11h8V9l2 1 2-4.5L16 3l-4 2-4-2Z"/></svg></button>
     <!-- <button class="tb-btn" data-page="friends-page" data-i18n="tab_friends">Friends</button> -->
     <button class="tb-btn" data-page="logs-page" data-i18n="tab_logs"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></svg><span id="running-badge" class="tb-badge" style="display:none"></span></button>
-    <button class="tb-btn" data-page="messages-page" data-i18n="tab_messages"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 3V5Z"/><path d="M8 9h8M8 12h5"/></svg><span id="messages-badge" class="tb-badge tb-badge--count" style="display:none"></span></button>
     <button class="tb-btn" data-page="servers-page" data-i18n="tab_servers"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg></button>
     <button class="tb-btn" data-page="features-page" data-i18n="tab_features" style="display:none"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4L12 3Z"/><path d="m18.5 15 .9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1Z"/></svg></button>
     <button class="tb-btn" data-page="bugreport-page" id="tb-bugreport-btn" data-i18n="tab_bugreport"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3Z"/><path d="M9 21h6M9.5 13h5"/></svg></button>
@@ -2265,6 +2264,9 @@ function showPage(id){
   const recentCol=document.getElementById('launch-recent-col');
   if(recentCol) recentCol.style.display = id === 'launch-page' ? '' : 'none';
   if(id==='messages-page' && typeof markMessagesRead==='function') markMessagesRead();
+  // Nachrichten haben keinen Toolbar-Tab mehr — die Glocke ist der Zugang
+  // und zeigt jetzt auch den aktiven Zustand.
+  if(typeof syncBellActive==='function') syncBellActive();
   document.querySelectorAll('.tb-btn[data-page]').forEach(b=>{
     const on=b.dataset.page===id; b.classList.toggle('active',on);
     if(on){ const col=ACCENTS[currentAccentIdx]; const lightText=[3,4,5,6,15].includes(currentAccentIdx);
@@ -10126,6 +10128,11 @@ function applyFabPosition(){
 // Die Nachrichten-Glocke steht standardmaessig direkt ueber dem Settings-Button.
 // In den Einstellungen kann sie nach unten rechts ODER frei (X/Y von unten
 // links, wie beim Settings-Button) gesetzt werden — z.B. unten links.
+function syncBellActive(){
+  const bell = document.getElementById('message-bell-btn');
+  if(!bell) return;
+  bell.classList.toggle('is-active', !!document.getElementById('messages-page')?.classList.contains('active'));
+}
 function applyBellPosition(){
   const bell = document.getElementById('message-bell-btn');
   const screen = document.getElementById('launcher-screen');
@@ -10138,26 +10145,25 @@ function applyBellPosition(){
   if(pos === 'settings' && fabInToolbar){
     bell.className = 'tb-btn message-bell--toolbar';
     fab.parentElement.insertBefore(bell, fab);
-    return;
-  }
-  if(pos === 'custom'){
+  } else if(pos === 'custom'){
     bell.className = 'tb-btn message-bell--custom';
     bell.style.left = (settings.bellX == null ? 20 : settings.bellX) + 'px';
     bell.style.bottom = (settings.bellY == null ? 20 : settings.bellY) + 'px';
     screen.appendChild(bell);
-    return;
+  } else {
+    bell.className = 'tb-btn message-bell--corner';
+    screen.appendChild(bell);
+    if(fab && fab.classList.contains('fab-position-custom')){
+      bell.classList.add('message-bell--above-fab');
+      bell.style.top = Math.max(0, (parseInt(fab.style.top, 10) || 20) - 66) + 'px';
+      bell.style.left = (parseInt(fab.style.left, 10) || 20) + 'px';
+      bell.style.right = 'auto';
+      bell.style.bottom = 'auto';
+    } else if(fab && (fab.classList.contains('fab-position-corner') || fab.classList.contains('fab-position-custom'))){
+      bell.classList.add('message-bell--above-fab');
+    }
   }
-  bell.className = 'tb-btn message-bell--corner';
-  screen.appendChild(bell);
-  if(fab && fab.classList.contains('fab-position-custom')){
-    bell.classList.add('message-bell--above-fab');
-    bell.style.top = Math.max(0, (parseInt(fab.style.top, 10) || 20) - 66) + 'px';
-    bell.style.left = (parseInt(fab.style.left, 10) || 20) + 'px';
-    bell.style.right = 'auto';
-    bell.style.bottom = 'auto';
-  } else if(fab && (fab.classList.contains('fab-position-corner') || fab.classList.contains('fab-position-custom'))){
-    bell.classList.add('message-bell--above-fab');
-  }
+  syncBellActive();
 }
 function syncBellPositionUI(){
   const sel = document.getElementById('bell-position-select');

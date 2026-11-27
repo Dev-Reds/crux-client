@@ -358,6 +358,16 @@ body:not(.tabs-left):not(.tabs-right) .toolbar > .tb-btn[data-page="logs-page"] 
 }
 .message-bell--corner { right: 20px; bottom: 20px; }
 .message-bell--corner:hover, .message-bell--custom:hover { background: rgba(255, 255, 255, .09); color: var(--text); border-color: var(--border-strong); }
+/* Nachrichten-Seite ist aktiv: Glocke markieren (Toolbar-Pill bzw. Akzent-Ring) */
+.message-bell--toolbar.is-active {
+  border-style: solid; border-color: transparent; border-width: 0 .35rem;
+  background: linear-gradient(135deg, var(--acc-light), var(--acc)) padding-box;
+  color: var(--acc-on);
+}
+.message-bell--corner.is-active, .message-bell--custom.is-active {
+  background: var(--acc-soft); border-color: var(--acc); color: var(--acc);
+}
+.message-bell-btn.is-active .tb-ic { opacity: 1; }
 .message-bell--above-fab { bottom: 88px; }
 body.tabs-left .message-bell--toolbar,
 body.tabs-right .message-bell--toolbar {
