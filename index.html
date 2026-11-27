@@ -2147,11 +2147,29 @@ function closeReloginPrompt(){
   const ov = document.getElementById('relogin-overlay');
   if(ov) ov.style.display = 'none';
 }
-function showReloginPrompt(acc){
+function hasAccountName(acc){
+  const name = acc && typeof acc.name === 'string' ? acc.name.trim() : '';
+  return name && name.toLowerCase() !== 'undefined' ? name : '';
+}
+function accountInvalidReason(reason){
+  const text = reason ? String(reason).trim() : '';
+  return text || t('reason_unknown');
+}
+function showReloginPrompt(acc, reason){
   const msg = document.getElementById('relogin-message');
   if(msg){
     delete msg.dataset.i18n;
-    msg.textContent = t('relogin_msg').replace('{name}', (acc && acc.name) || 'Account');
+    const name = hasAccountName(acc);
+    const why = accountInvalidReason(reason);
+    let text;
+    if(name){
+      text = t('relogin_msg').replace('{name}', name);
+      if(why) text += ' ' + t('reason_suffix').replace('{reason}', why);
+    } else {
+      // Kein Name vorhanden: stattdessen den Grund anzeigen, nie "undefined".
+      text = t('relogin_msg_reason').replace('{reason}', why);
+    }
+    msg.textContent = text;
   }
   const ov = document.getElementById('relogin-overlay');
   if(ov) ov.style.display = 'flex';
@@ -2567,7 +2585,7 @@ const LANGS={
     no_mods:'No mods installed yet.', no_profiles:'No profiles yet.', no_accounts:'No accounts added yet.', no_instances:'No instances launched yet.',
     no_custom_capes:'No custom capes saved yet.', no_servers:'No servers created yet. Click "+ New Server" to start.', skin_list_empty:'No skins saved yet.',
     add_ms:'+ Microsoft', add_offline:'+ Offline',
-    first_run_eyebrow:'WELCOME TO CRUX CLIENT', first_run_title:'Welcome to Crux Client', first_run_desc:'Link your Microsoft account to start playing. Profiles, skins and settings stay connected to it.', first_run_step1:'Sign in with Microsoft', first_run_step2:'Pick or create a profile', first_run_step3:'Launch Minecraft', first_run_login:'Sign in with Microsoft', first_run_note:'You can switch accounts later on the Account page.', relogin_title:'Session expired', relogin_msg:'The Microsoft account {name} is no longer valid and was removed. Please sign in again.', relogin_login:'Sign in again', relogin_later:'Later', toast_account_invalid:'Session expired for {name}. Please sign in again.',
+    first_run_eyebrow:'WELCOME TO CRUX CLIENT', first_run_title:'Welcome to Crux Client', first_run_desc:'Link your Microsoft account to start playing. Profiles, skins and settings stay connected to it.', first_run_step1:'Sign in with Microsoft', first_run_step2:'Pick or create a profile', first_run_step3:'Launch Minecraft', first_run_login:'Sign in with Microsoft', first_run_note:'You can switch accounts later on the Account page.', relogin_title:'Session expired', relogin_msg:'The Microsoft account {name} is no longer valid and was removed. Please sign in again.', relogin_login:'Sign in again', relogin_later:'Later', toast_account_invalid:'Session expired for {name}. Please sign in again.', toast_account_invalid_reason:'Account session invalid: {reason}', reason_suffix:'Reason: {reason}', reason_unknown:'Unknown error', relogin_msg_reason:'An account without a name was removed because its session is no longer valid. Reason: {reason}. Please sign in again.',
     ver_latest:'— Latest Release —', ver_latest_snap:'— Latest Snapshot —', ver_latest_prerelease:'— Latest Pre-release —', ver_releases:'Releases', ver_snapshots:'Snapshots', ver_other:'Other',
     profile_name:'Name:', profile_version:'Minecraft Version:', profile_section:'Section:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Resource Packs', profile_shaderpacks:'Shader Packs', profile_worlds:'Worlds',
@@ -2727,7 +2745,7 @@ const LANGS={
     no_mods:'Keine Mods installiert.', no_profiles:'Keine Profile vorhanden.', no_accounts:'Keine Konten vorhanden.', no_instances:'Keine Instanzen gestartet.',
     no_custom_capes:'Noch keine Custom Capes gespeichert.', no_servers:'Noch keine Server erstellt. Klicke auf "+ Neuer Server" zum Starten.', skin_list_empty:'Noch keine Skins gespeichert.',
     add_ms:'+ Microsoft', add_offline:'+ Offline',
-    first_run_eyebrow:'WILLKOMMEN BEI CRUX CLIENT', first_run_title:'Willkommen bei Crux Client', first_run_desc:'Verbinde deinen Microsoft-Account, um zu spielen. Profile, Skins und Einstellungen bleiben daran gekoppelt.', first_run_step1:'Mit Microsoft anmelden', first_run_step2:'Profil auswählen oder erstellen', first_run_step3:'Minecraft starten', first_run_login:'Mit Microsoft anmelden', first_run_note:'Du kannst den Account später auf der Account-Seite wechseln.', relogin_title:'Sitzung abgelaufen', relogin_msg:'Der Microsoft-Account {name} ist nicht mehr gültig und wurde entfernt. Bitte melde dich erneut an.', relogin_login:'Erneut anmelden', relogin_later:'Später', toast_account_invalid:'Sitzung abgelaufen für {name}. Bitte erneut anmelden.',
+    first_run_eyebrow:'WILLKOMMEN BEI CRUX CLIENT', first_run_title:'Willkommen bei Crux Client', first_run_desc:'Verbinde deinen Microsoft-Account, um zu spielen. Profile, Skins und Einstellungen bleiben daran gekoppelt.', first_run_step1:'Mit Microsoft anmelden', first_run_step2:'Profil auswählen oder erstellen', first_run_step3:'Minecraft starten', first_run_login:'Mit Microsoft anmelden', first_run_note:'Du kannst den Account später auf der Account-Seite wechseln.', relogin_title:'Sitzung abgelaufen', relogin_msg:'Der Microsoft-Account {name} ist nicht mehr gültig und wurde entfernt. Bitte melde dich erneut an.', relogin_login:'Erneut anmelden', relogin_later:'Später', toast_account_invalid:'Sitzung abgelaufen für {name}. Bitte erneut anmelden.', toast_account_invalid_reason:'Account-Sitzung ungültig: {reason}', reason_suffix:'Grund: {reason}', reason_unknown:'Unbekannter Fehler', relogin_msg_reason:'Ein Account ohne Namen wurde entfernt, weil seine Sitzung nicht mehr gültig ist. Grund: {reason}. Bitte melde dich erneut an.',
     ver_latest:'— Neueste Version —', ver_latest_snap:'— Neuester Snapshot —', ver_latest_prerelease:'— Neueste Vorabversion —', ver_releases:'Vollversionen', ver_snapshots:'Snapshots', ver_other:'Sonstige',
     profile_name:'Name:', profile_version:'Minecraft-Version:', profile_section:'Bereich:', profile_mods:'Mods', profile_datapacks:'Datenpakete',
     profile_resourcepacks:'Ressourcenpakete', profile_shaderpacks:'Shaderpakete', profile_worlds:'Welten',
@@ -2887,7 +2905,7 @@ const LANGS={
     no_mods:'Aucun mod installé.', no_profiles:'Aucun profil.', no_accounts:'Aucun compte.', no_instances:'Aucune instance.',
     no_custom_capes:'Aucune cape custom sauvegardée.', no_servers:'Aucun serveur créé. Cliquez sur "+ Nouveau Serveur" pour commencer.', skin_list_empty:'Aucun skin sauvegardé.',
     add_ms:'+ Microsoft', add_offline:'+ Hors ligne',
-    first_run_eyebrow:'BIENVENUE SUR CRUX CLIENT', first_run_title:'Bienvenue sur Crux Client', first_run_desc:'Connecte ton compte Microsoft pour commencer à jouer. Profils, skins et paramètres y restent associés.', first_run_step1:'Se connecter avec Microsoft', first_run_step2:'Choisir ou créer un profil', first_run_step3:'Lancer Minecraft', first_run_login:'Se connecter avec Microsoft', first_run_note:'Tu pourras changer de compte plus tard dans l’onglet Compte.', relogin_title:'Session expirée', relogin_msg:'Le compte Microsoft {name} n’est plus valide et a été supprimé. Connecte-toi à nouveau.', relogin_login:'Se connecter à nouveau', relogin_later:'Plus tard', toast_account_invalid:'Session expirée pour {name}. Connecte-toi à nouveau.',
+    first_run_eyebrow:'BIENVENUE SUR CRUX CLIENT', first_run_title:'Bienvenue sur Crux Client', first_run_desc:'Connecte ton compte Microsoft pour commencer à jouer. Profils, skins et paramètres y restent associés.', first_run_step1:'Se connecter avec Microsoft', first_run_step2:'Choisir ou créer un profil', first_run_step3:'Lancer Minecraft', first_run_login:'Se connecter avec Microsoft', first_run_note:'Tu pourras changer de compte plus tard dans l’onglet Compte.', relogin_title:'Session expirée', relogin_msg:'Le compte Microsoft {name} n’est plus valide et a été supprimé. Connecte-toi à nouveau.', relogin_login:'Se connecter à nouveau', relogin_later:'Plus tard', toast_account_invalid:'Session expirée pour {name}. Connecte-toi à nouveau.', toast_account_invalid_reason:'Session du compte invalide : {reason}', reason_suffix:'Raison : {reason}', reason_unknown:'Erreur inconnue', relogin_msg_reason:'Un compte sans nom a été supprimé car sa session n’est plus valide. Raison : {reason}. Connecte-toi à nouveau.',
     ver_latest:'— Dernière version —', ver_latest_snap:'— Dernier instantané —', ver_latest_prerelease:'— Dernière préversion —', ver_releases:'Versions', ver_snapshots:'Instantanés', ver_other:'Autres',
     profile_name:'Nom :', profile_version:'Version Minecraft :', profile_section:'Section :', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Packs de ressources', profile_shaderpacks:'Packs de shaders', profile_worlds:'Mondes',
@@ -3044,7 +3062,7 @@ const LANGS={
     no_mods:'Sin mods instalados.', no_profiles:'Sin perfiles.', no_accounts:'Sin cuentas.', no_instances:'Sin instancias.',
     no_custom_capes:'No hay capas personalizadas guardadas.', no_servers:'No hay servidores creados. Haz clic en "+ Nuevo Servidor" para empezar.', skin_list_empty:'No hay skins guardados.',
     add_ms:'+ Microsoft', add_offline:'+ Sin conexión',
-    first_run_eyebrow:'BIENVENIDO A CRUX CLIENT', first_run_title:'Bienvenido a Crux Client', first_run_desc:'Vincula tu cuenta de Microsoft para empezar a jugar. Los perfiles, skins y ajustes quedan asociados a ella.', first_run_step1:'Iniciar sesión con Microsoft', first_run_step2:'Elegir o crear un perfil', first_run_step3:'Iniciar Minecraft', first_run_login:'Iniciar sesión con Microsoft', first_run_note:'Podrás cambiar de cuenta más tarde en la pestaña Cuenta.', relogin_title:'Sesión caducada', relogin_msg:'La cuenta de Microsoft {name} ya no es válida y se eliminó. Inicia sesión de nuevo.', relogin_login:'Iniciar sesión de nuevo', relogin_later:'Más tarde', toast_account_invalid:'Sesión caducada para {name}. Inicia sesión de nuevo.',
+    first_run_eyebrow:'BIENVENIDO A CRUX CLIENT', first_run_title:'Bienvenido a Crux Client', first_run_desc:'Vincula tu cuenta de Microsoft para empezar a jugar. Los perfiles, skins y ajustes quedan asociados a ella.', first_run_step1:'Iniciar sesión con Microsoft', first_run_step2:'Elegir o crear un perfil', first_run_step3:'Iniciar Minecraft', first_run_login:'Iniciar sesión con Microsoft', first_run_note:'Podrás cambiar de cuenta más tarde en la pestaña Cuenta.', relogin_title:'Sesión caducada', relogin_msg:'La cuenta de Microsoft {name} ya no es válida y se eliminó. Inicia sesión de nuevo.', relogin_login:'Iniciar sesión de nuevo', relogin_later:'Más tarde', toast_account_invalid:'Sesión caducada para {name}. Inicia sesión de nuevo.', toast_account_invalid_reason:'Sesión de cuenta no válida: {reason}', reason_suffix:'Motivo: {reason}', reason_unknown:'Error desconocido', relogin_msg_reason:'Se eliminó una cuenta sin nombre porque su sesión ya no es válida. Motivo: {reason}. Inicia sesión de nuevo.',
     ver_latest:'— Última versión —', ver_latest_snap:'— Último instantáneo —', ver_latest_prerelease:'— Última versión preliminar —', ver_releases:'Versiones', ver_snapshots:'Instantáneas', ver_other:'Otras',
     profile_name:'Nombre:', profile_version:'Versión de Minecraft:', profile_section:'Sección:', profile_mods:'Mods', profile_datapacks:'Datapacks',
     profile_resourcepacks:'Paquetes de recursos', profile_shaderpacks:'Paquetes de shaders', profile_worlds:'Mundos',
@@ -4397,8 +4415,9 @@ const _invalidAccounts = new Set();
 async function handleInvalidAccount(acc, reason){
   if(!acc || _invalidAccounts.has(acc.id)) return;
   _invalidAccounts.add(acc.id);
-  console.warn('[AUTH] Removing invalid account:', acc.name || acc.id, reason || '');
-  const name = acc.name || 'Account';
+  const name = hasAccountName(acc);
+  const why = accountInvalidReason(reason);
+  console.warn('[AUTH] Removing invalid account:', name || acc.id || 'unknown', why);
   accounts = accounts.filter(a => a.id !== acc.id);
   if(settings && settings.selectedAccount === acc.id) settings.selectedAccount = accounts[0]?.id || null;
   ipcRenderer.send('save-accounts', accounts);
@@ -4406,8 +4425,12 @@ async function handleInvalidAccount(acc, reason){
   renderAccountList();
   updateSkinDisplay();
   if(typeof updateAccountTabHead === 'function') updateAccountTabHead();
-  showToast(t('toast_account_invalid').replace('{name}', name), 'error', 5000);
-  showReloginPrompt(acc);
+  let toastText = name
+    ? t('toast_account_invalid').replace('{name}', name)
+    : t('toast_account_invalid_reason').replace('{reason}', why);
+  if(name && why) toastText += ' ' + t('reason_suffix').replace('{reason}', why);
+  showToast(toastText, 'error', 5000);
+  showReloginPrompt(acc, reason);
   setTimeout(() => _invalidAccounts.delete(acc.id), 1500);
 }
 async function refreshAccountToken(acc){
