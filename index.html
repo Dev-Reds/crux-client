@@ -1711,7 +1711,7 @@
 const { ipcRenderer, shell } = require('electron');
 const path = require('path');
 // Ein Discord-Link fuer alle Stellen (Bug-Report, Ban-Appeal, ...).
-const CRUX_DISCORD = 'https://discord.gg/dd5R3nDQc';
+const CRUX_DISCORD = 'https://discord.gg/9DJvDjyub';
 function rlog(msg){ try{ ipcRenderer.send('renderer-log', msg); }catch{} }
 window.onerror = (msg, src, line, col, err) => { rlog(`ERROR: ${msg} at ${src}:${line}:${col} ${err?.stack||''}`); };
 window.addEventListener('unhandledrejection', (e) => { rlog(`UNHANDLED PROMISE: ${e.reason?.stack||e.reason}`); });
