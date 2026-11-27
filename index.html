@@ -30,6 +30,27 @@
     <button class="tb-btn" data-page="owner-page" id="tb-owner-btn" style="display:none">Owner</button>
 	  </div>
 
+    <!-- Recent Played: ganz links, direkt neben der Tab-Leiste und vor allen Seiten -->
+    <aside class="launch-recent-col" id="launch-recent-col">
+      <section class="rail-card" id="launch-recent-card">
+        <header class="rail-card__head">
+          <span class="rail-card__title" data-i18n="h_recent">Recent Played</span>
+          <div class="launch-recent__tools">
+            <span class="launch-recent__count" id="recent-count"></span>
+            <button class="btn btn-sm btn-ghost rail-card__action" id="recent-clear-btn" data-i18n="btn_clear_history">Clear History</button>
+          </div>
+        </header>
+        <div class="rail-card__body">
+          <div id="recent-sections"></div>
+        </div>
+      </section>
+    </aside>
+
+    <button class="tb-btn message-bell-btn" id="message-bell-btn" type="button" title="Messages" aria-label="Messages">
+      <svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+      <span id="bell-badge" class="tb-badge tb-badge--count" style="display:none"></span>
+    </button>
+
 	  <button class="tb-btn" id="settings-fab" data-page="settings-page" data-i18n-title="tab_settings" title="Settings">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
   </button>
@@ -48,21 +69,6 @@
     <!-- ── LAUNCH ── -->
     <div id="launch-page" class="page active" data-drop-kind="launch">
       <div class="launch-layout">
-        <!-- Recent Played: ganz linke Spalte, Eintraege untereinander -->
-        <aside class="launch-recent-col" id="launch-recent-col">
-          <section class="rail-card" id="launch-recent-card">
-            <header class="rail-card__head">
-              <span class="rail-card__title" data-i18n="h_recent">Recent Played</span>
-              <div class="launch-recent__tools">
-                <span class="launch-recent__count" id="recent-count"></span>
-                <button class="btn btn-sm btn-ghost rail-card__action" id="recent-clear-btn" data-i18n="btn_clear_history">Clear History</button>
-              </div>
-            </header>
-            <div class="rail-card__body">
-              <div id="recent-sections"></div>
-            </div>
-          </section>
-        </aside>
         <div class="launch-left">
           <h1 class="launch-title" data-i18n="h_launch">Launch</h1>
 
@@ -101,8 +107,7 @@
           <div class="skin3d-wrap" id="skin3d-wrap">
             <canvas class="skin3d-canvas" id="skin3d-canvas"></canvas>
           </div>
-          <div class="skin-name-display" id="skin-name-display">No account</div>
-          <button class="btn btn-sm btn-primary launch-change-skin-btn" id="launch-change-skin-btn" type="button" data-i18n="lbl_change_skin">Change Skin</button>
+          <div class="skin-name-display skin-name-display--action" id="skin-name-display" title="Change Skin">No account</div>
 
           <!-- Konto-Karte -->
           <section class="rail-card" id="rail-account">
@@ -430,6 +435,16 @@
             <select id="fab-position-select">
               <option value="toolbar" data-i18n="fab_pos_toolbar">In der Tab-Leiste</option>
               <option value="corner" data-i18n="fab_pos_corner">Unten rechts (Kreis)</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-section" id="bell-position-section">
+          <h2 data-i18n="sec_bell_position">Message bell position</h2>
+          <div class="form-row form-row--narrow">
+            <label data-i18n="lbl_bell_position">Position:</label>
+            <select id="bell-position-select">
+              <option value="settings" data-i18n="bell_pos_settings">Above settings</option>
+              <option value="corner" data-i18n="bell_pos_corner">Bottom right</option>
             </select>
           </div>
         </div>
@@ -1753,11 +1768,14 @@ function loadMessages(){
 function saveMessages(){
   try{ localStorage.setItem(MESSAGES_KEY, JSON.stringify(appMessages.slice(0, 50))); }catch{}
 }
-function addMessage(text, kind = 'info'){
+function addMessage(text, kind = 'info', id = ''){
   if(!text) return;
+  const stableId = id ? String(id) : Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  // Gleiche Meldung (z.B. eine Owner-Nachricht) bleibt nur einmal im Tab.
+  if(stableId && appMessages.some(m => m.id === stableId)) return;
   // Wenn der Tab gerade offen ist, gilt die Meldung sofort als gelesen.
   const visible = document.getElementById('messages-page')?.classList.contains('active');
-  appMessages.unshift({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 7), text: String(text), kind, ts: Date.now(), read: !!visible });
+  appMessages.unshift({ id: stableId, text: String(text), kind, ts: Date.now(), read: !!visible });
   appMessages = appMessages.slice(0, 50);
   saveMessages();
   renderMessages();
@@ -1770,7 +1788,7 @@ function markMessagesRead(){
 function renderMessages(){
   const list = document.getElementById('messages-list');
   const empty = document.getElementById('messages-empty');
-  const badge = document.getElementById('messages-badge');
+  const badges = [document.getElementById('messages-badge'), document.getElementById('bell-badge')].filter(Boolean);
   if(!list || !empty) return;
   list.innerHTML = '';
   for(const m of appMessages){
@@ -1796,12 +1814,13 @@ function renderMessages(){
   }
   empty.style.display = appMessages.length ? 'none' : '';
   const unread = appMessages.filter(m => !m.read).length;
-  if(badge){ badge.textContent = String(unread); badge.style.display = unread ? '' : 'none'; }
+  for(const badge of badges){ badge.textContent = String(unread); badge.style.display = unread ? '' : 'none'; }
 }
 loadMessages();
 document.getElementById('messages-clear-btn')?.addEventListener('click', () => {
   appMessages = []; saveMessages(); renderMessages();
 });
+document.getElementById('message-bell-btn')?.addEventListener('click', () => showPage('messages-page'));
 
 // ────────────────────────────────────────
 // STATE
@@ -2091,6 +2110,8 @@ async function bootLauncher(){
     } catch {}
     applyTabBarPosition();
     applyFabPosition();
+    const bellSel = document.getElementById('bell-position-select');
+    if(bellSel) bellSel.value = settings.bellPosition || 'settings';
     renderModList();
     fetchMissingModIcons();
     renderAccountList();
@@ -2202,6 +2223,10 @@ function showPage(id){
   try{ if(typeof banPageBlocked==='function' && banPageBlocked(id)) return; }catch(err){}
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
   const pg=document.getElementById(id); pg.classList.add('active'); pg.style.display='';
+  // Recent Played bleibt als eigene Spalte immer direkt nach der Tab-Leiste,
+  // ist aber nur auf dem Launch-Tab sichtbar.
+  const recentCol=document.getElementById('launch-recent-col');
+  if(recentCol) recentCol.style.display = id === 'launch-page' ? '' : 'none';
   if(id==='messages-page' && typeof markMessagesRead==='function') markMessagesRead();
   document.querySelectorAll('.tb-btn[data-page]').forEach(b=>{
     const on=b.dataset.page===id; b.classList.toggle('active',on);
@@ -2421,6 +2446,7 @@ const LANGS={
     sec_corner_radius:'Corner Radius', lbl_corner_radius:'Roundness', corner_small:'Small', corner_medium:'Medium', corner_large:'Large', corner_round:'Round',
     sec_font:'Font', lbl_font_style:'Style', font_system:'System', font_minecraft:'Minecraft', font_custom:'Custom', lbl_font_family:'Font family',
     sec_fab_position:'Settings Button Position', lbl_fab_position:'Position:', fab_pos_toolbar:'In Tab Bar', fab_pos_corner:'Bottom Right (Circle)', fab_pos_custom:'Custom (Pixels)', lbl_fab_x:'X (Pixel):', lbl_fab_y:'Y (Pixel):',
+    sec_bell_position:'Message bell position', lbl_bell_position:'Position:', bell_pos_settings:'Above settings', bell_pos_corner:'Bottom right',
     sec_reset:'Reset', desc_reset:'Deletes all accounts, profiles, settings, and mods. Launcher will restart as if first opened.',
     btn_reset:'Reset Launcher', sec_updates:'Updates', btn_check_update:'Check for Updates',
     desc_current_version:'Current version:',
@@ -2430,7 +2456,7 @@ const LANGS={
     btn_use_client_rps:'Use Client Resource Packs (from Client Options tab)',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
     btn_import_share:'📋 Import Share Code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Share', open_folder:'Open Folder',
-    btn_import_mc_launcher:'🟦 Minecraft Launcher', mcimp_title:'Import from Minecraft Launcher', mcimp_desc:'Select the launcher instances to import. Settings, server list and all worlds are copied into new Crux profiles.', mcimp_toggle:'Select all', mcimp_deselect:'Deselect all', mcimp_count:'{n} instances', mcimp_import:'Import selected', mcimp_refresh:'Rescan', mcimp_empty:'No Minecraft Launcher instances found.', mcimp_scanning:'Scanning…', mcimp_worlds:'worlds', mcimp_packs:'resource packs', mcimp_customdir:'custom folder', mcimp_latest_release:'Latest Release', mcimp_latest_snapshot:'Latest Snapshot', mcimp_settings:'settings', mcimp_servers:'servers', mcimp_done:'Imported {n} profile(s).', mcimp_failed:'Import failed: {e}', mcimp_pick:'Select at least one instance.', mcimp_importing:'Importing…',
+    btn_import_mc_launcher:'🟦 Minecraft Launcher', mcimp_title:'Import from Minecraft Launcher', mcimp_desc:'Select the launcher instances to import. Settings, server list and all worlds are copied into new Crux profiles.', mcimp_toggle:'Select all', mcimp_deselect:'Deselect all', mcimp_count:'{n} instances', mcimp_import:'Import selected', mcimp_refresh:'Rescan', mcimp_empty:'No Minecraft Launcher instances found.', mcimp_scanning:'Scanning…', mcimp_worlds:'worlds', mcimp_packs:'resource packs', mcimp_customdir:'custom folder', mcimp_latest_release:'Latest Release', mcimp_latest_snapshot:'Latest Snapshot', mcimp_settings:'settings', mcimp_servers:'servers', mcimp_done:'Imported {n} profile(s).', mcimp_failed:'Import failed: {e}', mcimp_nospace:'Not enough disk space. Free space on your drive and try again.', mcimp_pick:'Select at least one instance.', mcimp_importing:'Importing…',
     btn_stop_server:'■ Stop Server', btn_op_player:'OP Player', btn_whitelist:'Whitelist', btn_backup_world:'Backup World',
     btn_new_server:'+ New Server', server_count:'servers',
     btn_microsoft:'Microsoft',
@@ -2571,6 +2597,7 @@ const LANGS={
     sec_corner_radius:'Eckenradius', lbl_corner_radius:'Abrundung', corner_small:'Klein', corner_medium:'Mittel', corner_large:'GroÎ', corner_round:'Rund',
     sec_font:'Schrift', lbl_font_style:'Stil', font_system:'System', font_minecraft:'Minecraft', font_custom:'Eigene', lbl_font_family:'Schriftart',
     sec_fab_position:'Position des Settings-Buttons', lbl_fab_position:'Position:', fab_pos_toolbar:'In der Tab-Leiste', fab_pos_corner:'Unten rechts (Kreis)', fab_pos_custom:'Benutzerdefiniert (Pixel)', lbl_fab_x:'X (Pixel):', lbl_fab_y:'Y (Pixel):',
+    sec_bell_position:'Position der Nachrichten-Glocke', lbl_bell_position:'Position:', bell_pos_settings:'Über den Einstellungen', bell_pos_corner:'Unten rechts',
     sec_reset:'Zurücksetzen', desc_reset:'Löscht alle Konten, Profile, Einstellungen und Mods. Der Launcher startet wie beim ersten Mal.',
     btn_reset:'Launcher zurücksetzen', sec_updates:'Updates', btn_check_update:'Nach Updates suchen',
     desc_current_version:'Aktuelle Version:',
@@ -2580,7 +2607,7 @@ const LANGS={
     btn_use_client_rps:'Client Ressourcenpakete verwenden (aus Client Options Tab)',
     btn_import_modpack_modrinth:'📦 Modrinth', btn_import_modpack_curseforge:'📦 CurseForge',
     btn_import_share:'📋 Import-Code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Teilen', open_folder:'Ordner öffnen',
-    btn_import_mc_launcher:'🟦 Minecraft Launcher', mcimp_title:'Aus Minecraft Launcher importieren', mcimp_desc:'Wähle die zu importierenden Launcher-Instanzen. Einstellungen, Serverliste und alle Welten werden in neue Crux-Profile kopiert.', mcimp_toggle:'Alle auswählen', mcimp_deselect:'Auswahl aufheben', mcimp_count:'{n} Instanzen', mcimp_import:'Auswahl importieren', mcimp_refresh:'Erneut scannen', mcimp_empty:'Keine Minecraft-Launcher-Instanzen gefunden.', mcimp_scanning:'Suche…', mcimp_worlds:'Welten', mcimp_packs:'Ressourcenpakete', mcimp_customdir:'eigenes Verzeichnis', mcimp_latest_release:'Neueste Version', mcimp_latest_snapshot:'Neueste Snapshot', mcimp_settings:'Einstellungen', mcimp_servers:'Server', mcimp_done:'{n} Profil(e) importiert.', mcimp_failed:'Import fehlgeschlagen: {e}', mcimp_pick:'Mindestens eine Instanz auswählen.', mcimp_importing:'Importiere…',
+    btn_import_mc_launcher:'🟦 Minecraft Launcher', mcimp_title:'Aus Minecraft Launcher importieren', mcimp_desc:'Wähle die zu importierenden Launcher-Instanzen. Einstellungen, Serverliste und alle Welten werden in neue Crux-Profile kopiert.', mcimp_toggle:'Alle auswählen', mcimp_deselect:'Auswahl aufheben', mcimp_count:'{n} Instanzen', mcimp_import:'Auswahl importieren', mcimp_refresh:'Erneut scannen', mcimp_empty:'Keine Minecraft-Launcher-Instanzen gefunden.', mcimp_scanning:'Suche…', mcimp_worlds:'Welten', mcimp_packs:'Ressourcenpakete', mcimp_customdir:'eigenes Verzeichnis', mcimp_latest_release:'Neueste Version', mcimp_latest_snapshot:'Neueste Snapshot', mcimp_settings:'Einstellungen', mcimp_servers:'Server', mcimp_done:'{n} Profil(e) importiert.', mcimp_failed:'Import fehlgeschlagen: {e}', mcimp_nospace:'Nicht genug Speicherplatz. Bitte Laufwerk freiräumen und erneut versuchen.', mcimp_pick:'Mindestens eine Instanz auswählen.', mcimp_importing:'Importiere…',
     btn_stop_server:'■ Server stoppen', btn_op_player:'OP Spieler', btn_whitelist:'Whitelist', btn_backup_world:'Welt sichern',
     btn_new_server:'+ Neuer Server', server_count:'Server',
     btn_microsoft:'Microsoft',
@@ -2720,6 +2747,7 @@ const LANGS={
     sec_glass_bg:'Fond du verre', desc_glass_bg:'Fond personnalisé derrière le verre dépoli. Affiché uniquement dans le thème Verre.', btn_choose_bg:'Choisir une imageâ€¦', btn_remove_bg:'Retirer', lbl_bg_tint:'Teinter lâ€™image avec la couleur dâ€™accentuation',
     sec_corner_radius:'Rayon des coins', lbl_corner_radius:'Arrondi', corner_small:'Petit', corner_medium:'Moyen', corner_large:'Grand', corner_round:'Rond',
     sec_font:'Police', lbl_font_style:'Style', font_system:'Système', font_minecraft:'Minecraft', font_custom:'Personnalisée', lbl_font_family:'Famille de police',
+    sec_bell_position:'Position de la cloche de messages', lbl_bell_position:'Position :', bell_pos_settings:'Au-dessus des paramètres', bell_pos_corner:'En bas à droite',
     sec_reset:'Réinitialiser', desc_reset:'Supprime tous les comptes, profils, paramètres et mods. Le lanceur redémarrera comme au premier lancement.',
     btn_reset:'Réinitialiser le Lanceur', sec_updates:'Mises à jour', btn_check_update:'Vérifier les mises à jour',
     desc_current_version:'Version actuelle :',
@@ -2729,7 +2757,7 @@ const LANGS={
     btn_use_client_rps:'Utiliser les Packs de Ressources Client (onglet Options Client)',
     btn_import_modpack_modrinth:'ðŸ“¦ Modrinth', btn_import_modpack_curseforge:'ðŸ“¦ CurseForge',
     btn_import_share:'📋 Importer un code', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Partager', open_folder:'Ouvrir le dossier',
-    btn_import_mc_launcher:'🟦 Minecraft Launcher', mcimp_title:'Importer depuis le Minecraft Launcher', mcimp_desc:'Sélectionnez les instances à importer. Paramètres, liste des serveurs et tous les mondes sont copiés dans de nouveaux profils Crux.', mcimp_toggle:'Tout sélectionner', mcimp_deselect:'Tout désélectionner', mcimp_count:'{n} instances', mcimp_import:'Importer la sélection', mcimp_refresh:'Réanalyser', mcimp_empty:'Aucune instance du Minecraft Launcher trouvée.', mcimp_scanning:'Recherche…', mcimp_worlds:'mondes', mcimp_packs:'packs de ressources', mcimp_customdir:'dossier personnalisé', mcimp_latest_release:'Dernière version', mcimp_latest_snapshot:'Dernier snapshot', mcimp_settings:'paramètres', mcimp_servers:'serveurs', mcimp_done:'{n} profil(s) importé(s).', mcimp_failed:'Échec de l’import : {e}', mcimp_pick:'Sélectionnez au moins une instance.', mcimp_importing:'Importation…',
+    btn_import_mc_launcher:'🟦 Minecraft Launcher', mcimp_title:'Importer depuis le Minecraft Launcher', mcimp_desc:'Sélectionnez les instances à importer. Paramètres, liste des serveurs et tous les mondes sont copiés dans de nouveaux profils Crux.', mcimp_toggle:'Tout sélectionner', mcimp_deselect:'Tout désélectionner', mcimp_count:'{n} instances', mcimp_import:'Importer la sélection', mcimp_refresh:'Réanalyser', mcimp_empty:'Aucune instance du Minecraft Launcher trouvée.', mcimp_scanning:'Recherche…', mcimp_worlds:'mondes', mcimp_packs:'packs de ressources', mcimp_customdir:'dossier personnalisé', mcimp_latest_release:'Dernière version', mcimp_latest_snapshot:'Dernier snapshot', mcimp_settings:'paramètres', mcimp_servers:'serveurs', mcimp_done:'{n} profil(s) importé(s).', mcimp_failed:'Échec de l’import : {e}', mcimp_nospace:'Espace disque insuffisant. Libérez de l’espace et réessayez.', mcimp_pick:'Sélectionnez au moins une instance.', mcimp_importing:'Importation…',
     btn_stop_server:'■ Arrêter le Serveur', btn_op_player:'OP Joueur', btn_whitelist:'Whitelist', btn_backup_world:'Sauvegarder le monde',
     btn_new_server:'+ Nouveau Serveur', server_count:'serveurs',
     btn_microsoft:'Microsoft',
@@ -2867,6 +2895,7 @@ const LANGS={
     sec_glass_bg:'Fondo de vidrio', desc_glass_bg:'Fondo personalizado detrás del vidrio esmerilado. Solo se muestra en el tema Vidrio.', btn_choose_bg:'Elegir imagenâ€¦', btn_remove_bg:'Quitar', lbl_bg_tint:'Teñir la imagen con el color de acento',
     sec_corner_radius:'Radio de esquinas', lbl_corner_radius:'Redondeo', corner_small:'Pequeño', corner_medium:'Medio', corner_large:'Grande', corner_round:'Redondo',
     sec_font:'Fuente', lbl_font_style:'Estilo', font_system:'Sistema', font_minecraft:'Minecraft', font_custom:'Personalizada', lbl_font_family:'Familia de fuente',
+    sec_bell_position:'Posición de la campana de mensajes', lbl_bell_position:'Posición:', bell_pos_settings:'Encima de ajustes', bell_pos_corner:'Abajo a la derecha',
     sec_reset:'Restablecer', desc_reset:'Elimina todas las cuentas, perfiles, ajustes y mods. El launcher se reiniciará como si se abriera por primera vez.',
     btn_reset:'Restablecer Launcher', sec_updates:'Actualizaciones', btn_check_update:'Buscar actualizaciones',
     desc_current_version:'Versión actual:',
@@ -2874,7 +2903,7 @@ const LANGS={
     btn_use_crux_mod:'Usar Funciones Crux Client',
     btn_import_modpack_modrinth:'ðŸ“¦ Modrinth', btn_import_modpack_curseforge:'ðŸ“¦ CurseForge',
     btn_import_share:'📋 Importar código', btn_import_norisk:'⬛ NoRisk Client', btn_share:'Compartir', open_folder:'Abrir carpeta',
-    btn_import_mc_launcher:'🟦 Minecraft Launcher', mcimp_title:'Importar desde Minecraft Launcher', mcimp_desc:'Selecciona las instancias que deseas importar. Los ajustes, la lista de servidores y todos los mundos se copian en nuevos perfiles de Crux.', mcimp_toggle:'Seleccionar todo', mcimp_deselect:'Deseleccionar todo', mcimp_count:'{n} instancias', mcimp_import:'Importar selección', mcimp_refresh:'Volver a buscar', mcimp_empty:'No se encontraron instancias de Minecraft Launcher.', mcimp_scanning:'Buscando…', mcimp_worlds:'mundos', mcimp_packs:'paquetes de recursos', mcimp_customdir:'carpeta personalizada', mcimp_latest_release:'Última versión', mcimp_latest_snapshot:'Última snapshot', mcimp_settings:'ajustes', mcimp_servers:'servidores', mcimp_done:'{n} perfil(es) importado(s).', mcimp_failed:'Error al importar: {e}', mcimp_pick:'Selecciona al menos una instancia.', mcimp_importing:'Importando…',
+    btn_import_mc_launcher:'🟦 Minecraft Launcher', mcimp_title:'Importar desde Minecraft Launcher', mcimp_desc:'Selecciona las instancias que deseas importar. Los ajustes, la lista de servidores y todos los mundos se copian en nuevos perfiles de Crux.', mcimp_toggle:'Seleccionar todo', mcimp_deselect:'Deseleccionar todo', mcimp_count:'{n} instancias', mcimp_import:'Importar selección', mcimp_refresh:'Volver a buscar', mcimp_empty:'No se encontraron instancias de Minecraft Launcher.', mcimp_scanning:'Buscando…', mcimp_worlds:'mundos', mcimp_packs:'paquetes de recursos', mcimp_customdir:'carpeta personalizada', mcimp_latest_release:'Última versión', mcimp_latest_snapshot:'Última snapshot', mcimp_settings:'ajustes', mcimp_servers:'servidores', mcimp_done:'{n} perfil(es) importado(s).', mcimp_failed:'Error al importar: {e}', mcimp_nospace:'No hay suficiente espacio en disco. Libera espacio y vuelve a intentarlo.', mcimp_pick:'Selecciona al menos una instancia.', mcimp_importing:'Importando…',
     btn_stop_server:'■ Detener Servidor', btn_op_player:'OP Jugador', btn_whitelist:'Whitelist', btn_backup_world:'Copiar mundo',
     btn_new_server:'+ Nuevo Servidor', server_count:'servidores',
     btn_microsoft:'Microsoft',
@@ -3754,14 +3783,24 @@ function renderLaunchRail(){
 document.getElementById('rail-account-btn')?.addEventListener('click', () => showPage('account-page'));
 
 // Skin-Card aus-/einklappen
-document.getElementById('rail-skin-toggle')?.addEventListener('click', () => {
+function setSkinCardOpen(open){
   const body = document.getElementById('rail-skin-body');
   const btn = document.getElementById('rail-skin-toggle');
   if (!body) return;
-  const open = body.hasAttribute('hidden');
   if (open) body.removeAttribute('hidden'); else body.setAttribute('hidden','');
-  btn.setAttribute('aria-expanded', String(open));
-  btn.classList.toggle('is-open', open);
+  btn?.setAttribute('aria-expanded', String(open));
+  btn?.classList.toggle('is-open', open);
+}
+document.getElementById('rail-skin-toggle')?.addEventListener('click', () => {
+  const body = document.getElementById('rail-skin-body');
+  if (!body) return;
+  setSkinCardOpen(body.hasAttribute('hidden'));
+});
+// Statt eines Extra-Buttons oeffnet der Spielername das vorhandene
+// Change-Skin-Objekt unter der Konto-Karte.
+document.getElementById('skin-name-display')?.addEventListener('click', () => {
+  setSkinCardOpen(true);
+  document.getElementById('rail-skin')?.scrollIntoView({ block: 'nearest' });
 });
 document.getElementById('rail-profiles-btn')?.addEventListener('click', () => showPage('profiles-page'));
 
@@ -3974,8 +4013,10 @@ function renderRecentList(){
             <span class="recent-item__name">${escHtml(r.serverName||r.profileName||'Server')}</span>
             <span class="recent-item__meta">${escHtml(metaParts.join(' · '))}</span>
           </span>
-          <button class="btn btn-sm recent-join-btn" type="button">▶ Join</button>
-          <button class="btn btn-sm recent-remove-btn" type="button" title="Remove">✕</button>`;
+          <span class="recent-item__actions">
+            <button class="btn btn-sm recent-join-btn" type="button">▶ Join</button>
+            <button class="btn btn-sm recent-remove-btn" type="button" title="Remove">✕</button>
+          </span>`;
         item.querySelector('.recent-join-btn').addEventListener('click',async()=>{
           // Check if local server is running, start if not
           if(r.localServerId){
@@ -4002,8 +4043,10 @@ function renderRecentList(){
             <span class="recent-item__name">${escHtml(r.profileName||'Instance')}</span>
             <span class="recent-item__meta">${escHtml([r.version||'?',r.modLoader,date].filter(Boolean).join(' · '))}</span>
           </span>
-          <button class="btn btn-sm recent-launch-btn" type="button">▶ Launch</button>
-          <button class="btn btn-sm recent-remove-btn" type="button" title="Remove">✕</button>`;
+          <span class="recent-item__actions">
+            <button class="btn btn-sm recent-launch-btn" type="button">▶ Launch</button>
+            <button class="btn btn-sm recent-remove-btn" type="button" title="Remove">✕</button>
+          </span>`;
         item.querySelector('.recent-launch-btn').addEventListener('click',()=>{
           const p=profiles.find(x=>x.id===r.profileId);
           if(p){
@@ -4021,8 +4064,10 @@ function renderRecentList(){
             <span class="recent-item__name">${escHtml(r.worldName||r.profileName||r.version||'Minecraft')}</span>
             <span class="recent-item__meta">${escHtml([r.version,r.modLoader,r.profileName,date].filter(Boolean).join(' · '))}</span>
           </span>
-          <button class="btn btn-sm recent-launch-btn" type="button">▶ Play</button>
-          <button class="btn btn-sm recent-remove-btn" type="button" title="Remove">✕</button>`;
+          <span class="recent-item__actions">
+            <button class="btn btn-sm recent-launch-btn" type="button">▶ Play</button>
+            <button class="btn btn-sm recent-remove-btn" type="button" title="Remove">✕</button>
+          </span>`;
         item.querySelector('.recent-launch-btn').addEventListener('click',async()=>{
           const p=profiles.find(x=>x.id===r.profileId);
           if(!p) return;
@@ -4809,7 +4854,9 @@ document.getElementById('mcimp-import-btn').addEventListener('click',async()=>{
     if(st){ st.textContent=t('mcimp_done').replace('{n}',n); st.style.color='#1bd96a'; }
     setTimeout(()=>{ const m=document.getElementById('import-mc-launcher-modal'); if(m) m.style.display='none'; },1400);
   }catch(e){
-    if(st){ st.textContent=t('mcimp_failed').replace('{e}',e.message||e); st.style.color='#f44'; }
+    const msg=String(e && e.message || e);
+    const noSpace=/ENOSPC|no space left|nicht genug speicher/i.test(msg);
+    if(st){ st.textContent = noSpace ? t('mcimp_nospace') : t('mcimp_failed').replace('{e}', msg); st.style.color='#f44'; }
   }finally{ ipcRenderer.removeListener('mc-launcher-import-progress', onProgress); btn.disabled=false; }
 });
 
@@ -6182,6 +6229,8 @@ function dismissNotice(){
     const k=noticeKey(n);
     if(!settings.seenNotices.includes(k)) settings.seenNotices.push(k);
     saveSettings();
+    // Die Nachricht bleibt dauerhaft im Nachrichten-Tab, auch nach "Verstanden".
+    addMessage('Nachricht von ' + (n.by || 'Owner') + ': ' + (n.reason || ''), 'owner', 'notice:' + k);
   }
   const ov=document.getElementById('notice-modal');
   if(ov) ov.style.display='none';
@@ -8551,11 +8600,6 @@ function renderSkin3DMini(targetCanvas, skinUrl) {
 })();
 
 document.getElementById('skin-list-btn').addEventListener('click', () => { renderSkinList(); document.getElementById('skin-list-overlay').classList.add('open'); });
-// Change Skin direkt im Launch-Tab (unter dem Spielernamen) oeffnet dieselbe Skin-Auswahl.
-document.getElementById('launch-change-skin-btn')?.addEventListener('click', () => {
-  renderSkinList();
-  document.getElementById('skin-list-overlay')?.classList.add('open');
-});
 document.getElementById('skin-list-close').addEventListener('click', () => document.getElementById('skin-list-overlay').classList.remove('open'));
 document.getElementById('skin-list-overlay').addEventListener('click', e => { if (e.target.id === 'skin-list-overlay') e.target.classList.remove('open'); });
 
@@ -9711,7 +9755,49 @@ function applyFabPosition(){
     fab.style.display = '';
     document.getElementById('launcher-screen').appendChild(fab);
   }
+  if(typeof applyBellPosition === 'function') applyBellPosition();
 }
+
+// Die Nachrichten-Glocke steht standardmaessig direkt ueber dem Settings-Button
+// und kann in den Einstellungen nach unten rechts gesetzt werden.
+function applyBellPosition(){
+  const bell = document.getElementById('message-bell-btn');
+  const screen = document.getElementById('launcher-screen');
+  const fab = document.getElementById('settings-fab');
+  if(!bell || !screen) return;
+  bell.remove();
+  bell.style.top = ''; bell.style.left = ''; bell.style.right = ''; bell.style.bottom = '';
+  const pos = settings.bellPosition || 'settings';
+  const fabInToolbar = !!(fab && fab.parentElement && fab.parentElement.classList.contains('toolbar'));
+  if(pos === 'settings' && fabInToolbar){
+    bell.className = 'tb-btn message-bell--toolbar';
+    fab.parentElement.insertBefore(bell, fab);
+    return;
+  }
+  bell.className = 'tb-btn message-bell--corner';
+  screen.appendChild(bell);
+  if(fab && fab.classList.contains('fab-position-custom')){
+    bell.classList.add('message-bell--above-fab');
+    bell.style.top = Math.max(0, (parseInt(fab.style.top, 10) || 20) - 66) + 'px';
+    bell.style.left = (parseInt(fab.style.left, 10) || 20) + 'px';
+    bell.style.right = 'auto';
+    bell.style.bottom = 'auto';
+  } else if(fab && (fab.classList.contains('fab-position-corner') || fab.classList.contains('fab-position-custom'))){
+    bell.classList.add('message-bell--above-fab');
+  }
+}
+
+(function bindBellPositionUI(){
+  const sel = document.getElementById('bell-position-select');
+  if(!sel) return;
+  if(settings.bellPosition) sel.value = settings.bellPosition;
+  sel.addEventListener('change', () => {
+    settings.bellPosition = sel.value;
+    saveSettings();
+    applyBellPosition();
+  });
+})();
+
 (function bindFabPositionUI(){
   const sel = document.getElementById('fab-position-select');
   const custom = document.getElementById('fab-custom-position');

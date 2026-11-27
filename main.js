@@ -2500,10 +2500,23 @@ ipcMain.handle('scan-mc-launcher-instances', async () => {
   }
 });
 
+// Ein volles Laufwerk soll nicht als kryptischer Fehler am Ende des Imports
+// erscheinen. Die Herkunft des Schreibfehlers wird in eine klare Meldung
+// uebersetzt, damit der Renderer den passenden Hinweis anzeigen kann.
+function isNoSpaceError(e) {
+  return !!(e && (e.code === 'ENOSPC' || /ENOSPC|no space left/i.test(String(e.message || e))));
+}
+function noSpaceError(dst, e) {
+  const root = path.parse(path.resolve(dst || base)).root || '';
+  return new Error('ENOSPC: Not enough disk space' + (root ? ' on ' + root : '') +
+    '. Free space and try again. (' + ((e && e.message) || 'write failed') + ')');
+}
+
 // Kopiert die Daten der ausgewaehlten Launcher-Instanzen in eigene Crux-Profile.
 // Einstellungen und Serverliste liegen zusaetzlich in der Settings-Group, damit
 // sie von allen Profilen dieser Gruppe genutzt werden koennen.
 ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
+  const createdDirs = [];
   try {
     const list = Array.isArray(selected) ? selected : [];
     if (!list.length) return { ok: false, error: 'Keine Instanz ausgewaehlt.' };
@@ -2519,7 +2532,9 @@ ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
         try {
           await fs.promises.mkdir(path.dirname(dst), { recursive: true });
           await fs.promises.copyFile(src, dst);
-        } catch {}
+        } catch (e) {
+          if (isNoSpaceError(e)) throw noSpaceError(dst, e);
+        }
       }
       return true;
     };
@@ -2570,6 +2585,7 @@ ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
       const gDir = path.join(P.groups, groupDirName(dataGroup));
       const dest = instanceDir(id);
       await fs.promises.mkdir(dest, { recursive: true });
+      createdDirs.push(dest, gDir);
 
       // Einstellungen: options.txt (Keybinds/Video/...) plus optionale
       // OptiFine-/Shader-Optionen. Serverliste: servers.dat. Beides liegt im
@@ -2592,7 +2608,8 @@ ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
           const src = path.join(savesRoot, en.name);
           if (!fs.existsSync(path.join(src, 'level.dat'))) continue;
           for (const dst of [path.join(dest, 'saves', en.name), path.join(gDir, 'saves', en.name)]) {
-            try { await fs.promises.mkdir(path.dirname(dst), { recursive: true }); await fs.promises.cp(src, dst, { recursive: true }); } catch {}
+            try { await fs.promises.mkdir(path.dirname(dst), { recursive: true }); await fs.promises.cp(src, dst, { recursive: true }); }
+            catch (e) { if (isNoSpaceError(e)) throw noSpaceError(dst, e); }
           }
           worlds++;
         }
@@ -2605,7 +2622,8 @@ ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
         const src = fs.existsSync(path.join(gameDir, folder)) ? path.join(gameDir, folder) : path.join(mcDir, folder);
         if (!fs.existsSync(src)) continue;
         const target = path.join(dest, folder);
-        try { await fs.promises.cp(src, target, { recursive: true }); } catch {}
+        try { await fs.promises.cp(src, target, { recursive: true }); }
+        catch (e) { if (isNoSpaceError(e)) throw noSpaceError(target, e); }
         const key = folder === 'resourcepacks' ? 'resourcePacks' : folder === 'shaderpacks' ? 'shaderPacks' : folder;
         if (importedPacks[key]) importedPacks[key] = await packEntries(target, folder, folder);
       }
@@ -2633,11 +2651,24 @@ ipcMain.handle('import-mc-launcher-instances', async (event, selected) => {
       created.push({ profile: prof, worlds, settings, servers, packs: packCount });
     }
     // Direkt schreiben, damit ein Persistenzfehler nicht als Erfolg gemeldet wird.
-    await fs.promises.writeFile(P.profiles, JSON.stringify(profiles, null, 2));
+    try {
+      await fs.promises.writeFile(P.profiles, JSON.stringify(profiles, null, 2));
+    } catch (e) {
+      throw isNoSpaceError(e) ? noSpaceError(P.profiles, e) : e;
+    }
     progress('Import complete', 100);
     return { ok: true, created };
   } catch (e) {
-    return { ok: false, error: e.message || String(e) };
+    // Bei einem Abbruch (z.B. volles Laufwerk) keine halb kopierten Profile
+    // und Gruppenordner zuruecklassen.
+    for (const dir of createdDirs.reverse()) {
+      try { await fs.promises.rm(dir, { recursive: true, force: true }); } catch {}
+    }
+    const raw = String((e && e.message) || e);
+    const message = /^ENOSPC: Not enough disk space/.test(raw)
+      ? raw
+      : (isNoSpaceError(e) ? noSpaceError(base, e).message : raw);
+    return { ok: false, error: message };
   }
 });
 
@@ -5934,8 +5965,18 @@ ipcMain.on('launch-minecraft', async (event, data) => {
             if (cur && cur.profiles) { delete cur.profiles[profileKey]; fs.writeFileSync(profilesPath, JSON.stringify(cur, null, 2)); }
           } catch {}
         }
-        send('instance-closed', { instanceId, code:0 });
-        delete instances[instanceId];
+        if (modCrashDetected) {
+          const crashText = crashContent || 'Mod resolution failed / incompatible mods found.';
+          send('instance-log', { instanceId, line: '[LAUNCHER] Mod conflict detected after the official launcher closed.' });
+          if (instances[instanceId]) instances[instanceId].logs.push(crashText);
+          // Mod-Fehler (z.B. Fabric "incompatible mods") sollen nach dem
+          // Schliessen des Spiels das gleiche Analyse-/Fix-Fenster oeffnen.
+          showCrashWindow(instanceId, 1, crashText);
+          send('instance-crashed', { instanceId, code: 1 });
+        } else {
+          send('instance-closed', { instanceId, code:0 });
+          delete instances[instanceId];
+        }
       })();
       send('launch-status', 'Opening Minecraft Launcher...');
       send('launch-progress', { instanceId, percent:100, message:'Original launcher opened', done:true });
@@ -6524,7 +6565,7 @@ ipcMain.on('launch-minecraft', async (event, data) => {
     send('instance-closed', { instanceId, code: mclcResult.code });
     if (mclcResult.code !== 0 && mclcResult.code !== null && !stoppedInstances.has(instanceId)) {
       instances[instanceId].crashed = true;
-      if (!mclcResult.modCrash) showCrashWindow(instanceId, mclcResult.code, instances[instanceId].logs.slice(-80).join('\n'));
+      showCrashWindow(instanceId, mclcResult.code, instances[instanceId].logs.slice(-80).join('\n'));
       send('instance-crashed', { instanceId, code: mclcResult.code });
     }
 
@@ -6544,13 +6585,22 @@ function analyzeCrashLog(text){
   const log = String(text || '');
   const lower = log.toLowerCase();
   const mods = new Set();
+  const modConflict = /mod resolution failed|incompatible mods found|some of your mods are incompatible|conflicting mods|duplicate mod/i.test(log);
   for(const m of log.matchAll(/(?:mods[\\/]|[\\/]mods[\\/])([^\\/\r\n"']+\.jar)/gi)) mods.add(m[1]);
   if(!mods.size){
     for(const m of log.matchAll(/\b([A-Za-z0-9._+\-]+\.jar)\b/g)){
       if(!/^(java|jre|minecraft|client|server|launcher)/i.test(m[1])) mods.add(m[1]);
     }
   }
-  const modList = [...mods].slice(0, 4);
+  // Fabric/NeoForge listen haeufig Mod-IDs statt JAR-Namen (z.B. "mod 'sodium'"
+  // oder "- sodium@0.6.5"). Diese IDs reichen zum Deaktivieren der passenden
+  // JAR-Dateien im Mods-Ordner aus.
+  for(const m of log.matchAll(/\bmod\s+['"]([A-Za-z0-9._+\-]+)['"]/gi)) mods.add(m[1]);
+  for(const m of log.matchAll(/\b([a-z0-9_][a-z0-9_.-]*)\s*@\s*\d[^\s,;]*/gi)) mods.add(m[1]);
+  for(const m of log.matchAll(/^\s*-\s+([a-z][a-z0-9_.-]*)\s*(?:\(|@|:|$)/gim)) mods.add(m[1]);
+  const modList = [...mods]
+    .filter(n => !/^(java|jre|minecraft|client|server|launcher|fabric-loader|forge|neoforge|quilt-loader)$/i.test(n))
+    .slice(0, 4);
   const gpu = GPU_DRIVER_HINT.test(log) && /exception_access_violation|access violation|hs_err|fatal error/i.test(log);
   if(gpu){
     const usingZink = /gallium_driver\s*=\s*zink|mesa3d\s*\/\s*zink/i.test(log);
@@ -6563,12 +6613,15 @@ function analyzeCrashLog(text){
       fixes: [{ id:'gpu', label:'Use ' + gpuModeById(target).label, description:'Next launch switches the render mode for this PC.', target }]
     };
   }
-  if(modList.length){
+  if(modList.length || modConflict){
+    const hint = modList.length
+      ? 'Crash log mentions: ' + modList.join(', ') + '. '
+      : 'The mod loader reported incompatible or conflicting mods, but no exact names were printed. ';
     return {
       kind: 'mod',
-      summary: 'Mod-related crash',
-      details: 'Crash log mentions: ' + modList.join(', ') + '. Disabling them is reversible — the JARs are only renamed to *.disabled.',
-      fixes: [{ id:'mod', label:'Disable ' + (modList.length === 1 ? 'crashing mod' : modList.length + ' crashing mods'), description:'Disables the matching mod entries and renames their JAR files.', mods: modList }]
+      summary: modConflict ? 'Incompatible / conflicting mods' : 'Mod-related crash',
+      details: hint + 'Disabling matching entries is reversible — JARs are only renamed to *.disabled.',
+      fixes: [{ id:'mod', label: modList.length ? 'Disable ' + (modList.length === 1 ? 'crashing mod' : modList.length + ' crashing mods') : 'Disable conflicting mods', description:'Disables the matching mod entries and renames their JAR files.', mods: modList }]
     };
   }
   if(/outofmemoryerror|java heap space|gc overhead limit/i.test(lower)){
@@ -6620,14 +6673,26 @@ ipcMain.handle('crash-apply-fix', async (_e, { instanceId, fix }) => {
       const loader = String(prof?.modLoader || 'fabric');
       let disabled = 0;
       for(const name of (Array.isArray(fix.mods) ? fix.mods : []).slice(0, 4)){
-        const jar = path.basename(String(name));
-        if(!/\.jar$/i.test(jar)) continue;
-        await disableBrokenModPersistent(jar, inst.profileId, [], [], []);
-        try {
-          const src = path.join(modsDir, jar);
-          if(fs.existsSync(src)){ await fs.promises.rename(src, src + '.disabled'); disabled++; }
-        } catch {}
-        await rememberBrokenMods(inst.version, loader, [jar, jar.replace(/-\d[\w.+-]*\.jar$/i, '')], 'Crash assistant: mod crash');
+        const raw = path.basename(String(name));
+        let jars = [];
+        if(/\.jar$/i.test(raw)){
+          jars = [raw];
+        } else {
+          // Fabric-Reports enthalten oft nur die Mod-ID. Die passende JAR
+          // suchen wir im Mods-Ordner (z.B. sodium -> sodium-0.6.5.jar).
+          const id = raw.toLowerCase();
+          try {
+            jars = (await fs.promises.readdir(modsDir)).filter(f => /\.jar$/i.test(f) && f.toLowerCase().includes(id));
+          } catch {}
+        }
+        for(const jar of jars.slice(0, 2)){
+          await disableBrokenModPersistent(jar, inst.profileId, [], [], []);
+          try {
+            const src = path.join(modsDir, jar);
+            if(fs.existsSync(src)){ await fs.promises.rename(src, src + '.disabled'); disabled++; }
+          } catch {}
+          await rememberBrokenMods(inst.version, loader, [jar, jar.replace(/-\d[\w.+-]*\.jar$/i, '')], 'Crash assistant: mod crash');
+        }
       }
       return { ok:disabled > 0, message: disabled ? ('Disabled ' + disabled + ' mod JAR(s). Relaunch the profile to test.') : 'No matching JAR files were found in the mods folder.' };
     }

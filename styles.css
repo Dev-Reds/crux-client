@@ -234,7 +234,7 @@ body:not(.glass)::after {
 :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; border-radius: var(--r-sm); }
 
 /* ── 03  APP-SHELL ──────────────────────────────────────────── */
-#launcher-screen { width: 100%; height: 100vh; flex-direction: column; overflow: hidden; }
+#launcher-screen { width: 100%; height: 100vh; flex-direction: column; overflow: hidden; position: relative; }
 
 /* Toolbar — schwebende Glas-Leiste (moderner App-Look) */
 .toolbar {
@@ -341,6 +341,31 @@ body:not(.tabs-left):not(.tabs-right) .toolbar > .tb-btn[data-page="logs-page"] 
   box-shadow: 0 0 8px color-mix(in srgb, var(--acc) 70%, transparent);
 }
 
+/* Nachrichten-Glocke: steht ueber dem Settings-Button oder unten rechts. */
+.message-bell-btn { position: relative; padding: 0; display: grid; place-items: center; }
+.message-bell-btn .tb-ic { width: 1.15em; height: 1.15em; }
+.message-bell--corner {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  z-index: 1201;
+  box-shadow: var(--shadow);
+  background: rgba(255, 255, 255, .035);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.message-bell--corner:hover { background: rgba(255, 255, 255, .09); color: var(--text); border-color: var(--border-strong); }
+.message-bell--above-fab { bottom: 88px; }
+body.tabs-left .message-bell--toolbar,
+body.tabs-right .message-bell--toolbar {
+  width: 100%;
+  height: auto;
+  min-height: calc(var(--tb) * .8);
+}
+
 #settings-fab {
   margin-left: auto;
   width: calc(var(--tb) * .74);
@@ -370,7 +395,8 @@ body.tabs-bottom .toolbar { order: 99; border-bottom: none; border-top: 1px soli
 body.tabs-bottom #offline-banner { order: 3; }
 body.tabs-bottom .pages { order: 1; }
 
-#main-col { order: 0; flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+#main-col { order: 0; flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; margin-left: calc(clamp(220px, 20vw, 300px) + 1.2rem); }
+body.tabs-left #main-col, body.tabs-right #main-col { margin-left: 0; }
 /* Laufende Profile nicht oben unter der Tab-Leiste anzeigen */
 #stop-bar { display: none; }
 body.tabs-left #launcher-screen, body.tabs-right #launcher-screen { flex-direction: row; }
@@ -1031,21 +1057,45 @@ input[type=range]::-webkit-slider-thumb {
    Bereich reserviert - der Launch-Tab endet, wo der Inhalt endet. */
 .launch-layout {
   display: grid;
-  grid-template-columns: clamp(220px, 20vw, 300px) minmax(0, 1fr) clamp(280px, 26vw, 360px);
+  grid-template-columns: minmax(0, 1fr) clamp(280px, 26vw, 360px);
   grid-template-rows: minmax(0, 1fr);
   gap: var(--sp-4);
   padding: 0;
   height: 100%;
 }
-/* Ganz links: Recent Played als eigene Spalte, nicht ueber dem Launch-Button. */
+/* Recent Played: eigene Spalte direkt nach der Tab-Leiste und vor allen
+   Seiten. Bei tabs-left steht sie also links von allem ausser der Tab-Leiste. */
 .launch-recent-col {
-  min-width: 0;
+  position: absolute;
+  left: .7rem;
+  top: calc(var(--tb) + 1.1rem);
+  bottom: .7rem;
+  z-index: 20;
+  width: clamp(220px, 20vw, 300px);
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  padding: .5rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   overflow-y: auto;
 }
-.launch-recent-col > * { flex: 0 0 auto; }
+body.tabs-bottom .launch-recent-col { top: .7rem; bottom: calc(var(--tb) + 1.1rem); }
+body.tabs-left .launch-recent-col,
+body.tabs-right .launch-recent-col {
+  position: static;
+  flex: 0 0 clamp(220px, 20vw, 300px);
+  width: auto;
+  height: 100%;
+  margin: .7rem .45rem .7rem .1rem;
+}
+.launch-recent-col .rail-card {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+}
 .launch-left {
   min-width: 0;
   min-height: 0;
@@ -1212,8 +1262,9 @@ input[type=range]::-webkit-slider-thumb {
 .launch-hero .status-text.err::before { background: var(--danger); box-shadow: 0 0 10px color-mix(in srgb, var(--danger) 65%, transparent); }
 .launch-hero .lp-wrap { align-self: stretch; width: 100%; max-width: none; }
 
-/* Change Skin: direkt unter dem Spielernamen in der rechten Launch-Spalte */
-.launch-change-skin-btn { width: 100%; }
+/* Der Spielername oeffnet das vorhandene Change-Skin-Objekt unter dem Account. */
+.skin-name-display--action { cursor: pointer; text-decoration: underline dotted transparent; }
+.skin-name-display--action:hover { text-decoration-color: var(--acc); color: var(--acc-2); }
 
 /* Recent Played — ganz linke Spalte, eine Zeile pro Eintrag untereinander
    mit dem Icon des zugehörigen Profils. */
@@ -1230,16 +1281,24 @@ input[type=range]::-webkit-slider-thumb {
 }
 .recent-section__count { color: var(--muted-2); font-weight: 400; }
 .recent-section__empty { font-size: var(--fs-xs); }
+#recent-sections { display: flex; flex-direction: column; min-width: 0; }
 .recent-list { display: flex; flex-direction: column; gap: .35rem; }
 .recent-item {
-  display: flex; align-items: center; gap: .5rem;
+  display: flex; align-items: center; flex-wrap: wrap; gap: .4rem;
   min-width: 0; padding: .4rem .45rem;
   border: 1px solid var(--line); border-radius: var(--r-sm);
   background: var(--surface-2);
 }
+/* Was in der schmalen Spalte nicht nebeneinander passt, rutscht in eine
+   neue Zeile — zuerst der Text, darunter die Aktionen. */
+.recent-item__body { flex: 1 1 7.5rem; }
+.recent-item__actions { display: flex; flex-wrap: wrap; gap: .35rem; margin-left: auto; }
+.recent-item__actions .recent-launch-btn,
+.recent-item__actions .recent-join-btn { flex: 1 1 auto; }
+.recent-item__actions .recent-remove-btn { flex: 0 0 auto; }
 .recent-item .rail-profile__avatar { width: 1.5rem; height: 1.5rem; flex: none; border-radius: 8px; font-size: .62rem; }
 .recent-item .rail-profile__avatar--custom { border-radius: 8px; }
-.recent-item__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .08rem; }
+.recent-item__body { flex: 1 1 7.5rem; min-width: 0; display: flex; flex-direction: column; gap: .08rem; }
 .recent-item__name {
   font-size: .82rem; font-weight: 650; color: var(--text);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -3304,6 +3363,8 @@ body.glass .owner-action--msg { color: var(--acc) !important; }
 body.glass .owner-action--danger { color: #c92a2a !important; }
 body.glass .owner-action--ok { color: #0d7a3d !important; }
 body.glass .notice-text { background: var(--gs-list) !important; border-color: var(--gs-bd) !important; color: var(--gs-tx) !important; }
+body.glass .launch-recent-col { background: transparent !important; border-color: var(--gs-bd) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body.light .launch-recent-col { background: rgba(255, 255, 255, .78); }
 
 /* Glas-Sicherheitsnetz: hart kodierte Textfarben aus JS-Markup auf die Theme-Farbe ziehen */
 body.glass, body.glass *, body.glass *::before, body.glass *::after { color: var(--gs-tx) !important; }
@@ -3327,7 +3388,13 @@ body.glass .settings-accent-dot { color: #0d7a3d !important; }
 @media (max-width: 900px) {
   .page { padding: var(--sp-5) var(--sp-4); }
   .launch-layout { grid-template-columns: 1fr; padding: 0; }
-  .launch-recent-col { width: 100%; overflow: visible; }
+  .launch-recent-col { width: 200px; left: .3rem; top: calc(var(--tb) + .9rem); bottom: .5rem; }
+  body.tabs-bottom .launch-recent-col { top: .5rem; bottom: calc(var(--tb) + .9rem); }
+  body.tabs-left .launch-recent-col, body.tabs-right .launch-recent-col {
+    left: auto; top: auto; bottom: auto; height: 100%; margin: .5rem .3rem; flex-basis: 200px;
+  }
+  #main-col { margin-left: calc(200px + .8rem); }
+  body.tabs-left #main-col, body.tabs-right #main-col { margin-left: 0; }
   .launch-recent-col #launch-recent-card { flex: 0 0 auto; }
   .launch-recent-col #launch-recent-card .rail-card__body { max-height: min(34vh, 20rem); }
   .launch-right { width: 100%; border-left: none; border-top: none; }
