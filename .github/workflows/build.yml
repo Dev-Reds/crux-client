@@ -120,7 +120,6 @@ jobs:
         with:
           tag_name: ${{ inputs.tag || github.event.release.tag_name }}
           files: |
-            Crux-Client-Installer-All.zip
             *.exe
             *.zip
             *.tar.gz
