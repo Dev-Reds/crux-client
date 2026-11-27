@@ -1676,6 +1676,30 @@ document.addEventListener('drop', _cacheUserActivity, true);
   setTimeout(()=>ipcRenderer.invoke('service-check-now').catch(()=>{}), 8000);
 })();
 
+// Kurzer, selbst verschwindender Toast im gleichen bottom-right Stapel.
+// Die Service-Down-Toasts oben bleiben dagegen stehen, bis man sie wegklickt.
+function showToast(message, kind = 'ok', duration = 2600){
+  const box = document.getElementById('svc-toasts');
+  if(!box) return null;
+  const d = document.createElement('div');
+  d.className = 'svc-toast toast-transient ' + (kind === 'muted' ? 'toast-muted' : 'toast-ok');
+  d.innerHTML = '<span class="svc-dot"></span>';
+  const label = document.createElement('span');
+  label.textContent = message;
+  d.appendChild(label);
+  box.appendChild(d);
+  void d.offsetWidth; // Layout-Flush, damit die Transition nicht uebersprungen wird
+  d.classList.add('svc-in');
+  const close = () => {
+    d.classList.remove('svc-in');
+    d.classList.add('svc-out');
+    setTimeout(() => d.remove(), 300);
+  };
+  d.addEventListener('click', close);
+  setTimeout(close, duration);
+  return d;
+}
+
 // ────────────────────────────────────────
 // STATE
 // ────────────────────────────────────────
@@ -2319,6 +2343,7 @@ const LANGS={
     btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
     filter_all:'All', filter_disabled:'Disabled',
     search_mods:'Search mods...', sort_mods:'Sort mods', sort_name:'Name (A → Z)', sort_name_desc:'Name (Z → A)', sort_version:'Version', sort_loader:'Loader', sort_source:'Source', sort_mcversion:'MC Version', sort_enabled:'Enabled first', sort_added:'Added', mods_count:'{n} mods', mods_count_one:'1 mod',
+    toast_mod_disabled:'{name} disabled', toast_mod_enabled:'{name} enabled',
     btn_new_profile:'+ New Profile', no_mods_installed:'No mods installed yet.',
     launch_via_launcher:'Launch via original Minecraft Launcher',
     after_launch_logs:'Open logs after launch',
@@ -2467,6 +2492,7 @@ const LANGS={
     btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
     filter_all:'Alle', filter_disabled:'Deaktiviert',
     search_mods:'Mods suchen...', sort_mods:'Sortieren', sort_name:'Name (A → Z)', sort_name_desc:'Name (Z → A)', sort_version:'Version', sort_loader:'Loader', sort_source:'Quelle', sort_mcversion:'MC-Version', sort_enabled:'Aktiv zuerst', sort_added:'Hinzugefügt', mods_count:'{n} Mods', mods_count_one:'1 Mod',
+    toast_mod_disabled:'{name} deaktiviert', toast_mod_enabled:'{name} aktiviert',
     btn_new_profile:'+ Neues Profil', no_mods_installed:'Noch keine Mods installiert.',
     launch_via_launcher:'Íber den offiziellen Minecraft Launcher starten',
     after_launch_logs:'Protokolle nach dem Start öffnen',
@@ -2612,6 +2638,7 @@ const LANGS={
     btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
     filter_all:'Tous', filter_disabled:'Désactivés',
     search_mods:'Rechercher des mods...', sort_mods:'Trier', sort_name:'Nom (A → Z)', sort_name_desc:'Nom (Z → A)', sort_version:'Version', sort_loader:'Chargeur', sort_source:'Source', sort_mcversion:'Version MC', sort_enabled:'Activés d\'abord', sort_added:'Ajoutés', mods_count:'{n} mods', mods_count_one:'1 mod',
+    toast_mod_disabled:'{name} désactivé', toast_mod_enabled:'{name} activé',
     btn_new_profile:'+ Nouveau profil', no_mods_installed:'Aucun mod installé.',
     launch_via_launcher:'Lancer via le lanceur Minecraft original',
     after_launch_logs:'Ouvrir les journaux après le lancement',
@@ -2752,6 +2779,7 @@ const LANGS={
     btn_modrinth:'Modrinth', btn_curseforge:'CurseForge',
     filter_all:'Todos', filter_disabled:'Desactivados',
     search_mods:'Buscar mods...', sort_mods:'Ordenar', sort_name:'Nombre (A → Z)', sort_name_desc:'Nombre (Z → A)', sort_version:'Versión', sort_loader:'Cargador', sort_source:'Origen', sort_mcversion:'Versión MC', sort_enabled:'Activados primero', sort_added:'Añadidos', mods_count:'{n} mods', mods_count_one:'1 mod',
+    toast_mod_disabled:'{name} desactivado', toast_mod_enabled:'{name} activado',
     btn_new_profile:'+ Nuevo perfil', no_mods_installed:'Sin mods instalados.',
     launch_via_launcher:'Iniciar a través del Minecraft Launcher original',
     after_launch_logs:'Abrir registros después de iniciar',
@@ -4655,6 +4683,34 @@ document.getElementById('mcimp-import-btn').addEventListener('click',async()=>{
 
 // Profile pack buttons
 
+// FLIP-Helfer fuer den Mod-Toggle im Profil: Positionen vor dem Re-Render
+// merken und die Zeilen danach von der alten zur neuen Stelle animieren.
+function captureModItemPositions(container){
+  const map = new Map();
+  container.querySelectorAll('.mod-item').forEach(item => {
+    const toggle = item.querySelector('.mod-toggle');
+    if(!toggle || toggle.dataset.i == null) return;
+    const r = item.getBoundingClientRect();
+    map.set(String(toggle.dataset.i), { top: r.top, left: r.left });
+  });
+  return map;
+}
+function animateModItemMove(container, before){
+  if(!before || !before.size || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  container.querySelectorAll('.mod-item').forEach(item => {
+    const toggle = item.querySelector('.mod-toggle');
+    const old = toggle && before.get(String(toggle.dataset.i));
+    if(!old || typeof item.animate !== 'function') return;
+    const r = item.getBoundingClientRect();
+    const dx = old.left - r.left, dy = old.top - r.top;
+    if(Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    item.animate(
+      [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }],
+      { duration: 280, easing: 'cubic-bezier(.2,.8,.2,1)' }
+    );
+  });
+}
+
 function renderProfilePackList(containerId, key, isMods=false){
   const el=document.getElementById(containerId); el.innerHTML='';
   const items=editingPackData[key]||[];
@@ -4679,7 +4735,7 @@ function renderProfilePackList(containerId, key, isMods=false){
     }
     const activeItems=[], disabledItems=[];
     displayItems.forEach((m,i)=>(m.disabled?disabledItems:activeItems).push({...m,_idx:items.indexOf(m)}));
-    appendItemsChunked(el, [...activeItems, ...disabledItems], (mod,i)=>{
+    return appendItemsChunked(el, [...activeItems, ...disabledItems], (mod,i)=>{
       const isDisabled=mod.disabled;
       const item=document.createElement('div'); item.className='mod-item';
       if(i===activeItems.length && disabledItems.length) item.classList.add('mod-list-sep');
@@ -4709,9 +4765,15 @@ function renderProfilePackList(containerId, key, isMods=false){
       });
       el.querySelectorAll('.mod-toggle').forEach(btn=>btn.addEventListener('change',()=>{
         const idx=parseInt(btn.dataset.i,10);
-        editingPackData[key][idx].disabled=!btn.checked;
-        renderProfilePackList(containerId,key,true);
+        const mod=editingPackData[key][idx];
+        if(!mod) return;
+        const nowDisabled=!btn.checked;
+        mod.disabled=nowDisabled;
+        const before=captureModItemPositions(el);
+        const rendered=renderProfilePackList(containerId,key,true);
         saveProfileEdits();
+        showToast(t(nowDisabled?'toast_mod_disabled':'toast_mod_enabled').replace('{name}', mod.name||'Mod'), nowDisabled?'muted':'ok');
+        Promise.resolve(rendered).then(()=>animateModItemMove(el,before));
       }));
       el.querySelectorAll('.mod-remove').forEach(btn=>btn.addEventListener('click',()=>{
         editingPackData[key].splice(parseInt(btn.dataset.i,10),1);

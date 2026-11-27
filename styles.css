@@ -2874,6 +2874,11 @@ body:not(.light):not(.glass).bg-light .page-head__sub { color: rgba(23, 18, 31, 
 .svc-toast.svc-in { opacity: 1; transform: translateX(0); }
 .svc-toast.svc-out { opacity: 0; transform: translateX(140%); }
 .svc-toast .svc-dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--danger); flex: 0 0 auto; }
+/* Kurze Toasts (z. B. Mod aktiviert/deaktiviert) statt der roten Service-Meldung */
+.svc-toast.toast-ok { border-color: color-mix(in srgb, var(--ok) 38%, transparent); background: color-mix(in srgb, var(--ok) 12%, var(--surface-1)); color: var(--ok); }
+.svc-toast.toast-ok .svc-dot { background: var(--ok); }
+.svc-toast.toast-muted { border-color: var(--border-strong); background: color-mix(in srgb, var(--muted) 12%, var(--surface-1)); color: var(--text-2); }
+.svc-toast.toast-muted .svc-dot { background: var(--muted); }
 
 .status-online, .running, .on { color: var(--ok); }
 .status-offline, .stopped, .off { color: var(--muted-2); }
@@ -3005,6 +3010,8 @@ body.light .modal { background: var(--surface-1); }
 body.light .modal-header { background: var(--surface-2); }
 body.light .server-console { background: var(--surface-sunken); border-color: var(--border); color: var(--text-2); }
 body.light .svc-toast { background: #fff0f0; border-color: color-mix(in srgb, var(--danger) 35%, transparent); color: #a11; }
+body.light .svc-toast.toast-ok { background: #eafaf0; border-color: color-mix(in srgb, var(--ok) 35%, transparent); color: #0a7a44; }
+body.light .svc-toast.toast-muted { background: #fff; border-color: var(--border-strong); color: var(--muted); }
 body.light .status-text, body.light .lp-label, body.light .skin-change-label { color: var(--muted); }
 body.light .logs-container { background: #fff; border-color: var(--border); color: var(--text); }
 body.light .log-line { border-bottom-color: #efeaf7; }
@@ -3208,6 +3215,10 @@ body.glass .skin-editor-toolbar .tool-btn:hover { background: rgba(255, 255, 255
 body.glass .skin-editor-toolbar .sep { background: var(--gs-bd); }
 body.glass .skin-editor-canvas { border-color: var(--gs-bd); }
 body.glass .svc-toast { background: rgba(255, 255, 255, .6) !important; border-color: rgba(255, 90, 90, .35); backdrop-filter: var(--gs-blur); -webkit-backdrop-filter: var(--gs-blur); }
+body.glass .svc-toast.toast-ok { background: rgba(255, 255, 255, .68) !important; border-color: rgba(53, 208, 127, .35) !important; color: #0a5c36 !important; }
+body.glass .svc-toast.toast-muted { background: rgba(255, 255, 255, .6) !important; border-color: rgba(0, 0, 0, .14) !important; color: #14171c !important; }
+body.glass .svc-toast.toast-ok .svc-dot { background: var(--ok) !important; }
+body.glass .svc-toast.toast-muted .svc-dot { background: var(--muted) !important; }
 body.glass .gbg-preset { background: var(--gs-panel); border-color: var(--gs-bd); }
 body.glass #update-overlay.update-themed #update-content { background: var(--gs-list); border-color: var(--gs-bd); box-shadow: var(--gs-hl); color: var(--gs-tx); }
 body.glass #update-overlay.update-themed #update-title { color: #14171c !important; }
